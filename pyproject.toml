@@ -1,0 +1,37 @@
+[tool.poetry]
+name = "operationsgateway-api"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+authors = ["Matthew Richards <matthew.richards@stfc.ac.uk>"]
+
+[tool.poetry.dependencies]
+python = ">=3.6.2,<4.0"
+fastapi = "^0.75.2"
+motor = "^2.5.1"
+uvicorn = "0.16.0"
+python-multipart = "^0.0.5"
+PyYAML = "^6.0"
+numpy = "<=1.14.5"
+h5py = "2.10.0"
+loguru = "^0.6.0"
+
+[tool.poetry.dev-dependencies]
+black = "^22.3.0"
+flake8 = "^4.0.1"
+flake8-bandit = "^2.1.2"
+flake8-black = "^0.2.1"
+flake8-broken-line = "0.4.0"
+flake8-bugbear = "^22.4.25"
+flake8-builtins = "^1.5.3"
+flake8-commas = "^2.1.0"
+flake8-comprehensions = "^3.3.0"
+flake8-import-order = "^0.18.1"
+flake8-logging-format = "^0.6.0"
+pep8-naming = "^0.12.1"
+safety = "^1.10.3"
+pytest = "^6.1.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

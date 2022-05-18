@@ -1,0 +1,10 @@
+venv/
+.idea/
+*.pyc
+*.log
+config.yml*
+.vscode/
+.nox/
+.python-version
+.coverage
+coverage.xml
