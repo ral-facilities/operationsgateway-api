@@ -64,4 +64,3 @@ async def insert_waveforms(waveforms):
 
         log.debug("Waveforms: %s, Length: %s", waveforms, len(waveforms))
         await MongoDBInterface.insert_many("waveforms", waveforms)
-
