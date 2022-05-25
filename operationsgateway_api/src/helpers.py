@@ -9,6 +9,7 @@ from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
 log = logging.getLogger()
 
+
 async def filter_conditions(
     conditions: Optional[str] = None,
 ):
@@ -19,8 +20,6 @@ async def filter_conditions(
     converted using `json.loads()` and 'injected' into the endpoint function using
     `Depends()`
     """
-
-    log.debug(f"Conditions: {conditions}, Type: {type(conditions)}")
 
     return json.loads(conditions) if conditions is not None else {}
 

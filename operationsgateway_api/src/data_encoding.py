@@ -53,7 +53,11 @@ class DataEncoding:
         elif isinstance(value, numpy.ndarray) and len(value.shape) == 2:
             # For images
             new_value = base64.b64encode(value)
-        elif isinstance(value, str) or isinstance(value, bytes) or isinstance(value, ObjectId):
+        elif (
+            isinstance(value, str)
+            or isinstance(value, bytes)
+            or isinstance(value, ObjectId)
+        ):
             new_value = value
         else:
             log.warning("Type not caught: %s, Value: %s", type(value), value)

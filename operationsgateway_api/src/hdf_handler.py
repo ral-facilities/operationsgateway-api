@@ -5,8 +5,6 @@ import logging
 from bson import ObjectId
 import h5py
 
-from operationsgateway_api.src.mongo.interface import MongoDBInterface
-
 log = logging.getLogger()
 
 
@@ -99,7 +97,9 @@ class HDFDataHandler:
             if key in flat_stored_data:
                 log.warning(
                     "There's data that already exists in the database, this will be"
-                    " overwritten: %s", key)
+                    " overwritten: %s",
+                    key,
+                )
                 # TODO - if we choose to return a 400, implement this
                 # Current exception is there as a template only
                 # raise Exception("Duplicate data, will not process")

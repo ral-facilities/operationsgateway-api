@@ -25,7 +25,7 @@ class MongoDBInterface:
     @staticmethod
     def find(
         collection_name="images",
-        filter_={},
+        filter_={},  # noqa: B006
         skip=0,
         limit=0,
         sort="",
@@ -86,7 +86,7 @@ class MongoDBInterface:
 
         # TODO - might be able to implement projection?
         return await collection.find_one(filter_)
-    
+
     @staticmethod
     def aggregate(collection_name, pipeline):
         """
@@ -99,8 +99,6 @@ class MongoDBInterface:
         collection = MongoDBInterface.get_collection_object(collection_name)
 
         return collection.aggregate(pipeline)
-
-
 
     # TODO - do we need update_many() too?
     @staticmethod

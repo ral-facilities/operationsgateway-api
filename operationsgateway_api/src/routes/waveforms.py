@@ -4,7 +4,6 @@ from fastapi import APIRouter
 
 from operationsgateway_api.src.data_encoding import DataEncoding
 from operationsgateway_api.src.models import Record
-
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
 
