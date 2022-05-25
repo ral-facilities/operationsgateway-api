@@ -23,5 +23,3 @@ async def get_waveform_by_id(id_: str):
 
     # TODO - need to make that model more generic, not specific to records
     return Record.construct(waveform.keys(), **waveform)
-
-# TODO - do we want /waveforms/count
