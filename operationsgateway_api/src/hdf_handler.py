@@ -17,7 +17,7 @@ class HDFDataHandler:
         """
 
         hdf_bytes = io.BytesIO(request_upload)
-        return h5py.File(hdf_bytes)
+        return h5py.File(hdf_bytes, "r")
 
     @staticmethod
     def extract_hdf_data(file_path=None, hdf_file=None):
@@ -51,14 +51,14 @@ class HDFDataHandler:
                 # Create a object ID here so it can be assigned to the waveform document
                 # and the record before data insertion. This way, we can send the data
                 # to the database one after the other. The alternative would be to send
-                # the waveform data,fetch the IDs and inject them into the record data.
-                # That method wouldn't be as efficient
+                # the waveform data, fetch the IDs and inject them into the record data
+                # which wouldn't be as efficient
                 waveform_id = ObjectId()
                 log.debug("Waveform ID: %s", waveform_id)
                 # Trace column, <f8/float64
                 record["channels"][column_name] = {
                     "metadata": {},
-                    "waveform": waveform_id,
+                    "waveform_id": waveform_id,
                 }
 
                 waveforms.append(
