@@ -36,6 +36,7 @@ class HDFDataHandler:
             hdf_file = h5py.File(file_path, "r")
 
         record_id = ObjectId()
+
         record = {"_id": record_id, "metadata": {}, "channels": {}}
         waveforms = []
         images = {}
@@ -48,9 +49,12 @@ class HDFDataHandler:
 
         for column_name, value in hdf_file.items():
             if value.attrs["channel_dtype"] == "image":
+                # TODO - should we use a directory per ID? Will need a bit of code added
+                # to create directories for each ID to prevent a FileNotFoundError when
+                # saving the images
                 image_path = (
-                    f"{Config.config.mongodb.image_store_directory}/{record_id}/"
-                    f"{column_name}.png"
+                    f"{Config.config.mongodb.image_store_directory}/"
+                    f"{record['metadata']['shotnum']}_{column_name}.png"
                 )
                 image_data = value["data"][()]
                 images[image_path] = image_data

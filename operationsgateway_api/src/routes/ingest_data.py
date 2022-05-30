@@ -7,6 +7,7 @@ from operationsgateway_api.src.hdf_handler import HDFDataHandler
 from operationsgateway_api.src.helpers import (
     insert_waveforms,
     is_shot_stored,
+    store_images,
 )
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
@@ -28,11 +29,14 @@ async def submit_hdf(file: UploadFile):
 
     file_shot_num = records["metadata"]["shotnum"]
 
+    # Always insert images and waveforms for now
+    await insert_waveforms(waveforms)
+    await store_images(images)
+
     shot_document = await MongoDBInterface.find_one(
         "records",
         filter_={"metadata.shotnum": file_shot_num},
     )
-
     shot_exist = is_shot_stored(shot_document)
 
     if shot_exist:
@@ -46,7 +50,6 @@ async def submit_hdf(file: UploadFile):
             records,
             shot_document,
         )
-        await insert_waveforms(waveforms)
         log.debug("Remaining data: %s", remaining_request_data.keys())
         if remaining_request_data:
             await MongoDBInterface.update_one(
@@ -58,7 +61,6 @@ async def submit_hdf(file: UploadFile):
         else:
             return f"{str(shot_document['_id'])} not updated, no new data"
     else:
-        await insert_waveforms(waveforms)
         data_insert = await MongoDBInterface.insert_one("records", records)
         return MongoDBInterface.get_inserted_id(data_insert)
 
@@ -79,13 +81,8 @@ async def submit_hdf_basic(file: UploadFile):
     record, waveforms, images = HDFDataHandler.extract_hdf_data(hdf_file=hdf_file)
     DataEncoding.encode_numpy_for_mongo(record)
 
-    # TODO - call the function instead
-    if waveforms:
-        for waveform in waveforms:
-            DataEncoding.encode_numpy_for_mongo(waveform)
-
-        await MongoDBInterface.insert_many("waveforms", waveforms)
-
+    await insert_waveforms(waveforms)
+    await store_images(images)
     record_insert = await MongoDBInterface.insert_one("records", record)
 
     return MongoDBInterface.get_inserted_id(record_insert)

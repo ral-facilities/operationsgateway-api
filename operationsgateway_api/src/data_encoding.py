@@ -51,6 +51,7 @@ class DataEncoding:
             # For 1D arrays in traces
             new_value = str(list(value))
         elif isinstance(value, numpy.ndarray) and len(value.shape) == 2:
+            # TODO - might not be needed as we'll be storing images on disk
             # For images
             new_value = base64.b64encode(value)
         elif (

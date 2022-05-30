@@ -2,6 +2,7 @@ import json
 import logging
 from typing import Optional
 
+from PIL import Image
 import pymongo
 
 from operationsgateway_api.src.data_encoding import DataEncoding
@@ -62,3 +63,10 @@ async def insert_waveforms(waveforms):
             DataEncoding.encode_numpy_for_mongo(waveform)
 
         await MongoDBInterface.insert_many("waveforms", waveforms)
+
+
+# TODO - is async needed?
+async def store_images(images):
+    for path, data in images.items():
+        image = Image.fromarray(data)
+        image.save(path)
