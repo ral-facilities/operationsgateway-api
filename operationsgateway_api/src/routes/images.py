@@ -17,12 +17,13 @@ async def get_full_image(
     string_response: bool = False,
 ):
     if string_response:
+        # TODO - could we make this async? Benefits?
         with open(
             f"{Config.config.mongodb.image_store_directory}/{shot_num}_{channel_name}"
             ".png",
             "rb",
-        ) as image:
-            image_string = base64.b64encode(image.read())
+        ) as image_file:
+            image_string = base64.b64encode(image_file.read())
         return image_string
     else:
         return FileResponse(

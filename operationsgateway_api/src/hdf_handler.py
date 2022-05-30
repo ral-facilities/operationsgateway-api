@@ -4,6 +4,7 @@ import logging
 
 from bson import ObjectId
 import h5py
+import numpy as np
 
 from operationsgateway_api.src.config import Config
 
@@ -52,6 +53,7 @@ class HDFDataHandler:
                 # TODO - should we use a directory per ID? Will need a bit of code added
                 # to create directories for each ID to prevent a FileNotFoundError when
                 # saving the images
+                # TODO - put as a constant/put elsewhere?
                 image_path = (
                     f"{Config.config.mongodb.image_store_directory}/"
                     f"{record['metadata']['shotnum']}_{column_name}.png"
@@ -64,7 +66,28 @@ class HDFDataHandler:
                     "image_path": image_path,
                 }
             elif value.attrs["channel_dtype"] == "rgb-image":
-                pass
+                # TODO - when we don't want random noise anymore, we could probably
+                # combine this code with greyscale images, its the same implementation
+                image_path = (
+                    f"{Config.config.mongodb.image_store_directory}/"
+                    f"{record['metadata']['shotnum']}_{column_name}.png"
+                )
+
+                # Gives random noise, where only example RGB I have sends full black
+                # image. Comment out to store true data
+                image_data = np.random.randint(
+                    0,
+                    255,
+                    size=(300, 400, 3),
+                    dtype=np.uint8,
+                )
+                # image_data = value["data"][()]
+                images[image_path] = image_data
+
+                record["channels"][column_name] = {
+                    "metadata": {},
+                    "image_path": image_path,
+                }
             elif value.attrs["channel_dtype"] == "scalar":
                 record["channels"][column_name] = {"metadata": {}, "data": None}
                 record["channels"][column_name]["data"] = value["data"][()]
