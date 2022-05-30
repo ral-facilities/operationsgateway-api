@@ -5,6 +5,8 @@ import logging
 from bson import ObjectId
 import h5py
 
+from operationsgateway_api.src.config import Config
+
 log = logging.getLogger()
 
 
@@ -33,8 +35,10 @@ class HDFDataHandler:
         if file_path:
             hdf_file = h5py.File(file_path, "r")
 
-        record = {"metadata": {}, "channels": {}}
+        record_id = ObjectId()
+        record = {"_id": record_id, "metadata": {}, "channels": {}}
         waveforms = []
+        images = {}
 
         for metadata_key, metadata_value in hdf_file.attrs.items():
             log.debug("Metadata Key: %s, Value: %s", metadata_key, metadata_value)
@@ -43,11 +47,24 @@ class HDFDataHandler:
             record["metadata"][metadata_key] = metadata_value
 
         for column_name, value in hdf_file.items():
-            # TODO - we could make use of the dtype data instead of the try/except
-            try:
+            if value.attrs["channel_dtype"] == "image":
+                image_path = (
+                    f"{Config.config.mongodb.image_store_directory}/{record_id}/"
+                    f"{column_name}.png"
+                )
+                image_data = value["data"][()]
+                images[image_path] = image_data
+
+                record["channels"][column_name] = {
+                    "metadata": {},
+                    "image_path": image_path,
+                }
+            elif value.attrs["channel_dtype"] == "rgb-image":
+                pass
+            elif value.attrs["channel_dtype"] == "scalar":
                 record["channels"][column_name] = {"metadata": {}, "data": None}
                 record["channels"][column_name]["data"] = value["data"][()]
-            except KeyError:
+            elif value.attrs["channel_dtype"] == "waveform":
                 # Create a object ID here so it can be assigned to the waveform document
                 # and the record before data insertion. This way, we can send the data
                 # to the database one after the other. The alternative would be to send
@@ -55,7 +72,6 @@ class HDFDataHandler:
                 # which wouldn't be as efficient
                 waveform_id = ObjectId()
                 log.debug("Waveform ID: %s", waveform_id)
-                # Trace column, <f8/float64
                 record["channels"][column_name] = {
                     "metadata": {},
                     "waveform_id": waveform_id,
@@ -71,7 +87,7 @@ class HDFDataHandler:
                     column_metadata_key
                 ] = column_metadata_value
 
-        return record, waveforms
+        return record, waveforms, images
 
     # TODO - could be named/placed better?
     @staticmethod

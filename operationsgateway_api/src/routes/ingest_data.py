@@ -23,7 +23,7 @@ async def submit_hdf(file: UploadFile):
     file_contents = await file.read()
     hdf_file = HDFDataHandler.convert_to_hdf_from_request(file_contents)
 
-    records, waveforms = HDFDataHandler.extract_hdf_data(hdf_file=hdf_file)
+    records, waveforms, images = HDFDataHandler.extract_hdf_data(hdf_file=hdf_file)
     DataEncoding.encode_numpy_for_mongo(records)
 
     file_shot_num = records["metadata"]["shotnum"]
@@ -36,6 +36,10 @@ async def submit_hdf(file: UploadFile):
     shot_exist = is_shot_stored(shot_document)
 
     if shot_exist:
+        # When an existing shot is stored, overwrite the newly generated ID with the one
+        # that already exists in the database
+        records["_id"] = shot_document["_id"]
+
         # Cycle through data and detect repeating data
         # Any remaining data should be put into MongoDB via update_one()
         remaining_request_data = HDFDataHandler.search_existing_data(
@@ -43,7 +47,7 @@ async def submit_hdf(file: UploadFile):
             shot_document,
         )
         await insert_waveforms(waveforms)
-        log.debug("Remaining data: %s", remaining_request_data)
+        log.debug("Remaining data: %s", remaining_request_data.keys())
         if remaining_request_data:
             await MongoDBInterface.update_one(
                 "records",
@@ -71,7 +75,8 @@ async def submit_hdf_basic(file: UploadFile):
     file_contents = await file.read()
     hdf_file = HDFDataHandler.convert_to_hdf_from_request(file_contents)
 
-    record, waveforms = HDFDataHandler.extract_hdf_data(hdf_file=hdf_file)
+    # TODO - do something with these images
+    record, waveforms, images = HDFDataHandler.extract_hdf_data(hdf_file=hdf_file)
     DataEncoding.encode_numpy_for_mongo(record)
 
     # TODO - call the function instead
@@ -79,7 +84,6 @@ async def submit_hdf_basic(file: UploadFile):
         for waveform in waveforms:
             DataEncoding.encode_numpy_for_mongo(waveform)
 
-        log.debug("Waveforms: %s, Length: %s", waveforms, len(waveforms))
         await MongoDBInterface.insert_many("waveforms", waveforms)
 
     record_insert = await MongoDBInterface.insert_one("records", record)

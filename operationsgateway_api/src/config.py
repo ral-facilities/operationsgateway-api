@@ -37,6 +37,7 @@ class MongoDB(BaseModel):
     database_name: StrictStr
     collection_name: StrictStr
     max_documents: StrictInt
+    image_store_directory: StrictStr
 
 
 class APIConfig(BaseModel):

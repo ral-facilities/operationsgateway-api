@@ -61,5 +61,4 @@ async def insert_waveforms(waveforms):
         for waveform in waveforms:
             DataEncoding.encode_numpy_for_mongo(waveform)
 
-        log.debug("Waveforms: %s, Length: %s", waveforms, len(waveforms))
         await MongoDBInterface.insert_many("waveforms", waveforms)
