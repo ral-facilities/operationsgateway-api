@@ -9,6 +9,7 @@ from operationsgateway_api.src.hdf_handler import HDFDataHandler
 from operationsgateway_api.src.helpers import (
     extract_order_data,
     filter_conditions,
+    truncate_thumbnail_output,
 )
 from operationsgateway_api.src.models import Record
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
@@ -25,6 +26,7 @@ async def get_records(
     limit: int = 0,
     order: Optional[List[str]] = Query(None),  # noqa: B008
     projection: Optional[List[str]] = Query(None),  # noqa: B008
+    truncate: Optional[bool] = False,
 ):
     log.info("Getting records by query")
 
@@ -39,6 +41,10 @@ async def get_records(
         projection=projection,
     )
     records = await MongoDBInterface.query_to_list(records_query)
+
+    if truncate:
+        for record in records:
+            truncate_thumbnail_output(record)
 
     # TODO - do I need this model stuff?
     return [Record.construct(record.keys(), **record) for record in records]
@@ -66,6 +72,7 @@ async def get_record_by_aggregation(
 async def get_record_by_id(
     id_: str,
     conditions: dict = Depends(filter_conditions),  # noqa: B008
+    truncate: Optional[bool] = False,
 ):  # noqa: B008
     log.info("Getting record by ID: %s", id_)
 
@@ -76,6 +83,10 @@ async def get_record_by_id(
         "records",
         {"_id": DataEncoding.encode_object_id(id_), **conditions},
     )
+
+    if truncate:
+        truncate_thumbnail_output(record)
+
     return Record.construct(record.keys(), **record)
 
 
@@ -101,6 +112,7 @@ async def update_record_by_id(id_: str, new_data: dict = Body(...)):  # noqa: B0
 async def insert_record():
     log.info("Inserting record (currently static/hardcoded file on disk)")
 
+    # TODO - this isn't going to work anymore
     hdf_data = HDFDataHandler.extract_hdf_data(
         file_path="/root/seg_dev/OG-HDF5/output_data/366375.h5",
     )

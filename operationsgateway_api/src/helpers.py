@@ -146,3 +146,13 @@ def store_waveform_thumbnails(record, thumbnails):
                 # A KeyError here will be because the channel isn't a waveform. This is
                 # normal behaviour and is acceptable to pass
                 pass
+
+
+def truncate_thumbnail_output(record):
+    for value in record["channels"].values():
+        try:
+            value["thumbnail"] = value["thumbnail"][:50]
+        except KeyError:
+            # If there's no thumbnails (e.g. if channel isn't an image or waveform) then
+            # a KeyError will be raised. This is normal behaviour, so acceptable to pass
+            pass
