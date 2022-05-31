@@ -4,9 +4,12 @@ import json
 import logging
 from typing import Optional
 
+from bson import ObjectId
+import matplotlib.pyplot as plt
 from PIL import Image
 import pymongo
 
+from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.data_encoding import DataEncoding
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
@@ -101,3 +104,45 @@ def store_thumbnails(record, thumbnails):
 
         record["channels"][channel_name]["thumbnail"] = thumbnail
 
+
+def create_image_plot(x, y, _id):
+    plt.plot(x, y)
+    plt.savefig(f"/root/seg_dev/og-images/waveforms/{_id}.png")
+    # Flushes figure so axes aren't distorted between figures
+    plt.clf()
+
+
+def create_waveform_thumbnails(waveforms):
+    # TODO - could probably combine image and waveform thumbnail creation into a single
+    # function if the path was given directly/abstracted away
+    thumbnails = {}
+    for waveform in waveforms:
+        waveform_plot = Image.open(
+            f"{Config.config.mongodb.image_store_directory}/waveforms/{waveform['_id']}"
+            ".png",
+        )
+        waveform_plot.thumbnail((100, 100))
+
+        # TODO - could be sensible to put the image to base64 stuff (via BytesIO) into
+        # its own function
+        buffered = BytesIO()
+        waveform_plot.save(buffered, format="PNG")
+        waveform_string = base64.b64encode(buffered.getvalue())
+        thumbnails[waveform["_id"]] = waveform_string
+
+    return thumbnails
+
+
+def store_waveform_thumbnails(record, thumbnails):
+    # TODO - fairly scruffy code, I'd like to have the channel name given to this
+    # function really. Or combining it with the image version of this function so we can
+    # abstract fetching the channel name
+    for _id, thumbnail in thumbnails.items():
+        for channel_name, value in record["channels"].items():
+            try:
+                if ObjectId(_id) == value["waveform_id"]:
+                    record["channels"][channel_name]["thumbnail"] = thumbnail
+            except KeyError:
+                # A KeyError here will be because the channel isn't a waveform. This is
+                # normal behaviour and is acceptable to pass
+                pass
