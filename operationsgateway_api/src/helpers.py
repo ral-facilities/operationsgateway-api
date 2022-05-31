@@ -1,3 +1,5 @@
+import base64
+from io import BytesIO
 import json
 import logging
 from typing import Optional
@@ -70,3 +72,32 @@ async def store_images(images):
     for path, data in images.items():
         image = Image.fromarray(data)
         image.save(path)
+
+
+def create_thumbnails(image_paths):
+    thumbnails = {}
+
+    for path in image_paths:
+        image = Image.open(path)
+        image.thumbnail((50, 50))
+
+        buffered = BytesIO()
+        image.save(buffered, format="PNG")
+
+        # TODO - move the base64 encoding into its own function
+        image_string = base64.b64encode(buffered.getvalue())
+        thumbnails[path] = image_string
+
+    return thumbnails
+
+
+def store_thumbnails(record, thumbnails):
+    # TODO - need to store thumbnails from waveforms - need to create them first
+    for image_path, thumbnail in thumbnails.items():
+        # TODO - extracting the channel name from the path should be thoroughly unit
+        # tested. Probably best to put this code into its own function
+        shot_channel = image_path.split("/")[-1].split("_")[1:]
+        channel_name = "_".join(shot_channel).split(".")[0]
+
+        record["channels"][channel_name]["thumbnail"] = thumbnail
+
