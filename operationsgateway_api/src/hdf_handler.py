@@ -38,7 +38,7 @@ class HDFDataHandler:
 
         record_id = ObjectId()
 
-        record = {"_id": record_id, "metadata": {}, "channels": {}}
+        record = {"_id": record_id, "metadata": {}, "channels": []}
         waveforms = []
         images = {}
 
@@ -48,7 +48,9 @@ class HDFDataHandler:
             # Adding metadata of shot
             record["metadata"][metadata_key] = metadata_value
 
-        for column_name, value in hdf_file.items():
+        for channel_name, value in hdf_file.items():
+            channel_data = {"name": channel_name}
+
             if value.attrs["channel_dtype"] == "image":
                 # TODO - should we use a directory per ID? Will need a bit of code added
                 # to create directories for each ID to prevent a FileNotFoundError when
@@ -56,21 +58,18 @@ class HDFDataHandler:
                 # TODO - put as a constant/put elsewhere?
                 image_path = (
                     f"{Config.config.mongodb.image_store_directory}/"
-                    f"{record['metadata']['shotnum']}_{column_name}.png"
+                    f"{record['metadata']['shotnum']}_{channel_name}.png"
                 )
                 image_data = value["data"][()]
                 images[image_path] = image_data
 
-                record["channels"][column_name] = {
-                    "metadata": {},
-                    "image_path": image_path,
-                }
+                channel_data["image_path"] = image_path
             elif value.attrs["channel_dtype"] == "rgb-image":
                 # TODO - when we don't want random noise anymore, we could probably
                 # combine this code with greyscale images, its the same implementation
                 image_path = (
                     f"{Config.config.mongodb.image_store_directory}/"
-                    f"{record['metadata']['shotnum']}_{column_name}.png"
+                    f"{record['metadata']['shotnum']}_{channel_name}.png"
                 )
 
                 # Gives random noise, where only example RGB I have sends full black
@@ -81,16 +80,11 @@ class HDFDataHandler:
                     size=(300, 400, 3),
                     dtype=np.uint8,
                 )
-                # image_data = value["data"][()]
                 images[image_path] = image_data
 
-                record["channels"][column_name] = {
-                    "metadata": {},
-                    "image_path": image_path,
-                }
+                channel_data["image_path"] = image_path
             elif value.attrs["channel_dtype"] == "scalar":
-                record["channels"][column_name] = {"metadata": {}, "data": None}
-                record["channels"][column_name]["data"] = value["data"][()]
+                channel_data["data"] = value["data"][()]
             elif value.attrs["channel_dtype"] == "waveform":
                 # Create a object ID here so it can be assigned to the waveform document
                 # and the record before data insertion. This way, we can send the data
@@ -99,20 +93,17 @@ class HDFDataHandler:
                 # which wouldn't be as efficient
                 waveform_id = ObjectId()
                 log.debug("Waveform ID: %s", waveform_id)
-                record["channels"][column_name] = {
-                    "metadata": {},
-                    "waveform_id": waveform_id,
-                }
+                channel_data["waveform_id"] = waveform_id
 
                 waveforms.append(
                     {"_id": waveform_id, "x": value["x"][()], "y": value["y"][()]},
                 )
 
             # Adding channel metadata
-            for column_metadata_key, column_metadata_value in value.attrs.items():
-                record["channels"][column_name]["metadata"][
-                    column_metadata_key
-                ] = column_metadata_value
+            channel_data["metadata"] = dict(value.attrs)
+
+            # Adding the processed channel to the record
+            record["channels"].append(channel_data)
 
         return record, waveforms, images
 

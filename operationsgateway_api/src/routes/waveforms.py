@@ -20,5 +20,6 @@ async def get_waveform_by_id(id_: str):
         {"_id": DataEncoding.encode_object_id(id_)},
     )
 
-    # TODO - need to make that model more generic, not specific to records
+    # TODO - need to make that model more generic, not specific to records. Or make a
+    # separate model probably
     return Record.construct(waveform.keys(), **waveform)

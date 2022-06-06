@@ -17,7 +17,6 @@ async def get_full_image(
     string_response: bool = False,
 ):
     if string_response:
-        # TODO - could we make this async? Benefits?
         with open(
             f"{Config.config.mongodb.image_store_directory}/{shot_num}_{channel_name}"
             ".png",

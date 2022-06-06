@@ -87,14 +87,14 @@ def create_image_thumbnails(image_paths):
 
 
 def store_image_thumbnails(record, thumbnails):
-    # TODO - need to store thumbnails from waveforms - need to create them first
     for image_path, thumbnail in thumbnails.items():
         # TODO - extracting the channel name from the path should be thoroughly unit
         # tested. Probably best to put this code into its own function
         shot_channel = image_path.split("/")[-1].split("_")[1:]
         channel_name = "_".join(shot_channel).split(".")[0]
 
-        record["channels"][channel_name]["thumbnail"] = thumbnail
+        channel = search_for_channel(record, channel_name)
+        channel["thumbnail"] = thumbnail
 
 
 def create_image_plot(x, y, buf):
@@ -115,14 +115,15 @@ def convert_image_to_base64(image: Image.Image) -> bytes:
 
 
 def create_waveform_thumbnails(waveforms):
-    # TODO - could probably combine image and waveform thumbnail creation into a single
-    # function if the path was given directly/abstracted away
     thumbnails = {}
+
     for waveform in waveforms:
         with BytesIO() as plot_buf:
             # TODO - S307 linting error
             create_image_plot(
-                list(eval(waveform["x"])), list(eval(waveform["y"])), plot_buf,
+                list(eval(waveform["x"])),
+                list(eval(waveform["y"])),
+                plot_buf,
             )
             waveform_image = Image.open(plot_buf)
             create_thumbnail(waveform_image, (100, 100))
@@ -137,10 +138,10 @@ def store_waveform_thumbnails(record, thumbnails):
     # function really. Or combining it with the image version of this function so we can
     # abstract fetching the channel name
     for _id, thumbnail in thumbnails.items():
-        for channel_name, value in record["channels"].items():
+        for channel in record["channels"]:
             try:
-                if ObjectId(_id) == value["waveform_id"]:
-                    record["channels"][channel_name]["thumbnail"] = thumbnail
+                if ObjectId(_id) == channel["waveform_id"]:
+                    channel["thumbnail"] = thumbnail
             except KeyError:
                 # A KeyError here will be because the channel isn't a waveform. This is
                 # normal behaviour and is acceptable to pass
@@ -148,10 +149,16 @@ def store_waveform_thumbnails(record, thumbnails):
 
 
 def truncate_thumbnail_output(record):
-    for value in record["channels"].values():
+    for channel in record["channels"]:
         try:
-            value["thumbnail"] = value["thumbnail"][:50]
+            channel["thumbnail"] = channel["thumbnail"][:50]
         except KeyError:
             # If there's no thumbnails (e.g. if channel isn't an image or waveform) then
             # a KeyError will be raised. This is normal behaviour, so acceptable to pass
             pass
+
+
+def search_for_channel(record, channel_name):
+    for channel in record["channels"]:
+        if channel_name in channel["name"]:
+            return channel
