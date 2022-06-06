@@ -5,13 +5,12 @@ from fastapi import APIRouter, UploadFile
 from operationsgateway_api.src.data_encoding import DataEncoding
 from operationsgateway_api.src.hdf_handler import HDFDataHandler
 from operationsgateway_api.src.helpers import (
-    create_image_plot,
-    create_thumbnails,
+    create_image_thumbnails,
     create_waveform_thumbnails,
     insert_waveforms,
     is_shot_stored,
+    store_image_thumbnails,
     store_images,
-    store_thumbnails,
     store_waveform_thumbnails,
 )
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
@@ -36,21 +35,14 @@ async def submit_hdf(file: UploadFile):
 
     # Always insert images and waveforms for now
     await insert_waveforms(waveforms)
-    await store_images(images)
+    store_images(images)
 
     # Create and store thumbnails from stored images
-    thumbnails = create_thumbnails(images.keys())
-    store_thumbnails(record, thumbnails)
+    image_thumbnails = create_image_thumbnails(images.keys())
+    store_image_thumbnails(record, image_thumbnails)
 
-    for waveform in waveforms:
-        # TODO - S307 linting error
-        create_image_plot(
-            list(eval(waveform["x"])),
-            list(eval(waveform["y"])),
-            waveform["_id"],
-        )
-        thumbnails = create_waveform_thumbnails(waveforms)
-        store_waveform_thumbnails(record, thumbnails)
+    waveform_thumbnails = create_waveform_thumbnails(waveforms)
+    store_waveform_thumbnails(record, waveform_thumbnails)
 
     shot_document = await MongoDBInterface.find_one(
         "records",

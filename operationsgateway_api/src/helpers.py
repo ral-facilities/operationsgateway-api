@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import pymongo
 
-from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.data_encoding import DataEncoding
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
@@ -70,31 +69,24 @@ async def insert_waveforms(waveforms):
         await MongoDBInterface.insert_many("waveforms", waveforms)
 
 
-# TODO - is async needed?
-async def store_images(images):
+def store_images(images):
     for path, data in images.items():
         image = Image.fromarray(data)
         image.save(path)
 
 
-def create_thumbnails(image_paths):
+def create_image_thumbnails(image_paths):
     thumbnails = {}
 
     for path in image_paths:
         image = Image.open(path)
-        image.thumbnail((50, 50))
-
-        buffered = BytesIO()
-        image.save(buffered, format="PNG")
-
-        # TODO - move the base64 encoding into its own function
-        image_string = base64.b64encode(buffered.getvalue())
-        thumbnails[path] = image_string
+        create_thumbnail(image, (50, 50))
+        thumbnails[path] = convert_image_to_base64(image)
 
     return thumbnails
 
 
-def store_thumbnails(record, thumbnails):
+def store_image_thumbnails(record, thumbnails):
     # TODO - need to store thumbnails from waveforms - need to create them first
     for image_path, thumbnail in thumbnails.items():
         # TODO - extracting the channel name from the path should be thoroughly unit
@@ -105,11 +97,21 @@ def store_thumbnails(record, thumbnails):
         record["channels"][channel_name]["thumbnail"] = thumbnail
 
 
-def create_image_plot(x, y, _id):
+def create_image_plot(x, y, buf):
     plt.plot(x, y)
-    plt.savefig(f"/root/seg_dev/og-images/waveforms/{_id}.png")
+    plt.savefig(buf, format="PNG")
     # Flushes figure so axes aren't distorted between figures
     plt.clf()
+
+
+def create_thumbnail(image: Image.Image, max_size: tuple) -> None:
+    image.thumbnail(max_size)
+
+
+def convert_image_to_base64(image: Image.Image) -> bytes:
+    with BytesIO() as buf:
+        image.save(buf, format="PNG")
+        return base64.b64encode(buf.getvalue())
 
 
 def create_waveform_thumbnails(waveforms):
@@ -118,18 +120,14 @@ def create_waveform_thumbnails(waveforms):
     thumbnails = {}
     for waveform in waveforms:
         with BytesIO() as plot_buf:
-            plt.plot(list(eval(waveform["x"])), list(eval(waveform["y"])))
-            plt.savefig(plot_buf, format="PNG")
-            plt.clf()
-
+            # TODO - S307 linting error
+            create_image_plot(
+                list(eval(waveform["x"])), list(eval(waveform["y"])), plot_buf,
+            )
             waveform_image = Image.open(plot_buf)
-            waveform_image.thumbnail((100, 100))
+            create_thumbnail(waveform_image, (100, 100))
 
-            with BytesIO() as thumbnail_buf:
-                waveform_image.save(thumbnail_buf, format="PNG")
-                waveform_string = base64.b64encode(thumbnail_buf.getvalue())
-            
-        thumbnails[waveform["_id"]] = waveform_string
+            thumbnails[waveform["_id"]] = convert_image_to_base64(waveform_image)
 
     return thumbnails
 
