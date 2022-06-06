@@ -117,17 +117,18 @@ def create_waveform_thumbnails(waveforms):
     # function if the path was given directly/abstracted away
     thumbnails = {}
     for waveform in waveforms:
-        waveform_plot = Image.open(
-            f"{Config.config.mongodb.image_store_directory}/waveforms/{waveform['_id']}"
-            ".png",
-        )
-        waveform_plot.thumbnail((100, 100))
+        with BytesIO() as plot_buf:
+            plt.plot(list(eval(waveform["x"])), list(eval(waveform["y"])))
+            plt.savefig(plot_buf, format="PNG")
+            plt.clf()
 
-        # TODO - could be sensible to put the image to base64 stuff (via BytesIO) into
-        # its own function
-        buffered = BytesIO()
-        waveform_plot.save(buffered, format="PNG")
-        waveform_string = base64.b64encode(buffered.getvalue())
+            waveform_image = Image.open(plot_buf)
+            waveform_image.thumbnail((100, 100))
+
+            with BytesIO() as thumbnail_buf:
+                waveform_image.save(thumbnail_buf, format="PNG")
+                waveform_string = base64.b64encode(thumbnail_buf.getvalue())
+            
         thumbnails[waveform["_id"]] = waveform_string
 
     return thumbnails
