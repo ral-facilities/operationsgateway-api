@@ -121,8 +121,8 @@ def create_waveform_thumbnails(waveforms):
         with BytesIO() as plot_buf:
             # TODO - S307 linting error
             create_image_plot(
-                list(eval(waveform["x"])),
-                list(eval(waveform["y"])),
+                list(eval(waveform["x"])),  # noqa: S307
+                list(eval(waveform["y"])),  # noqa: S307
                 plot_buf,
             )
             waveform_image = Image.open(plot_buf)
