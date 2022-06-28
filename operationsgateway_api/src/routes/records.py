@@ -18,7 +18,7 @@ log = logging.getLogger()
 router = APIRouter()
 
 
-@router.get("/records/find", response_description="Get records using MongoDB's find()")
+@router.get("/records", response_description="Get records using MongoDB's find()")
 async def get_records(
     # TODO - investigate linting errors
     conditions: dict = Depends(filter_conditions),  # noqa: B008
