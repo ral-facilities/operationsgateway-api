@@ -74,26 +74,3 @@ async def submit_hdf(file: UploadFile):
     else:
         data_insert = await MongoDBInterface.insert_one("records", record)
         return MongoDBInterface.get_inserted_id(data_insert)
-
-
-@router.post(
-    "/submit_hdf/basic",
-    response_description="Upload a HDF file, extract the contents and store the data in"
-    " MongoDB",
-)
-async def submit_hdf_basic(file: UploadFile):
-    log.info("Adding contents of attached file to MongoDB")
-    log.debug("Filename: %s, Content: %s", file.filename, file.content_type)
-
-    file_contents = await file.read()
-    hdf_file = HDFDataHandler.convert_to_hdf_from_request(file_contents)
-
-    # TODO - do something with these images
-    record, waveforms, images = HDFDataHandler.extract_hdf_data(hdf_file=hdf_file)
-    DataEncoding.encode_numpy_for_mongo(record)
-
-    await insert_waveforms(waveforms)
-    await store_images(images)
-    record_insert = await MongoDBInterface.insert_one("records", record)
-
-    return MongoDBInterface.get_inserted_id(record_insert)

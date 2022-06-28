@@ -86,19 +86,6 @@ class MongoDBInterface:
         # TODO - might be able to implement projection?
         return await collection.find_one(filter_)
 
-    @staticmethod
-    def aggregate(collection_name, pipeline):
-        """
-        TODO
-        """
-
-        log.info("Sending aggregate() to MongoDB, collection: %s", collection_name)
-        log.debug("Pipeline: %s", pipeline)
-
-        collection = MongoDBInterface.get_collection_object(collection_name)
-
-        return collection.aggregate(pipeline)
-
     # TODO - do we need update_many() too?
     @staticmethod
     async def update_one(collection_name, filter_={}, update={}):  # noqa: B006

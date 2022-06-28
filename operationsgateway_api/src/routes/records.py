@@ -50,23 +50,6 @@ async def get_records(
     return [Record.construct(record.keys(), **record) for record in records]
 
 
-@router.get(
-    "/records/aggregate",
-    response_description="Get records by MongoDB aggregation",
-)
-async def get_record_by_aggregation(
-    pipeline: Optional[List[str]] = Query(None),  # noqa: B008
-):  # noqa: B008
-    log.debug("Pipeline: %s, Type: %s", pipeline, type(pipeline))
-    log.info("Getting records by MongoDB aggregation")
-
-    # TODO - if matching on _id, the ID needs to be encoded to an ObjectId
-    records_query = MongoDBInterface.aggregate("records", json.loads(pipeline[0]))
-    records = await MongoDBInterface.query_to_list(records_query)
-
-    return [Record.construct(record.keys(), **record) for record in records]
-
-
 @router.get("/records/{id_}", response_description="Get record by ID")
 # TODO - can I find a use case for conditions?
 async def get_record_by_id(
@@ -88,38 +71,5 @@ async def get_record_by_id(
         truncate_thumbnail_output(record)
 
     return Record.construct(record.keys(), **record)
-
-
-@router.patch(
-    "/records/{id_}",
-    response_description="Update or add new fields to a record by ID",
-)
-async def update_record_by_id(id_: str, new_data: dict = Body(...)):  # noqa: B008
-    log.info("Updating record by ID: %s", id_)
-    log.debug("New Data: %s, Type: %s", new_data, type(new_data))
-
-    # TODO - would find_one_and_update() be better?
-    await MongoDBInterface.update_one(
-        "records",
-        {"_id": DataEncoding.encode_object_id(id_)},
-        {"$set": new_data},
-    )
-
-    return await get_record_by_id(id_)
-
-
-@router.post("/records", response_description="Insert hardcoded record")
-async def insert_record():
-    log.info("Inserting record (currently static/hardcoded file on disk)")
-
-    # TODO - this isn't going to work anymore
-    hdf_data = HDFDataHandler.extract_hdf_data(
-        file_path="/root/seg_dev/OG-HDF5/output_data/366375.h5",
-    )
-    DataEncoding.encode_numpy_for_mongo(hdf_data)
-    data_insert = await MongoDBInterface.insert_one("records", hdf_data)
-
-    return MongoDBInterface.get_inserted_id(data_insert)
-
 
 # TODO - add /records/count
