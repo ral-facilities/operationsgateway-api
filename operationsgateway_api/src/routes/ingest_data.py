@@ -63,11 +63,23 @@ async def submit_hdf(file: UploadFile):
         )
         log.debug("Remaining data: %s", remaining_request_data.keys())
         if remaining_request_data:
+            for metadata_key, value in remaining_request_data["metadata"].items():
+                await MongoDBInterface.update_one(
+                    "records",
+                    {"metadata.shotnum": file_shot_num},
+                    {"$set": {f"metadata.{metadata_key}": value}},
+                )
+
             await MongoDBInterface.update_one(
                 "records",
-                {"metadata.shotnum": file_shot_num},
-                {"$set": remaining_request_data},
+                {"_id": remaining_request_data["_id"]},
+                {
+                    "$addToSet": {
+                        "channels": {"$each": remaining_request_data["channels"]},
+                    },
+                },
             )
+
             return f"Updated {str(shot_document['_id'])}"
         else:
             return f"{str(shot_document['_id'])} not updated, no new data"
