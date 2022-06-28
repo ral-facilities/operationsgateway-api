@@ -141,10 +141,9 @@ class HDFDataHandler:
                 # Current exception is there as a template only
                 # raise Exception("Duplicate data, will not process")
 
-        # Bug fix where waveform channels are duplicated because the channels are seen
-        # as unique to MongoDB due to the differing waveform IDs each time. This loops
-        # over waveform channels, ignores the waveform IDs and remove ones that have
-        # already been stored
+        # Waveform channels are duplicated because the channels are seen as unique to
+        # MongoDB due to the differing waveform IDs each time. This loops over waveform
+        # channels, ignores the waveform IDs and remove ones that have already been stored
         for stored_channel in stored_data["channels"]:
             if stored_channel["metadata"]["channel_dtype"] == "waveform":
                 for input_channel in input_data["channels"].copy():

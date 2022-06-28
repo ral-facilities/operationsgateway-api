@@ -63,10 +63,14 @@ async def submit_hdf(file: UploadFile):
         )
         log.debug("Remaining data: %s", remaining_request_data.keys())
         if remaining_request_data:
+            # This update query has been split into two one (which is iterated in a
+            # loop) to add record metadata, and another to add each of the channels.
+            # Based on some quick dev testing while making sure it worked, this doesn't
+            # slow down ingestion times
             for metadata_key, value in remaining_request_data["metadata"].items():
                 await MongoDBInterface.update_one(
                     "records",
-                    {"metadata.shotnum": file_shot_num},
+                    {"_id": remaining_request_data["_id"]},
                     {"$set": {f"metadata.{metadata_key}": value}},
                 )
 
