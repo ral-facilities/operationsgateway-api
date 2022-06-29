@@ -20,8 +20,21 @@ log = logging.getLogger()
 router = APIRouter()
 
 
-@router.post("/submit_hdf", response_description="")
+@router.post(
+    "/submit_hdf",
+    summary="Submit a HDF file for ingestion into MongoDB",
+    response_description="ID of the record document that has been inserted/updated",
+    tags=["Ingestion"],
+)
 async def submit_hdf(file: UploadFile):
+    """
+    This endpoint accepts a HDF file, processes it and stores the data in MongoDB (with
+    images being stored on disk). The HDF file should follow the format specified for
+    the OperationsGateway project. Example files can be obtained via
+    https://github.com/CentralLaserFacility/OG-HDF5, when you provide this tool with
+    exported ecat data
+    """
+
     log.info("Submitting CLF data in HDF file to be processed then stored in MongoDB")
     log.debug("Filename: %s, Content: %s", file.filename, file.content_type)
 
