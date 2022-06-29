@@ -88,6 +88,9 @@ async def get_record_by_id(
     status_code=204,
 )
 async def delete_record_by_id(id_: str):
+    # TODO - full implementation will require searching through waveform channels to
+    # remove the documents in the waveforms collection. The images will need to be
+    # removed from disk too
     log.info("Deleting record by ID: %s", id_)
 
     await MongoDBInterface.delete_one("records", {"_id": ObjectId(id_)})
