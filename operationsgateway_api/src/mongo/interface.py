@@ -126,6 +126,27 @@ class MongoDBInterface:
         return await collection.insert_many(data)
 
     @staticmethod
+    async def delete_one(collection_name, filter_={}):  # noqa: B006
+        """
+        TODO
+        """
+
+        log.info("Sending delete_one() to MongoDB, collection: %s", collection_name)
+
+        collection = MongoDBInterface.get_collection_object(collection_name)
+        return await collection.delete_one(filter_)
+
+    @staticmethod
+    async def count_documents(collection_name, filter_={}):  # noqa: B006
+        log.info(
+            "Sending count_documents() to MongoDB, collection: %s",
+            collection_name,
+        )
+
+        collection = MongoDBInterface.get_collection_object(collection_name)
+        return await collection.count_documents(filter_)
+
+    @staticmethod
     def get_inserted_id(document):
         """
         Get the ID of the newly added document. This is likely to be used in
