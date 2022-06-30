@@ -17,12 +17,12 @@ router = APIRouter()
     tags=["Images"],
 )
 async def get_full_image(
-    shot_num: str = Path(
+    shot_num: str = Path(  # noqa: B008
         "",
         description="Shot number of the record",
         examples={"test_data": {"summary": "Example shot number", "value": 366368}},
     ),
-    channel_name: str = Path(
+    channel_name: str = Path(  # noqa: B008
         "",
         description="Channel name containing the image",
         examples={
@@ -32,7 +32,7 @@ async def get_full_image(
             },
         },
     ),
-    string_response: bool = Query(
+    string_response: bool = Query(  # noqa: B008
         False,
         description="Return image as a base64 encoded string (true) or as a .png file"
         " (false)",

@@ -27,14 +27,15 @@ router = APIRouter()
 async def get_records(
     # TODO - investigate linting errors
     conditions: dict = Depends(filter_conditions),  # noqa: B008
-    skip: int = Query(
+    skip: int = Query(  # noqa: B008
         0,
         description="How many documents should be skipped before returning results",
     ),
-    limit: int = Query(
-        0, description="How many documents the result should be limited to",
+    limit: int = Query(  # noqa: B008
+        0,
+        description="How many documents the result should be limited to",
     ),
-    order: Optional[List[str]] = Query(
+    order: Optional[List[str]] = Query(  # noqa: B008
         None,
         description="Specify order of results in the format of `field_name ASC`",
         examples={
@@ -44,16 +45,16 @@ async def get_records(
             },
             "desc": {"summary": "ID descending", "value": "_id DESC"},
         },
-    ),  # noqa: B008
-    projection: Optional[List[str]] = Query(
+    ),
+    projection: Optional[List[str]] = Query(  # noqa: B008
         None,
         description="Select specific fields in the record e.g. `metadata.shotnum`",
         examples={
             "metadata": {"summary": "Shot number", "value": "metadata.shotnum"},
             "channel_data": {"summary": "Channel data", "value": "channels.data"},
         },
-    ),  # noqa: B008
-    truncate: Optional[bool] = Query(
+    ),
+    truncate: Optional[bool] = Query(  # noqa: B008
         False,
         description="Parameter used for development to reduce the output of thumbnail"
         " strings to 50 characters",
@@ -114,14 +115,17 @@ async def count_records(conditions: dict = Depends(filter_conditions)):  # noqa:
 )
 # TODO - can I find a use case for conditions?
 async def get_record_by_id(
-    id_: str = Path(..., description="`_id` of the record to fetch from the database"),
+    id_: str = Path(  # noqa: B008
+        ...,
+        description="`_id` of the record to fetch from the database",
+    ),
     conditions: dict = Depends(filter_conditions),  # noqa: B008
-    truncate: Optional[bool] = Query(
+    truncate: Optional[bool] = Query(  # noqa: B008
         False,
         description="Parameter used for development to reduce the output of thumbnail"
         " strings to 50 characters",
     ),
-):  # noqa: B008
+):
     """
     Get a single record by its ID. The `conditions` query parameter exists but a
     specific use case is uncertain at this stage because the ID is the element that
@@ -151,7 +155,10 @@ async def get_record_by_id(
     tags=["Records"],
 )
 async def delete_record_by_id(
-    id_: str = Path(..., description="`_id` of the record to delete from the database"),
+    id_: str = Path(  # noqa: B008
+        ...,
+        description="`_id` of the record to delete from the database",
+    ),
 ):
     # TODO - full implementation will require searching through waveform channels to
     # remove the documents in the waveforms collection. The images will need to be

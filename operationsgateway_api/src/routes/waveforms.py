@@ -18,7 +18,10 @@ router = APIRouter()
     tags=["Waveforms"],
 )
 async def get_waveform_by_id(
-    id_: str = Path(..., description="`_id` of the waveform to fetch from MongoDB"),
+    id_: str = Path(  # noqa: B008
+        ...,
+        description="`_id` of the waveform to fetch from MongoDB",
+    ),
 ):
     """
     This endpoint gets a single waveform object by specifying its ID. You can find the
