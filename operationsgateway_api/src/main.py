@@ -1,12 +1,21 @@
 import logging
 
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+import orjson
 import uvicorn
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.logger_config import setup_logger
 from operationsgateway_api.src.mongo.connection import ConnectionInstance
 from operationsgateway_api.src.routes import images, ingest_data, records, waveforms
+
+# Add custom response class to deal with NaN values ingested into MongoDB
+class ORJSONResponse(JSONResponse):
+    media_type = "application/json"
+
+    def render(self, content) -> bytes:
+        return orjson.dumps(content)
 
 api_description = """
 This API is the backend to OperationsGateway that allows users to:
@@ -18,6 +27,7 @@ This API is the backend to OperationsGateway that allows users to:
 app = FastAPI(
     title="OperationsGateway API",
     description=api_description,
+    default_response_class=ORJSONResponse,
 )
 
 setup_logger()
