@@ -93,8 +93,7 @@ def store_image_thumbnails(record, thumbnails):
         shot_channel = image_path.split("/")[-1].split("_")[1:]
         channel_name = "_".join(shot_channel).split(".")[0]
 
-        channel = search_for_channel(record, channel_name)
-        channel["thumbnail"] = thumbnail
+        record["channels"][channel_name]["thumbnail"] = thumbnail
 
 
 def create_image_plot(x, y, buf):
@@ -118,14 +117,14 @@ def create_waveform_thumbnails(waveforms):
     thumbnails = {}
 
     for waveform in waveforms:
-        with BytesIO() as plot_buf:
+        with BytesIO() as plot_buffer:
             # TODO - S307 linting error
             create_image_plot(
                 list(eval(waveform["x"])),  # noqa: S307
                 list(eval(waveform["y"])),  # noqa: S307
-                plot_buf,
+                plot_buffer,
             )
-            waveform_image = Image.open(plot_buf)
+            waveform_image = Image.open(plot_buffer)
             create_thumbnail(waveform_image, (100, 100))
 
             thumbnails[waveform["_id"]] = convert_image_to_base64(waveform_image)
@@ -138,10 +137,10 @@ def store_waveform_thumbnails(record, thumbnails):
     # function really. Or combining it with the image version of this function so we can
     # abstract fetching the channel name
     for _id, thumbnail in thumbnails.items():
-        for channel in record["channels"]:
+        for channel_name, value in record["channels"].items():
             try:
-                if ObjectId(_id) == channel["waveform_id"]:
-                    channel["thumbnail"] = thumbnail
+                if ObjectId(_id) == value["waveform_id"]:
+                    record["channels"][channel_name]["thumbnail"] = thumbnail
             except KeyError:
                 # A KeyError here will be because the channel isn't a waveform. This is
                 # normal behaviour and is acceptable to pass
@@ -149,16 +148,10 @@ def store_waveform_thumbnails(record, thumbnails):
 
 
 def truncate_thumbnail_output(record):
-    for channel in record["channels"]:
+    for value in record["channels"].values():
         try:
-            channel["thumbnail"] = channel["thumbnail"][:50]
+            value["thumbnail"] = value["thumbnail"][:50]
         except KeyError:
             # If there's no thumbnails (e.g. if channel isn't an image or waveform) then
             # a KeyError will be raised. This is normal behaviour, so acceptable to pass
             pass
-
-
-def search_for_channel(record, channel_name):
-    for channel in record["channels"]:
-        if channel_name in channel["name"]:
-            return channel
