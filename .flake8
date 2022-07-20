@@ -7,3 +7,5 @@ max-line-length = 80
 application-import-names = operationsgateway_api,test
 import-order-style = google
 enable-extensions=G
+per-file-ignores =
+  test/*: S101
