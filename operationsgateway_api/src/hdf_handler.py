@@ -56,6 +56,8 @@ class HDFDataHandler:
                 # to create directories for each ID to prevent a FileNotFoundError when
                 # saving the images
                 # TODO - put as a constant/put elsewhere?
+                # TODO - separate the code to create an image path into a separate
+                # function, this is going to be used in multiple places
                 image_path = (
                     f"{Config.config.mongodb.image_store_directory}/"
                     f"{record['metadata']['shotnum']}_{channel_name}.png"
@@ -128,6 +130,9 @@ class HDFDataHandler:
         flat_stored_data = HDFDataHandler.flatten_data_dict(stored_data)
 
         for key in flat_input_data:
+            # TODO - this checks if the channels key-value pair is populated, doesn't go
+            # any deeper than that. If this is going to be implemented to actually do
+            # something, you need to iterate through each channel
             if key in flat_stored_data:
                 log.warning(
                     "There's data that already exists in the database, this will be"
@@ -137,6 +142,23 @@ class HDFDataHandler:
                 # TODO - if we choose to return a 400, implement this
                 # Current exception is there as a template only
                 # raise Exception("Duplicate data, will not process")
+
+        # Waveform channels are duplicated because the channels are seen as unique to
+        # MongoDB due to the differing waveform IDs each time. This loops over waveform
+        # channels, ignores the waveform IDs and remove ones that have already been stored
+        for stored_channel in stored_data["channels"]:
+            if stored_channel["metadata"]["channel_dtype"] == "waveform":
+                for input_channel in input_data["channels"].copy():
+                    if (
+                        input_channel["metadata"]["channel_dtype"] == "waveform"
+                        and stored_channel["name"] == input_channel["name"]
+                    ):
+                        input_waveform = input_channel
+                        del input_waveform["waveform_id"]
+                        stored_waveform = stored_channel.copy()
+                        del stored_waveform["waveform_id"]
+                        if input_waveform == stored_waveform:
+                            input_data["channels"].remove(input_channel)
 
         return input_data
 
