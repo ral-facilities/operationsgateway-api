@@ -38,7 +38,7 @@ class HDFDataHandler:
 
         record_id = ObjectId()
 
-        record = {"_id": record_id, "metadata": {}, "channels": []}
+        record = {"_id": record_id, "metadata": {}, "channels": {}}
         waveforms = []
         images = {}
 
@@ -63,7 +63,11 @@ class HDFDataHandler:
                 image_data = value["data"][()]
                 images[image_path] = image_data
 
-                channel_data["image_path"] = image_path
+                record["channels"][channel_name] = {
+                    "metadata": {},
+                    "image_path": image_path,
+                }
+
             elif value.attrs["channel_dtype"] == "rgb-image":
                 # TODO - when we don't want random noise anymore, we could probably
                 # combine this code with greyscale images, its the same implementation
@@ -82,8 +86,13 @@ class HDFDataHandler:
                 )
                 images[image_path] = image_data
 
-                channel_data["image_path"] = image_path
+                record["channels"][channel_name] = {
+                    "metadata": {},
+                    "image_path": image_path,
+                }
             elif value.attrs["channel_dtype"] == "scalar":
+                record["channels"][channel_name] = {"metadata": {}, "data": None}
+                record["channels"][channel_name]["data"] = value["data"][()]
                 channel_data["data"] = value["data"][()]
             elif value.attrs["channel_dtype"] == "waveform":
                 # Create a object ID here so it can be assigned to the waveform document
@@ -93,17 +102,18 @@ class HDFDataHandler:
                 # which wouldn't be as efficient
                 waveform_id = ObjectId()
                 log.debug("Waveform ID: %s", waveform_id)
-                channel_data["waveform_id"] = waveform_id
+
+                record["channels"][channel_name] = {
+                    "metadata": {},
+                    "waveform_id": waveform_id,
+                }
 
                 waveforms.append(
                     {"_id": waveform_id, "x": value["x"][()], "y": value["y"][()]},
                 )
 
             # Adding channel metadata
-            channel_data["metadata"] = dict(value.attrs)
-
-            # Adding the processed channel to the record
-            record["channels"].append(channel_data)
+            record["channels"][channel_name]["metadata"] = dict(value.attrs)
 
         return record, waveforms, images
 
@@ -128,6 +138,9 @@ class HDFDataHandler:
         flat_stored_data = HDFDataHandler.flatten_data_dict(stored_data)
 
         for key in flat_input_data:
+            # TODO - this checks if the channels key-value pair is populated, doesn't go
+            # any deeper than that. If this is going to be implemented to actually do
+            # something, you need to iterate through each channel
             if key in flat_stored_data:
                 log.warning(
                     "There's data that already exists in the database, this will be"
@@ -137,6 +150,25 @@ class HDFDataHandler:
                 # TODO - if we choose to return a 400, implement this
                 # Current exception is there as a template only
                 # raise Exception("Duplicate data, will not process")
+
+        # Waveform channels are duplicated because the channels are seen as unique to
+        # MongoDB due to the differing waveform IDs each time. This loops over waveform
+        # channels, ignores the waveform IDs and remove ones that have already been
+        # stored
+        for stored_channel_name, stored_value in stored_data["channels"].items():
+            if stored_value["metadata"]["channel_dtype"] == "waveform":
+                input_channels_copy = input_data["channels"].copy()
+                for input_channel_name, input_value in input_channels_copy.items():
+                    if (
+                        input_value["metadata"]["channel_dtype"] == "waveform"
+                        and stored_channel_name == input_channel_name
+                    ):
+                        input_waveform = input_value
+                        del input_waveform["waveform_id"]
+                        stored_waveform = stored_value.copy()
+                        del stored_waveform["waveform_id"]
+                        if input_waveform == stored_waveform:
+                            del input_data["channels"][input_channel_name]
 
         return input_data
 
