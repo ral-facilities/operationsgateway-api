@@ -12,6 +12,8 @@ from operationsgateway_api.src.routes import images, ingest_data, records, wavef
 
 
 # Add custom response class to deal with NaN values ingested into MongoDB
+# https://github.com/ral-facilities/operationsgateway-api/pull/9 explains the reasoning
+# behind this change
 class ORJSONResponse(JSONResponse):
     media_type = "application/json"
 
