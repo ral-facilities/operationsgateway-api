@@ -45,7 +45,7 @@ class APIConfig(BaseModel):
     Class to store the API's configuration settings
     """
 
-    app: App
+    app: Optional[App]
     logging: Logging
     mongodb: MongoDB
 

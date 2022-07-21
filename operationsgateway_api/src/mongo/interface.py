@@ -31,7 +31,8 @@ class MongoDBInterface:
         projection=None,  # noqa: B006
     ):
         """
-        Creates a query to find documents a collection based on filters
+        Creates a query to find documents in a given collection, based on filters
+        provided
 
         Due to Motor being asynchronous, the query is executed in `query_to_list()`, not
         in this function
