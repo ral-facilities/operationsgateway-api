@@ -56,6 +56,8 @@ class HDFDataHandler:
                 # to create directories for each ID to prevent a FileNotFoundError when
                 # saving the images
                 # TODO - put as a constant/put elsewhere?
+                # TODO - separate the code to create an image path into a separate
+                # function, this is going to be used in multiple places
                 image_path = (
                     f"{Config.config.mongodb.image_store_directory}/"
                     f"{record['metadata']['shotnum']}_{channel_name}.png"
