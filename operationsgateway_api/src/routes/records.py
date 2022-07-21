@@ -1,11 +1,11 @@
-import json
+from http import HTTPStatus
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, Body, Depends, Query
+from bson import ObjectId
+from fastapi import APIRouter, Depends, Query, Response
 
 from operationsgateway_api.src.data_encoding import DataEncoding
-from operationsgateway_api.src.hdf_handler import HDFDataHandler
 from operationsgateway_api.src.helpers import (
     extract_order_data,
     filter_conditions,
@@ -50,6 +50,15 @@ async def get_records(
     return [Record.construct(record.keys(), **record) for record in records]
 
 
+@router.get(
+    "/records/count",
+    response_description="",
+)
+async def count_records(conditions: dict = Depends(filter_conditions)):  # noqa: B008
+    log.info("Counting records using given conditions")
+    return await MongoDBInterface.count_documents("records", conditions)
+
+
 @router.get("/records/{id_}", response_description="Get record by ID")
 # TODO - can I find a use case for conditions?
 async def get_record_by_id(
@@ -72,4 +81,18 @@ async def get_record_by_id(
 
     return Record.construct(record.keys(), **record)
 
-# TODO - add /records/count
+
+@router.delete(
+    "/records/{id_}",
+    response_description="Delete record by ID",
+    status_code=204,
+)
+async def delete_record_by_id(id_: str):
+    # TODO - full implementation will require searching through waveform channels to
+    # remove the documents in the waveforms collection. The images will need to be
+    # removed from disk too
+    log.info("Deleting record by ID: %s", id_)
+
+    await MongoDBInterface.delete_one("records", {"_id": ObjectId(id_)})
+
+    return Response(status_code=HTTPStatus.NO_CONTENT.value)
