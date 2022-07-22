@@ -8,6 +8,7 @@ from bson import ObjectId
 import matplotlib.pyplot as plt
 from PIL import Image
 import pymongo
+from operationsgateway_api.src.config import Config
 
 from operationsgateway_api.src.data_encoding import DataEncoding
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
@@ -80,7 +81,7 @@ def create_image_thumbnails(image_paths):
 
     for path in image_paths:
         image = Image.open(path)
-        create_thumbnail(image, (50, 50))
+        create_thumbnail(image, Config.config.app.image_thumbnail_size)
         thumbnails[path] = convert_image_to_base64(image)
 
     return thumbnails
@@ -125,7 +126,7 @@ def create_waveform_thumbnails(waveforms):
                 plot_buffer,
             )
             waveform_image = Image.open(plot_buffer)
-            create_thumbnail(waveform_image, (100, 100))
+            create_thumbnail(waveform_image, Config.config.app.waveform_thumbnail_size)
 
             thumbnails[waveform["_id"]] = convert_image_to_base64(waveform_image)
 
