@@ -37,6 +37,7 @@ class MongoDB(BaseModel):
     database_name: StrictStr
     collection_name: StrictStr
     max_documents: StrictInt
+    image_store_directory: StrictStr
 
 
 class APIConfig(BaseModel):
@@ -44,7 +45,7 @@ class APIConfig(BaseModel):
     Class to store the API's configuration settings
     """
 
-    app: App
+    app: Optional[App]
     logging: Logging
     mongodb: MongoDB
 

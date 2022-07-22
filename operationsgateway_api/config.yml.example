@@ -1,0 +1,17 @@
+app:
+  host: 127.0.0.1
+  port: 8000
+  # API will auto-reload when changes on code files are detected
+  reload: true
+logging:
+  log_level: DEBUG
+  log_location: /var/log/operationsgateway-api.log
+  # Enables/disables information about the origin of the log message
+  log_message_location: true
+mongodb:
+  mongodb_url: mongodb://localhost:27017
+  database_name: opsgateway-test
+  collection_name: records
+  # Maximum number of documents to return when querying, similar to ICAT's maxEntities
+  max_documents: 1000
+  image_store_directory: /home/user/og-images

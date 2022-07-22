@@ -21,18 +21,18 @@ class MongoDBInterface:
 
         return getattr(ConnectionInstance.db_connection, collection_name)
 
-    # TODO - might need to make .records more generic if we use more than one collection
     @staticmethod
     def find(
         collection_name="images",
-        filter_={},
+        filter_={},  # noqa: B006
         skip=0,
         limit=0,
         sort="",
         projection=None,  # noqa: B006
     ):
         """
-        Creates a query to find documents in the records collection based on filters
+        Creates a query to find documents in a given collection, based on filters
+        provided
 
         Due to Motor being asynchronous, the query is executed in `query_to_list()`, not
         in this function
@@ -86,21 +86,6 @@ class MongoDBInterface:
 
         # TODO - might be able to implement projection?
         return await collection.find_one(filter_)
-    
-    @staticmethod
-    def aggregate(collection_name, pipeline):
-        """
-        TODO
-        """
-
-        log.info("Sending aggregate() to MongoDB, collection: %s", collection_name)
-        log.debug("Pipeline: %s", pipeline)
-
-        collection = MongoDBInterface.get_collection_object(collection_name)
-
-        return collection.aggregate(pipeline)
-
-
 
     # TODO - do we need update_many() too?
     @staticmethod
@@ -119,11 +104,10 @@ class MongoDBInterface:
             update,
         )
 
-    # TODO - insert_many() needed?
     @staticmethod
     async def insert_one(collection_name, data):
         """
-        Using the input data, insert a single document into the records collection
+        Using the input data, insert a single document into a given collection
         """
 
         log.info("Sending insert_one() to MongoDB, collection: %s", collection_name)
@@ -143,11 +127,31 @@ class MongoDBInterface:
         return await collection.insert_many(data)
 
     @staticmethod
-    # TODO - collection could be better named
-    def get_inserted_id(collection):
+    async def delete_one(collection_name, filter_={}):  # noqa: B006
+        """
+        TODO
+        """
+
+        log.info("Sending delete_one() to MongoDB, collection: %s", collection_name)
+
+        collection = MongoDBInterface.get_collection_object(collection_name)
+        return await collection.delete_one(filter_)
+
+    @staticmethod
+    async def count_documents(collection_name, filter_={}):  # noqa: B006
+        log.info(
+            "Sending count_documents() to MongoDB, collection: %s",
+            collection_name,
+        )
+
+        collection = MongoDBInterface.get_collection_object(collection_name)
+        return await collection.count_documents(filter_)
+
+    @staticmethod
+    def get_inserted_id(document):
         """
         Get the ID of the newly added document. This is likely to be used in
         correpsondance with `insert_one()`
         """
 
-        return str(collection.inserted_id)
+        return str(document.inserted_id)

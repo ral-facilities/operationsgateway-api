@@ -6,7 +6,7 @@ import uvicorn
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.logger_config import setup_logger
 from operationsgateway_api.src.mongo.connection import ConnectionInstance
-from operationsgateway_api.src.routes import router as records_router
+from operationsgateway_api.src.routes import images, ingest_data, records, waveforms
 
 
 app = FastAPI()
@@ -27,7 +27,10 @@ async def close_mongodb_client():
 
 
 # Adding endpoints to FastAPI app
-app.include_router(records_router)
+app.include_router(images.router)
+app.include_router(ingest_data.router)
+app.include_router(records.router)
+app.include_router(waveforms.router)
 
 if __name__ == "__main__":
     uvicorn.run(

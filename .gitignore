@@ -3,6 +3,7 @@ venv/
 *.pyc
 *.log
 config.yml*
+!config.yml.example
 .vscode/
 .nox/
 .python-version

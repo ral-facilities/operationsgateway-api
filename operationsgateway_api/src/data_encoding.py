@@ -2,7 +2,7 @@ import base64
 import logging
 
 from bson import ObjectId
-import numpy
+import numpy as np
 
 log = logging.getLogger()
 
@@ -43,17 +43,29 @@ class DataEncoding:
                 new_new_value = DataEncoding.data_conversion(inner_value)
                 value[inner_key] = new_new_value
             new_value = value
-        elif isinstance(value, numpy.int64) or isinstance(value, numpy.uint64):
+        elif isinstance(value, list):
+            # For channel data
+            new_list = []
+            for inner_value in value:
+                new_new_value = DataEncoding.data_conversion(inner_value)
+                new_list.append(new_new_value)
+            new_value = new_list
+        elif isinstance(value, np.int64) or isinstance(value, np.uint64):
             new_value = int(value)
-        elif isinstance(value, numpy.float64):
+        elif isinstance(value, np.float64):
             new_value = float(value)
-        elif isinstance(value, numpy.ndarray) and len(value.shape) == 1:
+        elif isinstance(value, np.ndarray) and len(value.shape) == 1:
             # For 1D arrays in traces
             new_value = str(list(value))
-        elif isinstance(value, numpy.ndarray) and len(value.shape) == 2:
+        elif isinstance(value, np.ndarray) and len(value.shape) == 2:
+            # TODO - might not be needed as we'll be storing images on disk
             # For images
             new_value = base64.b64encode(value)
-        elif isinstance(value, str) or isinstance(value, bytes) or isinstance(value, ObjectId):
+        elif (
+            isinstance(value, str)
+            or isinstance(value, bytes)
+            or isinstance(value, ObjectId)
+        ):
             new_value = value
         else:
             log.warning("Type not caught: %s, Value: %s", type(value), value)

@@ -4,8 +4,9 @@ import logging
 
 from bson import ObjectId
 import h5py
+import numpy as np
 
-from operationsgateway_api.src.mongo.interface import MongoDBInterface
+from operationsgateway_api.src.config import Config
 
 log = logging.getLogger()
 
@@ -19,7 +20,7 @@ class HDFDataHandler:
         """
 
         hdf_bytes = io.BytesIO(request_upload)
-        return h5py.File(hdf_bytes)
+        return h5py.File(hdf_bytes, "r")
 
     @staticmethod
     def extract_hdf_data(file_path=None, hdf_file=None):
@@ -35,8 +36,11 @@ class HDFDataHandler:
         if file_path:
             hdf_file = h5py.File(file_path, "r")
 
-        record = {"metadata": {}, "channels": {}}
+        record_id = ObjectId()
+
+        record = {"_id": record_id, "metadata": {}, "channels": []}
         waveforms = []
+        images = {}
 
         for metadata_key, metadata_value in hdf_file.attrs.items():
             log.debug("Metadata Key: %s, Value: %s", metadata_key, metadata_value)
@@ -44,36 +48,66 @@ class HDFDataHandler:
             # Adding metadata of shot
             record["metadata"][metadata_key] = metadata_value
 
-        for column_name, value in hdf_file.items():
-            # TODO - we could make use of the dtype data instead of the try/except
-            try:
-                record["channels"][column_name] = {"metadata": {}, "data": None}
-                record["channels"][column_name]["data"] = value["data"][()]
-            except KeyError:
+        for channel_name, value in hdf_file.items():
+            channel_data = {"name": channel_name}
+
+            if value.attrs["channel_dtype"] == "image":
+                # TODO - should we use a directory per ID? Will need a bit of code added
+                # to create directories for each ID to prevent a FileNotFoundError when
+                # saving the images
+                # TODO - put as a constant/put elsewhere?
+                # TODO - separate the code to create an image path into a separate
+                # function, this is going to be used in multiple places
+                image_path = (
+                    f"{Config.config.mongodb.image_store_directory}/"
+                    f"{record['metadata']['shotnum']}_{channel_name}.png"
+                )
+                image_data = value["data"][()]
+                images[image_path] = image_data
+
+                channel_data["image_path"] = image_path
+            elif value.attrs["channel_dtype"] == "rgb-image":
+                # TODO - when we don't want random noise anymore, we could probably
+                # combine this code with greyscale images, its the same implementation
+                image_path = (
+                    f"{Config.config.mongodb.image_store_directory}/"
+                    f"{record['metadata']['shotnum']}_{channel_name}.png"
+                )
+
+                # Gives random noise, where only example RGB I have sends full black
+                # image. Comment out to store true data
+                image_data = np.random.randint(
+                    0,
+                    255,
+                    size=(300, 400, 3),
+                    dtype=np.uint8,
+                )
+                images[image_path] = image_data
+
+                channel_data["image_path"] = image_path
+            elif value.attrs["channel_dtype"] == "scalar":
+                channel_data["data"] = value["data"][()]
+            elif value.attrs["channel_dtype"] == "waveform":
                 # Create a object ID here so it can be assigned to the waveform document
                 # and the record before data insertion. This way, we can send the data
                 # to the database one after the other. The alternative would be to send
-                # the waveform data,fetch the IDs and inject them into the record data.
-                # That method wouldn't be as efficient
+                # the waveform data, fetch the IDs and inject them into the record data
+                # which wouldn't be as efficient
                 waveform_id = ObjectId()
                 log.debug("Waveform ID: %s", waveform_id)
-                # Trace column, <f8/float64
-                record["channels"][column_name] = {
-                    "metadata": {},
-                    "waveform": waveform_id,
-                }
+                channel_data["waveform_id"] = waveform_id
 
                 waveforms.append(
                     {"_id": waveform_id, "x": value["x"][()], "y": value["y"][()]},
                 )
 
             # Adding channel metadata
-            for column_metadata_key, column_metadata_value in value.attrs.items():
-                record["channels"][column_name]["metadata"][
-                    column_metadata_key
-                ] = column_metadata_value
+            channel_data["metadata"] = dict(value.attrs)
 
-        return record, waveforms
+            # Adding the processed channel to the record
+            record["channels"].append(channel_data)
+
+        return record, waveforms, images
 
     # TODO - could be named/placed better?
     @staticmethod
@@ -96,13 +130,35 @@ class HDFDataHandler:
         flat_stored_data = HDFDataHandler.flatten_data_dict(stored_data)
 
         for key in flat_input_data:
+            # TODO - this checks if the channels key-value pair is populated, doesn't go
+            # any deeper than that. If this is going to be implemented to actually do
+            # something, you need to iterate through each channel
             if key in flat_stored_data:
                 log.warning(
                     "There's data that already exists in the database, this will be"
-                    " overwritten: %s", key)
+                    " overwritten: %s",
+                    key,
+                )
                 # TODO - if we choose to return a 400, implement this
                 # Current exception is there as a template only
                 # raise Exception("Duplicate data, will not process")
+
+        # Waveform channels are duplicated because the channels are seen as unique to
+        # MongoDB due to the differing waveform IDs each time. This loops over waveform
+        # channels, ignores the waveform IDs and remove ones that have already been stored
+        for stored_channel in stored_data["channels"]:
+            if stored_channel["metadata"]["channel_dtype"] == "waveform":
+                for input_channel in input_data["channels"].copy():
+                    if (
+                        input_channel["metadata"]["channel_dtype"] == "waveform"
+                        and stored_channel["name"] == input_channel["name"]
+                    ):
+                        input_waveform = input_channel
+                        del input_waveform["waveform_id"]
+                        stored_waveform = stored_channel.copy()
+                        del stored_waveform["waveform_id"]
+                        if input_waveform == stored_waveform:
+                            input_data["channels"].remove(input_channel)
 
         return input_data
 
