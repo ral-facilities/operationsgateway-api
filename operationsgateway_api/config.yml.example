@@ -3,6 +3,8 @@ app:
   port: 8000
   # API will auto-reload when changes on code files are detected
   reload: true
+  image_thumbnail_size: [50, 50]
+  waveform_thumbnail_size: [100, 100]
 logging:
   log_level: DEBUG
   log_location: /var/log/operationsgateway-api.log
