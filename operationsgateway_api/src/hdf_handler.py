@@ -59,7 +59,6 @@ class HDFDataHandler:
                 # TODO - separate the code to create an image path into a separate
                 # function, this is going to be used in multiple places
                 image_path = (
-                    f"{Config.config.mongodb.image_store_directory}/"
                     f"{record['metadata']['shotnum']}_{channel_name}.png"
                 )
                 image_data = value["data"][()]
@@ -74,7 +73,6 @@ class HDFDataHandler:
                 # TODO - when we don't want random noise anymore, we could probably
                 # combine this code with greyscale images, its the same implementation
                 image_path = (
-                    f"{Config.config.mongodb.image_store_directory}/"
                     f"{record['metadata']['shotnum']}_{channel_name}.png"
                 )
 

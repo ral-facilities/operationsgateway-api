@@ -73,14 +73,14 @@ async def insert_waveforms(waveforms):
 def store_images(images):
     for path, data in images.items():
         image = Image.fromarray(data)
-        image.save(path)
+        image.save(f"{Config.config.mongodb.image_store_directory}/{path}")
 
 
 def create_image_thumbnails(image_paths):
     thumbnails = {}
 
     for path in image_paths:
-        image = Image.open(path)
+        image = Image.open(f"{Config.config.mongodb.image_store_directory}/{path}")
         create_thumbnail(image, Config.config.app.image_thumbnail_size)
         thumbnails[path] = convert_image_to_base64(image)
 
