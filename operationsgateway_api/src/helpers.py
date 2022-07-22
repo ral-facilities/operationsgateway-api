@@ -2,14 +2,15 @@ import base64
 from io import BytesIO
 import json
 import logging
+import os
 from typing import Optional
 
 from bson import ObjectId
 import matplotlib.pyplot as plt
 from PIL import Image
 import pymongo
-from operationsgateway_api.src.config import Config
 
+from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.data_encoding import DataEncoding
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
@@ -73,6 +74,15 @@ async def insert_waveforms(waveforms):
 def store_images(images):
     for path, data in images.items():
         image = Image.fromarray(data)
+
+        shot_directory = "".join(path.split("/")[:-1])
+        if not os.path.exists(
+            f"{Config.config.mongodb.image_store_directory}/{shot_directory}",
+        ):
+            os.makedirs(
+                f"{Config.config.mongodb.image_store_directory}/{shot_directory}",
+            )
+
         image.save(f"{Config.config.mongodb.image_store_directory}/{path}")
 
 
@@ -91,8 +101,8 @@ def store_image_thumbnails(record, thumbnails):
     for image_path, thumbnail in thumbnails.items():
         # TODO - extracting the channel name from the path should be thoroughly unit
         # tested. Probably best to put this code into its own function
-        shot_channel = image_path.split("/")[-1].split("_")[1:]
-        channel_name = "_".join(shot_channel).split(".")[0]
+        shot_channel = image_path.split("/")[-1]
+        channel_name = shot_channel.split(".")[0]
 
         record["channels"][channel_name]["thumbnail"] = thumbnail
 

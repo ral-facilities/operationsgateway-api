@@ -6,7 +6,6 @@ from bson import ObjectId
 import h5py
 import numpy as np
 
-from operationsgateway_api.src.config import Config
 
 log = logging.getLogger()
 
@@ -58,9 +57,7 @@ class HDFDataHandler:
                 # TODO - put as a constant/put elsewhere?
                 # TODO - separate the code to create an image path into a separate
                 # function, this is going to be used in multiple places
-                image_path = (
-                    f"{record['metadata']['shotnum']}_{channel_name}.png"
-                )
+                image_path = f"{record['metadata']['shotnum']}/{channel_name}.png"
                 image_data = value["data"][()]
                 images[image_path] = image_data
 
@@ -72,9 +69,7 @@ class HDFDataHandler:
             elif value.attrs["channel_dtype"] == "rgb-image":
                 # TODO - when we don't want random noise anymore, we could probably
                 # combine this code with greyscale images, its the same implementation
-                image_path = (
-                    f"{record['metadata']['shotnum']}_{channel_name}.png"
-                )
+                image_path = f"{record['metadata']['shotnum']}/{channel_name}.png"
 
                 # Gives random noise, where only example RGB I have sends full black
                 # image. Comment out to store true data
