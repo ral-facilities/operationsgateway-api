@@ -19,6 +19,7 @@ class ORJSONResponse(JSONResponse):
     def render(self, content) -> bytes:
         return orjson.dumps(content)
 
+
 api_description = """
 This API is the backend to OperationsGateway that allows users to:
 - Ingest HDF files containing scalar, image and waveform data into a MongoDB instance
