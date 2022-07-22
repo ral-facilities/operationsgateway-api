@@ -1,0 +1,357 @@
+{
+	"info": {
+		"_postman_id": "6d6218d8-9678-4a42-82df-6f6add1575ec",
+		"name": "OperationsGateway API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get Records",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{og-api}}/records",
+					"host": [
+						"{{og-api}}"
+					],
+					"path": [
+						"records"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "2",
+							"disabled": true
+						},
+						{
+							"key": "skip",
+							"value": "45",
+							"disabled": true
+						},
+						{
+							"key": "order",
+							"value": "_id desc",
+							"disabled": true
+						},
+						{
+							"key": "order",
+							"value": "int_value desc",
+							"disabled": true
+						},
+						{
+							"key": "order",
+							"value": "_id desc",
+							"disabled": true
+						},
+						{
+							"key": "projection",
+							"value": "channels.image_example.metadata.gain",
+							"disabled": true
+						},
+						{
+							"key": "projection",
+							"value": "metadata.shotnum",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
+							"value": "{\"title\": \"document 2\"}",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
+							"value": "{\"channels.image_example.metadata.gain\": 3.0}",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
+							"value": "{\"$or\": [{\"int_value\": {\"$lt\": 23}}, {\"channel\": \"Channel 6\"}]}",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
+							"value": "{\"$lookup\": {\"from\": \"waveforms\", \"localField\": \"channels.LASER_BAY_SCINTILLATOR_TRACE.waveform\", \"foreignField\": \"_id\", \"as\": \"test\"}}",
+							"disabled": true
+						},
+						{
+							"key": "truncate",
+							"value": "true",
+							"disabled": true
+						},
+						{
+							"key": "projection",
+							"value": "channels.name",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
+							"value": "{\"metadata.shotnum\": \"366375\"}",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
+							"value": "{\"_id\": \"629f66013b69d64ab3d437dd\"}",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Count Records",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{og-api}}/records/count",
+					"host": [
+						"{{og-api}}"
+					],
+					"path": [
+						"records",
+						"count"
+					],
+					"query": [
+						{
+							"key": "conditions",
+							"value": "{\"channels.image_example.metadata.gain\": 3.0}",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
+							"value": "{\"$or\": [{\"int_value\": {\"$lt\": 23}}, {\"channel\": \"Channel 6\"}]}",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
+							"value": "{\"$lookup\": {\"from\": \"waveforms\", \"localField\": \"channels.LASER_BAY_SCINTILLATOR_TRACE.waveform\", \"foreignField\": \"_id\", \"as\": \"test\"}}",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
+							"value": "{\"metadata.shotnum\": \"366375\"}",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
+							"value": "{\"_id\": \"629f66013b69d64ab3d437dd\"}",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Record By ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{og-api}}/records/629f66003b69d64ab3d437d9",
+					"host": [
+						"{{og-api}}"
+					],
+					"path": [
+						"records",
+						"629f66003b69d64ab3d437d9"
+					],
+					"query": [
+						{
+							"key": "conditions",
+							"value": "{\"$lookup\": {\"from\": \"waveforms\"}}",
+							"disabled": true
+						},
+						{
+							"key": "truncate",
+							"value": "false",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Record By ID",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{og-api}}/records/625594d9ac1541974dc6f880",
+					"host": [
+						"{{og-api}}"
+					],
+					"path": [
+						"records",
+						"625594d9ac1541974dc6f880"
+					],
+					"query": [
+						{
+							"key": "conditions",
+							"value": "{\"$lookup\": {\"from\": \"waveforms\"}}",
+							"disabled": true
+						},
+						{
+							"key": "truncate",
+							"value": "true",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Image",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{og-api}}/images/366375/N_COMP_NF_IMAGE?string_response=true",
+					"host": [
+						"{{og-api}}"
+					],
+					"path": [
+						"images",
+						"366375",
+						"N_COMP_NF_IMAGE"
+					],
+					"query": [
+						{
+							"key": "string_response",
+							"value": "true"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Waveform By ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{og-api}}/waveforms/62b17f87f6d14382aa17de8d",
+					"host": [
+						"{{og-api}}"
+					],
+					"path": [
+						"waveforms",
+						"62b17f87f6d14382aa17de8d"
+					],
+					"query": [
+						{
+							"key": "conditions",
+							"value": "{\"$lookup\": {\"from\": \"waveforms\"}}",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Submit HDF File",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/C:/Users/XFU59478/Desktop/366375.h5",
+							"disabled": true
+						},
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/C:/Users/XFU59478/Desktop/366367.h5",
+							"disabled": true
+						},
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/C:/Users/XFU59478/Desktop/366368.h5",
+							"disabled": true
+						},
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/C:/Users/XFU59478/Desktop/366372.h5"
+						},
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/C:/Users/XFU59478/Desktop/demo.h5",
+							"disabled": true
+						},
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/C:/Users/XFU59478/Downloads/test.h5",
+							"disabled": true
+						},
+						{
+							"key": "file",
+							"type": "file",
+							"src": [],
+							"disabled": true
+						}
+					]
+				},
+				"url": {
+					"raw": "{{og-api}}/submit_hdf",
+					"host": [
+						"{{og-api}}"
+					],
+					"path": [
+						"submit_hdf"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "og-api",
+			"value": "http://localhost:6000",
+			"disabled": true
+		},
+		{
+			"key": "og-api",
+			"value": "opsgateway-epac-dev.clf.stfc.ac.uk:8000"
+		},
+		{
+			"key": "og-api",
+			"value": "",
+			"disabled": true
+		}
+	]
+}

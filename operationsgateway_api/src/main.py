@@ -8,8 +8,17 @@ from operationsgateway_api.src.logger_config import setup_logger
 from operationsgateway_api.src.mongo.connection import ConnectionInstance
 from operationsgateway_api.src.routes import images, ingest_data, records, waveforms
 
+api_description = """
+This API is the backend to OperationsGateway that allows users to:
+- Ingest HDF files containing scalar, image and waveform data into a MongoDB instance
+- Query MongoDB to get records containing data channels, using typical database filters
+- Get waveform data and full-size images via specific endpoints
+"""
 
-app = FastAPI()
+app = FastAPI(
+    title="OperationsGateway API",
+    description=api_description,
+)
 
 setup_logger()
 log = logging.getLogger()
