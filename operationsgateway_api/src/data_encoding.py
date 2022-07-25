@@ -1,4 +1,5 @@
 import base64
+from datetime import datetime
 import logging
 
 from bson import ObjectId
@@ -58,6 +59,7 @@ class DataEncoding:
             isinstance(value, str)
             or isinstance(value, bytes)
             or isinstance(value, ObjectId)
+            or isinstance(value, datetime)
         ):
             new_value = value
         else:

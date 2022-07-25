@@ -1,4 +1,5 @@
 import collections
+from datetime import datetime
 import io
 import logging
 
@@ -44,6 +45,9 @@ class HDFDataHandler:
 
         for metadata_key, metadata_value in hdf_file.attrs.items():
             log.debug("Metadata Key: %s, Value: %s", metadata_key, metadata_value)
+
+            if metadata_key == "timestamp":
+                metadata_value = datetime.strptime(metadata_value, "%Y-%m-%d %H:%M:%S")
 
             # Adding metadata of shot
             record["metadata"][metadata_key] = metadata_value
