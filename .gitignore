@@ -9,3 +9,4 @@ config.yml*
 .python-version
 .coverage
 coverage.xml
+util/ingest_hdf_dev.py

@@ -5,7 +5,7 @@ from time import time
 import requests
 
 
-BASE_DIR = "/root/seg_dev/OG-HDF5/dev_server"
+BASE_DIR = "/path/to/hdf/files"
 API_URL = "http://127.0.0.1:8000"
 
 
