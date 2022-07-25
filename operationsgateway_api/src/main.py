@@ -10,6 +10,7 @@ from operationsgateway_api.src.logger_config import setup_logger
 from operationsgateway_api.src.mongo.connection import ConnectionInstance
 from operationsgateway_api.src.routes import images, ingest_data, records, waveforms
 
+
 # Add custom response class to deal with NaN values ingested into MongoDB
 # https://github.com/ral-facilities/operationsgateway-api/pull/9 explains the reasoning
 # behind this change

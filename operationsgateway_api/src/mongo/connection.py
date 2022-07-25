@@ -1,4 +1,5 @@
 import asyncio
+
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from operationsgateway_api.src.config import Config

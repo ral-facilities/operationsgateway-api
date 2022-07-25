@@ -46,7 +46,7 @@ async def get_full_image(
 
     if string_response:
         with open(
-            f"{Config.config.mongodb.image_store_directory}/{shot_num}_{channel_name}"
+            f"{Config.config.mongodb.image_store_directory}/{shot_num}/{channel_name}"
             ".png",
             "rb",
         ) as image_file:
@@ -54,6 +54,6 @@ async def get_full_image(
         return image_string
     else:
         return FileResponse(
-            f"{Config.config.mongodb.image_store_directory}/{shot_num}_{channel_name}"
+            f"{Config.config.mongodb.image_store_directory}/{shot_num}/{channel_name}"
             ".png",
         )
