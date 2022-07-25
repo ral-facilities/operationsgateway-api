@@ -1,6 +1,5 @@
 from http import HTTPStatus
 import logging
-from pprint import pprint
 from typing import List, Optional
 
 from bson import ObjectId
@@ -108,6 +107,7 @@ async def count_records(conditions: dict = Depends(filter_conditions)):  # noqa:
     """
 
     log.info("Counting records using given conditions")
+
     encode_date_for_conditions(conditions)
 
     return await MongoDBInterface.count_documents("records", conditions)
