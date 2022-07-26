@@ -1,6 +1,7 @@
 import logging
 
-from fastapi import APIRouter, UploadFile
+from fastapi import APIRouter, status, UploadFile
+from fastapi.responses import JSONResponse
 
 from operationsgateway_api.src.data_encoding import DataEncoding
 from operationsgateway_api.src.hdf_handler import HDFDataHandler
@@ -101,4 +102,9 @@ async def submit_hdf(file: UploadFile):
             return f"{str(shot_document['_id'])} not updated, no new data"
     else:
         data_insert = await MongoDBInterface.insert_one("records", record)
-        return MongoDBInterface.get_inserted_id(data_insert)
+        inserted_id = MongoDBInterface.get_inserted_id(data_insert)
+        return JSONResponse(
+            inserted_id,
+            status_code=status.HTTP_201_CREATED,
+            headers={"Location": f"/records/{inserted_id}"}
+        )
