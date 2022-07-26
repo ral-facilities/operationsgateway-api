@@ -74,9 +74,21 @@
 							"disabled": true
 						},
 						{
+							"key": "conditions",
+							"value": "{\"channels.N_COMP_SPEC_TRACE\": {\"$exists\": true}}",
+							"description": "Return records where N_COMP_SPEC_TRACE channel exists",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
+							"value": "{\"channels.N_LEG1_GREEN_NF_YPOS.data\": {\"$exists\": false}}",
+							"description": "Return records that do not have data for the N_LEG1_GREEN_NF_YPOS channel",
+							"disabled": true
+						},
+						{
 							"key": "projection",
 							"value": "metadata.shotnum",
-							"description": "Return shot numbers only",
+							"description": "Return shot numbers only. Use multiple projection parameters to select multiple fields",
 							"disabled": true
 						},
 						{
@@ -145,6 +157,12 @@
 							"key": "conditions",
 							"value": "{\"$and\": [{\"metadata.timestamp\": {\"$gt\": \"2022-04-07 14:00:00\", \"$lt\": \"2022-04-08 08:00:00\"}}]}",
 							"description": "WHERE timestamp > _ AND < _",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
+							"value": "{\"channels.N_COMP_SPEC_TRACE\": {\"$exists\": true}}",
+							"description": "WHERE the N_COMP_SPEC_TRACE channel exists",
 							"disabled": true
 						}
 					]
