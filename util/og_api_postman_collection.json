@@ -22,76 +22,91 @@
 						{
 							"key": "limit",
 							"value": "2",
+							"description": "Limit 2 records",
 							"disabled": true
 						},
 						{
 							"key": "skip",
-							"value": "45",
+							"value": "35",
+							"description": "Skip 35 records",
+							"disabled": true
+						},
+						{
+							"key": "order",
+							"value": "metadata.shotnum asc",
+							"description": "Order by shot number, ascending",
 							"disabled": true
 						},
 						{
 							"key": "order",
 							"value": "_id desc",
+							"description": "Order by id, descending",
 							"disabled": true
 						},
 						{
-							"key": "order",
-							"value": "int_value desc",
+							"key": "conditions",
+							"value": "{\"metadata.shotnum\": 366372}",
+							"description": "Look for records WHERE shot number is 366372",
 							"disabled": true
 						},
 						{
-							"key": "order",
-							"value": "_id desc",
+							"key": "conditions",
+							"value": "{\"metadata.shotnum\": {\"$lt\": 366280}}",
+							"description": "Return records with a shot number < 366285",
 							"disabled": true
 						},
 						{
-							"key": "projection",
-							"value": "channels.image_example.metadata.gain",
+							"key": "conditions",
+							"value": "{\"channels.N_COMP_FF_XPOS.data\": {\"$lt\": 310}}",
+							"description": "WHERE N_COMP_FF_XPOS's data < 310",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
+							"value": "{\"$or\": [{\"metadata.shotnum\": {\"$eq\": 366371}}, {\"metadata.shotnum\": {\"$gt\": 366374}}]}",
+							"description": "Condition using OR and equality operators",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
+							"value": "{\"$and\": [{\"metadata.timestamp\": {\"$gt\": \"2022-04-07 14:00:00\", \"$lt\": \"2022-04-08 08:00:00\"}}]}",
+							"description": "Search by date",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
+							"value": "{\"channels.N_COMP_SPEC_TRACE\": {\"$exists\": true}}",
+							"description": "Return records where N_COMP_SPEC_TRACE channel exists",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
+							"value": "{\"channels.N_LEG1_GREEN_NF_YPOS.data\": {\"$exists\": false}}",
+							"description": "Return records that do not have data for the N_LEG1_GREEN_NF_YPOS channel",
 							"disabled": true
 						},
 						{
 							"key": "projection",
 							"value": "metadata.shotnum",
+							"description": "Return shot numbers only. Use multiple projection parameters to select multiple fields",
 							"disabled": true
 						},
 						{
-							"key": "conditions",
-							"value": "{\"title\": \"document 2\"}",
+							"key": "projection",
+							"value": "metadata.timestamp",
+							"description": "Return timestamps only",
 							"disabled": true
 						},
 						{
-							"key": "conditions",
-							"value": "{\"channels.image_example.metadata.gain\": 3.0}",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"$or\": [{\"int_value\": {\"$lt\": 23}}, {\"channel\": \"Channel 6\"}]}",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"$lookup\": {\"from\": \"waveforms\", \"localField\": \"channels.LASER_BAY_SCINTILLATOR_TRACE.waveform\", \"foreignField\": \"_id\", \"as\": \"test\"}}",
+							"key": "projection",
+							"value": "channels.N_COMP_FF_E",
+							"description": "Return N_COMP_FF_E only",
 							"disabled": true
 						},
 						{
 							"key": "truncate",
 							"value": "true",
-							"disabled": true
-						},
-						{
-							"key": "projection",
-							"value": "channels.name",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"metadata.shotnum\": \"366375\"}",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"_id\": \"629f66013b69d64ab3d437dd\"}",
+							"description": "Truncate base64 thumbnail outputs",
 							"disabled": true
 						}
 					]
@@ -116,27 +131,38 @@
 					"query": [
 						{
 							"key": "conditions",
-							"value": "{\"channels.image_example.metadata.gain\": 3.0}",
+							"value": "{\"metadata.shotnum\": 366372}",
+							"description": "WHERE shot number = 366372",
 							"disabled": true
 						},
 						{
 							"key": "conditions",
-							"value": "{\"$or\": [{\"int_value\": {\"$lt\": 23}}, {\"channel\": \"Channel 6\"}]}",
+							"value": "{\"metadata.shotnum\": {\"$lt\": 366280}}",
+							"description": "WHERE shot number < 366280",
 							"disabled": true
 						},
 						{
 							"key": "conditions",
-							"value": "{\"$lookup\": {\"from\": \"waveforms\", \"localField\": \"channels.LASER_BAY_SCINTILLATOR_TRACE.waveform\", \"foreignField\": \"_id\", \"as\": \"test\"}}",
+							"value": "{\"$or\": [{\"metadata.shotnum\": {\"$eq\": 366371}}, {\"metadata.shotnum\": {\"$gt\": 366372}}]}",
+							"description": "WHERE shot number = 366371 OR shot number >366372",
 							"disabled": true
 						},
 						{
 							"key": "conditions",
-							"value": "{\"metadata.shotnum\": \"366375\"}",
+							"value": "{\"channels.N_COMP_FF_XPOS.data\": {\"$lt\": 310}}",
+							"description": "WHERE N_COMP_FF_XPOS's data < 310",
 							"disabled": true
 						},
 						{
 							"key": "conditions",
-							"value": "{\"_id\": \"629f66013b69d64ab3d437dd\"}",
+							"value": "{\"$and\": [{\"metadata.timestamp\": {\"$gt\": \"2022-04-07 14:00:00\", \"$lt\": \"2022-04-08 08:00:00\"}}]}",
+							"description": "WHERE timestamp > _ AND < _",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
+							"value": "{\"channels.N_COMP_SPEC_TRACE\": {\"$exists\": true}}",
+							"description": "WHERE the N_COMP_SPEC_TRACE channel exists",
 							"disabled": true
 						}
 					]
@@ -150,23 +176,19 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{og-api}}/records/629f66003b69d64ab3d437d9",
+					"raw": "{{og-api}}/records/62d7f02de1a95ee3bcccb57d",
 					"host": [
 						"{{og-api}}"
 					],
 					"path": [
 						"records",
-						"629f66003b69d64ab3d437d9"
+						"62d7f02de1a95ee3bcccb57d"
 					],
 					"query": [
 						{
-							"key": "conditions",
-							"value": "{\"$lookup\": {\"from\": \"waveforms\"}}",
-							"disabled": true
-						},
-						{
 							"key": "truncate",
-							"value": "false",
+							"value": "true",
+							"description": "Truncate base64 thumbnail outputs",
 							"disabled": true
 						}
 					]
@@ -180,25 +202,13 @@
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "{{og-api}}/records/625594d9ac1541974dc6f880",
+					"raw": "{{og-api}}/records/62da9fc0f9a1f639c8348a48",
 					"host": [
 						"{{og-api}}"
 					],
 					"path": [
 						"records",
-						"625594d9ac1541974dc6f880"
-					],
-					"query": [
-						{
-							"key": "conditions",
-							"value": "{\"$lookup\": {\"from\": \"waveforms\"}}",
-							"disabled": true
-						},
-						{
-							"key": "truncate",
-							"value": "true",
-							"disabled": true
-						}
+						"62da9fc0f9a1f639c8348a48"
 					]
 				}
 			},
@@ -210,19 +220,27 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{og-api}}/images/366375/N_COMP_NF_IMAGE?string_response=true",
+					"raw": "{{og-api}}/images/366375/N_COMP_FF_IMAGE",
 					"host": [
 						"{{og-api}}"
 					],
 					"path": [
 						"images",
 						"366375",
-						"N_COMP_NF_IMAGE"
+						"N_COMP_FF_IMAGE"
 					],
 					"query": [
 						{
 							"key": "string_response",
-							"value": "true"
+							"value": "true",
+							"description": "Response will be a base64 string of the image",
+							"disabled": true
+						},
+						{
+							"key": "string_response",
+							"value": "false",
+							"description": "Response will be the png image",
+							"disabled": true
 						}
 					]
 				}
@@ -235,20 +253,13 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{og-api}}/waveforms/62b17f87f6d14382aa17de8d",
+					"raw": "{{og-api}}/waveforms/62d1637156910a546d0b9a63",
 					"host": [
 						"{{og-api}}"
 					],
 					"path": [
 						"waveforms",
-						"62b17f87f6d14382aa17de8d"
-					],
-					"query": [
-						{
-							"key": "conditions",
-							"value": "{\"$lookup\": {\"from\": \"waveforms\"}}",
-							"disabled": true
-						}
+						"62d1637156910a546d0b9a63"
 					]
 				}
 			},
@@ -264,41 +275,7 @@
 					"formdata": [
 						{
 							"key": "file",
-							"type": "file",
-							"src": "/C:/Users/XFU59478/Desktop/366375.h5",
-							"disabled": true
-						},
-						{
-							"key": "file",
-							"type": "file",
-							"src": "/C:/Users/XFU59478/Desktop/366367.h5",
-							"disabled": true
-						},
-						{
-							"key": "file",
-							"type": "file",
-							"src": "/C:/Users/XFU59478/Desktop/366368.h5",
-							"disabled": true
-						},
-						{
-							"key": "file",
-							"type": "file",
-							"src": "/C:/Users/XFU59478/Desktop/366372.h5"
-						},
-						{
-							"key": "file",
-							"type": "file",
-							"src": "/C:/Users/XFU59478/Desktop/demo.h5",
-							"disabled": true
-						},
-						{
-							"key": "file",
-							"type": "file",
-							"src": "/C:/Users/XFU59478/Downloads/test.h5",
-							"disabled": true
-						},
-						{
-							"key": "file",
+							"description": "Upload your own HDF file created by the OG-HDF5 converter",
 							"type": "file",
 							"src": [],
 							"disabled": true
@@ -341,7 +318,7 @@
 	"variable": [
 		{
 			"key": "og-api",
-			"value": "http://localhost:6000",
+			"value": "http://localhost:8000",
 			"disabled": true
 		},
 		{
