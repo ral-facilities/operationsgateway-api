@@ -23,9 +23,14 @@ for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
 
                     end_time = time()
                     duration = end_time - start_time
-                    if response.status_code == 200:
+                    if response.status_code == 201:
                         print(
                             f"Ingested {file.name}, time taken: {duration:0.2f}"
+                            " seconds"
+                        )
+                    elif response.status_code == 200:
+                        print(
+                            f"Updated {file.name}, time taken: {duration:0.2f}"
                             " seconds"
                         )
                     else:
