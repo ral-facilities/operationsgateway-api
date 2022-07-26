@@ -27,7 +27,7 @@
 						},
 						{
 							"key": "skip",
-							"value": "1",
+							"value": "35",
 							"description": "Skip 35 records",
 							"disabled": true
 						},
@@ -300,7 +300,7 @@
 	"variable": [
 		{
 			"key": "og-api",
-			"value": "http://localhost:6000",
+			"value": "http://localhost:8000",
 			"disabled": true
 		},
 		{
