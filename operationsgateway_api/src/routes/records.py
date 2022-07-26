@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Path, Query, Response
 
 from operationsgateway_api.src.data_encoding import DataEncoding
 from operationsgateway_api.src.helpers import (
+    encode_date_for_conditions,
     extract_order_data,
     filter_conditions,
     truncate_thumbnail_output,
@@ -71,6 +72,8 @@ async def get_records(
 
     query_order = list(extract_order_data(order)) if order else ""
 
+    encode_date_for_conditions(conditions)
+
     records_query = MongoDBInterface.find(
         collection_name="records",
         filter_=conditions,
@@ -104,6 +107,9 @@ async def count_records(conditions: dict = Depends(filter_conditions)):  # noqa:
     """
 
     log.info("Counting records using given conditions")
+
+    encode_date_for_conditions(conditions)
+
     return await MongoDBInterface.count_documents("records", conditions)
 
 
