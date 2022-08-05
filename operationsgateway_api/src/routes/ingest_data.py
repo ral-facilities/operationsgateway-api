@@ -47,7 +47,6 @@ async def submit_hdf(file: UploadFile):
 
     file_shot_num = record["metadata"]["shotnum"]
 
-    # Always insert images and waveforms for now
     await insert_waveforms(waveforms)
     store_images(images)
 
