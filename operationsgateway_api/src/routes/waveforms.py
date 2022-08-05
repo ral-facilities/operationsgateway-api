@@ -2,7 +2,6 @@ import logging
 
 from fastapi import APIRouter, Path
 
-from operationsgateway_api.src.data_encoding import DataEncoding
 from operationsgateway_api.src.models import Record
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
@@ -34,7 +33,7 @@ async def get_waveform_by_id(
 
     waveform = await MongoDBInterface.find_one(
         "waveforms",
-        {"_id": DataEncoding.encode_object_id(id_)},
+        {"_id": id_},
     )
 
     # TODO - need to make that model more generic, not specific to records. Or make a

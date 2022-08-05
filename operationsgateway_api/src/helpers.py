@@ -6,7 +6,6 @@ import logging
 import os
 from typing import Optional
 
-from bson import ObjectId
 from dateutil.parser import parse
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -175,7 +174,7 @@ def store_waveform_thumbnails(record, thumbnails):
     for _id, thumbnail in thumbnails.items():
         for channel_name, value in record["channels"].items():
             try:
-                if ObjectId(_id) == value["waveform_id"]:
+                if _id == value["waveform_id"]:
                     record["channels"][channel_name]["thumbnail"] = thumbnail
             except KeyError:
                 # A KeyError here will be because the channel isn't a waveform. This is

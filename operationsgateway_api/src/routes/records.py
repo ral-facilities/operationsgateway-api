@@ -2,10 +2,8 @@ from http import HTTPStatus
 import logging
 from typing import List, Optional
 
-from bson import ObjectId
 from fastapi import APIRouter, Depends, Path, Query, Response
 
-from operationsgateway_api.src.data_encoding import DataEncoding
 from operationsgateway_api.src.helpers import (
     encode_date_for_conditions,
     extract_order_data,
@@ -140,11 +138,10 @@ async def get_record_by_id(
 
     log.info("Getting record by ID: %s", id_)
 
-    # TODO - dependent on _id format we decide upon, this may need to be modified
     # TODO - add 404 to this endpoint
     record = await MongoDBInterface.find_one(
         "records",
-        {"_id": DataEncoding.encode_object_id(id_), **conditions},
+        {"_id": id_, **conditions},
     )
 
     if truncate:
@@ -171,6 +168,6 @@ async def delete_record_by_id(
     # removed from disk too
     log.info("Deleting record by ID: %s", id_)
 
-    await MongoDBInterface.delete_one("records", {"_id": ObjectId(id_)})
+    await MongoDBInterface.delete_one("records", {"_id": id_})
 
     return Response(status_code=HTTPStatus.NO_CONTENT.value)
