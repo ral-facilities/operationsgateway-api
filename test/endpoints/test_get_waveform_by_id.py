@@ -9,9 +9,9 @@ class TestGetWaveformByID:
         "waveform_id, expected_first_x, expected_first_y",
         [
             pytest.param(
-                "62d1637156910a546d0b9a63",
+                "20220407141616_N_COMP_SPEC_TRACE",
                 649.8,
-                822.0,
+                713.0,
                 id="Ordinary request",
             ),
         ],

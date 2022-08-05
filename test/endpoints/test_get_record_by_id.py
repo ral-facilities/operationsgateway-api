@@ -11,9 +11,9 @@ class TestGetRecordByID:
         "record_id, truncate, expected_channel_count, expected_channel_data",
         [
             pytest.param(
-                "62cd88520abfaa415fad6394",
+                "20220408094341",
                 True,
-                61,
+                59,
                 {"SAD_NF_E": -14.122},
                 id="Ordinary request",
             ),
