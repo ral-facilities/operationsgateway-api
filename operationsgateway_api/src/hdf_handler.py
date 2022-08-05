@@ -1,12 +1,11 @@
 import collections
+from datetime import datetime
 import io
 import logging
 
-from bson import ObjectId
 import h5py
 import numpy as np
 
-from operationsgateway_api.src.config import Config
 
 log = logging.getLogger()
 
@@ -36,14 +35,16 @@ class HDFDataHandler:
         if file_path:
             hdf_file = h5py.File(file_path, "r")
 
-        record_id = ObjectId()
-
-        record = {"_id": record_id, "metadata": {}, "channels": []}
+        record = {"metadata": {}, "channels": {}}
         waveforms = []
         images = {}
 
         for metadata_key, metadata_value in hdf_file.attrs.items():
             log.debug("Metadata Key: %s, Value: %s", metadata_key, metadata_value)
+
+            if metadata_key == "timestamp":
+                metadata_value = datetime.strptime(metadata_value, "%Y-%m-%d %H:%M:%S")
+                record["_id"] = metadata_value.strftime("%Y%m%d%H%M%S")
 
             # Adding metadata of shot
             record["metadata"][metadata_key] = metadata_value
@@ -58,21 +59,19 @@ class HDFDataHandler:
                 # TODO - put as a constant/put elsewhere?
                 # TODO - separate the code to create an image path into a separate
                 # function, this is going to be used in multiple places
-                image_path = (
-                    f"{Config.config.mongodb.image_store_directory}/"
-                    f"{record['metadata']['shotnum']}_{channel_name}.png"
-                )
+                image_path = f"{record['metadata']['shotnum']}/{channel_name}.png"
                 image_data = value["data"][()]
                 images[image_path] = image_data
 
-                channel_data["image_path"] = image_path
+                record["channels"][channel_name] = {
+                    "metadata": {},
+                    "image_path": image_path,
+                }
+
             elif value.attrs["channel_dtype"] == "rgb-image":
                 # TODO - when we don't want random noise anymore, we could probably
                 # combine this code with greyscale images, its the same implementation
-                image_path = (
-                    f"{Config.config.mongodb.image_store_directory}/"
-                    f"{record['metadata']['shotnum']}_{channel_name}.png"
-                )
+                image_path = f"{record['metadata']['shotnum']}/{channel_name}.png"
 
                 # Gives random noise, where only example RGB I have sends full black
                 # image. Comment out to store true data
@@ -84,28 +83,29 @@ class HDFDataHandler:
                 )
                 images[image_path] = image_data
 
-                channel_data["image_path"] = image_path
+                record["channels"][channel_name] = {
+                    "metadata": {},
+                    "image_path": image_path,
+                }
             elif value.attrs["channel_dtype"] == "scalar":
+                record["channels"][channel_name] = {"metadata": {}, "data": None}
+                record["channels"][channel_name]["data"] = value["data"][()]
                 channel_data["data"] = value["data"][()]
             elif value.attrs["channel_dtype"] == "waveform":
-                # Create a object ID here so it can be assigned to the waveform document
-                # and the record before data insertion. This way, we can send the data
-                # to the database one after the other. The alternative would be to send
-                # the waveform data, fetch the IDs and inject them into the record data
-                # which wouldn't be as efficient
-                waveform_id = ObjectId()
+                waveform_id = f"{record['_id']}_{channel_name}"
                 log.debug("Waveform ID: %s", waveform_id)
-                channel_data["waveform_id"] = waveform_id
+
+                record["channels"][channel_name] = {
+                    "metadata": {},
+                    "waveform_id": waveform_id,
+                }
 
                 waveforms.append(
                     {"_id": waveform_id, "x": value["x"][()], "y": value["y"][()]},
                 )
 
             # Adding channel metadata
-            channel_data["metadata"] = dict(value.attrs)
-
-            # Adding the processed channel to the record
-            record["channels"].append(channel_data)
+            record["channels"][channel_name]["metadata"] = dict(value.attrs)
 
         return record, waveforms, images
 
@@ -147,19 +147,20 @@ class HDFDataHandler:
         # MongoDB due to the differing waveform IDs each time. This loops over waveform
         # channels, ignores the waveform IDs and remove ones that have already been
         # stored
-        for stored_channel in stored_data["channels"]:
-            if stored_channel["metadata"]["channel_dtype"] == "waveform":
-                for input_channel in input_data["channels"].copy():
+        for stored_channel_name, stored_value in stored_data["channels"].items():
+            if stored_value["metadata"]["channel_dtype"] == "waveform":
+                input_channels_copy = input_data["channels"].copy()
+                for input_channel_name, input_value in input_channels_copy.items():
                     if (
-                        input_channel["metadata"]["channel_dtype"] == "waveform"
-                        and stored_channel["name"] == input_channel["name"]
+                        input_value["metadata"]["channel_dtype"] == "waveform"
+                        and stored_channel_name == input_channel_name
                     ):
-                        input_waveform = input_channel
+                        input_waveform = input_value
                         del input_waveform["waveform_id"]
-                        stored_waveform = stored_channel.copy()
+                        stored_waveform = stored_value.copy()
                         del stored_waveform["waveform_id"]
                         if input_waveform == stored_waveform:
-                            input_data["channels"].remove(input_channel)
+                            del input_data["channels"][input_channel_name]
 
         return input_data
 

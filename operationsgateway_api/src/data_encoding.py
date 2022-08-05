@@ -1,4 +1,5 @@
 import base64
+from datetime import datetime
 import logging
 
 from bson import ObjectId
@@ -43,13 +44,6 @@ class DataEncoding:
                 new_new_value = DataEncoding.data_conversion(inner_value)
                 value[inner_key] = new_new_value
             new_value = value
-        elif isinstance(value, list):
-            # For channel data
-            new_list = []
-            for inner_value in value:
-                new_new_value = DataEncoding.data_conversion(inner_value)
-                new_list.append(new_new_value)
-            new_value = new_list
         elif isinstance(value, np.int64) or isinstance(value, np.uint64):
             new_value = int(value)
         elif isinstance(value, np.float64):
@@ -64,7 +58,7 @@ class DataEncoding:
         elif (
             isinstance(value, str)
             or isinstance(value, bytes)
-            or isinstance(value, ObjectId)
+            or isinstance(value, datetime)
         ):
             new_value = value
         else:

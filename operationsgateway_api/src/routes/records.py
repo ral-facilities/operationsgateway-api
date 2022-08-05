@@ -2,11 +2,10 @@ from http import HTTPStatus
 import logging
 from typing import List, Optional
 
-from bson import ObjectId
 from fastapi import APIRouter, Depends, Path, Query, Response
 
-from operationsgateway_api.src.data_encoding import DataEncoding
 from operationsgateway_api.src.helpers import (
+    encode_date_for_conditions,
     extract_order_data,
     filter_conditions,
     truncate_thumbnail_output,
@@ -71,6 +70,8 @@ async def get_records(
 
     query_order = list(extract_order_data(order)) if order else ""
 
+    encode_date_for_conditions(conditions)
+
     records_query = MongoDBInterface.find(
         collection_name="records",
         filter_=conditions,
@@ -104,6 +105,9 @@ async def count_records(conditions: dict = Depends(filter_conditions)):  # noqa:
     """
 
     log.info("Counting records using given conditions")
+
+    encode_date_for_conditions(conditions)
+
     return await MongoDBInterface.count_documents("records", conditions)
 
 
@@ -134,11 +138,10 @@ async def get_record_by_id(
 
     log.info("Getting record by ID: %s", id_)
 
-    # TODO - dependent on _id format we decide upon, this may need to be modified
     # TODO - add 404 to this endpoint
     record = await MongoDBInterface.find_one(
         "records",
-        {"_id": DataEncoding.encode_object_id(id_), **conditions},
+        {"_id": id_, **conditions},
     )
 
     if truncate:
@@ -165,6 +168,6 @@ async def delete_record_by_id(
     # removed from disk too
     log.info("Deleting record by ID: %s", id_)
 
-    await MongoDBInterface.delete_one("records", {"_id": ObjectId(id_)})
+    await MongoDBInterface.delete_one("records", {"_id": id_})
 
     return Response(status_code=HTTPStatus.NO_CONTENT.value)

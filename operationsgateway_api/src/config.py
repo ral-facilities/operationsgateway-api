@@ -1,6 +1,6 @@
 from pathlib import Path
 import sys
-from typing import Optional
+from typing import Optional, Tuple
 
 from pydantic import (
     BaseModel,
@@ -20,6 +20,10 @@ class App(BaseModel):
     host: Optional[StrictStr]
     port: Optional[StrictInt]
     reload: Optional[StrictBool]
+    # The dimensions will be stored as a list in the YAML file, but are cast to tuple
+    # using `typing.Tuple` because this is the type used by Pillow
+    image_thumbnail_size: Tuple[int, int]
+    waveform_thumbnail_size: Tuple[int, int]
 
 
 class Logging(BaseModel):
