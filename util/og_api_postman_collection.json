@@ -45,6 +45,12 @@
 						},
 						{
 							"key": "conditions",
+							"value": "{\"_id\": {\"$eq\": \"20220408132830\"}}",
+							"description": "Return records matching the given ID",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
 							"value": "{\"metadata.shotnum\": 366372}",
 							"description": "Look for records WHERE shot number is 366372",
 							"disabled": true
@@ -59,6 +65,12 @@
 							"key": "conditions",
 							"value": "{\"channels.N_COMP_FF_XPOS.data\": {\"$lt\": 310}}",
 							"description": "WHERE N_COMP_FF_XPOS's data < 310",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
+							"value": "{\"channels.N_COMP_SPEC_TRACE.waveform_id\": {\"$eq\": \"20220408132830_N_COMP_SPEC_TRACE\"}}",
+							"description": "Return record that matches the waveform ID",
 							"disabled": true
 						},
 						{
@@ -176,13 +188,13 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{og-api}}/records/62d7f02de1a95ee3bcccb57d",
+					"raw": "{{og-api}}/records/20220408132830",
 					"host": [
 						"{{og-api}}"
 					],
 					"path": [
 						"records",
-						"62d7f02de1a95ee3bcccb57d"
+						"20220408132830"
 					],
 					"query": [
 						{
@@ -202,13 +214,13 @@
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "{{og-api}}/records/62da9fc0f9a1f639c8348a48",
+					"raw": "{{og-api}}/records/20220408142911",
 					"host": [
 						"{{og-api}}"
 					],
 					"path": [
 						"records",
-						"62da9fc0f9a1f639c8348a48"
+						"20220408142911"
 					]
 				}
 			},
@@ -220,13 +232,13 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{og-api}}/images/366375/N_COMP_FF_IMAGE",
+					"raw": "{{og-api}}/images/20220408132830/N_COMP_FF_IMAGE",
 					"host": [
 						"{{og-api}}"
 					],
 					"path": [
 						"images",
-						"366375",
+						"20220408132830",
 						"N_COMP_FF_IMAGE"
 					],
 					"query": [
@@ -253,13 +265,13 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{og-api}}/waveforms/62d1637156910a546d0b9a63",
+					"raw": "{{og-api}}/waveforms/20220408140310_N_COMP_SPEC_TRACE",
 					"host": [
 						"{{og-api}}"
 					],
 					"path": [
 						"waveforms",
-						"62d1637156910a546d0b9a63"
+						"20220408140310_N_COMP_SPEC_TRACE"
 					]
 				}
 			},
