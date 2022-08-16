@@ -71,7 +71,7 @@ class HDFDataHandler:
             elif value.attrs["channel_dtype"] == "rgb-image":
                 # TODO - when we don't want random noise anymore, we could probably
                 # combine this code with greyscale images, its the same implementation
-                image_path = f"{record['metadata']['shotnum']}/{channel_name}.png"
+                image_path = f"{record['_id']}/{channel_name}.png"
 
                 # Gives random noise, where only example RGB I have sends full black
                 # image. Comment out to store true data
