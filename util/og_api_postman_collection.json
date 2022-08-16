@@ -98,6 +98,12 @@
 							"disabled": true
 						},
 						{
+							"key": "conditions",
+							"value": "{\"metadata.shotnum\": {\"$exists\": false}}",
+							"description": "Return only environmental data",
+							"disabled": true
+						},
+						{
 							"key": "projection",
 							"value": "metadata.shotnum",
 							"description": "Return shot numbers only. Use multiple projection parameters to select multiple fields",
@@ -175,6 +181,12 @@
 							"key": "conditions",
 							"value": "{\"channels.N_COMP_SPEC_TRACE\": {\"$exists\": true}}",
 							"description": "WHERE the N_COMP_SPEC_TRACE channel exists",
+							"disabled": true
+						},
+						{
+							"key": "conditions",
+							"value": "{\"metadata.shotnum\": {\"$exists\": false}}",
+							"description": "WHERE record is environmental data",
 							"disabled": true
 						}
 					]
