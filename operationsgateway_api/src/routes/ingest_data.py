@@ -45,8 +45,6 @@ async def submit_hdf(file: UploadFile):
     record, waveforms, images = HDFDataHandler.extract_hdf_data(hdf_file=hdf_file)
     DataEncoding.encode_numpy_for_mongo(record)
 
-    file_shot_num = record["metadata"]["shotnum"]
-
     await insert_waveforms(waveforms)
     store_images(images)
 
@@ -59,7 +57,7 @@ async def submit_hdf(file: UploadFile):
 
     shot_document = await MongoDBInterface.find_one(
         "records",
-        filter_={"metadata.shotnum": file_shot_num},
+        filter_={"_id": record["_id"]},
     )
     shot_exist = is_shot_stored(shot_document)
 
