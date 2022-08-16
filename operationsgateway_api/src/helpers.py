@@ -89,10 +89,10 @@ def is_shot_stored(document):
 
 async def is_waveform_stored(waveform_id):
     waveform_exist = await MongoDBInterface.find_one(
-        "waveforms", filter_={"_id": waveform_id}
+        "waveforms", filter_={"_id": waveform_id},
     )
     return True if waveform_exist else False
-    
+
 
 async def insert_waveforms(waveforms):
     # Building a list of unstored waveforms is more reliable than removing items from
@@ -112,12 +112,12 @@ def store_images(images):
     for path, data in images.items():
         image = Image.fromarray(data)
 
-        shot_directory = "".join(path.split("/")[:-1])
+        record_directory = "".join(path.split("/")[:-1])
         if not os.path.exists(
-            f"{Config.config.mongodb.image_store_directory}/{shot_directory}",
+            f"{Config.config.mongodb.image_store_directory}/{record_directory}",
         ):
             os.makedirs(
-                f"{Config.config.mongodb.image_store_directory}/{shot_directory}",
+                f"{Config.config.mongodb.image_store_directory}/{record_directory}",
             )
 
         image.save(f"{Config.config.mongodb.image_store_directory}/{path}")
@@ -167,7 +167,6 @@ def create_waveform_thumbnails(waveforms):
     for waveform in waveforms:
         with BytesIO() as plot_buffer:
             # TODO - S307 linting error
-            log.debug(f"Waveform: {waveform}, Type: {type(waveform)}")
             create_image_plot(
                 list(eval(waveform["x"])),  # noqa: S307
                 list(eval(waveform["y"])),  # noqa: S307

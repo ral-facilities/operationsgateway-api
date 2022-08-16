@@ -59,7 +59,7 @@ class HDFDataHandler:
                 # TODO - put as a constant/put elsewhere?
                 # TODO - separate the code to create an image path into a separate
                 # function, this is going to be used in multiple places
-                image_path = f"{record['metadata']['shotnum']}/{channel_name}.png"
+                image_path = f"{record['_id']}/{channel_name}.png"
                 image_data = value["data"][()]
                 images[image_path] = image_data
 
