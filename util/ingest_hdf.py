@@ -1,3 +1,4 @@
+import argparse
 import os
 from pprint import pprint
 from time import time
@@ -7,6 +8,57 @@ import requests
 
 BASE_DIR = "/path/to/hdf/files"
 API_URL = "http://127.0.0.1:8000"
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-p",
+    "--path",
+    type=str,
+    help="Base directory path containing HDF files to ingest",
+    required=True,
+)
+parser.add_argument("-u",
+    "--url",
+    type=str,
+    help="URL of API to ingest files to",
+    default="http://127.0.0.1:8000",
+)
+parser.add_argument(
+    "-w",
+    "--wipe-database",
+    help="Flag to determine whether the database should be wiped before ingestion",
+    action="store_true",
+    default=False,
+)
+parser.add_argument(
+    "-n",
+    "--database-name",
+    type=str,
+    help="Name of database, used when wiping database before ingestion",
+    default="opsgateway",
+)
+parser.add_argument(
+    "-d",
+    "--delete-images",
+    help="Flag to determine whether to delete stored images before ingestion",
+    action="store_true",
+    default=False,
+)
+parser.add_argument(
+    "-i",
+    "--images-path",
+    type=str,
+    help="Image storage path, used when deleting images before ingestion",
+    default=None,
+)
+
+args = parser.parse_args()
+BASE_DIR = args.path
+API_URL = args.url
+WIPE_DATABASE = args.wipe_database
+DATABASE_NAME = args.database_name
+DELETE_IMAGES = args.delete_images
+IMAGES_PATH = args.images_path
 
 
 for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
