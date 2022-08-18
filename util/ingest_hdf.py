@@ -1,8 +1,10 @@
 import argparse
 import os
 from pprint import pprint
+import shutil
 from time import time
 
+from motor.motor_asyncio import AsyncIOMotorClient
 import requests
 
 
@@ -56,10 +58,30 @@ args = parser.parse_args()
 BASE_DIR = args.path
 API_URL = args.url
 WIPE_DATABASE = args.wipe_database
+DATABASE_CONNECTION_URL = "mongodb://localhost:27017"
 DATABASE_NAME = args.database_name
 DELETE_IMAGES = args.delete_images
 IMAGES_PATH = args.images_path
 
+
+if WIPE_DATABASE:
+    client = AsyncIOMotorClient(DATABASE_CONNECTION_URL)
+    db = client[DATABASE_NAME]
+
+    records_drop = db.records.drop()
+    print("Records collection dropped")
+    waveforms_drop = db.waveforms.drop()
+    print("Waveforms collection dropped")
+
+if DELETE_IMAGES:
+    for root, dirs, files in os.walk(IMAGES_PATH):
+        for f in files:
+            os.unlink(os.path.join(root, f))
+        print(f"Removed {len(files)} file(s) from base level of image path")
+
+        for d in dirs:
+            shutil.rmtree(os.path.join(root, d))
+        print(f"Removed {len(dirs)} directorie(s) and their contents from image path")
 
 for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
     if entry.is_dir():
