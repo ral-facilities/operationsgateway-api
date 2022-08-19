@@ -2,14 +2,11 @@ import argparse
 import os
 from pprint import pprint
 import shutil
-from time import time
+from subprocess import Popen, PIPE
+from time import sleep, time
 
 from motor.motor_asyncio import AsyncIOMotorClient
 import requests
-
-
-BASE_DIR = "/path/to/hdf/files"
-API_URL = "http://127.0.0.1:8000"
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -19,11 +16,12 @@ parser.add_argument(
     help="Base directory path containing HDF files to ingest",
     required=True,
 )
-parser.add_argument("-u",
+parser.add_argument(
+    "-u",
     "--url",
     type=str,
     help="URL of API to ingest files to",
-    default="http://127.0.0.1:8000",
+    default=None,
 )
 parser.add_argument(
     "-w",
@@ -54,6 +52,7 @@ parser.add_argument(
     default=None,
 )
 
+# Put command line options into variables
 args = parser.parse_args()
 BASE_DIR = args.path
 API_URL = args.url
@@ -64,6 +63,7 @@ DELETE_IMAGES = args.delete_images
 IMAGES_PATH = args.images_path
 
 
+# Wipe collections in the database
 if WIPE_DATABASE:
     client = AsyncIOMotorClient(DATABASE_CONNECTION_URL)
     db = client[DATABASE_NAME]
@@ -73,6 +73,7 @@ if WIPE_DATABASE:
     waveforms_drop = db.waveforms.drop()
     print("Waveforms collection dropped")
 
+# Delete images from disk
 if DELETE_IMAGES:
     for root, dirs, files in os.walk(IMAGES_PATH):
         for f in files:
@@ -83,6 +84,27 @@ if DELETE_IMAGES:
             shutil.rmtree(os.path.join(root, d))
         print(f"Removed {len(dirs)} directorie(s) and their contents from image path")
 
+# Start API if an API URL isn't given as a command line option
+if not args.url:
+    host = "127.0.0.1"
+    port = "8000"
+    api_process = Popen(
+        [
+            "uvicorn",
+            "operationsgateway_api.src.main:app",
+            "--host",
+            host,
+            "--port",
+            port,
+        ],
+        stdout=PIPE,
+        stderr=PIPE,
+    )
+    sleep(3)
+    API_URL = f"http://{host}:{port}"
+    print(f"API started on {API_URL}")
+
+# Ingesting HDF files
 for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
     if entry.is_dir():
         print(f"Iterating through {entry.path}")
@@ -110,3 +132,9 @@ for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
                     else:
                         print(f"{response.status_code} returned")
                         pprint(response.text)
+
+# Kill API process if it was started in this script
+# Using args.url because API_URL will be populated when API process was started
+if not args.url:
+    api_process.kill()
+    print(f"API stopped on {API_URL}")
