@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - DSEGOG-27-gh-actions
 
 jobs:
   tests:
