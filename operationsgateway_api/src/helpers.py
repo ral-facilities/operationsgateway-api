@@ -89,7 +89,8 @@ def is_shot_stored(document):
 
 async def is_waveform_stored(waveform_id):
     waveform_exist = await MongoDBInterface.find_one(
-        "waveforms", filter_={"_id": waveform_id},
+        "waveforms",
+        filter_={"_id": waveform_id},
     )
     return True if waveform_exist else False
 
