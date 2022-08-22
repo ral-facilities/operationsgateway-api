@@ -2,6 +2,7 @@ import argparse
 import os
 from pprint import pprint
 import shutil
+import socket
 from subprocess import Popen, PIPE
 from time import sleep, time
 
@@ -84,6 +85,15 @@ if DELETE_IMAGES:
             shutil.rmtree(os.path.join(root, d))
         print(f"Removed {len(dirs)} directorie(s) and their contents from image path")
 
+def is_api_alive(host, port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(2)
+    try:
+        s.connect((host, int(port)))
+        return True
+    except Exception:
+        return False
+
 # Start API if an API URL isn't given as a command line option
 if not args.url:
     host = "127.0.0.1"
@@ -100,7 +110,14 @@ if not args.url:
         stdout=PIPE,
         stderr=PIPE,
     )
-    sleep(3)
+
+    print("Checking if API started")
+    api_alive = False
+    while not api_alive:
+        api_alive = is_api_alive(host, port)
+        sleep(1)
+        print("API not started yet...")
+
     API_URL = f"http://{host}:{port}"
     print(f"API started on {API_URL}")
 
