@@ -12,21 +12,21 @@ class TestGetImage:
         "shot_number, channel_name, string_response, expected_image_size",
         [
             pytest.param(
-                366375,
+                "20220408164136",
                 "N_COMP_FF_IMAGE",
                 True,
                 (656, 494),
                 id="Output as base64 string",
             ),
             pytest.param(
-                366280,
+                "20220408002114",
                 "N_LEG1_GREEN_NF_IMAGE",
                 False,
                 (401, 401),
                 id="Output as image",
             ),
             pytest.param(
-                366280,
+                "20220408002114",
                 "N_LEG1_GREEN_NF_IMAGE",
                 None,
                 (401, 401),
