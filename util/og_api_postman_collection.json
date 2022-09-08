@@ -265,13 +265,14 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{og-api}}/waveforms/20220408140310_N_COMP_SPEC_TRACE",
+					"raw": "{{og-api}}/waveforms/20220408140310/N_COMP_SPEC_TRACE",
 					"host": [
 						"{{og-api}}"
 					],
 					"path": [
 						"waveforms",
-						"20220408140310_N_COMP_SPEC_TRACE"
+						"20220408140310",
+						"N_COMP_SPEC_TRACE"
 					]
 				}
 			},
