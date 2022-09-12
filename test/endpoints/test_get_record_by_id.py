@@ -27,9 +27,6 @@ class TestGetRecordByID:
         expected_channel_count,
         expected_channel_data,
     ):
-        # TODO - IDs must be standardised to ensure these tests pass across mutliple
-        # machines. Completing DSEGOG-28 will resolve this
-
         test_response = test_app.get(
             f"/records/{record_id}?truncate={json.dumps(truncate)}",
         )
