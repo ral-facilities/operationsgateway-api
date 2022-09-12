@@ -106,5 +106,5 @@ async def submit_hdf(file: UploadFile):
         return JSONResponse(
             inserted_id,
             status_code=status.HTTP_201_CREATED,
-            headers={"Location": f"/records/{inserted_id}"}
+            headers={"Location": f"/records/{inserted_id}"},
         )

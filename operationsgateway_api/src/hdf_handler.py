@@ -3,7 +3,6 @@ from datetime import datetime
 import io
 import logging
 
-from bson import ObjectId
 import h5py
 import numpy as np
 
@@ -36,9 +35,7 @@ class HDFDataHandler:
         if file_path:
             hdf_file = h5py.File(file_path, "r")
 
-        record_id = ObjectId()
-
-        record = {"_id": record_id, "metadata": {}, "channels": {}}
+        record = {"metadata": {}, "channels": {}}
         waveforms = []
         images = {}
 
@@ -47,6 +44,7 @@ class HDFDataHandler:
 
             if metadata_key == "timestamp":
                 metadata_value = datetime.strptime(metadata_value, "%Y-%m-%d %H:%M:%S")
+                record["_id"] = metadata_value.strftime("%Y%m%d%H%M%S")
 
             # Adding metadata of shot
             record["metadata"][metadata_key] = metadata_value
@@ -94,12 +92,7 @@ class HDFDataHandler:
                 record["channels"][channel_name]["data"] = value["data"][()]
                 channel_data["data"] = value["data"][()]
             elif value.attrs["channel_dtype"] == "waveform":
-                # Create a object ID here so it can be assigned to the waveform document
-                # and the record before data insertion. This way, we can send the data
-                # to the database one after the other. The alternative would be to send
-                # the waveform data, fetch the IDs and inject them into the record data
-                # which wouldn't be as efficient
-                waveform_id = ObjectId()
+                waveform_id = f"{record['_id']}_{channel_name}"
                 log.debug("Waveform ID: %s", waveform_id)
 
                 record["channels"][channel_name] = {

@@ -58,7 +58,6 @@ class DataEncoding:
         elif (
             isinstance(value, str)
             or isinstance(value, bytes)
-            or isinstance(value, ObjectId)
             or isinstance(value, datetime)
         ):
             new_value = value
