@@ -59,7 +59,7 @@ class HDFDataHandler:
                 # TODO - put as a constant/put elsewhere?
                 # TODO - separate the code to create an image path into a separate
                 # function, this is going to be used in multiple places
-                image_path = f"{record['metadata']['shotnum']}/{channel_name}.png"
+                image_path = f"{record['_id']}/{channel_name}.png"
                 image_data = value["data"][()]
                 images[image_path] = image_data
 
@@ -71,7 +71,7 @@ class HDFDataHandler:
             elif value.attrs["channel_dtype"] == "rgb-image":
                 # TODO - when we don't want random noise anymore, we could probably
                 # combine this code with greyscale images, its the same implementation
-                image_path = f"{record['metadata']['shotnum']}/{channel_name}.png"
+                image_path = f"{record['_id']}/{channel_name}.png"
 
                 # Gives random noise, where only example RGB I have sends full black
                 # image. Comment out to store true data
@@ -142,25 +142,6 @@ class HDFDataHandler:
                 # TODO - if we choose to return a 400, implement this
                 # Current exception is there as a template only
                 # raise Exception("Duplicate data, will not process")
-
-        # Waveform channels are duplicated because the channels are seen as unique to
-        # MongoDB due to the differing waveform IDs each time. This loops over waveform
-        # channels, ignores the waveform IDs and remove ones that have already been
-        # stored
-        for stored_channel_name, stored_value in stored_data["channels"].items():
-            if stored_value["metadata"]["channel_dtype"] == "waveform":
-                input_channels_copy = input_data["channels"].copy()
-                for input_channel_name, input_value in input_channels_copy.items():
-                    if (
-                        input_value["metadata"]["channel_dtype"] == "waveform"
-                        and stored_channel_name == input_channel_name
-                    ):
-                        input_waveform = input_value
-                        del input_waveform["waveform_id"]
-                        stored_waveform = stored_value.copy()
-                        del stored_waveform["waveform_id"]
-                        if input_waveform == stored_waveform:
-                            del input_data["channels"][input_channel_name]
 
         return input_data
 

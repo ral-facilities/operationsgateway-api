@@ -87,24 +87,37 @@ def is_shot_stored(document):
     return True if document else False
 
 
-async def insert_waveforms(waveforms):
-    if waveforms:
-        for waveform in waveforms:
-            DataEncoding.encode_numpy_for_mongo(waveform)
+async def is_waveform_stored(waveform_id):
+    waveform_exist = await MongoDBInterface.find_one(
+        "waveforms", filter_={"_id": waveform_id},
+    )
+    return True if waveform_exist else False
 
-        await MongoDBInterface.insert_many("waveforms", waveforms)
+
+async def insert_waveforms(waveforms):
+    # Building a list of unstored waveforms is more reliable than removing items from
+    # the list that's being iterated over
+    new_waveforms = []
+    for w in waveforms:
+        DataEncoding.encode_numpy_for_mongo(w)
+        if not await is_waveform_stored(w["_id"]):
+            new_waveforms.append(w)
+
+    # MongoDB will raise a TypeError if the list is empty
+    if new_waveforms:
+        await MongoDBInterface.insert_many("waveforms", new_waveforms)
 
 
 def store_images(images):
     for path, data in images.items():
         image = Image.fromarray(data)
 
-        shot_directory = "".join(path.split("/")[:-1])
+        record_directory = "".join(path.split("/")[:-1])
         if not os.path.exists(
-            f"{Config.config.mongodb.image_store_directory}/{shot_directory}",
+            f"{Config.config.mongodb.image_store_directory}/{record_directory}",
         ):
             os.makedirs(
-                f"{Config.config.mongodb.image_store_directory}/{shot_directory}",
+                f"{Config.config.mongodb.image_store_directory}/{record_directory}",
             )
 
         image.save(f"{Config.config.mongodb.image_store_directory}/{path}")
@@ -132,9 +145,17 @@ def store_image_thumbnails(record, thumbnails):
 
 
 def create_image_plot(x, y, buf):
-    plt.plot(x, y)
-    plt.savefig(buf, format="PNG")
-    # Flushes figure so axes aren't distorted between figures
+    # Making changes to plot so figure size and line width is correct and axes are
+    # disabled
+    plt.rcParams["figure.figsize"] = [1, 0.75]
+    plt.xticks([])
+    plt.yticks([])
+    plt.plot(x, y, linewidth=0.5)
+    plt.axis("off")
+    plt.box(False)
+
+    plt.savefig(buf, format="PNG", bbox_inches="tight", pad_inches=0, dpi=130)
+    # Flushes the plot to remove data from previously ingested waveforms
     plt.clf()
 
 
@@ -160,8 +181,6 @@ def create_waveform_thumbnails(waveforms):
                 plot_buffer,
             )
             waveform_image = Image.open(plot_buffer)
-            create_thumbnail(waveform_image, Config.config.app.waveform_thumbnail_size)
-
             thumbnails[waveform["_id"]] = convert_image_to_base64(waveform_image)
 
     return thumbnails

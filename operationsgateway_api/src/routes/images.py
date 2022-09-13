@@ -11,16 +11,21 @@ router = APIRouter()
 
 
 @router.get(
-    "/images/{shot_num}/{channel_name}",
+    "/images/{record_id}/{channel_name}",
     summary="Get full-size image from disk",
     response_description="Image in .png format or base64 encoded string of the image",
     tags=["Images"],
 )
 async def get_full_image(
-    shot_num: str = Path(  # noqa: B008
+    record_id: str = Path(  # noqa: B008
         "",
-        description="Shot number of the record",
-        examples={"test_data": {"summary": "Example shot number", "value": 366368}},
+        description="ID of the record (usually timestamp)",
+        examples={
+            "test_data": {
+                "summary": "Example record ID number",
+                "value": "20220408132830",
+            },
+        },
     ),
     channel_name: str = Path(  # noqa: B008
         "",
@@ -46,7 +51,7 @@ async def get_full_image(
 
     if string_response:
         with open(
-            f"{Config.config.mongodb.image_store_directory}/{shot_num}/{channel_name}"
+            f"{Config.config.mongodb.image_store_directory}/{record_id}/{channel_name}"
             ".png",
             "rb",
         ) as image_file:
@@ -54,6 +59,6 @@ async def get_full_image(
         return image_string
     else:
         return FileResponse(
-            f"{Config.config.mongodb.image_store_directory}/{shot_num}/{channel_name}"
+            f"{Config.config.mongodb.image_store_directory}/{record_id}/{channel_name}"
             ".png",
         )
