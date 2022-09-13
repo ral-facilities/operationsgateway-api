@@ -6,10 +6,11 @@ import pytest
 
 class TestGetWaveformByID:
     @pytest.mark.parametrize(
-        "waveform_id, expected_first_x, expected_first_y",
+        "record_id, channel_name, expected_first_x, expected_first_y",
         [
             pytest.param(
-                "20220407141616_N_COMP_SPEC_TRACE",
+                "20220407141616",
+                "N_COMP_SPEC_TRACE",
                 649.8,
                 713.0,
                 id="Ordinary request",
@@ -19,11 +20,12 @@ class TestGetWaveformByID:
     def test_valid_get_waveform_by_id(
         self,
         test_app: TestClient,
-        waveform_id,
+        record_id,
+        channel_name,
         expected_first_x,
         expected_first_y,
     ):
-        test_response = test_app.get(f"/waveforms/{waveform_id}")
+        test_response = test_app.get(f"/waveforms/{record_id}/{channel_name}")
 
         assert test_response.status_code == 200
 
