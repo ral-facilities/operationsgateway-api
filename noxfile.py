@@ -5,7 +5,7 @@ import nox
 
 # Separating Black away from the rest of the sessions
 nox.options.sessions = "lint", "safety", "tests"
-code_locations = "operationsgateway_api", "noxfile.py"
+code_locations = "operationsgateway_api", "test", "noxfile.py"
 
 
 def install_with_constraints(session, *args, **kwargs):
@@ -82,7 +82,7 @@ def safety(session):
             session.log("Error: The temporary requirements file could not be closed")
 
 
-@nox.session(python=["3.6", "3.7", "3.8", "3.9", "3.10"], reuse_venv=True)
+@nox.session(python=["3.8", "3.9", "3.10"], reuse_venv=True)
 def tests(session):
     args = session.posargs
     session.run("poetry", "install", external=True)
