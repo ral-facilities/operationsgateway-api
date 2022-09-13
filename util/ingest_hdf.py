@@ -14,7 +14,9 @@ parser.add_argument(
     "-p",
     "--path",
     type=str,
-    help="Base directory path containing HDF files to ingest",
+    help="Base directory path containing HDF files to ingest. HDF files should be"
+    " stored in subdirectories - no files will be detected in the base directory of the"
+    " path given",
     required=True,
 )
 parser.add_argument(

@@ -146,9 +146,17 @@ def store_image_thumbnails(record, thumbnails):
 
 
 def create_image_plot(x, y, buf):
-    plt.plot(x, y)
-    plt.savefig(buf, format="PNG")
-    # Flushes figure so axes aren't distorted between figures
+    # Making changes to plot so figure size and line width is correct and axes are
+    # disabled
+    plt.rcParams["figure.figsize"] = [1, 0.75]
+    plt.xticks([])
+    plt.yticks([])
+    plt.plot(x, y, linewidth=0.5)
+    plt.axis("off")
+    plt.box(False)
+
+    plt.savefig(buf, format="PNG", bbox_inches="tight", pad_inches=0, dpi=130)
+    # Flushes the plot to remove data from previously ingested waveforms
     plt.clf()
 
 
@@ -174,8 +182,6 @@ def create_waveform_thumbnails(waveforms):
                 plot_buffer,
             )
             waveform_image = Image.open(plot_buffer)
-            create_thumbnail(waveform_image, Config.config.app.waveform_thumbnail_size)
-
             thumbnails[waveform["_id"]] = convert_image_to_base64(waveform_image)
 
     return thumbnails

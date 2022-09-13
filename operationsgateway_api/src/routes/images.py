@@ -19,7 +19,7 @@ router = APIRouter()
 async def get_full_image(
     record_id: str = Path(  # noqa: B008
         "",
-        description="ID of the record number of the record",
+        description="ID of the record (usually timestamp)",
         examples={
             "test_data": {
                 "summary": "Example record ID number",

@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import io
 import json
 
@@ -9,27 +10,27 @@ import pytest
 
 class TestGetImage:
     @pytest.mark.parametrize(
-        "shot_number, channel_name, string_response, expected_image_size",
+        "record_id, channel_name, string_response, expected_image_md5sum",
         [
             pytest.param(
                 "20220408164136",
                 "N_COMP_FF_IMAGE",
                 True,
-                (656, 494),
+                "9d2fc96084349c5bff10206ef4dfdf3e",
                 id="Output as base64 string",
             ),
             pytest.param(
                 "20220408002114",
                 "N_LEG1_GREEN_NF_IMAGE",
                 False,
-                (401, 401),
+                "47f2e189fcf44cffb010b72a6de153bd",
                 id="Output as image",
             ),
             pytest.param(
                 "20220408002114",
                 "N_LEG1_GREEN_NF_IMAGE",
                 None,
-                (401, 401),
+                "47f2e189fcf44cffb010b72a6de153bd",
                 id="No string response query parameter",
             ),
         ],
@@ -37,10 +38,10 @@ class TestGetImage:
     def test_valid_get_image(
         self,
         test_app: TestClient,
-        shot_number,
+        record_id,
         channel_name,
         string_response,
-        expected_image_size,
+        expected_image_md5sum,
     ):
         string_response_param = (
             f"?string_response={json.dumps(string_response)}"
@@ -48,14 +49,11 @@ class TestGetImage:
             else ""
         )
         test_response = test_app.get(
-            f"/images/{shot_number}/{channel_name}{string_response_param}",
+            f"/images/{record_id}/{channel_name}{string_response_param}",
         )
 
         assert test_response.status_code == 200
 
-        # Storing expected image files and base64 strings would bloat the tests, so we
-        # check whether the image is genuine (by opening using Pillow) and if it matches
-        # an expected resolution
         if string_response:
             assert isinstance(test_response.json(), str)
             bytes_image = base64.b64decode(test_response.json())
@@ -64,7 +62,5 @@ class TestGetImage:
             assert isinstance(test_response.content, bytes)
             bytes_image = test_response.content
 
-        # If no exception is raised during opening via Pillow, we can check the size is
-        # what's expected and then assume this is a good image
-        image = Image.open(io.BytesIO(bytes_image))
-        assert image.size == expected_image_size
+        image_checksum = hashlib.md5(bytes_image).hexdigest()
+        assert expected_image_md5sum == image_checksum
