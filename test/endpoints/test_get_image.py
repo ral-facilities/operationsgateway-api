@@ -1,10 +1,8 @@
 import base64
 import hashlib
-import io
 import json
 
 from fastapi.testclient import TestClient
-from PIL import Image
 import pytest
 
 
@@ -62,5 +60,5 @@ class TestGetImage:
             assert isinstance(test_response.content, bytes)
             bytes_image = test_response.content
 
-        image_checksum = hashlib.md5(bytes_image).hexdigest()
+        image_checksum = hashlib.md5(bytes_image).hexdigest()  # noqa: S303
         assert expected_image_md5sum == image_checksum

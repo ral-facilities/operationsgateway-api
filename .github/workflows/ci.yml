@@ -1,0 +1,166 @@
+name: CI
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]
+
+    name: Python ${{ matrix.python-version }} Tests
+    steps:
+      - name: Checkout OperationsGateway API
+        uses: actions/checkout@v3
+
+      # Setup Python and environment dependencies (via cache)
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Load Pip cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('.github/ci_requirements.txt') }}
+      - name: Install Poetry & Nox
+        run: pip install -r .github/ci_requirements.txt
+
+      # Install and start MongoDB
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.7.0
+        with:
+          mongodb-version: '5.0'
+
+      # Configuration for API
+      - name: Move CI config.yml to correct place
+        run: cp .github/ci_config.yml operationsgateway_api/config.yml
+      - name: Create log file
+        run: touch "$GITHUB_WORKSPACE/logs.log"
+
+      # Load Poetry virtual environment dependencies and install API dependencies
+      - name: Load Poetry cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-poetry-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+      - name: Install dependencies
+        run: poetry install
+      
+      # Clone repo containing test data and use script to ingest the data
+      - name: Checkout OperationsGateway Test Data
+        uses: actions/checkout@v3
+        with:
+          repository: ral-facilities/operationsgateway-test-data
+          path: operationsgateway-test-data
+          ssh-key: ${{ secrets.SSH_PRIV_OG_TEST_DATA_ACTIONS }}
+      - name: Run ingestion script
+        run: poetry run python util/ingest_hdf.py -p operationsgateway-test-data/dev_server
+
+      - name: Load Poetry cache for Nox tests session
+        uses: actions/cache@v3
+        with:
+          path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/tests*
+          key: ${{ runner.os }}-poetry-nox-tests-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+
+      # Run Nox tests session, saves and uploads a coverage report to codecov
+      - name: Run Nox tests session
+        run: nox -p ${{ matrix.python-version }} -s tests -- --cov=operationsgateway_api --cov-report=xml
+      - name: Upload code coverage report
+        if: matrix.python-version == '3.8'
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+
+  linting:
+    runs-on: ubuntu-latest
+    name: Code Linting
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9.7"
+      - name: Checkout OperationsGateway API
+        uses: actions/checkout@v3
+
+      - name: Load Pip cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('.github/ci_requirements.txt') }}
+      - name: Install Poetry & Nox
+        run: pip install -r .github/ci_requirements.txt
+
+      - name: Load Poetry cache for Nox lint session
+        uses: actions/cache@v3
+        with:
+          path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/lint*
+          key: ${{ runner.os }}-poetry-nox-lint-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+
+      - name: Run Nox lint session
+        run: nox -s lint
+
+
+  formatting:
+    runs-on: ubuntu-latest
+    name: Code Formatting
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9.7"
+      - name: Checkout OperationsGateway API
+        uses: actions/checkout@v3
+
+      - name: Load Pip cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('.github/ci_requirements.txt') }}
+      - name: Install Poetry & Nox
+        run: pip install -r .github/ci_requirements.txt
+
+      - name: Load Poetry cache for Nox black session
+        uses: actions/cache@v3
+        with:
+          path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/black*
+          key: ${{ runner.os }}-poetry-nox-black-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+
+      - name: Run Nox black session
+        run: nox -s black
+
+
+  safety:
+    runs-on: ubuntu-latest
+    name: Dependency Safety
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9.7"
+      - name: Checkout OperationsGateway API
+        uses: actions/checkout@v3
+
+      - name: Load Pip cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('.github/ci_requirements.txt') }}
+      - name: Install Poetry & Nox
+        run: pip install -r .github/ci_requirements.txt
+
+      - name: Load Poetry cache for Nox safety session
+        uses: actions/cache@v3
+        with:
+          path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/safety*
+          key: ${{ runner.os }}-poetry-nox-safety-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+
+      - name: Run Nox safety session
+        run: nox -s safety

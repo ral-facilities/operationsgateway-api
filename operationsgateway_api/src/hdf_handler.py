@@ -1,4 +1,4 @@
-import collections
+from collections.abc import MutableMapping
 from datetime import datetime
 import io
 import logging
@@ -150,7 +150,7 @@ class HDFDataHandler:
         items = []
         for k, v in data.items():
             new_key = parent_key + "." + k if parent_key else k
-            if isinstance(v, collections.MutableMapping):
+            if isinstance(v, MutableMapping):
                 items.extend(HDFDataHandler.flatten_data_dict(v, new_key).items())
             else:
                 items.append((new_key, v))
