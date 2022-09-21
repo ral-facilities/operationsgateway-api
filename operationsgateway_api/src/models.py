@@ -43,6 +43,15 @@ class Record(BaseModel):
         json_encoders = {ObjectId: str}
 
 
+class LoginDetails(BaseModel):
+    username: str
+    password: str
+    
+
+class AccessToken(BaseModel):
+    token: str
+
+
 class RecordsQueryParams:
     filter_: dict
     skip: int
