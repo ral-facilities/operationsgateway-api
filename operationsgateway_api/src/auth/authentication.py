@@ -1,6 +1,7 @@
 from hashlib import sha256
-import ldap
 import logging
+
+import ldap
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import (
@@ -44,10 +45,10 @@ class Authentication:
 
         try:
             auth_type = user_document["auth_type"]
-        except KeyError:
+        except KeyError as exc:
             message = f"auth_type not set for user '{self.username}'"
             log.error(message)
-            raise DatabaseError(msg=message)
+            raise DatabaseError(msg=message) from exc
 
         if auth_type == "local":
             self._do_local_auth(user_document)
@@ -55,7 +56,7 @@ class Authentication:
             self._do_fedid_auth()
         else:
             message = (
-                f"auth_type '{auth_type}' not recognised for user " f"'{self.username}'"
+                f"auth_type '{auth_type}' not recognised for user '{self.username}'"
             )
             log.error(message)
             raise DatabaseError(msg=message)
@@ -69,10 +70,10 @@ class Authentication:
         log.debug("Doing local auth for '%s'", self.username)
         try:
             sha256_password = user_document["sha256_password"]
-        except KeyError:
+        except KeyError as exc:
             raise DatabaseError(
-                msg=f"Encoded password missing in record for user " f"'{self.username}'"
-            )
+                msg=f"Encoded password missing in record for user '{self.username}'",
+            ) from exc
         # create a sha256 hash of the provided password and compare it to the
         # password has that is stored in the database
         sha_256 = sha256()
@@ -101,10 +102,10 @@ class Authentication:
             )
             log.info("Login successful for '%s'", self.username)
             conn.unbind()
-        except ldap.INVALID_CREDENTIALS:
+        except ldap.INVALID_CREDENTIALS as exc:
             log.info("Invalid username or password for '%s'", self.username)
             conn.unbind()
-            raise UnauthorisedError()
-        except Exception:
-            log.error("Problem with LDAP/AD server", exc_info=1)
-            raise AuthServerError()
+            raise UnauthorisedError() from exc
+        except Exception as exc:
+            log.exception("Problem with LDAP/AD server")
+            raise AuthServerError() from exc

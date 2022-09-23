@@ -1,6 +1,7 @@
-from fastapi import HTTPException
 from functools import wraps
 import logging
+
+from fastapi import HTTPException
 
 from operationsgateway_api.src.exceptions import ApiError
 
@@ -18,14 +19,14 @@ def endpoint_error_handling(method):
     async def wrapper_error_handling(*args, **kwargs):
         try:
             return await method(*args, **kwargs)
-        except ApiError as e:
-            log.error("Error in endpoint '%s': %s", method.__name__, e.args[0])
-            raise HTTPException(e.status_code, e.args[0])
-        except Exception as e:
-            log.exception(msg=e.args, exc_info=1)
+        except ApiError as exc:
+            log.error("Error in endpoint '%s': %s", method.__name__, exc.args[0])
+            raise HTTPException(exc.status_code, exc.args[0]) from exc
+        except Exception as exc:
+            log.exception(msg=exc.args)
             # raise non-API errors as "unknown" server errors
             # for security reasons responses should not return messages that might
             # reveal details about the configuration of the server
-            raise HTTPException(status_code=500, detail="Unknown error")
+            raise HTTPException(status_code=500, detail="Unknown error") from exc
 
     return wrapper_error_handling

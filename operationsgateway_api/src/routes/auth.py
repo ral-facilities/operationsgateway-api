@@ -21,11 +21,11 @@ router = APIRouter()
     responses={
         401: {
             "description": "User not authorised (the user is not on the list of"
-            " allowed users or login details were incorrect)"
+            " allowed users or login details were incorrect)",
         },
         500: {
             "description": "Login failed due to problems with the user's account"
-            " record"
+            " record",
         },
     },
     tags=["Authentication"],
@@ -55,7 +55,9 @@ async def login(
     access_token = jwt_handler.get_access_token()
     refresh_token = jwt_handler.get_refresh_token()
     log.info(
-        "Refresh token assigned to '%s': %s", login_details.username, refresh_token
+        "Refresh token assigned to '%s': %s",
+        login_details.username,
+        refresh_token,
     )
     response = JSONResponse(content=access_token)
     response.set_cookie(
@@ -101,7 +103,7 @@ async def verify(
     responses={
         403: {
             "description": "There was a problem with the refresh token or a problem"
-            " updating the access token"
+            " updating the access token",
         },
     },
     tags=["Authentication"],

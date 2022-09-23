@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
-import jwt
 import logging
+from pathlib import Path
+
+import jwt
 
 from operationsgateway_api.src.auth.auth_keys import PRIVATE_KEY, PUBLIC_KEY
 from operationsgateway_api.src.config import Config
@@ -31,7 +32,7 @@ class JwtHandler:
         Return a signed JWT with selected user details as the payload
         :return: The access JWT
         """
-        payload = dict()
+        payload = {}
         payload["username"] = self.user_document["_id"]
         payload["groups"] = self.user_document["groups"]
         payload["exp"] = datetime.now(timezone.utc) + timedelta(
@@ -44,7 +45,7 @@ class JwtHandler:
         Return a signed JWT with to be used as a refresh token
         :return: The refresh JWT
         """
-        payload = dict()
+        payload = {}
         payload["exp"] = datetime.now(timezone.utc) + timedelta(
             days=Config.config.auth.refresh_token_validity_days,
         )
@@ -59,10 +60,10 @@ class JwtHandler:
         """
         try:
             jwt.decode(token, PUBLIC_KEY, algorithms=[algorithm])
-        except Exception:
+        except Exception as exc:
             message = "Invalid token"
             log.warning(message, exc_info=1)
-            raise ForbiddenError(message)
+            raise ForbiddenError(message) from exc
 
     @staticmethod
     def refresh_token(refresh_token: str, access_token: str):
@@ -90,10 +91,10 @@ class JwtHandler:
                 minutes=Config.config.auth.access_token_validity_mins,
             )
             return JwtHandler._pack_jwt(payload)
-        except Exception:
+        except Exception as exc:
             message = "Unable to refresh token"
             log.warning(message, exc_info=1)
-            raise ForbiddenError(message)
+            raise ForbiddenError(message) from exc
 
     @staticmethod
     def get_blacklisted_tokens():
@@ -108,12 +109,14 @@ class JwtHandler:
         blacklisted_tokens_filename = "blacklisted_tokens.txt"
         try:
             with open(
-                Path(__file__).parent.parent.parent / blacklisted_tokens_filename, "r"
+                Path(__file__).parent.parent.parent / blacklisted_tokens_filename,
+                "r",
             ) as f:
                 tokens_list = f.read().split("\n")
                 return tokens_list
         except FileNotFoundError:
             log.debug(
-                "Blacklisted tokens file '%s' not found", blacklisted_tokens_filename
+                "Blacklisted tokens file '%s' not found",
+                blacklisted_tokens_filename,
             )
-            return list()
+            return []
