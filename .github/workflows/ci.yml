@@ -19,6 +19,10 @@ jobs:
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
+      # Install dependencies of python-ldap
+      - name: Install python-ldap dependencies
+        run: sudo apt-get install -y libsasl2-dev python${{ matrix.python-version }}-dev libldap2-dev libssl-dev
+
       # Setup Python and environment dependencies (via cache)
       - name: Setup Python
         uses: actions/setup-python@v4
