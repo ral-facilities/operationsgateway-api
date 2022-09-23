@@ -8,7 +8,13 @@ import uvicorn
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.logger_config import setup_logger
 from operationsgateway_api.src.mongo.connection import ConnectionInstance
-from operationsgateway_api.src.routes import auth, images, ingest_data, records, waveforms
+from operationsgateway_api.src.routes import (
+    auth,
+    images,
+    ingest_data,
+    records,
+    waveforms,
+)
 
 
 # Add custom response class to deal with NaN values ingested into MongoDB

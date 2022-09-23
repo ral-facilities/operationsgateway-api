@@ -46,6 +46,7 @@ class MongoDB(BaseModel):
 
 class AuthConfig(BaseModel):
     """Configuration model class to store authentication configuration details"""
+
     private_key_path: StrictStr
     public_key_path: StrictStr
     jwt_algorithm: StrictStr

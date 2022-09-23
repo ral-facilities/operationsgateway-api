@@ -13,11 +13,10 @@ algorithm = Config.config.auth.jwt_algorithm
 
 
 class JwtHandler:
-
     def __init__(self, user_document: dict):
         self.user_document = user_document
 
-    @staticmethod    
+    @staticmethod
     def _pack_jwt(payload: dict):
         """
         Packs a given payload into a jwt
@@ -101,16 +100,20 @@ class JwtHandler:
         """
         JWT refresh tokens (stored in a cookie) can be revoked if necessary in order to
         prevent malicious use of the system. In order to do this the full token string
-        must be added to a file "blacklisted_tokens.txt" which must be created at the 
+        must be added to a file "blacklisted_tokens.txt" which must be created at the
         top level of this project (where the config.yml file lives).
         Each token must be on a separate line.
         :return: a list of blacklisted refresh tokens
         """
         blacklisted_tokens_filename = "blacklisted_tokens.txt"
         try:
-            with open(Path(__file__).parent.parent.parent / blacklisted_tokens_filename, "r") as f:
+            with open(
+                Path(__file__).parent.parent.parent / blacklisted_tokens_filename, "r"
+            ) as f:
                 tokens_list = f.read().split("\n")
                 return tokens_list
         except FileNotFoundError:
-            log.debug("Blacklisted tokens file '%s' not found", blacklisted_tokens_filename)
+            log.debug(
+                "Blacklisted tokens file '%s' not found", blacklisted_tokens_filename
+            )
             return list()

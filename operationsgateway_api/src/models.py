@@ -46,7 +46,7 @@ class Record(BaseModel):
 class LoginDetails(BaseModel):
     username: str
     password: str
-    
+
 
 class AccessToken(BaseModel):
     token: str

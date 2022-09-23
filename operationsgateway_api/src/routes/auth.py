@@ -19,10 +19,14 @@ router = APIRouter()
     summary="Login with a username and password",
     response_description="A JWT access token (and a refresh token cookie)",
     responses={
-        401: {"description": "User not authorised (the user is not on the list of"
-        " allowed users or login details were incorrect)"},
-        500: {"description": "Login failed due to problems with the user's account"
-        " record"},
+        401: {
+            "description": "User not authorised (the user is not on the list of"
+            " allowed users or login details were incorrect)"
+        },
+        500: {
+            "description": "Login failed due to problems with the user's account"
+            " record"
+        },
     },
     tags=["Authentication"],
 )
@@ -34,8 +38,8 @@ async def login(
     ),
 ):
     """
-    This endpoint takes a username and password, authenticates the user and then 
-    returns a JWT access token in the response body and a JWT refresh token in a 
+    This endpoint takes a username and password, authenticates the user and then
+    returns a JWT access token in the response body and a JWT refresh token in a
     cookie.
     """
 
@@ -51,19 +55,17 @@ async def login(
     access_token = jwt_handler.get_access_token()
     refresh_token = jwt_handler.get_refresh_token()
     log.info(
-        "Refresh token assigned to '%s': %s", 
-        login_details.username, 
-        refresh_token
+        "Refresh token assigned to '%s': %s", login_details.username, refresh_token
     )
     response = JSONResponse(content=access_token)
     response.set_cookie(
-        key = "refresh_token",
-        value = refresh_token,
+        key="refresh_token",
+        value=refresh_token,
         max_age=604800,
-        secure = True,
-        httponly = True, 
-        samesite = "Lax",
-        path = "/refresh",
+        secure=True,
+        httponly=True,
+        samesite="Lax",
+        path="/refresh",
     )
     return response
 
@@ -91,13 +93,16 @@ async def verify(
     JwtHandler.verify_token(token.token)
     return Response(status_code=status.HTTP_200_OK)
 
+
 @router.post(
     "/refresh",
     summary="Generate an updated JWT access token using the JWT refresh token",
     response_description="A JWT access token",
     responses={
-        403: {"description": "There was a problem with the refresh token or a problem"
-        " updating the access token"},
+        403: {
+            "description": "There was a problem with the refresh token or a problem"
+            " updating the access token"
+        },
     },
     tags=["Authentication"],
 )

@@ -6,6 +6,7 @@ from operationsgateway_api.src.exceptions import ApiError
 
 log = logging.getLogger()
 
+
 def endpoint_error_handling(method):
     """
     Decorator to handle errors raised up to the top level of the endpoint
@@ -23,7 +24,7 @@ def endpoint_error_handling(method):
         except Exception as e:
             log.exception(msg=e.args, exc_info=1)
             # raise non-API errors as "unknown" server errors
-            # for security reasons responses should not return messages that might 
+            # for security reasons responses should not return messages that might
             # reveal details about the configuration of the server
             raise HTTPException(status_code=500, detail="Unknown error")
 
