@@ -12,7 +12,7 @@ class TestGetRecords:
         ", expected_channels_data",
         [
             pytest.param(
-                {},
+                {"metadata.shotnum": {"$exists": True}},
                 0,
                 2,
                 "metadata.shotnum ASC",
@@ -31,10 +31,10 @@ class TestGetRecords:
                 False,
                 [59],
                 [{"N_COMP_FF_XPOS": 323.75}],
-                id="Query with condition",
+                id="Query to retrieve specific shot",
             ),
             pytest.param(
-                {},
+                {"metadata.shotnum": {"$exists": True}},
                 0,
                 2,
                 "metadata.shotnum ASC",
