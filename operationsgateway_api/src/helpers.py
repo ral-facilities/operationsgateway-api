@@ -87,29 +87,11 @@ def is_shot_stored(document):
     return True if document else False
 
 
-async def is_waveform_stored(waveform_id):
-    waveform_exist = await MongoDBInterface.find_one(
-        "waveforms",
-        filter_={"_id": waveform_id},
-    )
-    return True if waveform_exist else False
-
-
-async def insert_waveforms(waveforms):
-    # Building a list of unstored waveforms is more reliable than removing items from
-    # the list that's being iterated over
-    new_waveforms = []
-    for w in waveforms:
-        DataEncoding.encode_numpy_for_mongo(w)
-        if not await is_waveform_stored(w["_id"]):
-            new_waveforms.append(w)
-
-    # MongoDB will raise a TypeError if the list is empty
-    if new_waveforms:
-        await MongoDBInterface.insert_many("waveforms", new_waveforms)
-
-
 def store_images(images):
+    # TODO - should we use a directory per ID? Will need a bit of code added
+    # to create directories for each ID to prevent a FileNotFoundError when
+    # saving the images
+    # TODO - generally catch some execptions here
     for path, data in images.items():
         image = Image.fromarray(data)
 
@@ -145,6 +127,7 @@ def store_image_thumbnails(record, thumbnails):
         record["channels"][channel_name]["thumbnail"] = thumbnail
 
 
+# TODO - not clearly named
 def create_image_plot(x, y, buf):
     # Making changes to plot so figure size and line width is correct and axes are
     # disabled

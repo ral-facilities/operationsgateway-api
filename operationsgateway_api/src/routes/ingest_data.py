@@ -8,13 +8,14 @@ from operationsgateway_api.src.hdf_handler import HDFDataHandler
 from operationsgateway_api.src.helpers import (
     create_image_thumbnails,
     create_waveform_thumbnails,
-    insert_waveforms,
     is_shot_stored,
     store_image_thumbnails,
     store_images,
     store_waveform_thumbnails,
 )
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
+from operationsgateway_api.src.records.ingestion_validator import IngestionValidator
+from operationsgateway_api.src.waveform import WaveformHandler
 
 
 log = logging.getLogger()
@@ -39,13 +40,10 @@ async def submit_hdf(file: UploadFile):
     log.info("Submitting CLF data in HDF file to be processed then stored in MongoDB")
     log.debug("Filename: %s, Content: %s", file.filename, file.content_type)
 
-    file_contents = await file.read()
-    hdf_file = HDFDataHandler.convert_to_hdf_from_request(file_contents)
+    hdf_handler = HDFDataHandler(file.file)
+    record, waveforms, images = hdf_handler.extract_data()
 
-    record, waveforms, images = HDFDataHandler.extract_hdf_data(hdf_file=hdf_file)
-    DataEncoding.encode_numpy_for_mongo(record)
-
-    await insert_waveforms(waveforms)
+    await WaveformHandler.insert_waveforms(waveforms)
     store_images(images)
 
     # Create and store thumbnails from stored images
@@ -55,20 +53,23 @@ async def submit_hdf(file: UploadFile):
     waveform_thumbnails = create_waveform_thumbnails(waveforms)
     store_waveform_thumbnails(record, waveform_thumbnails)
 
+    ingest_checker = IngestionValidator.with_stored_record(record)
+    # TODO - sort out names for these below
     shot_document = await MongoDBInterface.find_one(
         "records",
         filter_={"_id": record["_id"]},
     )
-    shot_exist = is_shot_stored(shot_document)
-
-    if shot_exist:
+    # TODO - test, it might be broken
+    if ingest_checker.stored_record:
         # When an existing shot is stored, overwrite the newly generated ID with the one
         # that already exists in the database
+        # TODO - needs some thinking about if `ingested_record` is now in self
         record["_id"] = shot_document["_id"]
 
         # Cycle through data and detect repeating data
         # Any remaining data should be put into MongoDB via update_one()
-        remaining_request_data = HDFDataHandler.search_existing_data(
+
+        remaining_request_data = IngestionValidator.search_existing_data(
             record,
             shot_document,
         )
