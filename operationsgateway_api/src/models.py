@@ -1,7 +1,8 @@
-from typing import List, Optional
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Union
 
 from bson import ObjectId
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 
 class PyObjectId(ObjectId):
@@ -49,3 +50,80 @@ class RecordsQueryParams:
     limit: int
     order: Optional[List[str]]
     projection: Optional[List[str]]
+
+
+# Not sure if I'll need this or not
+class Channel(BaseModel):
+    pass
+
+
+class Image(BaseModel):
+    path: str
+    # TODO - data, name and type
+    data: Any
+
+
+class Waveform(BaseModel):
+    _id: str
+    # TODO - probably should change this to str only to match how it's stored in DB
+    x: List[str]
+    y: List[str]
+
+    @validator("x", "y", pre=True, always=True)
+    def encode_values(cls, value):
+        return list(value)
+
+
+class ImageChannelMetadata(BaseModel):
+    # TODO - could we have a channel data type model to restrict acceptable values:
+    # export type DataType = 'scalar' | 'image' | 'waveform';
+    channel_dtype: str
+    exposure_time_s: Optional[float]
+    gain: Optional[float]
+    x_pixel_size: Optional[float]
+    x_pixel_units: Optional[str]
+    y_pixel_size: Optional[float]
+    y_pixel_units: Optional[str]
+
+
+class ImageChannel(BaseModel):
+    metadata: ImageChannelMetadata
+    image_path: str
+    thumbnail: Optional[str]
+
+
+class ScalarChannelMetadata(BaseModel):
+    channel_dtype: str
+    units: Optional[str]
+
+
+class ScalarChannel(BaseModel):
+    metadata: ScalarChannelMetadata
+    # TODO - check the type on this works, shot num channel should still be an integer
+    data: Union[float, int, str]
+
+
+class WaveformChannelMetadata(BaseModel):
+    channel_dtype: str
+    x_units: Optional[str]
+    y_units: Optional[str]
+
+
+class WaveformChannel(BaseModel):
+    metadata: WaveformChannelMetadata
+    thumbnail: Optional[str]
+    waveform_id: str
+
+
+class RecordMetadata(BaseModel):
+    epac_ops_data_version: str
+    shotnum: Optional[int]
+    timestamp: datetime
+
+
+# TODO - rename when I've removed the original Record model above
+class RecordM(BaseModel):
+    _id: str
+    metadata: RecordMetadata
+    # TODO - channels type
+    channels: Dict[str, Union[ImageChannel, ScalarChannel, WaveformChannel]]
