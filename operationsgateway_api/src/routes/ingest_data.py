@@ -4,7 +4,7 @@ from fastapi import APIRouter, status, UploadFile
 from fastapi.responses import JSONResponse
 
 from operationsgateway_api.src.data_encoding import DataEncoding
-from operationsgateway_api.src.hdf_handler import HDFDataHandler
+from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
 from operationsgateway_api.src.helpers import (
     store_waveform_thumbnails,
 )

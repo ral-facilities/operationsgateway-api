@@ -23,7 +23,6 @@ from operationsgateway_api.src.records.image import Image as ImageClass
 log = logging.getLogger()
 
 
-# TODO - put class into `records/`
 class HDFDataHandler:
     def __init__(self, hdf_temp_file: SpooledTemporaryFile):
         """
@@ -56,6 +55,7 @@ class HDFDataHandler:
         images = []
 
         for channel_name, value in self.hdf_file.items():
+            # TODO - move this stuff into a separate function?
             channel_metadata = dict(value.attrs)
 
             if value.attrs["channel_dtype"] == "image":
