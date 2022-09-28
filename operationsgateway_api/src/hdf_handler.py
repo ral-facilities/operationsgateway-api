@@ -17,6 +17,7 @@ from operationsgateway_api.src.models import (
     WaveformChannel,
     WaveformChannelMetadata,
 )
+from operationsgateway_api.src.records.image import Image as ImageClass
 
 
 log = logging.getLogger()
@@ -58,7 +59,9 @@ class HDFDataHandler:
             channel_metadata = dict(value.attrs)
 
             if value.attrs["channel_dtype"] == "image":
-                image_path = self.create_image_path(channel_name)
+                image_path = ImageClass.get_image_path(
+                    self.record_id, channel_name, full_path=False,
+                )
                 images.append(Image(path=image_path, data=value["data"][()]))
 
                 try:
@@ -72,7 +75,9 @@ class HDFDataHandler:
             elif value.attrs["channel_dtype"] == "rgb-image":
                 # TODO - when we don't want random noise anymore, we could probably
                 # combine this code with greyscale images, its the same implementation
-                image_path = self.create_image_path(channel_name)
+                image_path = ImageClass.get_image_path(
+                    self.record_id, channel_name, full_path=False,
+                )
 
                 # TODO - refactor this branch
                 """
@@ -137,6 +142,3 @@ class HDFDataHandler:
 
         # TODO - put these in self?
         return record, waveforms, images
-
-    def create_image_path(self, channel_name):
-        return f"{self.record_id}/{channel_name}.png"

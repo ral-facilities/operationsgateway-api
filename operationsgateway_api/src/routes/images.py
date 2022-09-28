@@ -5,6 +5,7 @@ from fastapi import APIRouter, Path, Query
 from fastapi.responses import FileResponse
 
 from operationsgateway_api.src.config import Config
+from operationsgateway_api.src.records.image import Image
 
 log = logging.getLogger()
 router = APIRouter()
@@ -50,15 +51,6 @@ async def get_full_image(
     """
 
     if string_response:
-        with open(
-            f"{Config.config.mongodb.image_store_directory}/{record_id}/{channel_name}"
-            ".png",
-            "rb",
-        ) as image_file:
-            image_string = base64.b64encode(image_file.read())
-        return image_string
+        return Image.get_image(record_id, channel_name)
     else:
-        return FileResponse(
-            f"{Config.config.mongodb.image_store_directory}/{record_id}/{channel_name}"
-            ".png",
-        )
+        return FileResponse(Image.get_image_path(record_id, channel_name))

@@ -83,29 +83,6 @@ def encode_date_for_conditions(value):
         return new_date
 
 
-def is_shot_stored(document):
-    return True if document else False
-
-
-def store_images(images):
-    # TODO - should we use a directory per ID? Will need a bit of code added
-    # to create directories for each ID to prevent a FileNotFoundError when
-    # saving the images
-    # TODO - generally catch some execptions here
-    for path, data in images.items():
-        image = Image.fromarray(data)
-
-        record_directory = "".join(path.split("/")[:-1])
-        if not os.path.exists(
-            f"{Config.config.mongodb.image_store_directory}/{record_directory}",
-        ):
-            os.makedirs(
-                f"{Config.config.mongodb.image_store_directory}/{record_directory}",
-            )
-
-        image.save(f"{Config.config.mongodb.image_store_directory}/{path}")
-
-
 def create_image_thumbnails(image_paths):
     thumbnails = {}
 
