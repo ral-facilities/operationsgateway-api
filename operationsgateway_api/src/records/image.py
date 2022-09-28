@@ -19,7 +19,7 @@ class Image:
             print(f"IMAGE DATA NOT IN CORRECT FORMAT FOR PIL: {e}")
 
     def store(self):
-        record_id, _ = Image.extract_metadata_from_path(self.image.path)
+        record_id, _ = self.extract_metadata_from_path()
 
         try:
             os.makedirs(
@@ -41,6 +41,12 @@ class Image:
             f"{Config.config.mongodb.image_store_directory}/{self.image.path}",
         )
         self.thumbnail = ThumbnailHandler.convert_to_base64(img)
+    
+    def extract_metadata_from_path(self):
+        record_id = self.image.path.split("/")[-2]
+        channel_name = self.image.path.split("/")[-1].split(".")[0]
+
+        return record_id, channel_name
 
     @staticmethod
     def get_image(record_id, channel_name):
@@ -63,11 +69,3 @@ class Image:
             )
         else:
             return f"{record_id}/{channel_name}.png"
-
-    # TODO - work out if this needs to be static when storing image thumbnails
-    @staticmethod
-    def extract_metadata_from_path(path):
-        record_id = path.split("/")[-2]
-        channel_name = path.split("/")[-1].split(".")[0]
-
-        return record_id, channel_name

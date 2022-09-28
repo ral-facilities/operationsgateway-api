@@ -82,32 +82,6 @@ def encode_date_for_conditions(value):
         return new_date
 
 
-def store_image_thumbnails(record, thumbnails):
-    for image_path, thumbnail in thumbnails.items():
-        # TODO - extracting the channel name from the path should be thoroughly unit
-        # tested. Probably best to put this code into its own function
-        # TODO - could extract using extract_metadata_from_path()?
-        shot_channel = image_path.split("/")[-1]
-        channel_name = shot_channel.split(".")[0]
-
-        record["channels"][channel_name]["thumbnail"] = thumbnail
-
-
-def store_waveform_thumbnails(record, thumbnails):
-    # TODO - fairly scruffy code, I'd like to have the channel name given to this
-    # function really. Or combining it with the image version of this function so we can
-    # abstract fetching the channel name
-    for _id, thumbnail in thumbnails.items():
-        for channel_name, value in record["channels"].items():
-            try:
-                if _id == value["waveform_id"]:
-                    record["channels"][channel_name]["thumbnail"] = thumbnail
-            except KeyError:
-                # A KeyError here will be because the channel isn't a waveform. This is
-                # normal behaviour and is acceptable to pass
-                pass
-
-
 def truncate_thumbnail_output(record):
     for value in record["channels"].values():
         try:

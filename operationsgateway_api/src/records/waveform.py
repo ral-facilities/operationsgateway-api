@@ -25,6 +25,11 @@ class Waveform:
             self._create_plot(waveform_image_buffer)
             self.thumbnail = base64.b64encode(waveform_image_buffer.getvalue())
 
+    def get_channel_name_from_id(self):
+        # TODO - add docstring
+        # 20220408140310_N_COMP_SPEC_TRACE -> N_COMP_SPEC_TRACE
+        return "_".join(self.waveform.id_.split("_")[1:])
+
     async def _is_waveform_stored(self) -> bool:
         waveform_exist = await MongoDBInterface.find_one(
             "waveforms", filter_={"_id": self.waveform.id_},
