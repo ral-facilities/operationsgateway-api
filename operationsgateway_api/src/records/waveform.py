@@ -2,7 +2,6 @@ import base64
 from io import BytesIO
 import matplotlib.pyplot as plt
 
-from operationsgateway_api.src.data_encoding import DataEncoding
 from operationsgateway_api.src.models import Waveform as WaveformModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 

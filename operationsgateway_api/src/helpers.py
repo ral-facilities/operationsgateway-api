@@ -12,7 +12,6 @@ from PIL import Image
 import pymongo
 
 from operationsgateway_api.src.config import Config
-from operationsgateway_api.src.data_encoding import DataEncoding
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
 log = logging.getLogger()
