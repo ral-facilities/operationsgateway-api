@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, Path
 
 from operationsgateway_api.src.models import Record
-from operationsgateway_api.src.mongo.interface import MongoDBInterface
+from operationsgateway_api.src.records.waveform import Waveform
 
 
 log = logging.getLogger()
@@ -50,10 +50,7 @@ async def get_waveform_by_id(
 
     log.info("Getting waveform by ID: %s", waveform_id)
 
-    waveform = await MongoDBInterface.find_one(
-        "waveforms",
-        {"_id": waveform_id},
-    )
+    waveform = await Waveform.get_waveform(waveform_id)
 
     # TODO - need to make that model more generic, not specific to records. Or make a
     # separate model probably

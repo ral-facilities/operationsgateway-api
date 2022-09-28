@@ -15,7 +15,7 @@ from operationsgateway_api.src.helpers import (
 )
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.ingestion_validator import IngestionValidator
-from operationsgateway_api.src.waveform import WaveformHandler
+from operationsgateway_api.src.records.waveform import Waveform
 
 
 log = logging.getLogger()
@@ -43,8 +43,10 @@ async def submit_hdf(file: UploadFile):
     hdf_handler = HDFDataHandler(file.file)
     record, waveforms, images = hdf_handler.extract_data()
 
-    await WaveformHandler.insert_waveforms(waveforms)
-    store_images(images)
+    for w in waveforms:
+        waveform = Waveform(w)
+        await waveform.insert_waveform()
+
 
     # Create and store thumbnails from stored images
     image_thumbnails = create_image_thumbnails(images.keys())
