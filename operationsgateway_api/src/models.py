@@ -66,8 +66,8 @@ class Image(BaseModel):
 class Waveform(BaseModel):
     id_: str = Field(alias="_id")
     # TODO - probably should change this to str only to match how it's stored in DB
-    x: List[str]
-    y: List[str]
+    x: List[float]
+    y: List[float]
 
     @validator("x", "y", pre=True, always=True)
     def encode_values(cls, value):

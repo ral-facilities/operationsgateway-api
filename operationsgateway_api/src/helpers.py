@@ -83,68 +83,15 @@ def encode_date_for_conditions(value):
         return new_date
 
 
-def create_image_thumbnails(image_paths):
-    thumbnails = {}
-
-    for path in image_paths:
-        image = Image.open(f"{Config.config.mongodb.image_store_directory}/{path}")
-        create_thumbnail(image, Config.config.app.image_thumbnail_size)
-        thumbnails[path] = convert_image_to_base64(image)
-
-    return thumbnails
-
-
 def store_image_thumbnails(record, thumbnails):
     for image_path, thumbnail in thumbnails.items():
         # TODO - extracting the channel name from the path should be thoroughly unit
         # tested. Probably best to put this code into its own function
+        # TODO - could extract using extract_metadata_from_path()?
         shot_channel = image_path.split("/")[-1]
         channel_name = shot_channel.split(".")[0]
 
         record["channels"][channel_name]["thumbnail"] = thumbnail
-
-
-# TODO - not clearly named
-def create_image_plot(x, y, buf):
-    # Making changes to plot so figure size and line width is correct and axes are
-    # disabled
-    plt.rcParams["figure.figsize"] = [1, 0.75]
-    plt.xticks([])
-    plt.yticks([])
-    plt.plot(x, y, linewidth=0.5)
-    plt.axis("off")
-    plt.box(False)
-
-    plt.savefig(buf, format="PNG", bbox_inches="tight", pad_inches=0, dpi=130)
-    # Flushes the plot to remove data from previously ingested waveforms
-    plt.clf()
-
-
-def create_thumbnail(image: Image.Image, max_size: tuple) -> None:
-    image.thumbnail(max_size)
-
-
-def convert_image_to_base64(image: Image.Image) -> bytes:
-    with BytesIO() as buf:
-        image.save(buf, format="PNG")
-        return base64.b64encode(buf.getvalue())
-
-
-def create_waveform_thumbnails(waveforms):
-    thumbnails = {}
-
-    for waveform in waveforms:
-        with BytesIO() as plot_buffer:
-            # TODO - S307 linting error
-            create_image_plot(
-                list(eval(waveform["x"])),  # noqa: S307
-                list(eval(waveform["y"])),  # noqa: S307
-                plot_buffer,
-            )
-            waveform_image = Image.open(plot_buffer)
-            thumbnails[waveform["_id"]] = convert_image_to_base64(waveform_image)
-
-    return thumbnails
 
 
 def store_waveform_thumbnails(record, thumbnails):

@@ -5,19 +5,20 @@ from PIL import Image as PILImage
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.models import Image as ImageModel
+from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
 
 
 class Image:
     def __init__(self, image: ImageModel):
         self.image = image
 
-    def store(self):
         try:
-            img = PILImage.fromarray(self.image.data)
+            self.image_buffer = PILImage.fromarray(self.image.data)
         except TypeError as e:
             # TODO - add proper exception
             print(f"IMAGE DATA NOT IN CORRECT FORMAT FOR PIL: {e}")
 
+    def store(self):
         record_id, _ = Image.extract_metadata_from_path(self.image.path)
 
         try:
@@ -25,10 +26,30 @@ class Image:
                 f"{Config.config.mongodb.image_store_directory}/{record_id}",
                 exist_ok=True,
             )
-            img.save(f"{Config.config.mongodb.image_store_directory}/{self.image.path}")
+            self.image_buffer.save(
+                f"{Config.config.mongodb.image_store_directory}/{self.image.path}",
+            )
         except OSError as e:
             # TODO - add proper exception
             print(f"IMAGE DIRECTORY CREATION OR IMAGE SAVE BROKE: {e}")
+
+    def create_thumbnail(self):
+        # TODO - do I really need to open the image? If yes, having `image_buffer`
+        # stored in the object itself is pointless
+        #self.image_buffer.thumbnail(Config.config.app.image_thumbnail_size)
+        img = PILImage.open(
+            f"{Config.config.mongodb.image_store_directory}/{self.image.path}",
+        )
+        self.thumbnail = ThumbnailHandler.convert_to_base64(img)
+
+    @staticmethod
+    def get_image(record_id, channel_name):
+        try:
+            with open(Image.get_image_path(record_id, channel_name), "rb") as file:
+                return base64.b64encode(file.read())
+        except OSError as e:
+            # TODO - add proper exception
+            print(f"FILE COULD NOT BE OPENED: {e}")
 
     @staticmethod
     def get_image_path(record_id, channel_name, full_path=True):
@@ -42,19 +63,11 @@ class Image:
             )
         else:
             return f"{record_id}/{channel_name}.png"
-    
+
+    # TODO - work out if this needs to be static when storing image thumbnails
     @staticmethod
     def extract_metadata_from_path(path):
         record_id = path.split("/")[-2]
         channel_name = path.split("/")[-1].split(".")[0]
 
         return record_id, channel_name
-
-    @staticmethod
-    def get_image(record_id, channel_name):
-        try:
-            with open(Image.get_image_path(record_id, channel_name), "rb") as file:
-                return base64.b64encode(file.read())
-        except OSError as e:
-            # TODO - add proper exception
-            print(f"FILE COULD NOT BE OPENED: {e}")

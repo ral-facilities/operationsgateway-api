@@ -6,9 +6,6 @@ from fastapi.responses import JSONResponse
 from operationsgateway_api.src.data_encoding import DataEncoding
 from operationsgateway_api.src.hdf_handler import HDFDataHandler
 from operationsgateway_api.src.helpers import (
-    create_image_thumbnails,
-    create_waveform_thumbnails,
-    store_image_thumbnails,
     store_waveform_thumbnails,
 )
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
@@ -42,20 +39,22 @@ async def submit_hdf(file: UploadFile):
     hdf_handler = HDFDataHandler(file.file)
     record, waveforms, images = hdf_handler.extract_data()
 
+    # TODO - move ingestion validation/check whether to reject the file here?
+
     for w in waveforms:
         waveform = Waveform(w)
         await waveform.insert_waveform()
+        waveform.create_thumbnail()
 
     for i in images:
         image = Image(i)
         image.store()
+        image.create_thumbnail()
+        #image.encode_thumbnail()
 
-    # Create and store thumbnails from stored images
-    image_thumbnails = create_image_thumbnails(images.keys())
-    store_image_thumbnails(record, image_thumbnails)
-
-    waveform_thumbnails = create_waveform_thumbnails(waveforms)
-    store_waveform_thumbnails(record, waveform_thumbnails)
+    # TODO - need to sort out storing thumbnails
+    #store_image_thumbnails(record, image_thumbnails)
+    #store_waveform_thumbnails(record, waveform_thumbnails)
 
     ingest_checker = IngestionValidator.with_stored_record(record)
     # TODO - sort out names for these below
