@@ -66,12 +66,12 @@ class Image(BaseModel):
 class Waveform(BaseModel):
     id_: str = Field(alias="_id")
     # TODO - probably should change this to str only to match how it's stored in DB
-    x: List[float]
-    y: List[float]
+    x: str
+    y: str
 
     @validator("x", "y", pre=True, always=True)
     def encode_values(cls, value):
-        return list(value)
+        return str(list(value))
 
 
 class ImageChannelMetadata(BaseModel):
@@ -124,7 +124,7 @@ class RecordMetadata(BaseModel):
 
 # TODO - rename when I've removed the original Record model above
 class RecordM(BaseModel):
-    _id: str
+    id_: str = Field(alias="_id")
     metadata: RecordMetadata
     # TODO - channels type
     channels: Dict[str, Union[ImageChannel, ScalarChannel, WaveformChannel]]

@@ -132,6 +132,7 @@ class HDFDataHandler:
             channels[channel_name] = channel
 
         try:
+            # TODO - remove the M
             record = RecordM(
                 _id=self.record_id,
                 metadata=RecordMetadata(**metadata_hdf),

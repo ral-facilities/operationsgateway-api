@@ -39,6 +39,7 @@ async def submit_hdf(file: UploadFile):
 
     # TODO - move ingestion validation/check whether to reject the file here?
 
+    # TODO - might need some logging?
     for w in waveforms:
         waveform = Waveform(w)
         await waveform.insert_waveform()
@@ -51,56 +52,36 @@ async def submit_hdf(file: UploadFile):
         image.create_thumbnail()
         record.store_thumbnail(image)
 
-    ingest_checker = IngestionValidator.with_stored_record(record_data)
-    # TODO - sort out names for these below
-    shot_document = await MongoDBInterface.find_one(
-        "records",
-        filter_={"_id": record_data["_id"]},
-    )
+    stored_record = await record.find_existing_record()
+    ingest_checker = IngestionValidator(record_data, stored_record)
+
+    if stored_record:
+        await record.update()
+        return f"Updated {stored_record.id_}"
+    else:
+        await record.insert()
+        return JSONResponse(
+            record.record.id_,
+            status_code=status.HTTP_201_CREATED,
+            headers={"Location": f"/records/{record.record.id_}"},
+        )
+
+    """
     # TODO - test, it might be broken
     if ingest_checker.stored_record:
-        # When an existing shot is stored, overwrite the newly generated ID with the one
-        # that already exists in the database
-        # TODO - needs some thinking about if `ingested_record` is now in self
-        record_data["_id"] = shot_document["_id"]
-
         # Cycle through data and detect repeating data
         # Any remaining data should be put into MongoDB via update_one()
-
+        # TODO - needs uncommenting once the class is fixed
+        remaining_request_data = record
+        '''
         remaining_request_data = IngestionValidator.search_existing_data(
             record_data,
-            shot_document,
+            stored_record,
         )
+        '''
         log.debug("Remaining data: %s", remaining_request_data.keys())
         if remaining_request_data:
-            # This update query has been split into two one (which is iterated in a
-            # loop) to add record metadata, and another to add each of the channels.
-            # Based on some quick dev testing while making sure it worked, this doesn't
-            # slow down ingestion times
-            for metadata_key, value in remaining_request_data["metadata"].items():
-                await MongoDBInterface.update_one(
-                    "records",
-                    {"_id": remaining_request_data["_id"]},
-                    {"$set": {f"metadata.{metadata_key}": value}},
-                )
-
-            for channel_name, channel_data in remaining_request_data[
-                "channels"
-            ].items():
-                await MongoDBInterface.update_one(
-                    "records",
-                    {"_id": remaining_request_data["_id"]},
-                    {"$set": {f"channels.{channel_name}": channel_data}},
-                )
-
-            return f"Updated {str(shot_document['_id'])}"
+            return f"Updated {str(stored_record['_id'])}"
         else:
-            return f"{str(shot_document['_id'])} not updated, no new data"
-    else:
-        data_insert = await MongoDBInterface.insert_one("records", record_data)
-        inserted_id = MongoDBInterface.get_inserted_id(data_insert)
-        return JSONResponse(
-            inserted_id,
-            status_code=status.HTTP_201_CREATED,
-            headers={"Location": f"/records/{inserted_id}"},
-        )
+            return f"{str(stored_record['_id'])} not updated, no new data"
+    """

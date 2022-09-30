@@ -146,12 +146,3 @@ class MongoDBInterface:
 
         collection = MongoDBInterface.get_collection_object(collection_name)
         return await collection.count_documents(filter_)
-
-    @staticmethod
-    def get_inserted_id(document):
-        """
-        Get the ID of the newly added document. This is likely to be used in
-        correpsondance with `insert_one()`
-        """
-
-        return str(document.inserted_id)

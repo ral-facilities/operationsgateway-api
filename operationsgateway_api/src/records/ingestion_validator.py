@@ -8,16 +8,9 @@ log = logging.getLogger()
 
 
 class IngestionValidator:
-    def __init__(self, ingested_record):
+    def __init__(self, ingested_record, stored_record):
         self.ingested_record = ingested_record
-
-    @classmethod
-    async def with_stored_record(cls, ingested_record):
-        self = cls(ingested_record)
-        self.stored_record = await MongoDBInterface.find_one(
-            "records",
-            filter_={"_id": self.ingested_record["_id"]},
-        )
+        self.stored_record = stored_record
 
     # TODO - could be named/placed better?
     @staticmethod
@@ -55,8 +48,8 @@ class IngestionValidator:
 
         return input_data
 
-
-    # TODO - where is this used?
+    # TODO - not used outside of the class, remove static
+    # TODO - fix, doesn't work with the record model objects
     @staticmethod
     def flatten_data_dict(data, parent_key=""):
         items = []
