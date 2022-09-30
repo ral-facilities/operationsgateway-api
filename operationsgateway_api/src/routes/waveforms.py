@@ -51,8 +51,4 @@ async def get_waveform_by_id(
     log.info("Getting waveform by ID: %s", waveform_id)
 
     # TODO - add 404
-    waveform = await Waveform.get_waveform(waveform_id)
-
-    # TODO - need to make that model more generic, not specific to records. Or make a
-    # separate model probably
-    return Record.construct(waveform.keys(), **waveform)
+    return await Waveform.get_waveform(waveform_id)

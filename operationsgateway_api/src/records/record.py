@@ -1,12 +1,22 @@
 from typing import Union
-from operationsgateway_api.src.models import RecordM as RecordModel
+from operationsgateway_api.src.models import Record as RecordModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
 from operationsgateway_api.src.records.waveform import Waveform
 
 class Record:
     def __init__(self, record: RecordModel) -> None:
-        self.record = record
+        if isinstance(record, RecordModel):
+            self.record = record
+        elif isinstance(record, dict):
+            # TODO - check there's exception handling around everytime a model is created
+            print(record.keys())
+            self.record = RecordModel(**record)
+        else:
+            # TODO - should we be defensive and raise an exception?
+            pass
+
         # TODO - is this needed?
         self.is_stored = False
     
@@ -58,3 +68,41 @@ class Record:
             return existing_record
         else:
             return None
+
+    @staticmethod
+    async def find_record(conditions, skip, limit, sort, projection):
+        records_query = MongoDBInterface.find(
+            collection_name="records",
+            filter_=conditions,
+            skip=skip,
+            limit=limit,
+            sort=sort,
+            projection=projection,
+        )
+        records_data = await MongoDBInterface.query_to_list(records_query)
+        return records_data
+    
+    @staticmethod
+    async def find_record_by_id(id_, conditions):
+        return await MongoDBInterface.find_one(
+            "records",
+            {"_id": id_, **conditions},
+        )
+
+    @staticmethod
+    async def count_records(conditions):
+        return await MongoDBInterface.count_documents("records", conditions)
+
+    @staticmethod
+    async def delete_record(id_):
+        return await MongoDBInterface.delete_one("records", {"_id": id_})
+
+    @staticmethod
+    def truncate_thumbnails(record):
+        for value in record["channels"].values():
+            try:
+                value["thumbnail"] = value["thumbnail"][:50]
+            except KeyError:
+                # If there's no thumbnails (e.g. if channel isn't an image or waveform) then
+                # a KeyError will be raised. This is normal behaviour, so acceptable to pass
+                pass

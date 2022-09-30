@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
 from bson import ObjectId
+import numpy as np
 from pydantic import BaseModel, Field, validator
 
 
@@ -22,28 +23,7 @@ class PyObjectId(ObjectId):
         field_schema.update(type="string")
 
 
-class Record(BaseModel):
-    id_: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    # title: Optional[str]
-
-    """
-    #@root_validator(pre=True)
-    @classmethod
-    def build_data(cls, mongo_data):
-        pydantic_record_field_names = cls.__fields__
-
-        for key, value in mongo_data.items():
-            if key not in pydantic_record_field_names:
-                setattr(cls, key, value)
-
-        return cls
-    """
-
-    class Config:
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
-
-
+# TODO - has this been used?
 class RecordsQueryParams:
     filter_: dict
     skip: int
@@ -52,7 +32,7 @@ class RecordsQueryParams:
     projection: Optional[List[str]]
 
 
-# Not sure if I'll need this or not
+# TODO - Not sure if I'll need this or not
 class Channel(BaseModel):
     pass
 
@@ -71,7 +51,12 @@ class Waveform(BaseModel):
 
     @validator("x", "y", pre=True, always=True)
     def encode_values(cls, value):
-        return str(list(value))
+        if isinstance(value, np.ndarray):
+            return str(list(value))
+        else:
+            # Typically will be a string when putting waveform data into the model from
+            # results of a MongoDB query
+            return value
 
 
 class ImageChannelMetadata(BaseModel):
@@ -118,12 +103,13 @@ class WaveformChannel(BaseModel):
 
 class RecordMetadata(BaseModel):
     epac_ops_data_version: str
+    # TODO - if there's no shotnum, it ingested as null. Don't want this
     shotnum: Optional[int]
     timestamp: datetime
 
 
 # TODO - rename when I've removed the original Record model above
-class RecordM(BaseModel):
+class Record(BaseModel):
     id_: str = Field(alias="_id")
     metadata: RecordMetadata
     # TODO - channels type

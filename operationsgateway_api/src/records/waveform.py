@@ -55,7 +55,9 @@ class Waveform:
 
     @staticmethod
     async def get_waveform(waveform_id):
-        return await MongoDBInterface.find_one(
+        waveform_data = await MongoDBInterface.find_one(
             "waveforms",
             {"_id": waveform_id},
         )
+
+        return WaveformModel(**waveform_data)

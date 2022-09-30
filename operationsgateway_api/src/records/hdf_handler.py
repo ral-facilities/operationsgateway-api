@@ -10,7 +10,7 @@ from operationsgateway_api.src.models import (
     ImageChannel,
     ImageChannelMetadata,
     RecordMetadata,
-    RecordM,
+    Record,
     ScalarChannel,
     ScalarChannelMetadata,
     Waveform,
@@ -132,8 +132,7 @@ class HDFDataHandler:
             channels[channel_name] = channel
 
         try:
-            # TODO - remove the M
-            record = RecordM(
+            record = Record(
                 _id=self.record_id,
                 metadata=RecordMetadata(**metadata_hdf),
                 channels=channels,
@@ -141,5 +140,4 @@ class HDFDataHandler:
         except ValidationError as e:
             print(f"RECORD CREATION BROKE: {e}")
 
-        # TODO - put these in self?
         return record, waveforms, images
