@@ -3,7 +3,10 @@ import logging
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Path, Query, Response
-
+from operationsgateway_api.src.auth.authorisation import (
+    authorise_route, 
+    authorise_token,
+)
 from operationsgateway_api.src.helpers import (
     encode_date_for_conditions,
     extract_order_data,
@@ -58,6 +61,7 @@ async def get_records(
         description="Parameter used for development to reduce the output of thumbnail"
         " strings to 50 characters",
     ),
+    access_token: str = Depends(authorise_token),
 ):
     """
     This endpoint uses MongoDB's find() method to query the records
@@ -97,7 +101,10 @@ async def get_records(
     response_description="Record count",
     tags=["Records"],
 )
-async def count_records(conditions: dict = Depends(filter_conditions)):  # noqa: B008
+async def count_records(
+    conditions: dict = Depends(filter_conditions),  # noqa: B008
+    access_token: str = Depends(authorise_token),
+):
     """
     This endpoint uses the `conditions` query parameter (i.e. like a WHERE filter) in
     the same way as GET `/records`. For example, there is a WHERE filter is not
@@ -129,6 +136,7 @@ async def get_record_by_id(
         description="Parameter used for development to reduce the output of thumbnail"
         " strings to 50 characters",
     ),
+    access_token: str = Depends(authorise_token),
 ):
     """
     Get a single record by its ID. The `conditions` query parameter exists but a
@@ -162,6 +170,7 @@ async def delete_record_by_id(
         ...,
         description="`_id` of the record to delete from the database",
     ),
+    access_token: str = Depends(authorise_route),
 ):
     # TODO - full implementation will require searching through waveform channels to
     # remove the documents in the waveforms collection. The images will need to be

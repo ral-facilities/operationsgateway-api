@@ -1,9 +1,10 @@
 import base64
 import logging
 
-from fastapi import APIRouter, Path, Query
+from fastapi import APIRouter, Depends, Path, Query
 from fastapi.responses import FileResponse
 
+from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.config import Config
 
 log = logging.getLogger()
@@ -42,6 +43,7 @@ async def get_full_image(
         description="Return image as a base64 encoded string (true) or as a .png file"
         " (false)",
     ),
+    access_token: str = Depends(authorise_token),
 ):
     """
     This endpoint can be used to retrieve a full-size image by specifying the shot
