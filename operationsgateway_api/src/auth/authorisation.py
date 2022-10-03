@@ -16,7 +16,7 @@ security = HTTPBearer()
 @endpoint_error_handling
 async def authorise_token(
     request: Request,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    credentials: HTTPAuthorizationCredentials = Depends(security),  # noqa: B008
 ) -> str:
     """
     Method to check that a valid access token is passed as a Bearer token in the
@@ -33,7 +33,7 @@ async def authorise_token(
 @endpoint_error_handling
 async def authorise_route(
     request: Request,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    credentials: HTTPAuthorizationCredentials = Depends(security),  # noqa: B008
 ) -> str:
     """
     Method to check that a valid access token is passed as a Bearer token in the
@@ -52,6 +52,9 @@ async def authorise_route(
         if endpoint_path_from_mapping in payload_dict["authorised_routes"]:
             return access_token
     # getting this far means the user is not authorised for this endpoint
-    msg = f"User '{payload_dict['username']}' is not authorised to use endpoint '{endpoint_path_from_mapping}'"
+    msg = (
+        f"User '{payload_dict['username']}' is not authorised "
+        f"to use endpoint '{endpoint_path_from_mapping}'"
+    )
     log.warning(msg)
     raise ForbiddenError(msg)

@@ -43,7 +43,7 @@ async def get_full_image(
         description="Return image as a base64 encoded string (true) or as a .png file"
         " (false)",
     ),
-    access_token: str = Depends(authorise_token),
+    access_token: str = Depends(authorise_token),  # noqa: B008
 ):
     """
     This endpoint can be used to retrieve a full-size image by specifying the shot
