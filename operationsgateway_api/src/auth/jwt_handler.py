@@ -34,7 +34,7 @@ class JwtHandler:
         """
         payload = {}
         payload["username"] = self.user_document["_id"]
-        payload["groups"] = self.user_document["groups"]
+        payload["authorised_routes"] = self.user_document["authorised_routes"]
         payload["exp"] = datetime.now(timezone.utc) + timedelta(
             minutes=Config.config.auth.access_token_validity_mins,
         )
