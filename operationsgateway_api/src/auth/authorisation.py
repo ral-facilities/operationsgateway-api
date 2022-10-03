@@ -15,7 +15,7 @@ security = HTTPBearer()
 
 @endpoint_error_handling
 async def authorise_token(
-    request: Request, 
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> str:
     """
@@ -45,7 +45,7 @@ async def authorise_route(
     """
     access_token = credentials.credentials
     payload_dict = JwtHandler.verify_token(access_token)
-    request_endpoint_function = request.scope['endpoint']
+    request_endpoint_function = request.scope["endpoint"]
     endpoint_path_from_mapping = ROUTE_MAPPINGS[request_endpoint_function]
     log.debug("endpoint_path_from_mapping: %s", endpoint_path_from_mapping)
     if "authorised_routes" in payload_dict:

@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Path, Query, Response
 from operationsgateway_api.src.auth.authorisation import (
-    authorise_route, 
+    authorise_route,
     authorise_token,
 )
 from operationsgateway_api.src.helpers import (
