@@ -42,6 +42,9 @@ jobs:
         with:
           mongodb-version: '5.0'
 
+      - name: Add test users to OperationsGateway database
+        run: mongoimport --db='opsgateway' --collection='users' --file='util/users_for_mongoimport.json'
+
       # Configuration for API
       - name: Move CI config.yml to correct place
         run: cp .github/ci_config.yml operationsgateway_api/config.yml
