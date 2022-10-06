@@ -45,11 +45,9 @@ jobs:
       - name: Get database name from ci_config.yml
         run: echo '::set-output name=DATABASE_NAME::$(grep database_name .github/ci_config.yml | cut -d ':' -f 2 | tr -d '[:space:]')'
         id: get-database-name
-      - name: Report database name
-        run: echo "The database name is '${{ steps.get-database-name.outputs.DATABASE_NAME }}'"      
 
       - name: Add test users to OperationsGateway database
-        run: mongoimport --db='opsgateway' --collection='users' --file='util/users_for_mongoimport.json'
+        run: mongoimport --db='${{ steps.get-database-name.outputs.DATABASE_NAME }}' --collection='users' --file='util/users_for_mongoimport.json'
 
       # Configuration for API
       - name: Move CI config.yml to correct place
