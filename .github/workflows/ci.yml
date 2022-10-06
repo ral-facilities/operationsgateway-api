@@ -56,7 +56,10 @@ jobs:
         run: touch "$GITHUB_WORKSPACE/logs.log"
 
       - name: Create SSH private key file for auth
-        run: 'echo ${{secrets.SSH_PRIVATE_KEY_FOR_AUTH}} > /home/runner/work/id_rsa'
+      - run: 'echo "$SSH_KEY" > /home/runner/work/id_rsa'
+        shell: bash
+        env:
+          SSH_KEY: ${{secrets.SSH_PRIVATE_KEY_FOR_AUTH}}
 
       - name: Set permissions on private key file
         run: chmod 600 /home/runner/work/id_rsa
