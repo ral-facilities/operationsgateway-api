@@ -43,11 +43,10 @@ jobs:
           mongodb-version: '5.0'
 
       - name: Get database name from ci_config.yml
-        run: echo '::set-output name=DATABASE_NAME::$(grep database_name .github/ci_config.yml | cut -d ':' -f 2 | tr -d '[:space:]')'
-        id: get-database-name
+        run: echo "DATABASE_NAME=$(grep database_name .github/ci_config.yml | cut -d ':' -f 2 | tr -d '[:space:]')" >> $GITHUB_ENV
 
       - name: Add test users to OperationsGateway database
-        run: mongoimport --db='${{ steps.get-database-name.outputs.DATABASE_NAME }}' --collection='users' --file='util/users_for_mongoimport.json'
+        run: mongoimport --db='${{ env.DATABASE_NAME }}' --collection='users' --file='util/users_for_mongoimport.json'
 
       # Configuration for API
       - name: Move CI config.yml to correct place
