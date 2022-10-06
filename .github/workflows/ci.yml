@@ -42,6 +42,7 @@ jobs:
         with:
           mongodb-version: '5.0'
 
+      # Read the database name from the config file and store it in an environment variable
       - name: Get database name from ci_config.yml
         run: echo "DATABASE_NAME=$(grep database_name .github/ci_config.yml | cut -d ':' -f 2 | tr -d '[:space:]')" >> $GITHUB_ENV
 
