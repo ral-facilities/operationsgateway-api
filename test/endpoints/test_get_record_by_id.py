@@ -3,7 +3,7 @@ import json
 from fastapi.testclient import TestClient
 import pytest
 
-from test.conftest import assert_record
+from test.conftest import assert_record, login_and_get_token
 
 
 class TestGetRecordByID:
@@ -29,6 +29,7 @@ class TestGetRecordByID:
     ):
         test_response = test_app.get(
             f"/records/{record_id}?truncate={json.dumps(truncate)}",
+            headers={"Authorization": f"Bearer {login_and_get_token(test_app)}"},
         )
 
         assert test_response.status_code == 200

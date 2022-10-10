@@ -5,6 +5,8 @@ import json
 from fastapi.testclient import TestClient
 import pytest
 
+from test.conftest import login_and_get_token
+
 
 class TestGetImage:
     @pytest.mark.parametrize(
@@ -48,6 +50,7 @@ class TestGetImage:
         )
         test_response = test_app.get(
             f"/images/{record_id}/{channel_name}{string_response_param}",
+            headers={"Authorization": f"Bearer {login_and_get_token(test_app)}"},
         )
 
         assert test_response.status_code == 200
