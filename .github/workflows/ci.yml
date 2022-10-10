@@ -65,7 +65,10 @@ jobs:
         run: chmod 600 /home/runner/work/operationsgateway-api/id_rsa
 
       - name: Create SSH public key file for auth
-        run: 'echo ${{secrets.SSH_PUBLIC_KEY_FOR_AUTH}} > /home/runner/work/id_rsa.pub'
+        run: 'echo "$SSH_KEY_PUBLIC" > /home/runner/work/operationsgateway-api/id_rsa.pub'
+        shell: bash
+        env:
+          SSH_KEY_PUBLIC: ${{secrets.SSH_PUBLIC_KEY_FOR_AUTH}}
 
       # Load Poetry virtual environment dependencies and install API dependencies
       - name: Load Poetry cache
