@@ -87,7 +87,6 @@ class MongoDBInterface:
         # TODO - might be able to implement projection?
         return await collection.find_one(filter_)
 
-    # TODO - do we need update_many() too?
     @staticmethod
     async def update_one(collection_name, filter_={}, update={}):  # noqa: B006
         """

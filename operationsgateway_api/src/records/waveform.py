@@ -10,7 +10,6 @@ from operationsgateway_api.src.mongo.interface import MongoDBInterface
 class Waveform:
     def __init__(self, waveform: WaveformModel) -> None:
         self.waveform = waveform
-        # TODO - do we need to declare this here if it's just None?
         self.thumbnail = None
         self.is_stored = False
 

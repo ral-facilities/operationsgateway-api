@@ -6,46 +6,16 @@ import numpy as np
 from pydantic import BaseModel, Field, validator
 
 
-class PyObjectId(ObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid ObjectId")
-
-        return ObjectId(v)
-
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(type="string")
-
-
-# TODO - has this been used?
-class RecordsQueryParams:
-    filter_: dict
-    skip: int
-    limit: int
-    order: Optional[List[str]]
-    projection: Optional[List[str]]
-
-
-# TODO - Not sure if I'll need this or not
-class Channel(BaseModel):
-    pass
-
-
 class Image(BaseModel):
     path: str
-    # TODO - data, name and type
-    data: Any
+    data: np.ndarray
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class Waveform(BaseModel):
     id_: str = Field(alias="_id")
-    # TODO - probably should change this to str only to match how it's stored in DB
     x: str
     y: str
 
@@ -60,8 +30,6 @@ class Waveform(BaseModel):
 
 
 class ImageChannelMetadata(BaseModel):
-    # TODO - could we have a channel data type model to restrict acceptable values:
-    # export type DataType = 'scalar' | 'image' | 'waveform';
     channel_dtype: str
     exposure_time_s: Optional[float]
     gain: Optional[float]
@@ -85,7 +53,6 @@ class ScalarChannelMetadata(BaseModel):
 
 class ScalarChannel(BaseModel):
     metadata: ScalarChannelMetadata
-    # TODO - check the type on this works, shot num channel should still be an integer
     data: Union[float, int, str]
 
 
@@ -108,9 +75,7 @@ class RecordMetadata(BaseModel):
     timestamp: datetime
 
 
-# TODO - rename when I've removed the original Record model above
 class Record(BaseModel):
     id_: str = Field(alias="_id")
     metadata: RecordMetadata
-    # TODO - channels type
     channels: Dict[str, Union[ImageChannel, ScalarChannel, WaveformChannel]]

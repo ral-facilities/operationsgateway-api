@@ -12,12 +12,6 @@ class Image:
     def __init__(self, image: ImageModel):
         self.image = image
 
-        try:
-            self.image_buffer = PILImage.fromarray(self.image.data)
-        except TypeError as e:
-            # TODO - add proper exception
-            print(f"IMAGE DATA NOT IN CORRECT FORMAT FOR PIL: {e}")
-
     def store(self):
         record_id, _ = self.extract_metadata_from_path()
 
@@ -26,18 +20,19 @@ class Image:
                 f"{Config.config.mongodb.image_store_directory}/{record_id}",
                 exist_ok=True,
             )
-            self.image_buffer.save(
+            image_buffer = PILImage.fromarray(self.image.data)
+            image_buffer.save(
                 f"{Config.config.mongodb.image_store_directory}/{self.image.path}",
             )
         except OSError as e:
             # TODO - add proper exception
             print(f"IMAGE DIRECTORY CREATION OR IMAGE SAVE BROKE: {e}")
+        except TypeError as e:
+            # TODO - add proper exception
+            print(f"IMAGE DATA NOT IN CORRECT FORMAT FOR PIL: {e}")
 
     # TODO - we don't store thumbnails in DB, oops
     def create_thumbnail(self):
-        # TODO - do I really need to open the image? If yes, having `image_buffer`
-        # stored in the object itself is pointless
-        #self.image_buffer.thumbnail(Config.config.app.image_thumbnail_size)
         img = PILImage.open(
             f"{Config.config.mongodb.image_store_directory}/{self.image.path}",
         )

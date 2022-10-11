@@ -15,7 +15,6 @@ import yaml
 class App(BaseModel):
     """Configuration model class to store configuration regarding the FastAPI app"""
 
-    # TODO - create wsgi/asgi.py so the following is true
     # Some options aren't mandatory when running the API in the production
     host: Optional[StrictStr]
     port: Optional[StrictInt]

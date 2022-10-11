@@ -16,9 +16,6 @@ class Record:
         else:
             # TODO - should we be defensive and raise an exception?
             pass
-
-        # TODO - is this needed?
-        self.is_stored = False
     
     def store_thumbnail(self, data: Union[Image, Waveform]) -> None:
         if isinstance(data, Image):
