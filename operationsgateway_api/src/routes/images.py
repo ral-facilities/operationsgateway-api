@@ -1,10 +1,8 @@
-import base64
 import logging
 
 from fastapi import APIRouter, Path, Query
 from fastapi.responses import FileResponse
 
-from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.records.image import Image
 
 log = logging.getLogger()

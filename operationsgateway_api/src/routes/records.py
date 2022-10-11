@@ -1,13 +1,10 @@
 from http import HTTPStatus
 import logging
-import re
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Path, Query, Response
 
-from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.record import Record as Record
-from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
 from operationsgateway_api.src.routes.common_parameters import ParameterHandler
 
 
@@ -70,7 +67,11 @@ async def get_records(
     ParameterHandler.encode_date_for_conditions(conditions)
 
     records_data = await Record.find_record(
-        conditions, skip, limit, query_order, projection,
+        conditions,
+        skip,
+        limit,
+        query_order,
+        projection,
     )
 
     if truncate:
@@ -87,7 +88,9 @@ async def get_records(
     response_description="Record count",
     tags=["Records"],
 )
-async def count_records(conditions: dict = Depends(ParameterHandler.filter_conditions)):  # noqa: B008
+async def count_records(
+    conditions: dict = Depends(ParameterHandler.filter_conditions),  # noqa: B008
+):
     """
     This endpoint uses the `conditions` query parameter (i.e. like a WHERE filter) in
     the same way as GET `/records`. For example, there is a WHERE filter is not

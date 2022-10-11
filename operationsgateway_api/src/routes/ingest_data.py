@@ -4,7 +4,6 @@ from fastapi import APIRouter, status, UploadFile
 from fastapi.responses import JSONResponse
 
 from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
-from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.ingestion_validator import IngestionValidator
 from operationsgateway_api.src.records.record import Record

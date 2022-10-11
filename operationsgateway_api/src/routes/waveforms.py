@@ -2,7 +2,6 @@ import logging
 
 from fastapi import APIRouter, Path
 
-from operationsgateway_api.src.models import Record
 from operationsgateway_api.src.records.waveform import Waveform
 
 

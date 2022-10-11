@@ -1,8 +1,6 @@
 from collections.abc import MutableMapping
 import logging
 
-from operationsgateway_api.src.mongo.interface import MongoDBInterface
-
 
 log = logging.getLogger()
 

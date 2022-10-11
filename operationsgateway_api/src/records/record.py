@@ -1,22 +1,24 @@
 from typing import Union
+
 from operationsgateway_api.src.models import Record as RecordModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.image import Image
-from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
 from operationsgateway_api.src.records.waveform import Waveform
+
 
 class Record:
     def __init__(self, record: RecordModel) -> None:
         if isinstance(record, RecordModel):
             self.record = record
         elif isinstance(record, dict):
-            # TODO - check there's exception handling around everytime a model is created
+            # TODO - check there's exception handling around everytime a model is
+            # created
             print(record.keys())
             self.record = RecordModel(**record)
         else:
             # TODO - should we be defensive and raise an exception?
             pass
-    
+
     def store_thumbnail(self, data: Union[Image, Waveform]) -> None:
         if isinstance(data, Image):
             _, channel_name = data.extract_metadata_from_path()
@@ -28,7 +30,8 @@ class Record:
     async def insert(self):
         # TODO - exception handling
         await MongoDBInterface.insert_one(
-            "records", self.record.dict(by_alias=True),
+            "records",
+            self.record.dict(by_alias=True),
         )
 
     async def update(self):
@@ -43,7 +46,7 @@ class Record:
                 {"_id": self.record.id_},
                 {"$set": {f"metadata.{metadata_key}": value}},
             )
-        
+
         for channel_name, channel_value in self.record.channels.items():
             await MongoDBInterface.update_one(
                 "records",
@@ -53,14 +56,15 @@ class Record:
 
     async def find_existing_record(self):
         record_dict = await MongoDBInterface.find_one(
-            "records", filter_={"_id": self.record.id_},
+            "records",
+            filter_={"_id": self.record.id_},
         )
 
         if record_dict:
             existing_record = RecordModel(
                 _id=record_dict["_id"],
                 metadata=record_dict["metadata"],
-                channels=record_dict["channels"]
+                channels=record_dict["channels"],
             )
             return existing_record
         else:
@@ -78,7 +82,7 @@ class Record:
         )
         records_data = await MongoDBInterface.query_to_list(records_query)
         return records_data
-    
+
     @staticmethod
     async def find_record_by_id(id_, conditions):
         return await MongoDBInterface.find_one(
@@ -100,6 +104,7 @@ class Record:
             try:
                 value["thumbnail"] = value["thumbnail"][:50]
             except KeyError:
-                # If there's no thumbnails (e.g. if channel isn't an image or waveform) then
-                # a KeyError will be raised. This is normal behaviour, so acceptable to pass
+                # If there's no thumbnails (e.g. if channel isn't an image or waveform)
+                # then a KeyError will be raised. This is normal behaviour, so
+                # acceptable to pass
                 pass

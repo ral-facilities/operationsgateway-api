@@ -37,7 +37,7 @@ class Image:
             f"{Config.config.mongodb.image_store_directory}/{self.image.path}",
         )
         self.thumbnail = ThumbnailHandler.convert_to_base64(img)
-    
+
     def extract_metadata_from_path(self):
         record_id = self.image.path.split("/")[-2]
         channel_name = self.image.path.split("/")[-1].split(".")[0]

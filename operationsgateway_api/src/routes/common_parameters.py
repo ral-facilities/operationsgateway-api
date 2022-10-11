@@ -12,7 +12,7 @@ class ParameterHandler:
         conditions: Optional[str] = None,
     ):
         """
-        Converts a JSON string that comes from a query parameter into a Python dictionary
+        Converts a JSON string that comes from a query parameter into a Python dict
 
         FastAPI doesn't directly support dictionary query parameters, so they must be
         converted using `json.loads()` and 'injected' into the endpoint function using
@@ -48,7 +48,7 @@ class ParameterHandler:
             sort_data.append((field, direction))
 
         return sort_data
-    
+
     @staticmethod
     def encode_date_for_conditions(value):
         new_date = None

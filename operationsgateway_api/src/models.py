@@ -1,7 +1,6 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, Optional, Union
 
-from bson import ObjectId
 import numpy as np
 from pydantic import BaseModel, Field, validator
 
@@ -20,7 +19,7 @@ class Waveform(BaseModel):
     y: str
 
     @validator("x", "y", pre=True, always=True)
-    def encode_values(cls, value):
+    def encode_values(cls, value):  # noqa: B902, N805
         if isinstance(value, np.ndarray):
             return str(list(value))
         else:

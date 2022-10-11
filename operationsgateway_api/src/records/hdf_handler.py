@@ -9,8 +9,8 @@ from operationsgateway_api.src.models import (
     Image,
     ImageChannel,
     ImageChannelMetadata,
-    RecordMetadata,
     Record,
+    RecordMetadata,
     ScalarChannel,
     ScalarChannelMetadata,
     Waveform,
@@ -31,7 +31,6 @@ class HDFDataHandler:
         """
         self.hdf_file = h5py.File(hdf_temp_file, "r")
 
-
     def extract_data(self):
         """
         Extract data from a HDF file that is formatted in the OperationsGateway data
@@ -43,7 +42,8 @@ class HDFDataHandler:
         try:
             # TODO - make sure that we can round-trip timestamps
             metadata_hdf["timestamp"] = datetime.strptime(
-                metadata_hdf["timestamp"], "%Y-%m-%d %H:%M:%S",
+                metadata_hdf["timestamp"],
+                "%Y-%m-%d %H:%M:%S",
             )
             self.record_id = metadata_hdf["timestamp"].strftime("%Y%m%d%H%M%S")
         except ValueError as e:
@@ -60,7 +60,9 @@ class HDFDataHandler:
 
             if value.attrs["channel_dtype"] == "image":
                 image_path = ImageClass.get_image_path(
-                    self.record_id, channel_name, full_path=False,
+                    self.record_id,
+                    channel_name,
+                    full_path=False,
                 )
                 images.append(Image(path=image_path, data=value["data"][()]))
 
@@ -76,7 +78,9 @@ class HDFDataHandler:
                 # TODO - when we don't want random noise anymore, we could probably
                 # combine this code with greyscale images, its the same implementation
                 image_path = ImageClass.get_image_path(
-                    self.record_id, channel_name, full_path=False,
+                    self.record_id,
+                    channel_name,
+                    full_path=False,
                 )
 
                 # TODO - refactor this branch
@@ -121,7 +125,7 @@ class HDFDataHandler:
                             _id=waveform_id,
                             x=value["x"][()],
                             y=value["y"][()],
-                        )
+                        ),
                     )
                 except ValidationError as e:
                     # TODO - add exception

@@ -1,6 +1,7 @@
 import base64
 from io import BytesIO
 import json
+
 import matplotlib.pyplot as plt
 
 from operationsgateway_api.src.models import Waveform as WaveformModel
@@ -17,7 +18,8 @@ class Waveform:
         await self._is_waveform_stored()
         if not self.is_stored:
             await MongoDBInterface.insert_one(
-                "waveforms", self.waveform.dict(by_alias=True),
+                "waveforms",
+                self.waveform.dict(by_alias=True),
             )
 
     def create_thumbnail(self):
@@ -33,7 +35,8 @@ class Waveform:
 
     async def _is_waveform_stored(self) -> bool:
         waveform_exist = await MongoDBInterface.find_one(
-            "waveforms", filter_={"_id": self.waveform.id_},
+            "waveforms",
+            filter_={"_id": self.waveform.id_},
         )
         self.is_stored = True if waveform_exist else False
 
@@ -44,7 +47,11 @@ class Waveform:
         plt.rcParams["figure.figsize"] = [1, 0.75]
         plt.xticks([])
         plt.yticks([])
-        plt.plot(json.loads(self.waveform.x), json.loads(self.waveform.y), linewidth=0.5)
+        plt.plot(
+            json.loads(self.waveform.x),
+            json.loads(self.waveform.y),
+            linewidth=0.5,
+        )
         plt.axis("off")
         plt.box(False)
 
