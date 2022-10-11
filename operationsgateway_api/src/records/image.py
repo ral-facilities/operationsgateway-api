@@ -33,6 +33,7 @@ class Image:
             # TODO - add proper exception
             print(f"IMAGE DIRECTORY CREATION OR IMAGE SAVE BROKE: {e}")
 
+    # TODO - we don't store thumbnails in DB, oops
     def create_thumbnail(self):
         # TODO - do I really need to open the image? If yes, having `image_buffer`
         # stored in the object itself is pointless

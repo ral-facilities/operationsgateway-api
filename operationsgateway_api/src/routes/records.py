@@ -5,14 +5,10 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Path, Query, Response
 
-from operationsgateway_api.src.helpers import (
-    encode_date_for_conditions,
-    extract_order_data,
-    truncate_thumbnail_output,
-)
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.record import Record as Record
 from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
+from operationsgateway_api.src.routes.common_parameters import ParameterHandler
 
 
 log = logging.getLogger()
@@ -27,7 +23,7 @@ router = APIRouter()
 )
 async def get_records(
     # TODO - investigate linting errors
-    conditions: dict = Depends(filter_conditions),  # noqa: B008
+    conditions: dict = Depends(ParameterHandler.filter_conditions),  # noqa: B008
     skip: int = Query(  # noqa: B008
         0,
         description="How many documents should be skipped before returning results",
@@ -70,8 +66,8 @@ async def get_records(
 
     log.info("Getting records by query")
 
-    query_order = list(extract_order_data(order)) if order else ""
-    encode_date_for_conditions(conditions)
+    query_order = list(ParameterHandler.extract_order_data(order)) if order else ""
+    ParameterHandler.encode_date_for_conditions(conditions)
 
     records_data = await Record.find_record(
         conditions, skip, limit, query_order, projection,
@@ -91,7 +87,7 @@ async def get_records(
     response_description="Record count",
     tags=["Records"],
 )
-async def count_records(conditions: dict = Depends(filter_conditions)):  # noqa: B008
+async def count_records(conditions: dict = Depends(ParameterHandler.filter_conditions)):  # noqa: B008
     """
     This endpoint uses the `conditions` query parameter (i.e. like a WHERE filter) in
     the same way as GET `/records`. For example, there is a WHERE filter is not
@@ -99,7 +95,7 @@ async def count_records(conditions: dict = Depends(filter_conditions)):  # noqa:
     """
 
     log.info("Counting records using given conditions")
-    encode_date_for_conditions(conditions)
+    ParameterHandler.encode_date_for_conditions(conditions)
 
     return await Record.count_records(conditions)
 
@@ -116,7 +112,7 @@ async def get_record_by_id(
         ...,
         description="`_id` of the record to fetch from the database",
     ),
-    conditions: dict = Depends(filter_conditions),  # noqa: B008
+    conditions: dict = Depends(ParameterHandler.filter_conditions),  # noqa: B008
     truncate: Optional[bool] = Query(  # noqa: B008
         False,
         description="Parameter used for development to reduce the output of thumbnail"
