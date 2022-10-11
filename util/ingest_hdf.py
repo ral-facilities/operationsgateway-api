@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 from pprint import pprint
 import shutil
@@ -10,6 +11,20 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import requests
 
 parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-U",
+    "--username",
+    type=str,
+    help="Username of a user that has permissions to call the /submit_hdf endpoint",
+    required=True,
+)
+parser.add_argument(
+    "-P",
+    "--password",
+    type=str,
+    help="Password of the user specified by the -U/--username argument",
+    required=True,
+)
 parser.add_argument(
     "-p",
     "--path",
@@ -57,6 +72,8 @@ parser.add_argument(
 
 # Put command line options into variables
 args = parser.parse_args()
+USERNAME = args.username
+PASSWORD = args.password
 BASE_DIR = args.path
 API_URL = args.url
 WIPE_DATABASE = args.wipe_database
@@ -75,6 +92,17 @@ if WIPE_DATABASE:
     print("Records collection dropped")
     waveforms_drop = db.waveforms.drop()
     print("Waveforms collection dropped")
+
+# Login to get an access token
+print(f"Login as '{USERNAME}' to get access token")
+credentials_json = json.dumps({"username": USERNAME, "password": PASSWORD})
+response = requests.post(
+    f"{API_URL}/login",
+    data=credentials_json,
+)
+# strip the first and last characters off the response
+# (the double quotes that surround it)
+token = response.text[1:-1]
 
 # Delete images from disk
 if DELETE_IMAGES:
@@ -134,6 +162,7 @@ for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
                     response = requests.post(
                         f"{API_URL}/submit_hdf",
                         files={"file": hdf_upload.read()},
+                        headers={"Authorization": f"Bearer {token}"},
                     )
 
                     end_time = time()
