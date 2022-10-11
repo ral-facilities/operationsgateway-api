@@ -31,7 +31,7 @@ class Record:
         # TODO - exception handling
         await MongoDBInterface.insert_one(
             "records",
-            self.record.dict(by_alias=True),
+            self.record.dict(by_alias=True, exclude_unset=True),
         )
 
     async def update(self):
@@ -40,7 +40,7 @@ class Record:
         # Based on some quick dev testing while making sure it worked, this doesn't
         # slow down ingestion times
 
-        for metadata_key, value in self.record.metadata:
+        for metadata_key, value in self.record.metadata.dict(exclude_unset=True).items():
             await MongoDBInterface.update_one(
                 "records",
                 {"_id": self.record.id_},
@@ -51,7 +51,7 @@ class Record:
             await MongoDBInterface.update_one(
                 "records",
                 {"_id": self.record.id_},
-                {"$set": {f"channels.{channel_name}": channel_value.dict()}},
+                {"$set": {f"channels.{channel_name}": channel_value.dict(exclude_unset=True)}},
             )
 
     async def find_existing_record(self):

@@ -69,7 +69,6 @@ class WaveformChannel(BaseModel):
 
 class RecordMetadata(BaseModel):
     epac_ops_data_version: str
-    # TODO - if there's no shotnum, it ingested as null. Don't want this
     shotnum: Optional[int]
     timestamp: datetime
 
