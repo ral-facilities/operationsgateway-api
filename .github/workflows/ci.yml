@@ -87,7 +87,7 @@ jobs:
           path: operationsgateway-test-data
           ssh-key: ${{ secrets.SSH_PRIV_OG_TEST_DATA_ACTIONS }}
       - name: Run ingestion script
-        run: poetry run python util/ingest_hdf.py -p operationsgateway-test-data/dev_server
+        run: poetry run python util/ingest_hdf.py -p operationsgateway-test-data/dev_server -U backend -P back
 
       - name: Load Poetry cache for Nox tests session
         uses: actions/cache@v3
