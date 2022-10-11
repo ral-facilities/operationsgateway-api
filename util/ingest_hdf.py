@@ -93,17 +93,6 @@ if WIPE_DATABASE:
     waveforms_drop = db.waveforms.drop()
     print("Waveforms collection dropped")
 
-# Login to get an access token
-print(f"Login as '{USERNAME}' to get access token")
-credentials_json = json.dumps({"username": USERNAME, "password": PASSWORD})
-response = requests.post(
-    f"{API_URL}/login",
-    data=credentials_json,
-)
-# strip the first and last characters off the response
-# (the double quotes that surround it)
-token = response.text[1:-1]
-
 # Delete images from disk
 if DELETE_IMAGES:
     for root, dirs, files in os.walk(IMAGES_PATH):
@@ -150,6 +139,17 @@ if not args.url:
 
     API_URL = f"http://{host}:{port}"
     print(f"API started on {API_URL}")
+
+# Login to get an access token
+print(f"Login as '{USERNAME}' to get access token")
+credentials_json = json.dumps({"username": USERNAME, "password": PASSWORD})
+response = requests.post(
+    f"{API_URL}/login",
+    data=credentials_json,
+)
+# strip the first and last characters off the response
+# (the double quotes that surround it)
+token = response.text[1:-1]
 
 # Ingesting HDF files
 for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
