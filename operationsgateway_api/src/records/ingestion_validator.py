@@ -31,7 +31,7 @@ class IngestionValidator:
         flat_stored_data = IngestionValidator.flatten_data_dict(stored_data)
 
         for key in flat_input_data:
-            # TODO - this checks if the channels key-value pair is populated, doesn't go
+            # TODO 2 - this checks if the channels key-value pair is populated, doesn't go
             # any deeper than that. If this is going to be implemented to actually do
             # something, you need to iterate through each channel
             if key in flat_stored_data:
@@ -46,8 +46,8 @@ class IngestionValidator:
 
         return input_data
 
-    # TODO - not used outside of the class, remove static
-    # TODO - fix, doesn't work with the record model objects
+    # TODO 2 - not used outside of the class, remove static
+    # TODO 2 - fix, doesn't work with the record model objects
     @staticmethod
     def flatten_data_dict(data, parent_key=""):
         items = []

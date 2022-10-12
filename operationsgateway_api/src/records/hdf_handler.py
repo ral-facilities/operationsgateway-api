@@ -40,14 +40,14 @@ class HDFDataHandler:
 
         metadata_hdf = dict(self.hdf_file.attrs)
         try:
-            # TODO - make sure that we can round-trip timestamps
+            # TODO 1 - make sure that we can round-trip timestamps
             metadata_hdf["timestamp"] = datetime.strptime(
                 metadata_hdf["timestamp"],
                 "%Y-%m-%d %H:%M:%S",
             )
             self.record_id = metadata_hdf["timestamp"].strftime("%Y%m%d%H%M%S")
         except ValueError as e:
-            # TODO - add proper exception
+            # TODO 1 - add proper exception
             print(f"DATE CONVERSION BROKE: {e}")
 
         channels = {}
@@ -55,7 +55,7 @@ class HDFDataHandler:
         images = []
 
         for channel_name, value in self.hdf_file.items():
-            # TODO - move this stuff into a separate function?
+            # TODO 1 - move this stuff into a separate function?
             channel_metadata = dict(value.attrs)
 
             if value.attrs["channel_dtype"] == "image":
@@ -72,7 +72,7 @@ class HDFDataHandler:
                         image_path=image_path,
                     )
                 except ValidationError as e:
-                    # TODO - add proper exception
+                    # TODO 1 - add proper exception
                     print(f"IMAGE CHANNEL BROKE: {e}")
             elif value.attrs["channel_dtype"] == "rgb-image":
                 # TODO - when we don't want random noise anymore, we could probably
@@ -83,7 +83,7 @@ class HDFDataHandler:
                     full_path=False,
                 )
 
-                # TODO - refactor this branch
+                # TODO 1 - refactor this branch
                 """
                 # Gives random noise, where only example RGB I have sends full black
                 # image. Comment out to store true data
@@ -108,7 +108,7 @@ class HDFDataHandler:
                         data=value["data"][()],
                     )
                 except ValidationError as e:
-                    # TODO - add exception
+                    # TODO 1 - add exception
                     print(f"SCALAR CHANNEL BROKE: {e}")
             elif value.attrs["channel_dtype"] == "waveform":
                 waveform_id = f"{self.record_id}_{channel_name}"
@@ -128,7 +128,7 @@ class HDFDataHandler:
                         ),
                     )
                 except ValidationError as e:
-                    # TODO - add exception
+                    # TODO 1 - add exception
                     print(f"WAVEFORM CHANNEL BROKE: {e}")
 
             # Put channels into a dictionary to give a good structure to query them in

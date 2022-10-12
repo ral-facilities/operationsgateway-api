@@ -25,13 +25,13 @@ class Image:
                 f"{Config.config.mongodb.image_store_directory}/{self.image.path}",
             )
         except OSError as e:
-            # TODO - add proper exception
+            # TODO 1 - add proper exception
             print(f"IMAGE DIRECTORY CREATION OR IMAGE SAVE BROKE: {e}")
         except TypeError as e:
-            # TODO - add proper exception
+            # TODO 1 - add proper exception
             print(f"IMAGE DATA NOT IN CORRECT FORMAT FOR PIL: {e}")
 
-    # TODO - we don't store thumbnails in DB, oops
+    # TODO 1 - we don't store thumbnails in DB, oops
     def create_thumbnail(self):
         img = PILImage.open(
             f"{Config.config.mongodb.image_store_directory}/{self.image.path}",
@@ -50,12 +50,12 @@ class Image:
             with open(Image.get_image_path(record_id, channel_name), "rb") as file:
                 return base64.b64encode(file.read())
         except OSError as e:
-            # TODO - add proper exception
+            # TODO 1 - add proper exception
             print(f"FILE COULD NOT BE OPENED: {e}")
 
     @staticmethod
     def get_image_path(record_id, channel_name, full_path=True):
-        # TODO - turn below into a docstring or comment or something
+        # TODO 1 - turn below into a docstring or comment or something
         # /root/seg_dev/og-images/20220408002834/N_COMP_FF_IMAGE.png
         # 20220408002834/N_COMP_FF_IMAGE.png
         if full_path:

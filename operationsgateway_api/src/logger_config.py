@@ -12,8 +12,8 @@ log_message_location = (
 )
 log_format = f"[%(asctime)s]{log_message_location}%(levelname)s - %(message)s"
 
-# TODO - try to move to a rotating file handler, while still keeping FastAPI output into
-# both file and stdout
+# TODO 2 - try to move to a rotating file handler, while still keeping FastAPI output
+# into both file and stdout
 logger_config = {
     "version": 1,
     "disable_existing_loggers": False,

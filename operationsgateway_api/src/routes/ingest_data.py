@@ -38,7 +38,7 @@ async def submit_hdf(file: UploadFile):
 
     # TODO - move ingestion validation/check whether to reject the file here?
 
-    # TODO - might need some logging?
+    # TODO 1 - might need some logging?
     for w in waveforms:
         waveform = Waveform(w)
         await waveform.insert_waveform()
@@ -66,7 +66,7 @@ async def submit_hdf(file: UploadFile):
         )
 
     """
-    # TODO - test, it might be broken
+    # TODO 1 - test, it might be broken
     if ingest_checker.stored_record:
         # Cycle through data and detect repeating data
         # Any remaining data should be put into MongoDB via update_one()

@@ -19,7 +19,7 @@ router = APIRouter()
     tags=["Records"],
 )
 async def get_records(
-    # TODO - investigate linting errors
+    # TODO 1 - investigate linting errors
     conditions: dict = Depends(ParameterHandler.filter_conditions),  # noqa: B008
     skip: int = Query(  # noqa: B008
         0,
@@ -109,7 +109,7 @@ async def count_records(
     response_description="Single record object",
     tags=["Records"],
 )
-# TODO - can I find a use case for conditions?
+# TODO 1 - can I find a use case for conditions?
 async def get_record_by_id(
     id_: str = Path(  # noqa: B008
         ...,
@@ -130,8 +130,8 @@ async def get_record_by_id(
 
     log.info("Getting record by ID: %s", id_)
 
-    # TODO - add 404 to this endpoint
-    # TODO - doesn't error anymore when nothing is found, just nulls
+    # TODO 2 - add 404 to this endpoint
+    # TODO 1 - doesn't error anymore when nothing is found, just nulls
     record_data = await Record.find_record_by_id(id_, conditions)
 
     if truncate:
@@ -153,7 +153,7 @@ async def delete_record_by_id(
         description="`_id` of the record to delete from the database",
     ),
 ):
-    # TODO - full implementation will require searching through waveform channels to
+    # TODO 2 - full implementation will require searching through waveform channels to
     # remove the documents in the waveforms collection. The images will need to be
     # removed from disk too
     log.info("Deleting record by ID: %s", id_)

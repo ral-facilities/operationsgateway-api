@@ -11,7 +11,7 @@ class Record:
         if isinstance(record, RecordModel):
             self.record = record
         elif isinstance(record, dict):
-            # TODO - check there's exception handling around everytime a model is
+            # TODO 1 - check there's exception handling around everytime a model is
             # created
             print(record.keys())
             self.record = RecordModel(**record)
@@ -28,7 +28,7 @@ class Record:
         self.record.channels[channel_name].thumbnail = data.thumbnail
 
     async def insert(self):
-        # TODO - exception handling
+        # TODO 1 - exception handling
         await MongoDBInterface.insert_one(
             "records",
             self.record.dict(by_alias=True, exclude_unset=True),
@@ -40,6 +40,7 @@ class Record:
         # Based on some quick dev testing while making sure it worked, this doesn't
         # slow down ingestion times
 
+        # TODO 1 - exception handling
         for metadata_key, value in self.record.metadata.dict(exclude_unset=True).items():
             await MongoDBInterface.update_one(
                 "records",

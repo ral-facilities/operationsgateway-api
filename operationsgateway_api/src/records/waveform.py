@@ -29,7 +29,7 @@ class Waveform:
             self.thumbnail = base64.b64encode(waveform_image_buffer.getvalue())
 
     def get_channel_name_from_id(self):
-        # TODO - add docstring
+        # TODO 1 - add docstring
         # 20220408140310_N_COMP_SPEC_TRACE -> N_COMP_SPEC_TRACE
         return "_".join(self.waveform.id_.split("_")[1:])
 
@@ -40,7 +40,7 @@ class Waveform:
         )
         self.is_stored = True if waveform_exist else False
 
-    # TODO - alternative to plt.?
+    # TODO 1 - alternative to plt.?
     def _create_plot(self, buffer):
         # Making changes to plot so figure size and line width is correct and axes are
         # disabled
