@@ -77,3 +77,12 @@ class Record(BaseModel):
     id_: str = Field(alias="_id")
     metadata: RecordMetadata
     channels: Dict[str, Union[ImageChannel, ScalarChannel, WaveformChannel]]
+
+
+class LoginDetails(BaseModel):
+    username: str
+    password: str
+
+
+class AccessToken(BaseModel):
+    token: str
