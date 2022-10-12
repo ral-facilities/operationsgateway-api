@@ -1,6 +1,9 @@
 import logging
 
+from pymongo.errors import InvalidName, WriteError
+
 from operationsgateway_api.src.config import Config
+from operationsgateway_api.src.exceptions import DatabaseError
 from operationsgateway_api.src.mongo.connection import ConnectionInstance
 
 log = logging.getLogger()
@@ -18,8 +21,11 @@ class MongoDBInterface:
         Simple getter function which gets a particular collection so it can be
         manipulated (in a function within this class) to perform a CRUD operation
         """
-
-        return ConnectionInstance.db_connection.db[collection_name]
+        try:
+            return ConnectionInstance.db_connection.db[collection_name]
+        except InvalidName as exc:
+            log.error("Invalid collection name given: %s", collection_name)
+            raise DatabaseError("Invalid collection name given") from exc
 
     @staticmethod
     def find(
@@ -98,10 +104,15 @@ class MongoDBInterface:
         log.debug("Filter: %s", filter_)
 
         collection = MongoDBInterface.get_collection_object(collection_name)
-        return await collection.update_one(
-            filter_,
-            update,
-        )
+        try:
+            return await collection.update_one(
+                filter_,
+                update,
+            )
+        except WriteError as exc:
+            raise DatabaseError(
+                "Error when updating single document in %s collection", collection_name,
+            ) from exc
 
     @staticmethod
     async def insert_one(collection_name, data):
@@ -112,7 +123,13 @@ class MongoDBInterface:
         log.info("Sending insert_one() to MongoDB, collection: %s", collection_name)
 
         collection = MongoDBInterface.get_collection_object(collection_name)
-        return await collection.insert_one(data)
+        try:
+            return await collection.insert_one(data)
+        except WriteError as exc:
+            raise DatabaseError(
+                "Error when inserting single document in %s collection",
+                collection_name,
+            ) from exc
 
     @staticmethod
     async def insert_many(collection_name, data):
@@ -123,7 +140,13 @@ class MongoDBInterface:
         log.info("Sending insert_many() to MongoDB, collection: %s", collection_name)
 
         collection = MongoDBInterface.get_collection_object(collection_name)
-        return await collection.insert_many(data)
+        try:
+            return await collection.insert_many(data)
+        except WriteError as exc:
+            raise DatabaseError(
+                "Error when inserting multiple documents in %s collection",
+                collection_name,
+            ) from exc
 
     @staticmethod
     async def delete_one(collection_name, filter_={}):  # noqa: B006

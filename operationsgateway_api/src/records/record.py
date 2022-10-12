@@ -1,5 +1,8 @@
 from typing import Union
 
+from pydantic import ValidationError
+from operationsgateway_api.src.exceptions import ModelError, RecordError
+
 from operationsgateway_api.src.models import Record as RecordModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.image import Image
@@ -11,13 +14,12 @@ class Record:
         if isinstance(record, RecordModel):
             self.record = record
         elif isinstance(record, dict):
-            # TODO 1 - check there's exception handling around everytime a model is
-            # created
-            print(record.keys())
-            self.record = RecordModel(**record)
+            try:
+                self.record = RecordModel(**record)
+            except ValidationError as exc:
+                raise ModelError(str(exc))
         else:
-            # TODO - should we be defensive and raise an exception?
-            pass
+            raise RecordError("RecordModel or dictionary not passed to Record init")
 
     def store_thumbnail(self, data: Union[Image, Waveform]) -> None:
         if isinstance(data, Image):
@@ -28,7 +30,6 @@ class Record:
         self.record.channels[channel_name].thumbnail = data.thumbnail
 
     async def insert(self):
-        # TODO 1 - exception handling
         await MongoDBInterface.insert_one(
             "records",
             self.record.dict(by_alias=True, exclude_unset=True),
@@ -40,7 +41,6 @@ class Record:
         # Based on some quick dev testing while making sure it worked, this doesn't
         # slow down ingestion times
 
-        # TODO 1 - exception handling
         for metadata_key, value in self.record.metadata.dict(
             exclude_unset=True,
         ).items():

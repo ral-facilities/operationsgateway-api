@@ -2,6 +2,7 @@ import logging
 
 from fastapi import APIRouter, Path
 
+from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.records.waveform import Waveform
 
 
@@ -15,6 +16,7 @@ router = APIRouter()
     response_description="Single waveform object",
     tags=["Waveforms"],
 )
+@endpoint_error_handling
 async def get_waveform_by_id(
     record_id: str = Path(  # noqa: B008
         "",

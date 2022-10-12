@@ -4,6 +4,7 @@ import os
 from PIL import Image as PILImage
 
 from operationsgateway_api.src.config import Config
+from operationsgateway_api.src.exceptions import ImageError
 from operationsgateway_api.src.models import Image as ImageModel
 from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
 
@@ -24,12 +25,10 @@ class Image:
             image_buffer.save(
                 f"{Config.config.mongodb.image_store_directory}/{self.image.path}",
             )
-        except OSError as e:
-            # TODO 1 - add proper exception
-            print(f"IMAGE DIRECTORY CREATION OR IMAGE SAVE BROKE: {e}")
-        except TypeError as e:
-            # TODO 1 - add proper exception
-            print(f"IMAGE DATA NOT IN CORRECT FORMAT FOR PIL: {e}")
+        except OSError as exc:
+            raise ImageError("Image folder structure has failed") from exc
+        except TypeError as exc:
+            raise ImageError("Image data is not in correct format to be read") from exc
 
     # TODO 1 - we don't store thumbnails in DB, oops
     def create_thumbnail(self):
@@ -49,9 +48,8 @@ class Image:
         try:
             with open(Image.get_image_path(record_id, channel_name), "rb") as file:
                 return base64.b64encode(file.read())
-        except OSError as e:
-            # TODO 1 - add proper exception
-            print(f"FILE COULD NOT BE OPENED: {e}")
+        except OSError as exc:
+            raise ImageError("Image could not be found on disk") from exc
 
     @staticmethod
     def get_image_path(record_id, channel_name, full_path=True):

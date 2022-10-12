@@ -3,6 +3,7 @@ import logging
 from fastapi import APIRouter, status, UploadFile
 from fastapi.responses import JSONResponse
 
+from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.ingestion_validator import IngestionValidator
@@ -20,6 +21,7 @@ router = APIRouter()
     response_description="ID of the record document that has been inserted/updated",
     tags=["Ingestion"],
 )
+@endpoint_error_handling
 async def submit_hdf(file: UploadFile):
     """
     This endpoint accepts a HDF file, processes it and stores the data in MongoDB (with

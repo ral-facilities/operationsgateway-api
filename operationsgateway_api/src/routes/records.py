@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Path, Query, Response
 
+from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.records.record import Record as Record
 from operationsgateway_api.src.routes.common_parameters import ParameterHandler
 
@@ -18,6 +19,7 @@ router = APIRouter()
     response_description="List of records",
     tags=["Records"],
 )
+@endpoint_error_handling
 async def get_records(
     # TODO 1 - investigate linting errors
     conditions: dict = Depends(ParameterHandler.filter_conditions),  # noqa: B008
@@ -88,6 +90,7 @@ async def get_records(
     response_description="Record count",
     tags=["Records"],
 )
+@endpoint_error_handling
 async def count_records(
     conditions: dict = Depends(ParameterHandler.filter_conditions),  # noqa: B008
 ):
@@ -109,6 +112,7 @@ async def count_records(
     response_description="Single record object",
     tags=["Records"],
 )
+@endpoint_error_handling
 # TODO 1 - can I find a use case for conditions?
 async def get_record_by_id(
     id_: str = Path(  # noqa: B008
@@ -147,6 +151,7 @@ async def get_record_by_id(
     status_code=204,
     tags=["Records"],
 )
+@endpoint_error_handling
 async def delete_record_by_id(
     id_: str = Path(  # noqa: B008
         ...,

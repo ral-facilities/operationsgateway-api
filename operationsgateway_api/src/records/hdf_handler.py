@@ -5,6 +5,7 @@ from tempfile import SpooledTemporaryFile
 import h5py
 from pydantic import ValidationError
 
+from operationsgateway_api.src.exceptions import HDFDataExtractionError, ModelError
 from operationsgateway_api.src.models import (
     Image,
     ImageChannel,
@@ -49,9 +50,11 @@ class HDFDataHandler:
                 "%Y-%m-%d %H:%M:%S",
             )
             self.record_id = metadata_hdf["timestamp"].strftime("%Y%m%d%H%M%S")
-        except ValueError as e:
-            # TODO 1 - add proper exception
-            print(f"DATE CONVERSION BROKE: {e}")
+        except ValueError as exc:
+            raise HDFDataExtractionError(
+                "Incorrect timestamp format for metadata timestamp. Use %Y-%m-%d"
+                " %H:%M:%S",
+            ) from exc
 
         self.extract_channels()
 
@@ -61,14 +64,13 @@ class HDFDataHandler:
                 metadata=RecordMetadata(**metadata_hdf),
                 channels=self.channels,
             )
-        except ValidationError as e:
-            print(f"RECORD CREATION BROKE: {e}")
+        except ValidationError as exc:
+            raise ModelError(str(exc))
 
         return record, self.waveforms, self.images
 
     def extract_channels(self):
         for channel_name, value in self.hdf_file.items():
-            # TODO 1 - move this stuff into a separate function?
             channel_metadata = dict(value.attrs)
 
             if value.attrs["channel_dtype"] == "image":
@@ -77,34 +79,31 @@ class HDFDataHandler:
                     channel_name,
                     full_path=False,
                 )
-                self.images.append(Image(path=image_path, data=value["data"][()]))
 
                 try:
+                    self.images.append(Image(path=image_path, data=value["data"][()]))
+
                     channel = ImageChannel(
                         metadata=ImageChannelMetadata(**channel_metadata),
                         image_path=image_path,
                     )
-                except ValidationError as e:
-                    # TODO 1 - add proper exception
-                    print(f"IMAGE CHANNEL BROKE: {e}")
+                except ValidationError as exc:
+                    raise ModelError(str(exc))
             elif value.attrs["channel_dtype"] == "rgb-image":
                 # TODO - implement colour image ingestion. Currently waiting on the
                 # OG-HDF5 converter to support conversion of colour images.
                 # Implementation will be as per greyscale image (`get_image_path()`
                 # then append to `self.images`) but might require extracting a different
                 # part of the value
-
-                # TODO 1 - add exception handling
-                print("COLOUR IMAGES CANNOT BE INGESTED")
+                raise HDFDataExtractionError("Colour images cannot be ingested")
             elif value.attrs["channel_dtype"] == "scalar":
                 try:
                     channel = ScalarChannel(
                         metadata=ScalarChannelMetadata(**channel_metadata),
                         data=value["data"][()],
                     )
-                except ValidationError as e:
-                    # TODO 1 - add exception
-                    print(f"SCALAR CHANNEL BROKE: {e}")
+                except ValidationError as exc:
+                    raise ModelError(str(exc))
             elif value.attrs["channel_dtype"] == "waveform":
                 waveform_id = f"{self.record_id}_{channel_name}"
                 log.debug("Waveform ID: %s", waveform_id)
@@ -122,9 +121,8 @@ class HDFDataHandler:
                             y=value["y"][()],
                         ),
                     )
-                except ValidationError as e:
-                    # TODO 1 - add exception
-                    print(f"WAVEFORM CHANNEL BROKE: {e}")
+                except ValidationError as exc:
+                    raise ModelError(str(exc))
 
             # Put channels into a dictionary to give a good structure to query them in
             # the database
