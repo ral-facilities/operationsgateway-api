@@ -15,11 +15,6 @@ class MongoDBConnection:
 
     db = mongo_client[Config.config.mongodb.database_name]
 
-    # TODO 1 - could clean this up, so you don't store collection objects here
-    records = db[Config.config.mongodb.collection_name]
-    images = db["images"]
-    waveforms = db["waveforms"]
-
 
 class ConnectionInstance:
     """

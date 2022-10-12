@@ -19,7 +19,7 @@ class MongoDBInterface:
         manipulated (in a function within this class) to perform a CRUD operation
         """
 
-        return getattr(ConnectionInstance.db_connection, collection_name)
+        return ConnectionInstance.db_connection.db[collection_name]
 
     @staticmethod
     def find(
