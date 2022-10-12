@@ -41,7 +41,9 @@ class Record:
         # slow down ingestion times
 
         # TODO 1 - exception handling
-        for metadata_key, value in self.record.metadata.dict(exclude_unset=True).items():
+        for metadata_key, value in self.record.metadata.dict(
+            exclude_unset=True,
+        ).items():
             await MongoDBInterface.update_one(
                 "records",
                 {"_id": self.record.id_},
@@ -52,7 +54,13 @@ class Record:
             await MongoDBInterface.update_one(
                 "records",
                 {"_id": self.record.id_},
-                {"$set": {f"channels.{channel_name}": channel_value.dict(exclude_unset=True)}},
+                {
+                    "$set": {
+                        f"channels.{channel_name}": channel_value.dict(
+                            exclude_unset=True,
+                        ),
+                    },
+                },
             )
 
     async def find_existing_record(self):

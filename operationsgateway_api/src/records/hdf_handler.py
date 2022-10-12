@@ -30,6 +30,9 @@ class HDFDataHandler:
         into a HDF file via h5py
         """
         self.hdf_file = h5py.File(hdf_temp_file, "r")
+        self.channels = {}
+        self.waveforms = []
+        self.images = []
 
     def extract_data(self):
         """
@@ -50,10 +53,20 @@ class HDFDataHandler:
             # TODO 1 - add proper exception
             print(f"DATE CONVERSION BROKE: {e}")
 
-        channels = {}
-        waveforms = []
-        images = []
+        self.extract_channels()
 
+        try:
+            record = Record(
+                _id=self.record_id,
+                metadata=RecordMetadata(**metadata_hdf),
+                channels=self.channels,
+            )
+        except ValidationError as e:
+            print(f"RECORD CREATION BROKE: {e}")
+
+        return record, self.waveforms, self.images
+
+    def extract_channels(self):
         for channel_name, value in self.hdf_file.items():
             # TODO 1 - move this stuff into a separate function?
             channel_metadata = dict(value.attrs)
@@ -64,7 +77,7 @@ class HDFDataHandler:
                     channel_name,
                     full_path=False,
                 )
-                images.append(Image(path=image_path, data=value["data"][()]))
+                self.images.append(Image(path=image_path, data=value["data"][()]))
 
                 try:
                     channel = ImageChannel(
@@ -75,32 +88,14 @@ class HDFDataHandler:
                     # TODO 1 - add proper exception
                     print(f"IMAGE CHANNEL BROKE: {e}")
             elif value.attrs["channel_dtype"] == "rgb-image":
-                # TODO - when we don't want random noise anymore, we could probably
-                # combine this code with greyscale images, its the same implementation
-                image_path = ImageClass.get_image_path(
-                    self.record_id,
-                    channel_name,
-                    full_path=False,
-                )
+                # TODO - implement colour image ingestion. Currently waiting on the
+                # OG-HDF5 converter to support conversion of colour images.
+                # Implementation will be as per greyscale image (`get_image_path()`
+                # then append to `self.images`) but might require extracting a different
+                # part of the value
 
-                # TODO 1 - refactor this branch
-                """
-                # Gives random noise, where only example RGB I have sends full black
-                # image. Comment out to store true data
-                image_data = np.random.randint(
-                    0,
-                    255,
-                    size=(300, 400, 3),
-                    dtype=np.uint8,
-                )
-
-                images[image_path] = image_data
-
-                record["channels"][channel_name] = {
-                    "metadata": {},
-                    "image_path": image_path,
-                }
-                """
+                # TODO 1 - add exception handling
+                print("COLOUR IMAGES CANNOT BE INGESTED")
             elif value.attrs["channel_dtype"] == "scalar":
                 try:
                     channel = ScalarChannel(
@@ -120,7 +115,7 @@ class HDFDataHandler:
                         waveform_id=waveform_id,
                     )
 
-                    waveforms.append(
+                    self.waveforms.append(
                         Waveform(
                             _id=waveform_id,
                             x=value["x"][()],
@@ -133,15 +128,4 @@ class HDFDataHandler:
 
             # Put channels into a dictionary to give a good structure to query them in
             # the database
-            channels[channel_name] = channel
-
-        try:
-            record = Record(
-                _id=self.record_id,
-                metadata=RecordMetadata(**metadata_hdf),
-                channels=channels,
-            )
-        except ValidationError as e:
-            print(f"RECORD CREATION BROKE: {e}")
-
-        return record, waveforms, images
+            self.channels[channel_name] = channel

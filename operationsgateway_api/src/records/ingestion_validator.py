@@ -31,8 +31,8 @@ class IngestionValidator:
         flat_stored_data = IngestionValidator.flatten_data_dict(stored_data)
 
         for key in flat_input_data:
-            # TODO 2 - this checks if the channels key-value pair is populated, doesn't go
-            # any deeper than that. If this is going to be implemented to actually do
+            # TODO 2 - this checks if the channels key-value pair is populated, doesn't
+            # go any deeper than that. If this is going to be implemented to actually do
             # something, you need to iterate through each channel
             if key in flat_stored_data:
                 log.warning(
