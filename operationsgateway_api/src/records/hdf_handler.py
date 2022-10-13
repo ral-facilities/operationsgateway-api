@@ -45,7 +45,6 @@ class HDFDataHandler:
 
         metadata_hdf = dict(self.hdf_file.attrs)
         try:
-            # TODO 1 - make sure that we can round-trip timestamps
             metadata_hdf["timestamp"] = datetime.strptime(
                 metadata_hdf["timestamp"],
                 "%Y-%m-%d %H:%M:%S",
