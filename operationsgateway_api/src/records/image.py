@@ -95,9 +95,12 @@ class Image:
 
     @staticmethod
     def get_image_path(record_id, channel_name, full_path=True):
-        # TODO 1 - turn below into a docstring or comment or something
-        # /root/seg_dev/og-images/20220408002834/N_COMP_FF_IMAGE.png
-        # 20220408002834/N_COMP_FF_IMAGE.png
+        """
+        Returns an image path given a record ID and channel name. By default, a full
+        path is returned, although this can be changed to not return the base directory
+        by using the `full_path` argument.
+        """
+
         if full_path:
             return (
                 f"{Config.config.mongodb.image_store_directory}/{record_id}/"

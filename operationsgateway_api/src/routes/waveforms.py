@@ -51,5 +51,4 @@ async def get_waveform_by_id(
 
     log.info("Getting waveform by ID: %s", waveform_id)
 
-    # TODO 2 - add 404
     return await Waveform.get_waveform(waveform_id)

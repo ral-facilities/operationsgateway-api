@@ -34,8 +34,10 @@ class Waveform:
             self.thumbnail = base64.b64encode(waveform_image_buffer.getvalue())
 
     def get_channel_name_from_id(self):
-        # TODO 1 - add docstring
-        # 20220408140310_N_COMP_SPEC_TRACE -> N_COMP_SPEC_TRACE
+        """
+        From a waveform ID, extract and return the channel name associated with the
+        waveform. For example, 20220408140310_N_COMP_SPEC_TRACE -> N_COMP_SPEC_TRACE
+        """
         return "_".join(self.waveform.id_.split("_")[1:])
 
     async def _is_waveform_stored(self) -> bool:

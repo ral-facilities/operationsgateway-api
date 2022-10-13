@@ -72,6 +72,9 @@ class Record:
             )
 
     async def find_existing_record(self):
+        log.debug(
+            "Querying MongoDB to see if a record is already stored in the database",
+        )
         record_dict = await MongoDBInterface.find_one(
             "records",
             filter_={"_id": self.record.id_},

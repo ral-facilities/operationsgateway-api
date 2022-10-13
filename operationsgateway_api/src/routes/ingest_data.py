@@ -40,13 +40,14 @@ async def submit_hdf(file: UploadFile):
 
     # TODO - move ingestion validation/check whether to reject the file here?
 
-    # TODO 1 - might need some logging?
+    log.debug("Processing waveforms")
     for w in waveforms:
         waveform = Waveform(w)
         await waveform.insert_waveform()
         waveform.create_thumbnail()
         record.store_thumbnail(waveform)
 
+    log.debug("Processing images")
     for i in images:
         image = Image(i)
         image.store()
@@ -57,9 +58,14 @@ async def submit_hdf(file: UploadFile):
     ingest_checker = IngestionValidator(record_data, stored_record)
 
     if stored_record:
+        log.debug(
+            "Record matching ID %s already exists in the database, updating existing"
+            " document",
+        )
         await record.update()
         return f"Updated {stored_record.id_}"
     else:
+        log.debug("Inserting new record into MongoDB")
         await record.insert()
         return JSONResponse(
             record.record.id_,

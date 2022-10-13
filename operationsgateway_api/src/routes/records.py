@@ -113,7 +113,6 @@ async def count_records(
     tags=["Records"],
 )
 @endpoint_error_handling
-# TODO 1 - can I find a use case for conditions?
 async def get_record_by_id(
     id_: str = Path(  # noqa: B008
         ...,

@@ -90,7 +90,6 @@ class MongoDBInterface:
 
         collection = MongoDBInterface.get_collection_object(collection_name)
 
-        # TODO 2 - might be able to implement projection?
         return await collection.find_one(filter_)
 
     @staticmethod
@@ -135,7 +134,7 @@ class MongoDBInterface:
     @staticmethod
     async def insert_many(collection_name, data):
         """
-        TODO 1
+        Using the input data, insert multiple documents into a given collection
         """
 
         log.info("Sending insert_many() to MongoDB, collection: %s", collection_name)
@@ -152,7 +151,7 @@ class MongoDBInterface:
     @staticmethod
     async def delete_one(collection_name, filter_={}):  # noqa: B006
         """
-        TODO 1
+        Given a condition, delete a single document from a collection
         """
 
         log.info("Sending delete_one() to MongoDB, collection: %s", collection_name)

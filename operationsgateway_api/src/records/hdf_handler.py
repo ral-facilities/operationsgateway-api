@@ -41,6 +41,7 @@ class HDFDataHandler:
         structure format. Metadata of the shot, channel data and its metadata is
         extracted. The data is then returned in a dictionary
         """
+        log.debug("Extracting data from HDF files")
 
         metadata_hdf = dict(self.hdf_file.attrs)
         try:
