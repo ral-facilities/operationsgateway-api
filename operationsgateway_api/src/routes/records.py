@@ -136,7 +136,6 @@ async def get_record_by_id(
 
     record_data = await Record.find_record_by_id(id_, conditions)
 
-    # TODO 1 - stores the entire thumbnail, that's not good
     if truncate:
         Record.truncate_thumbnails(record_data)
 

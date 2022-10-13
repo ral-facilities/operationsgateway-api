@@ -40,6 +40,7 @@ class Image:
         img = PILImage.open(
             f"{Config.config.mongodb.image_store_directory}/{self.image.path}",
         )
+        img.thumbnail(Config.config.app.image_thumbnail_size)
         self.thumbnail = ThumbnailHandler.convert_to_base64(img)
 
     def extract_metadata_from_path(self):
