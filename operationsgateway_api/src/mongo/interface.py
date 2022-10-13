@@ -111,7 +111,8 @@ class MongoDBInterface:
             )
         except WriteError as exc:
             raise DatabaseError(
-                "Error when updating single document in %s collection", collection_name,
+                "Error when updating single document in %s collection",
+                collection_name,
             ) from exc
 
     @staticmethod

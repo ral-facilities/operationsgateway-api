@@ -1,12 +1,18 @@
 import base64
+import logging
 import os
 
+from fastapi.responses import FileResponse
 from PIL import Image as PILImage
 
 from operationsgateway_api.src.config import Config
-from operationsgateway_api.src.exceptions import ImageError
+from operationsgateway_api.src.exceptions import ImageError, ImageNotFoundError
 from operationsgateway_api.src.models import Image as ImageModel
+from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
+
+
+log = logging.getLogger()
 
 
 class Image:
@@ -30,7 +36,6 @@ class Image:
         except TypeError as exc:
             raise ImageError("Image data is not in correct format to be read") from exc
 
-    # TODO 1 - we don't store thumbnails in DB, oops
     def create_thumbnail(self):
         img = PILImage.open(
             f"{Config.config.mongodb.image_store_directory}/{self.image.path}",
@@ -44,12 +49,48 @@ class Image:
         return record_id, channel_name
 
     @staticmethod
-    def get_image(record_id, channel_name):
+    async def get_image(record_id, channel_name, string_response):
         try:
-            with open(Image.get_image_path(record_id, channel_name), "rb") as file:
-                return base64.b64encode(file.read())
-        except OSError as exc:
-            raise ImageError("Image could not be found on disk") from exc
+            if string_response:
+                with open(Image.get_image_path(record_id, channel_name), "rb") as file:
+                    return base64.b64encode(file.read())
+            else:
+                # TODO - get exception handling to work on this one
+                return FileResponse(Image.get_image_path(record_id, channel_name))
+        except (OSError, RuntimeError) as exc:
+            # TODO - change to Record.count_records() and fix the circular import
+            record_count = await MongoDBInterface.count_documents(
+                "records",
+                {
+                    "_id": record_id,
+                    f"channels.{channel_name}": {"$exists": True},
+                },
+            )
+
+            if record_count == 1:
+                log.error(
+                    "Image could not be found on disk. Record ID: %s, channel name: %s",
+                    record_id,
+                    channel_name,
+                )
+                raise ImageError("Image could not be found on disk") from exc
+            elif record_count == 0:
+                log.error(
+                    "Image not available due to invalid record ID (%s) or channel name"
+                    " (%s)",
+                    record_id,
+                    channel_name,
+                )
+                raise ImageNotFoundError(
+                    "Image not available due to incorrect record ID or channel name",
+                ) from exc
+            else:
+                log.error(
+                    "Unexpected number of records (%d) found when verifying whether the"
+                    " image should be available on disk",
+                    record_count,
+                )
+                raise ImageError("Unexpected error finding image on disk") from exc
 
     @staticmethod
     def get_image_path(record_id, channel_name, full_path=True):

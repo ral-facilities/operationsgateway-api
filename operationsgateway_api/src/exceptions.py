@@ -45,6 +45,12 @@ class ImageError(ApiError):
         self.status_code = 500
 
 
+class ImageNotFoundError(ApiError):
+    def __init__(self, msg="Image cannot be found on disk", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 404
+
+
 class RecordError(ApiError):
     def __init__(self, msg="Record error", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)

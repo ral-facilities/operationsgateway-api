@@ -1,11 +1,16 @@
 import base64
 from io import BytesIO
 import json
+import logging
 
 import matplotlib.pyplot as plt
 
+from operationsgateway_api.src.exceptions import MissingDocumentError
 from operationsgateway_api.src.models import Waveform as WaveformModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
+
+
+log = logging.getLogger()
 
 
 class Waveform:
@@ -66,4 +71,8 @@ class Waveform:
             {"_id": waveform_id},
         )
 
-        return WaveformModel(**waveform_data)
+        if waveform_data:
+            return WaveformModel(**waveform_data)
+        else:
+            log.error("Waveform cannot be found, ID: %s", waveform_id)
+            raise MissingDocumentError("Waveform cannot be found")

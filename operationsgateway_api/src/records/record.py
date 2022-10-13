@@ -1,12 +1,20 @@
+import logging
 from typing import Union
 
 from pydantic import ValidationError
-from operationsgateway_api.src.exceptions import ModelError, RecordError
 
+from operationsgateway_api.src.exceptions import (
+    MissingDocumentError,
+    ModelError,
+    RecordError,
+)
 from operationsgateway_api.src.models import Record as RecordModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.waveform import Waveform
+
+
+log = logging.getLogger()
 
 
 class Record:
@@ -17,7 +25,7 @@ class Record:
             try:
                 self.record = RecordModel(**record)
             except ValidationError as exc:
-                raise ModelError(str(exc))
+                raise ModelError(str(exc)) from exc
         else:
             raise RecordError("RecordModel or dictionary not passed to Record init")
 
@@ -94,10 +102,16 @@ class Record:
 
     @staticmethod
     async def find_record_by_id(id_, conditions):
-        return await MongoDBInterface.find_one(
+        record_data = await MongoDBInterface.find_one(
             "records",
             {"_id": id_, **conditions},
         )
+
+        if record_data:
+            return record_data
+        else:
+            log.error("Record cannot be found. ID: %s, Conditions: %s", id_, conditions)
+            raise MissingDocumentError("Record cannot be found")
 
     @staticmethod
     async def count_records(conditions):

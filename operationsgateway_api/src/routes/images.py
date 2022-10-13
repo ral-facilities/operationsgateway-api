@@ -1,7 +1,6 @@
 import logging
 
 from fastapi import APIRouter, Path, Query
-from fastapi.responses import FileResponse
 
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.records.image import Image
@@ -50,8 +49,4 @@ async def get_full_image(
     encoded string of the image or as a .png file, by toggling `string_response`
     """
 
-    # TODO 1 - refactor so exception handling hits both
-    if string_response:
-        return Image.get_image(record_id, channel_name)
-    else:
-        return FileResponse(Image.get_image_path(record_id, channel_name))
+    return await Image.get_image(record_id, channel_name, string_response)

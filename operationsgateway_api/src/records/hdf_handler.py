@@ -65,7 +65,7 @@ class HDFDataHandler:
                 channels=self.channels,
             )
         except ValidationError as exc:
-            raise ModelError(str(exc))
+            raise ModelError(str(exc)) from exc
 
         return record, self.waveforms, self.images
 
@@ -88,7 +88,7 @@ class HDFDataHandler:
                         image_path=image_path,
                     )
                 except ValidationError as exc:
-                    raise ModelError(str(exc))
+                    raise ModelError(str(exc)) from exc
             elif value.attrs["channel_dtype"] == "rgb-image":
                 # TODO - implement colour image ingestion. Currently waiting on the
                 # OG-HDF5 converter to support conversion of colour images.
@@ -103,7 +103,7 @@ class HDFDataHandler:
                         data=value["data"][()],
                     )
                 except ValidationError as exc:
-                    raise ModelError(str(exc))
+                    raise ModelError(str(exc)) from exc
             elif value.attrs["channel_dtype"] == "waveform":
                 waveform_id = f"{self.record_id}_{channel_name}"
                 log.debug("Waveform ID: %s", waveform_id)
@@ -122,7 +122,7 @@ class HDFDataHandler:
                         ),
                     )
                 except ValidationError as exc:
-                    raise ModelError(str(exc))
+                    raise ModelError(str(exc)) from exc
 
             # Put channels into a dictionary to give a good structure to query them in
             # the database

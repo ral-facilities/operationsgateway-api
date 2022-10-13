@@ -134,10 +134,9 @@ async def get_record_by_id(
 
     log.info("Getting record by ID: %s", id_)
 
-    # TODO 2 - add 404 to this endpoint
-    # TODO 1 - doesn't error anymore when nothing is found, just nulls
     record_data = await Record.find_record_by_id(id_, conditions)
 
+    # TODO 1 - stores the entire thumbnail, that's not good
     if truncate:
         Record.truncate_thumbnails(record_data)
 
