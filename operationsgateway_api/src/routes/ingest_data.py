@@ -38,7 +38,8 @@ async def submit_hdf(file: UploadFile):
     record_data, waveforms, images = hdf_handler.extract_data()
     record = Record(record_data)
 
-    # TODO - move ingestion validation/check whether to reject the file here?
+    stored_record = await record.find_existing_record()
+    ingest_checker = IngestionValidator(record_data, stored_record)  # noqa: F841
 
     log.debug("Processing waveforms")
     for w in waveforms:
@@ -53,9 +54,6 @@ async def submit_hdf(file: UploadFile):
         image.store()
         image.create_thumbnail()
         record.store_thumbnail(image)
-
-    stored_record = await record.find_existing_record()
-    ingest_checker = IngestionValidator(record_data, stored_record)
 
     if stored_record:
         log.debug(
@@ -72,23 +70,3 @@ async def submit_hdf(file: UploadFile):
             status_code=status.HTTP_201_CREATED,
             headers={"Location": f"/records/{record.record.id_}"},
         )
-
-    """
-    # TODO 1 - test, it might be broken
-    if ingest_checker.stored_record:
-        # Cycle through data and detect repeating data
-        # Any remaining data should be put into MongoDB via update_one()
-        # TODO - needs uncommenting once the class is fixed
-        remaining_request_data = record
-        '''
-        remaining_request_data = IngestionValidator.search_existing_data(
-            record_data,
-            stored_record,
-        )
-        '''
-        log.debug("Remaining data: %s", remaining_request_data.keys())
-        if remaining_request_data:
-            return f"Updated {str(stored_record['_id'])}"
-        else:
-            return f"{str(stored_record['_id'])} not updated, no new data"
-    """

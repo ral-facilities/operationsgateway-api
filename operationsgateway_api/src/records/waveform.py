@@ -47,7 +47,6 @@ class Waveform:
         )
         self.is_stored = True if waveform_exist else False
 
-    # TODO 1 - alternative to plt.?
     def _create_plot(self, buffer):
         # Making changes to plot so figure size and line width is correct and axes are
         # disabled

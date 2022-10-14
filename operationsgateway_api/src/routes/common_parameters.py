@@ -72,10 +72,10 @@ class ParameterHandler:
 
             try:
                 new_date = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
-            except ValueError:
+            except ValueError as exc:
                 raise QueryParameterError(
                     "Incorrect date format used in query parameter. Use"
                     " %Y-%m-%dT%H:%M:%S to filter by datetimes",
-                )
+                ) from exc
 
             return new_date

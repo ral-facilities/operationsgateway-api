@@ -21,7 +21,7 @@ router = APIRouter()
 )
 @endpoint_error_handling
 async def get_records(
-    # TODO 1 - investigate linting errors
+    # TODO - investigate linting errors
     conditions: dict = Depends(ParameterHandler.filter_conditions),  # noqa: B008
     skip: int = Query(  # noqa: B008
         0,

@@ -10,9 +10,7 @@ class IngestionValidator:
         self.ingested_record = ingested_record
         self.stored_record = stored_record
 
-    # TODO - could be named/placed better?
-    @staticmethod
-    def search_existing_data(input_data, stored_data):
+    def search_existing_data(self):
         """
         This function searches through the existing shot data stored in MongoDB to see
         if any fields exist in the data extracted from the HDF file
@@ -26,9 +24,21 @@ class IngestionValidator:
         just to iterate through the original data to `del` or `pop()` the pre-existing
         data serves no purpose - we only flatten to make it easier to detect
         pre-existing data.
+
+        This class isn't implemented right now, but will be implemented when use cases
+        to reject a file are given. As such, there isn't much purpose in making this
+        class work with the refactored code because there are no use cases we can
+        implement
         """
-        flat_input_data = IngestionValidator.flatten_data_dict(input_data)
-        flat_stored_data = IngestionValidator.flatten_data_dict(stored_data)
+
+        # Check metadata
+
+        # Check channels
+        pass
+
+        """
+        flat_input_data = IngestionValidator.flatten_data_dict(self.ingested_record)
+        flat_stored_data = IngestionValidator.flatten_data_dict(self.stored_record)
 
         for key in flat_input_data:
             # TODO 2 - this checks if the channels key-value pair is populated, doesn't
@@ -44,7 +54,8 @@ class IngestionValidator:
                 # Current exception is there as a template only
                 # raise Exception("Duplicate data, will not process")
 
-        return input_data
+        return self.ingested_record
+        """
 
     # TODO 2 - not used outside of the class, remove static
     # TODO 2 - fix, doesn't work with the record model objects
