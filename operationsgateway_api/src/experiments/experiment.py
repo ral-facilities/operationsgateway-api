@@ -12,6 +12,9 @@ from operationsgateway_api.src.routes.common_parameters import ParameterHandler
 
 class Experiment:
     def __init__(self) -> None:
+        # TODO - think some client handling might be needed here, so the same client
+        # can be used throughout the lifetime of the instance. Would something as simple
+        # as class vars work?
         user_office_client = Client(
             Config.config.experiments.user_office_wsdl_url,
         )
@@ -48,6 +51,10 @@ class Experiment:
         each other) to avoid the scheduler returning an error
         """
 
+        # TODO - this needs to be a background task as well as a specific endpoint
+
+        # TODO - would it be better to get most recent X weeks to minimise number of
+        # requests to scheduler?
         experiments_data = self.scheduler_client.service.getExperimentDatesForInstrument(
             self.session_id,
             Config.config.experiments.instrument_name,
@@ -85,6 +92,8 @@ class Experiment:
         
         """
         Test code that I'm still not sure how it works
+        # TODO - work out how this call works and whether it would be better than
+        # getExperiment
 
         test = self.scheduler_client.service.getExperiments(
             self.session_id,

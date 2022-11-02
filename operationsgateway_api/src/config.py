@@ -57,6 +57,7 @@ class AuthConfig(BaseModel):
 
 class ExperimentsConfig(BaseModel):
     """Configuration model class to store experiment configuration details"""
+    # TODO - add this stuff to example config
     user_office_wsdl_url: StrictStr
     username: StrictStr
     password: StrictStr
