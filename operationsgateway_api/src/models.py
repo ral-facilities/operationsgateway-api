@@ -86,3 +86,11 @@ class LoginDetails(BaseModel):
 
 class AccessToken(BaseModel):
     token: str
+
+
+class Experiment(BaseModel):
+    id_: str = Field(alias="_id")
+    experiment_id: str
+    part: int
+    start_date: datetime
+    end_date: datetime

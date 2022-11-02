@@ -55,6 +55,14 @@ class AuthConfig(BaseModel):
     fedid_server_ldap_realm: StrictStr
 
 
+class ExperimentsConfig(BaseModel):
+    """Configuration model class to store experiment configuration details"""
+    user_office_wsdl_url: StrictStr
+    username: StrictStr
+    password: StrictStr
+    scheduler_wsdl_url: StrictStr
+    instrument_name: StrictStr
+
 class APIConfig(BaseModel):
     """
     Class to store the API's configuration settings
@@ -64,6 +72,7 @@ class APIConfig(BaseModel):
     logging: Logging
     mongodb: MongoDB
     auth: AuthConfig
+    experiments: ExperimentsConfig
 
     @classmethod
     def load(cls, path=Path(__file__).parent.parent / "config.yml"):  # noqa: B008
