@@ -8,6 +8,7 @@ from operationsgateway_api.src.main import app
 def test_app():
     return TestClient(app)
 
+
 @pytest.fixture()
 def login_and_get_token(test_app: TestClient):
     json = '{"username": "backend", "password": "back"}'
