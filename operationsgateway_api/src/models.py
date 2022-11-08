@@ -52,6 +52,13 @@ class AccessToken(BaseModel):
     token: str
 
 
+class UserModel(BaseModel):
+    username: str = Field(alias="_id")
+    sha256_password: Optional[str]
+    auth_type: str
+    authorised_routes: Optional[List[str]]
+
+
 class RecordsQueryParams:
     filter_: dict
     skip: int
