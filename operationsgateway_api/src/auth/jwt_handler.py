@@ -7,6 +7,7 @@ import jwt
 from operationsgateway_api.src.auth.auth_keys import PRIVATE_KEY, PUBLIC_KEY
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import ForbiddenError
+from operationsgateway_api.src.models import UserModel
 
 
 log = logging.getLogger()
@@ -14,8 +15,8 @@ algorithm = Config.config.auth.jwt_algorithm
 
 
 class JwtHandler:
-    def __init__(self, user_document: dict):
-        self.user_document = user_document
+    def __init__(self, user_model: UserModel):
+        self.user_model = user_model
 
     @staticmethod
     def _pack_jwt(payload: dict):
@@ -33,8 +34,8 @@ class JwtHandler:
         :return: The access JWT
         """
         payload = {}
-        payload["username"] = self.user_document["_id"]
-        payload["groups"] = self.user_document["groups"]
+        payload["username"] = self.user_model.username
+        payload["authorised_routes"] = self.user_model.authorised_routes
         payload["exp"] = datetime.now(timezone.utc) + timedelta(
             minutes=Config.config.auth.access_token_validity_mins,
         )
