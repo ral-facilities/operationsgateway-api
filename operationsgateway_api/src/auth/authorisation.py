@@ -15,13 +15,11 @@ security = HTTPBearer()
 
 @endpoint_error_handling
 async def authorise_token(
-    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security),  # noqa: B008
 ) -> str:
     """
     Method to check that a valid access token is passed as a Bearer token in the
     Authorization header.
-    :param request: the (HTTP) Request object for the call to the endpoint
     :param credentials: the access token
     :return: the access token (if verified)
     """
