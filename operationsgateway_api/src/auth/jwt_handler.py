@@ -58,9 +58,10 @@ class JwtHandler:
         Given a JWT, verify that it was signed by the API and that it has not expired
         (checked by default)
         :param token: The JWT to be checked
+        :return: a dictionary containing the token's payload
         """
         try:
-            jwt.decode(token, PUBLIC_KEY, algorithms=[algorithm])
+            return jwt.decode(token, PUBLIC_KEY, algorithms=[algorithm])
         except Exception as exc:
             message = "Invalid token"
             log.warning(message, exc_info=1)

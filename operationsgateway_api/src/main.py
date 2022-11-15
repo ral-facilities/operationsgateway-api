@@ -1,11 +1,12 @@
 import logging
 
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.responses import JSONResponse
 import orjson
 import uvicorn
 
 from operationsgateway_api.src.config import Config
+from operationsgateway_api.src.constants import ROUTE_MAPPINGS
 from operationsgateway_api.src.logger_config import setup_logger
 from operationsgateway_api.src.mongo.connection import ConnectionInstance
 from operationsgateway_api.src.routes import (
@@ -55,12 +56,28 @@ async def close_mongodb_client():
     ConnectionInstance.db_connection.mongo_client.close()
 
 
+def add_router_to_app(api_router: APIRouter):
+    # add this router to the FastAPI app
+    app.include_router(api_router)
+    # add an entry for each of the routes (endpoints) in that router to a dictionary
+    # that maps the function for the endpoint to the endpoint "path" and "method" eg.
+    # <function get_full_image at 0x7...9d0>, '/images/{record_id}/{channel_name} GET'
+    # so that the mappings can be used for authorisation
+    for route in api_router.routes:
+        ROUTE_MAPPINGS[route.endpoint] = f"{route.path} {list(route.methods)[0]}"
+
+
 # Adding endpoints to FastAPI app
-app.include_router(images.router)
-app.include_router(ingest_data.router)
-app.include_router(records.router)
-app.include_router(waveforms.router)
-app.include_router(auth.router)
+add_router_to_app(images.router)
+add_router_to_app(ingest_data.router)
+add_router_to_app(records.router)
+add_router_to_app(waveforms.router)
+add_router_to_app(auth.router)
+
+log.debug("ROUTE_MAPPINGS contents:")
+for item in ROUTE_MAPPINGS.items():
+    log.debug(item)
+
 
 if __name__ == "__main__":
     uvicorn.run(
