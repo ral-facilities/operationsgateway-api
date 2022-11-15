@@ -9,78 +9,53 @@ from operationsgateway_api.src.exceptions import (
     DatabaseError,
     UnauthorisedError,
 )
-from operationsgateway_api.src.models import LoginDetails
-from operationsgateway_api.src.mongo.interface import MongoDBInterface
+from operationsgateway_api.src.models import LoginDetails, UserModel
 
 
 log = logging.getLogger()
 
 
 class Authentication:
-    def __init__(self, login_details: LoginDetails):
-        self.username = login_details.username
-        self.password = login_details.password
+    def __init__(self, login_details: LoginDetails, user_model: UserModel):
+        self.login_details = login_details
+        self.user_model = user_model
 
-    @staticmethod
-    async def get_user_document(username: str) -> dict:
-        """
-        Get the document for the user specified from the database
-        :return: a dictionary containing the user's record
-        """
-        user_document = await MongoDBInterface.find_one(
-            "users",
-            {"_id": username},
-        )
-        return user_document
-
-    def authenticate(self, user_document: dict):
+    def authenticate(self):
         """
         Authenticate the user based on the details found in their database record
-        :param user_document: the user's document entry from the database
         """
-        log.debug("user_document: %s", user_document)
-        if user_document is None:
-            log.warning("Attempted login by user '%s'", self.username)
-            raise UnauthorisedError()
-
-        try:
-            auth_type = user_document["auth_type"]
-        except KeyError as exc:
-            message = f"auth_type not set for user '{self.username}'"
-            log.error(message)
-            raise DatabaseError(msg=message) from exc
-
+        auth_type = self.user_model.auth_type
         if auth_type == "local":
-            self._do_local_auth(user_document)
+            self._do_local_auth()
         elif auth_type == "FedID":
             self._do_fedid_auth()
         else:
             message = (
-                f"auth_type '{auth_type}' not recognised for user '{self.username}'"
+                f"auth_type '{auth_type}' not recognised for user "
+                f"'{self.login_details.username}'"
             )
             log.error(message)
             raise DatabaseError(msg=message)
 
-    def _do_local_auth(self, user_document: dict):
+    def _do_local_auth(self):
         """
         Authenticate a "local" user (functional/non-FedID accounts for control rooms,
         ingesters etc.)
         :param user_document: the user's document entry from the database
         """
-        log.debug("Doing local auth for '%s'", self.username)
-        try:
-            sha256_password = user_document["sha256_password"]
-        except KeyError as exc:
+        username = self.login_details.username
+        log.debug("Doing local auth for '%s'", username)
+        if self.user_model.sha256_password is None:
             raise DatabaseError(
-                msg=f"Encoded password missing in record for user '{self.username}'",
-            ) from exc
+                msg=f"Encoded password missing in record for user '{username}'",
+            )
         # create a sha256 hash of the provided password and compare it to the
         # password has that is stored in the database
         sha_256 = sha256()
-        sha_256.update(self.password.encode())
+        sha_256.update(self.login_details.password.encode())
         password_hashed = sha_256.hexdigest()
-        if password_hashed != sha256_password:
-            log.warning("Failed login attempt for user '%s'", self.username)
+        if password_hashed != self.user_model.sha256_password:
+            log.warning("Failed login attempt for user '%s'", username)
             raise UnauthorisedError()
 
     def _do_fedid_auth(self):
@@ -88,7 +63,8 @@ class Authentication:
         Authenticate a "FedID" user (actual people with entries in the STFC LDAP/Active
         Directory)
         """
-        log.debug("Doing FedID auth for '%s'", self.username)
+        username = self.login_details.username
+        log.debug("Doing FedID auth for '%s'", username)
         try:
             conn = ldap.initialize(Config.config.auth.fedid_server_url)
             ldap.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
@@ -97,13 +73,13 @@ class Authentication:
             ldap.set_option(ldap.OPT_DEBUG_LEVEL, 0)
             conn.start_tls_s()
             conn.simple_bind_s(
-                f"{self.username}@{Config.config.auth.fedid_server_ldap_realm}",
-                self.password,
+                f"{username}@{Config.config.auth.fedid_server_ldap_realm}",
+                self.login_details.password,
             )
-            log.info("Login successful for '%s'", self.username)
+            log.info("Login successful for '%s'", username)
             conn.unbind()
         except ldap.INVALID_CREDENTIALS as exc:
-            log.info("Invalid username or password for '%s'", self.username)
+            log.info("Invalid username or password for '%s'", username)
             conn.unbind()
             raise UnauthorisedError() from exc
         except Exception as exc:
