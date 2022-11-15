@@ -22,6 +22,7 @@ class TestGetRecordByID:
     def test_valid_get_record_by_id(
         self,
         test_app: TestClient,
+        login_and_get_token,
         record_id,
         truncate,
         expected_channel_count,
@@ -29,6 +30,7 @@ class TestGetRecordByID:
     ):
         test_response = test_app.get(
             f"/records/{record_id}?truncate={json.dumps(truncate)}",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
 
         assert test_response.status_code == 200

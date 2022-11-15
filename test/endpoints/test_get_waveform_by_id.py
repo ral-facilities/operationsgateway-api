@@ -20,12 +20,16 @@ class TestGetWaveformByID:
     def test_valid_get_waveform_by_id(
         self,
         test_app: TestClient,
+        login_and_get_token,
         record_id,
         channel_name,
         expected_first_x,
         expected_first_y,
     ):
-        test_response = test_app.get(f"/waveforms/{record_id}/{channel_name}")
+        test_response = test_app.get(
+            f"/waveforms/{record_id}/{channel_name}",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+        )
 
         assert test_response.status_code == 200
 

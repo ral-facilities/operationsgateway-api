@@ -19,6 +19,7 @@ class MongoDBConnection:
     records = db[Config.config.mongodb.collection_name]
     images = db["images"]
     waveforms = db["waveforms"]
+    users = db["users"]
 
 
 class ConnectionInstance:

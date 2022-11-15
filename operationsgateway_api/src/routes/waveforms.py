@@ -1,7 +1,8 @@
 import logging
 
-from fastapi import APIRouter, Path
+from fastapi import APIRouter, Depends, Path
 
+from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.models import Record
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
@@ -37,6 +38,7 @@ async def get_waveform_by_id(
             },
         },
     ),
+    access_token: str = Depends(authorise_token),  # noqa: B008
 ):
     """
     This endpoint gets a single waveform object by channel name and the record ID that

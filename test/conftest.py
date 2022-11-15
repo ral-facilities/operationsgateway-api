@@ -9,6 +9,16 @@ def test_app():
     return TestClient(app)
 
 
+@pytest.fixture()
+def login_and_get_token(test_app: TestClient):
+    json = '{"username": "backend", "password": "back"}'
+    response = test_app.post("/login", data=json)
+    # strip the first and last characters off the response
+    # (the double quotes that surround it)
+    token = response.text[1:-1]
+    return token
+
+
 def assert_record(record, expected_channel_count, expected_channel_data):
     assert list(record.keys()) == ["_id", "metadata", "channels"]
     assert len(record["channels"]) == expected_channel_count

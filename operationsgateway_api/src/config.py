@@ -44,6 +44,18 @@ class MongoDB(BaseModel):
     image_store_directory: StrictStr
 
 
+class AuthConfig(BaseModel):
+    """Configuration model class to store authentication configuration details"""
+
+    private_key_path: StrictStr
+    public_key_path: StrictStr
+    jwt_algorithm: StrictStr
+    access_token_validity_mins: StrictInt
+    refresh_token_validity_days: StrictInt
+    fedid_server_url: StrictStr
+    fedid_server_ldap_realm: StrictStr
+
+
 class APIConfig(BaseModel):
     """
     Class to store the API's configuration settings
@@ -52,6 +64,7 @@ class APIConfig(BaseModel):
     app: Optional[App]
     logging: Logging
     mongodb: MongoDB
+    auth: AuthConfig
 
     @classmethod
     def load(cls, path=Path(__file__).parent.parent / "config.yml"):  # noqa: B008
