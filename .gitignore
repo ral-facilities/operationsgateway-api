@@ -10,3 +10,5 @@ config.yml*
 .coverage
 coverage.xml
 util/ingest_hdf_dev.py
+id_rsa
+id_rsa.pub
