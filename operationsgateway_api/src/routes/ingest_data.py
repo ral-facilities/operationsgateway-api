@@ -1,8 +1,9 @@
 import logging
 
-from fastapi import APIRouter, status, UploadFile
+from fastapi import APIRouter, Depends, status, UploadFile
 from fastapi.responses import JSONResponse
 
+from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
 from operationsgateway_api.src.records.image import Image
@@ -22,7 +23,10 @@ router = APIRouter()
     tags=["Ingestion"],
 )
 @endpoint_error_handling
-async def submit_hdf(file: UploadFile):
+async def submit_hdf(
+    file: UploadFile,
+    access_token: str = Depends(authorise_route),  # noqa: B008
+):
     """
     This endpoint accepts a HDF file, processes it and stores the data in MongoDB (with
     images being stored on disk). The HDF file should follow the format specified for

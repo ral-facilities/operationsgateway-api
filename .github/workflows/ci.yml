@@ -42,11 +42,33 @@ jobs:
         with:
           mongodb-version: '5.0'
 
+      # Read the database name from the config file and store it in an environment variable
+      - name: Get database name from ci_config.yml
+        run: echo "DATABASE_NAME=$(grep database_name .github/ci_config.yml | cut -d ':' -f 2 | tr -d '[:space:]')" >> $GITHUB_ENV
+
+      - name: Add test users to OperationsGateway database
+        run: mongoimport --db='${{ env.DATABASE_NAME }}' --collection='users' --file='util/users_for_mongoimport.json'
+
       # Configuration for API
       - name: Move CI config.yml to correct place
         run: cp .github/ci_config.yml operationsgateway_api/config.yml
       - name: Create log file
         run: touch "$GITHUB_WORKSPACE/logs.log"
+
+      - name: Create SSH private key file for auth
+        run: 'echo "$SSH_KEY_PRIVATE" > /home/runner/work/operationsgateway-api/id_rsa'
+        shell: bash
+        env:
+          SSH_KEY_PRIVATE: ${{secrets.SSH_PRIVATE_KEY_FOR_AUTH}}
+
+      - name: Set permissions on private key file
+        run: chmod 600 /home/runner/work/operationsgateway-api/id_rsa
+
+      - name: Create SSH public key file for auth
+        run: 'echo "$SSH_KEY_PUBLIC" > /home/runner/work/operationsgateway-api/id_rsa.pub'
+        shell: bash
+        env:
+          SSH_KEY_PUBLIC: ${{secrets.SSH_PUBLIC_KEY_FOR_AUTH}}
 
       # Load Poetry virtual environment dependencies and install API dependencies
       - name: Load Poetry cache
@@ -65,7 +87,7 @@ jobs:
           path: operationsgateway-test-data
           ssh-key: ${{ secrets.SSH_PRIV_OG_TEST_DATA_ACTIONS }}
       - name: Run ingestion script
-        run: poetry run python util/ingest_hdf.py -p operationsgateway-test-data/dev_server
+        run: poetry run python util/ingest_hdf.py -p operationsgateway-test-data/dev_server -U backend -P back
 
       - name: Load Poetry cache for Nox tests session
         uses: actions/cache@v3

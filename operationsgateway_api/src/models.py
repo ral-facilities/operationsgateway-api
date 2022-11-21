@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 from pydantic import BaseModel, Field, validator
@@ -86,3 +86,10 @@ class LoginDetails(BaseModel):
 
 class AccessToken(BaseModel):
     token: str
+
+
+class UserModel(BaseModel):
+    username: str = Field(alias="_id")
+    sha256_password: Optional[str]
+    auth_type: str
+    authorised_routes: Optional[List[str]]
