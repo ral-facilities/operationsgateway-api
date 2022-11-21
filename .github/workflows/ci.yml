@@ -112,7 +112,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.9.7"
+          python-version: "3.8.14"
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
@@ -141,7 +141,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.9.7"
+          python-version: "3.8.14"
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
@@ -170,7 +170,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.9.7"
+          python-version: "3.8.14"
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
