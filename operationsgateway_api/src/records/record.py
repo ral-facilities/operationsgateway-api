@@ -8,7 +8,7 @@ from operationsgateway_api.src.exceptions import (
     ModelError,
     RecordError,
 )
-from operationsgateway_api.src.models import Record as RecordModel
+from operationsgateway_api.src.models import RecordModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.waveform import Waveform

@@ -5,7 +5,7 @@ import numpy as np
 from pydantic import BaseModel, Field, validator
 
 
-class Image(BaseModel):
+class ImageModel(BaseModel):
     path: str
     data: np.ndarray
 
@@ -13,7 +13,7 @@ class Image(BaseModel):
         arbitrary_types_allowed = True
 
 
-class Waveform(BaseModel):
+class WaveformModel(BaseModel):
     id_: str = Field(alias="_id")
     x: str
     y: str
@@ -28,7 +28,7 @@ class Waveform(BaseModel):
             return value
 
 
-class ImageChannelMetadata(BaseModel):
+class ImageChannelMetadataModel(BaseModel):
     channel_dtype: str
     exposure_time_s: Optional[float]
     gain: Optional[float]
@@ -39,52 +39,55 @@ class ImageChannelMetadata(BaseModel):
     y_pixel_units: Optional[str]
 
 
-class ImageChannel(BaseModel):
-    metadata: ImageChannelMetadata
+class ImageChannelModel(BaseModel):
+    metadata: ImageChannelMetadataModel
     image_path: str
     thumbnail: Optional[str]
 
 
-class ScalarChannelMetadata(BaseModel):
+class ScalarChannelMetadataModel(BaseModel):
     channel_dtype: str
     units: Optional[str]
 
 
-class ScalarChannel(BaseModel):
-    metadata: ScalarChannelMetadata
+class ScalarChannelModel(BaseModel):
+    metadata: ScalarChannelMetadataModel
     data: Union[float, int, str]
 
 
-class WaveformChannelMetadata(BaseModel):
+class WaveformChannelMetadataModel(BaseModel):
     channel_dtype: str
     x_units: Optional[str]
     y_units: Optional[str]
 
 
-class WaveformChannel(BaseModel):
-    metadata: WaveformChannelMetadata
+class WaveformChannelModel(BaseModel):
+    metadata: WaveformChannelMetadataModel
     thumbnail: Optional[str]
     waveform_id: str
 
 
-class RecordMetadata(BaseModel):
+class RecordMetadataModel(BaseModel):
     epac_ops_data_version: str
     shotnum: Optional[int]
     timestamp: datetime
 
 
-class Record(BaseModel):
+class RecordModel(BaseModel):
     id_: str = Field(alias="_id")
-    metadata: RecordMetadata
-    channels: Dict[str, Union[ImageChannel, ScalarChannel, WaveformChannel]]
+    metadata: RecordMetadataModel
+    channels: Dict[
+        str,
+        Union[ImageChannelModel, ScalarChannelModel, WaveformChannelModel],
+    ]
 
 
-class LoginDetails(BaseModel):
+class LoginDetailsModel(BaseModel):
     username: str
     password: str
 
 
-class AccessToken(BaseModel):
+class AccessTokenModel(BaseModel):
     token: str
 
 

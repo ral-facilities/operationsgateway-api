@@ -7,7 +7,7 @@ from PIL import Image as PILImage
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import ImageError, ImageNotFoundError
-from operationsgateway_api.src.models import Image as ImageModel
+from operationsgateway_api.src.models import ImageModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
 

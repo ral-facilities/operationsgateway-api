@@ -7,18 +7,18 @@ from pydantic import ValidationError
 
 from operationsgateway_api.src.exceptions import HDFDataExtractionError, ModelError
 from operationsgateway_api.src.models import (
-    Image,
-    ImageChannel,
-    ImageChannelMetadata,
-    Record,
-    RecordMetadata,
-    ScalarChannel,
-    ScalarChannelMetadata,
-    Waveform,
-    WaveformChannel,
-    WaveformChannelMetadata,
+    ImageChannelMetadataModel,
+    ImageChannelModel,
+    ImageModel,
+    RecordMetadataModel,
+    RecordModel,
+    ScalarChannelMetadataModel,
+    ScalarChannelModel,
+    WaveformChannelMetadataModel,
+    WaveformChannelModel,
+    WaveformModel,
 )
-from operationsgateway_api.src.records.image import Image as ImageClass
+from operationsgateway_api.src.records.image import Image
 
 
 log = logging.getLogger()
@@ -59,9 +59,9 @@ class HDFDataHandler:
         self.extract_channels()
 
         try:
-            record = Record(
+            record = RecordModel(
                 _id=self.record_id,
-                metadata=RecordMetadata(**metadata_hdf),
+                metadata=RecordMetadataModel(**metadata_hdf),
                 channels=self.channels,
             )
         except ValidationError as exc:
@@ -74,17 +74,19 @@ class HDFDataHandler:
             channel_metadata = dict(value.attrs)
 
             if value.attrs["channel_dtype"] == "image":
-                image_path = ImageClass.get_image_path(
+                image_path = Image.get_image_path(
                     self.record_id,
                     channel_name,
                     full_path=False,
                 )
 
                 try:
-                    self.images.append(Image(path=image_path, data=value["data"][()]))
+                    self.images.append(
+                        ImageModel(path=image_path, data=value["data"][()]),
+                    )
 
-                    channel = ImageChannel(
-                        metadata=ImageChannelMetadata(**channel_metadata),
+                    channel = ImageChannelModel(
+                        metadata=ImageChannelMetadataModel(**channel_metadata),
                         image_path=image_path,
                     )
                 except ValidationError as exc:
@@ -98,8 +100,8 @@ class HDFDataHandler:
                 raise HDFDataExtractionError("Colour images cannot be ingested")
             elif value.attrs["channel_dtype"] == "scalar":
                 try:
-                    channel = ScalarChannel(
-                        metadata=ScalarChannelMetadata(**channel_metadata),
+                    channel = ScalarChannelModel(
+                        metadata=ScalarChannelMetadataModel(**channel_metadata),
                         data=value["data"][()],
                     )
                 except ValidationError as exc:
@@ -109,13 +111,13 @@ class HDFDataHandler:
                 log.debug("Waveform ID: %s", waveform_id)
 
                 try:
-                    channel = WaveformChannel(
-                        metadata=WaveformChannelMetadata(**channel_metadata),
+                    channel = WaveformChannelModel(
+                        metadata=WaveformChannelMetadataModel(**channel_metadata),
                         waveform_id=waveform_id,
                     )
 
                     self.waveforms.append(
-                        Waveform(
+                        WaveformModel(
                             _id=waveform_id,
                             x=value["x"][()],
                             y=value["y"][()],

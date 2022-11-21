@@ -6,7 +6,7 @@ import logging
 import matplotlib.pyplot as plt
 
 from operationsgateway_api.src.exceptions import MissingDocumentError
-from operationsgateway_api.src.models import Waveform as WaveformModel
+from operationsgateway_api.src.models import WaveformModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
 
