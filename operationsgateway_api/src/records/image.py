@@ -32,8 +32,10 @@ class Image:
                 f"{Config.config.mongodb.image_store_directory}/{self.image.path}",
             )
         except OSError as exc:
+            log.exception(msg=exc)
             raise ImageError("Image folder structure has failed") from exc
         except TypeError as exc:
+            log.exception(msg=exc)
             raise ImageError("Image data is not in correct format to be read") from exc
 
     def create_thumbnail(self):

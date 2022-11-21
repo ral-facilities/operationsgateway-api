@@ -1,6 +1,6 @@
 import logging
 
-from pymongo.errors import InvalidName, WriteError
+from pymongo.errors import InvalidName, PyMongoError, WriteError
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import DatabaseError
@@ -109,6 +109,7 @@ class MongoDBInterface:
                 update,
             )
         except WriteError as exc:
+            log.exception(msg=exc)
             raise DatabaseError(
                 "Error when updating single document in %s collection",
                 collection_name,
@@ -126,6 +127,7 @@ class MongoDBInterface:
         try:
             return await collection.insert_one(data)
         except WriteError as exc:
+            log.exception(msg=exc)
             raise DatabaseError(
                 "Error when inserting single document in %s collection",
                 collection_name,
@@ -143,6 +145,7 @@ class MongoDBInterface:
         try:
             return await collection.insert_many(data)
         except WriteError as exc:
+            log.exception(msg=exc)
             raise DatabaseError(
                 "Error when inserting multiple documents in %s collection",
                 collection_name,
@@ -157,7 +160,20 @@ class MongoDBInterface:
         log.info("Sending delete_one() to MongoDB, collection: %s", collection_name)
 
         collection = MongoDBInterface.get_collection_object(collection_name)
-        return await collection.delete_one(filter_)
+        try:
+            return await collection.delete_one(filter_)
+        except PyMongoError as exc:
+            log.error(
+                "Error removing single document in %s collection. The following filter"
+                " was used: %s",
+                collection_name,
+                filter_,
+            )
+            log.exception(msg=exc)
+            raise DatabaseError(
+                "Error removing document from MongoDB, collection: %s",
+                collection_name,
+            ) from exc
 
     @staticmethod
     async def count_documents(collection_name, filter_={}):  # noqa: B006
@@ -167,4 +183,16 @@ class MongoDBInterface:
         )
 
         collection = MongoDBInterface.get_collection_object(collection_name)
-        return await collection.count_documents(filter_)
+        try:
+            return await collection.count_documents(filter_)
+        except PyMongoError as exc:
+            log.error(
+                "Error counting documents. Collection: %s, filter: %s",
+                collection_name,
+                filter_,
+            )
+            log.exception(msg=exc)
+            raise DatabaseError(
+                "Error counting the number of documents in collection %s",
+                collection_name,
+            ) from exc
