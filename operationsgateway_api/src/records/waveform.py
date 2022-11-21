@@ -28,7 +28,6 @@ class Waveform:
             )
 
     def create_thumbnail(self):
-        # Think base64 conversion function will be elsewhere?
         with BytesIO() as waveform_image_buffer:
             self._create_plot(waveform_image_buffer)
             self.thumbnail = base64.b64encode(waveform_image_buffer.getvalue())
