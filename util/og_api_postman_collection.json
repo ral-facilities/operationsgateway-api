@@ -368,12 +368,13 @@
 					]
 				},
 				"url": {
-					"raw": "{{og-api}}/submit_hdf",
+					"raw": "{{og-api}}//submit/hdf",
 					"host": [
 						"{{og-api}}"
 					],
 					"path": [
-						"submit_hdf"
+						"submit",
+						"hdf"
 					]
 				}
 			},

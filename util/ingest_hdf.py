@@ -15,7 +15,7 @@ parser.add_argument(
     "-U",
     "--username",
     type=str,
-    help="Username of a user that has permissions to call the /submit_hdf endpoint",
+    help="Username of a user that has permissions to call the /submit/hdf endpoint",
     required=True,
 )
 parser.add_argument(
@@ -160,7 +160,7 @@ for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
                 start_time = time()
                 with open(file.path, "rb") as hdf_upload:
                     response = requests.post(
-                        f"{API_URL}/submit_hdf",
+                        f"{API_URL}/submit/hdf",
                         files={"file": hdf_upload.read()},
                         headers={"Authorization": f"Bearer {token}"},
                     )
