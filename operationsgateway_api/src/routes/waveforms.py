@@ -3,8 +3,8 @@ import logging
 from fastapi import APIRouter, Depends, Path
 
 from operationsgateway_api.src.auth.authorisation import authorise_token
-from operationsgateway_api.src.models import Record
-from operationsgateway_api.src.mongo.interface import MongoDBInterface
+from operationsgateway_api.src.error_handling import endpoint_error_handling
+from operationsgateway_api.src.records.waveform import Waveform
 
 
 log = logging.getLogger()
@@ -17,6 +17,7 @@ router = APIRouter()
     response_description="Single waveform object",
     tags=["Waveforms"],
 )
+@endpoint_error_handling
 async def get_waveform_by_id(
     record_id: str = Path(  # noqa: B008
         "",
@@ -52,11 +53,4 @@ async def get_waveform_by_id(
 
     log.info("Getting waveform by ID: %s", waveform_id)
 
-    waveform = await MongoDBInterface.find_one(
-        "waveforms",
-        {"_id": waveform_id},
-    )
-
-    # TODO - need to make that model more generic, not specific to records. Or make a
-    # separate model probably
-    return Record.construct(waveform.keys(), **waveform)
+    return await Waveform.get_waveform(waveform_id)

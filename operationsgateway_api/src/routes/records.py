@@ -8,14 +8,10 @@ from operationsgateway_api.src.auth.authorisation import (
     authorise_route,
     authorise_token,
 )
-from operationsgateway_api.src.helpers import (
-    encode_date_for_conditions,
-    extract_order_data,
-    filter_conditions,
-    truncate_thumbnail_output,
-)
-from operationsgateway_api.src.models import Record
-from operationsgateway_api.src.mongo.interface import MongoDBInterface
+from operationsgateway_api.src.error_handling import endpoint_error_handling
+from operationsgateway_api.src.records.record import Record as Record
+from operationsgateway_api.src.routes.common_parameters import ParameterHandler
+
 
 log = logging.getLogger()
 router = APIRouter()
@@ -27,9 +23,10 @@ router = APIRouter()
     response_description="List of records",
     tags=["Records"],
 )
+@endpoint_error_handling
 async def get_records(
     # TODO - investigate linting errors
-    conditions: dict = Depends(filter_conditions),  # noqa: B008
+    conditions: dict = Depends(ParameterHandler.filter_conditions),  # noqa: B008
     skip: int = Query(  # noqa: B008
         0,
         description="How many documents should be skipped before returning results",
@@ -73,26 +70,22 @@ async def get_records(
 
     log.info("Getting records by query")
 
-    query_order = list(extract_order_data(order)) if order else ""
+    query_order = list(ParameterHandler.extract_order_data(order)) if order else ""
+    ParameterHandler.encode_date_for_conditions(conditions)
 
-    encode_date_for_conditions(conditions)
-
-    records_query = MongoDBInterface.find(
-        collection_name="records",
-        filter_=conditions,
-        skip=skip,
-        limit=limit,
-        sort=query_order,
-        projection=projection,
+    records_data = await Record.find_record(
+        conditions,
+        skip,
+        limit,
+        query_order,
+        projection,
     )
-    records = await MongoDBInterface.query_to_list(records_query)
 
     if truncate:
-        for record in records:
-            truncate_thumbnail_output(record)
+        for record_data in records_data:
+            Record.truncate_thumbnails(record_data)
 
-    # TODO - do I need this model stuff?
-    return [Record.construct(record.keys(), **record) for record in records]
+    return records_data
 
 
 @router.get(
@@ -102,8 +95,9 @@ async def get_records(
     response_description="Record count",
     tags=["Records"],
 )
+@endpoint_error_handling
 async def count_records(
-    conditions: dict = Depends(filter_conditions),  # noqa: B008
+    conditions: dict = Depends(ParameterHandler.filter_conditions),  # noqa: B008
     access_token: str = Depends(authorise_token),  # noqa: B008
 ):
     """
@@ -113,10 +107,9 @@ async def count_records(
     """
 
     log.info("Counting records using given conditions")
+    ParameterHandler.encode_date_for_conditions(conditions)
 
-    encode_date_for_conditions(conditions)
-
-    return await MongoDBInterface.count_documents("records", conditions)
+    return await Record.count_records(conditions)
 
 
 @router.get(
@@ -125,13 +118,13 @@ async def count_records(
     response_description="Single record object",
     tags=["Records"],
 )
-# TODO - can I find a use case for conditions?
+@endpoint_error_handling
 async def get_record_by_id(
     id_: str = Path(  # noqa: B008
         ...,
         description="`_id` of the record to fetch from the database",
     ),
-    conditions: dict = Depends(filter_conditions),  # noqa: B008
+    conditions: dict = Depends(ParameterHandler.filter_conditions),  # noqa: B008
     truncate: Optional[bool] = Query(  # noqa: B008
         False,
         description="Parameter used for development to reduce the output of thumbnail"
@@ -147,16 +140,12 @@ async def get_record_by_id(
 
     log.info("Getting record by ID: %s", id_)
 
-    # TODO - add 404 to this endpoint
-    record = await MongoDBInterface.find_one(
-        "records",
-        {"_id": id_, **conditions},
-    )
+    record_data = await Record.find_record_by_id(id_, conditions)
 
     if truncate:
-        truncate_thumbnail_output(record)
+        Record.truncate_thumbnails(record_data)
 
-    return Record.construct(record.keys(), **record)
+    return record_data
 
 
 @router.delete(
@@ -166,6 +155,7 @@ async def get_record_by_id(
     status_code=204,
     tags=["Records"],
 )
+@endpoint_error_handling
 async def delete_record_by_id(
     id_: str = Path(  # noqa: B008
         ...,
@@ -173,11 +163,11 @@ async def delete_record_by_id(
     ),
     access_token: str = Depends(authorise_route),  # noqa: B008
 ):
-    # TODO - full implementation will require searching through waveform channels to
+    # TODO 2 - full implementation will require searching through waveform channels to
     # remove the documents in the waveforms collection. The images will need to be
     # removed from disk too
     log.info("Deleting record by ID: %s", id_)
 
-    await MongoDBInterface.delete_one("records", {"_id": id_})
+    await Record.delete_record(id_)
 
     return Response(status_code=HTTPStatus.NO_CONTENT.value)

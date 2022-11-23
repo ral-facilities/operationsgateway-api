@@ -9,14 +9,14 @@ from operationsgateway_api.src.exceptions import (
     DatabaseError,
     UnauthorisedError,
 )
-from operationsgateway_api.src.models import LoginDetails, UserModel
+from operationsgateway_api.src.models import LoginDetailsModel, UserModel
 
 
 log = logging.getLogger()
 
 
 class Authentication:
-    def __init__(self, login_details: LoginDetails, user_model: UserModel):
+    def __init__(self, login_details: LoginDetailsModel, user_model: UserModel):
         self.login_details = login_details
         self.user_model = user_model
 

@@ -1,11 +1,10 @@
-import base64
 import logging
 
 from fastapi import APIRouter, Depends, Path, Query
-from fastapi.responses import FileResponse
 
 from operationsgateway_api.src.auth.authorisation import authorise_token
-from operationsgateway_api.src.config import Config
+from operationsgateway_api.src.error_handling import endpoint_error_handling
+from operationsgateway_api.src.records.image import Image
 
 log = logging.getLogger()
 router = APIRouter()
@@ -17,6 +16,7 @@ router = APIRouter()
     response_description="Image in .png format or base64 encoded string of the image",
     tags=["Images"],
 )
+@endpoint_error_handling
 async def get_full_image(
     record_id: str = Path(  # noqa: B008
         "",
@@ -51,16 +51,4 @@ async def get_full_image(
     encoded string of the image or as a .png file, by toggling `string_response`
     """
 
-    if string_response:
-        with open(
-            f"{Config.config.mongodb.image_store_directory}/{record_id}/{channel_name}"
-            ".png",
-            "rb",
-        ) as image_file:
-            image_string = base64.b64encode(image_file.read())
-        return image_string
-    else:
-        return FileResponse(
-            f"{Config.config.mongodb.image_store_directory}/{record_id}/{channel_name}"
-            ".png",
-        )
+    return await Image.get_image(record_id, channel_name, string_response)

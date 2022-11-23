@@ -13,7 +13,6 @@ logging:
 mongodb:
   mongodb_url: mongodb://localhost:27017
   database_name: opsgateway
-  collection_name: records
   # Maximum number of documents to return when querying, similar to ICAT's maxEntities
   max_documents: 1000
   image_store_directory: /home/runner/og-images

@@ -8,7 +8,7 @@ from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.auth.user import User
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import ForbiddenError
-from operationsgateway_api.src.models import AccessToken, LoginDetails
+from operationsgateway_api.src.models import AccessTokenModel, LoginDetailsModel
 
 
 log = logging.getLogger()
@@ -33,7 +33,7 @@ router = APIRouter()
 )
 @endpoint_error_handling
 async def login(
-    login_details: LoginDetails = Body(  # noqa: B008
+    login_details: LoginDetailsModel = Body(  # noqa: B008
         ...,
         description="JSON object containing username and password",
     ),
@@ -85,7 +85,7 @@ async def login(
 )
 @endpoint_error_handling
 async def verify(
-    token: AccessToken = Body(  # noqa: B008
+    token: AccessTokenModel = Body(  # noqa: B008
         ...,
         description="JSON object containing the token",
     ),
@@ -112,7 +112,7 @@ async def verify(
 )
 @endpoint_error_handling
 async def refresh(
-    token: AccessToken = Body(  # noqa: B008
+    token: AccessTokenModel = Body(  # noqa: B008
         ...,
         description="JSON object containing the existing access token",
     ),
