@@ -1,8 +1,10 @@
 from datetime import datetime
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Literal, Optional, Union
 
 import numpy as np
 from pydantic import BaseModel, Field, validator
+
+from operationsgateway_api.src.exceptions import ChannelManifestError
 
 
 class ImageModel(BaseModel):
@@ -96,3 +98,53 @@ class UserModel(BaseModel):
     sha256_password: Optional[str]
     auth_type: str
     authorised_routes: Optional[List[str]]
+
+
+class ChannelModel(BaseModel):
+    name: str
+    path: str
+    type: Optional[Literal["scalar", "image", "waveform"]]
+
+    # Should the value be displayed as it is stored or be shown in x10^n format
+    notation: Optional[Literal["scientific", "normal"]]
+    # Number of significant figures used to display the value
+    precision: Optional[int]
+    units: Optional[str]
+
+    x_pixel_units: Optional[str]
+    y_pixel_units: Optional[str]
+    x_pixel_size: Optional[int]
+    y_pixel_size: Optional[int]
+    exposure_time_s: Optional[float]
+    gain: Optional[float]
+
+
+    @validator("type")
+    def set_default_type(cls, v):
+        if not v:
+            return "scalar"
+        else:
+            # Else branch must be returned otherwise Pydantic will set the field to None
+            return v
+
+    @validator(
+        "x_pixel_units",
+        "y_pixel_units",
+        "x_pixel_size",
+        "y_pixel_size",
+        "exposure_time_s",
+        "gain",
+    )
+    def check_image_channel(cls, v, values):
+        if not values["type"] == "image":
+            raise ChannelManifestError(
+                "Only image channels should contain image channel metadata. Invalid"
+                f" channel is called: {values['name']}",
+            )
+        else:
+            return v
+
+
+class ChannelManifestModel(BaseModel):
+    id_: str = Field(alias="_id")
+    channels: Dict[str, ChannelModel]

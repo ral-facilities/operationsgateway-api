@@ -5,6 +5,7 @@ from tempfile import SpooledTemporaryFile
 import h5py
 from pydantic import ValidationError
 
+from operationsgateway_api.src.constants import ID_DATETIME_FORMAT
 from operationsgateway_api.src.exceptions import HDFDataExtractionError, ModelError
 from operationsgateway_api.src.models import (
     ImageChannelMetadataModel,
@@ -49,11 +50,11 @@ class HDFDataHandler:
                 metadata_hdf["timestamp"],
                 "%Y-%m-%d %H:%M:%S",
             )
-            self.record_id = metadata_hdf["timestamp"].strftime("%Y%m%d%H%M%S")
+            self.record_id = metadata_hdf["timestamp"].strftime(ID_DATETIME_FORMAT)
         except ValueError as exc:
             raise HDFDataExtractionError(
-                "Incorrect timestamp format for metadata timestamp. Use %Y-%m-%d"
-                " %H:%M:%S",
+                "Incorrect timestamp format for metadata timestamp. Use"
+                f" {ID_DATETIME_FORMAT} instead",
             ) from exc
 
         self.extract_channels()

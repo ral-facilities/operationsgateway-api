@@ -3,7 +3,8 @@ import logging
 from fastapi import APIRouter, Depends, status, UploadFile
 from fastapi.responses import JSONResponse
 
-from operationsgateway_api.src.auth.authorisation import authorise_route
+from operationsgateway_api.src.auth.authorisation import authorise_route, authorise_token
+from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
 from operationsgateway_api.src.records.image import Image
@@ -74,3 +75,27 @@ async def submit_hdf(
             status_code=status.HTTP_201_CREATED,
             headers={"Location": f"/records/{record.record.id_}"},
         )
+
+
+@router.post(
+    "/submit/manifest",
+    summary="Submit a channel manifest file for ingestion into MongoDB",
+    response_description="ID of the channel metadata document inserted/updated into DB",
+    tags=["Ingestion"],
+)
+@endpoint_error_handling
+async def submit_manifest(
+    file: UploadFile,
+    # TODO - change to authorise_route
+    #access_token: str = Depends(authorise_token),  # noqa: B008
+):
+    log.info("Submitting channel manifest file into database")
+    log.debug("Filename: %s, Content: %s", file.filename, file.content_type)
+
+    channel_manifest = ChannelManifest(file.file)
+
+    await channel_manifest.insert()
+    return JSONResponse(
+        channel_manifest.data.id_,
+        status_code=status.HTTP_201_CREATED,
+    )
