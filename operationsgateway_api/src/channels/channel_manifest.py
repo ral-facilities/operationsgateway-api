@@ -65,5 +65,4 @@ class ChannelManifest:
         """
         manifest_data = await ChannelManifest.get_most_recent_manifest()
         manifest = ChannelManifestModel(**manifest_data)
-        print(f"Return type in get_channel(): {type(manifest.channels[channel_name])}")
         return manifest.channels[channel_name]

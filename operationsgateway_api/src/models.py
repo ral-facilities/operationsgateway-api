@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Dict, List, Literal, Optional, Union
 
 import numpy as np
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, root_validator, validator
 
 from operationsgateway_api.src.exceptions import ChannelManifestError
 
@@ -118,14 +118,10 @@ class ChannelModel(BaseModel):
     exposure_time_s: Optional[float]
     gain: Optional[float]
 
-
-    @validator("type")
-    def set_default_type(cls, v):
-        if not v:
-            return "scalar"
-        else:
-            # Else branch must be returned otherwise Pydantic will set the field to None
-            return v
+    @root_validator(pre=True)
+    def set_default_type(cls, values):
+        values.setdefault("type", "scalar")
+        return values
 
     @validator(
         "x_pixel_units",
