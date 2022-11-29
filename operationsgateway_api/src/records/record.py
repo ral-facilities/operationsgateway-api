@@ -5,6 +5,7 @@ from pydantic import ValidationError
 import pymongo
 
 from operationsgateway_api.src.exceptions import (
+    ChannelSummaryError,
     MissingDocumentError,
     ModelError,
     RecordError,
@@ -120,8 +121,6 @@ class Record:
     @staticmethod
     async def get_date_of_channel_data(channel_name: str, direction: List[tuple]):
         channel_exist_condiion = {f"channels.{channel_name}.data": {"$exists": True}}
-        print(f"cond: {channel_exist_condiion}")
-        print(f"direction: {direction}")
         data = await MongoDBInterface.find_one(
             "records",
             filter_=channel_exist_condiion,
@@ -129,8 +128,13 @@ class Record:
             projection=["metadata.timestamp"],
         )
 
-        return data["metadata"]["timestamp"]
-    
+        if data:
+            return data["metadata"]["timestamp"]
+        else:
+            raise ChannelSummaryError(
+                f"There is no data for timestamp data for {channel_name}",
+            )
+
     @staticmethod
     async def get_recent_channel_values(channel_name: str):
         channel_path = f"channels.{channel_name}.data"

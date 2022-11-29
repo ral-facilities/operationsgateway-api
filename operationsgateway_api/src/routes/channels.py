@@ -18,6 +18,7 @@ router = APIRouter()
     response_description="Channel summary",
     tags=["Channels"],
 )
+@endpoint_error_handling
 async def get_channel_summary(
     channel_name: str = Path("", description="Channel name to provide a summary for"),
 ):
@@ -87,4 +88,3 @@ async def get_channel_by_system_name(
     channel = await ChannelManifest.get_channel(channel_system_name)
 
     return channel.dict(exclude_unset=True)
-

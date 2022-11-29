@@ -65,4 +65,7 @@ class ChannelManifest:
         """
         manifest_data = await ChannelManifest.get_most_recent_manifest()
         manifest = ChannelManifestModel(**manifest_data)
-        return manifest.channels[channel_name]
+        try:
+            return manifest.channels[channel_name]
+        except KeyError as exc:
+            raise ChannelManifestError(f"Channel '{channel_name}' cannot be found") from exc
