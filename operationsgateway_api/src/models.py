@@ -144,3 +144,9 @@ class ChannelModel(BaseModel):
 class ChannelManifestModel(BaseModel):
     id_: str = Field(alias="_id")
     channels: Dict[str, ChannelModel]
+
+
+class ChannelSummaryModel(BaseModel):
+    first_date: datetime
+    most_recent_date: datetime
+    recent_sample: List[Union[float, int, str]]

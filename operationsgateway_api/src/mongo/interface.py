@@ -80,18 +80,17 @@ class MongoDBInterface:
         return await query.to_list(length=Config.config.mongodb.max_documents)
 
     @staticmethod
-    async def find_one(collection_name, filter_={}, sort=None):  # noqa: B006
+    async def find_one(collection_name, filter_={}, sort=None, projection=None):  # noqa: B006
         """
         Based on a filter, find a single document in the record collection of MongoDB
         """
 
         log.info("Sending find_one() to MongoDB, collection: %s", collection_name)
-        log.debug("Filter: %s", filter_)
-        log.debug("Sort: %s", sort)
+        log.debug("Filter: %s, Sort: %s, Projection: %s", filter_, sort, projection)
 
         collection = MongoDBInterface.get_collection_object(collection_name)
 
-        return await collection.find_one(filter_, sort=sort)
+        return await collection.find_one(filter_, sort=sort, projection=projection)
 
     @staticmethod
     async def update_one(collection_name, filter_={}, update={}):  # noqa: B006

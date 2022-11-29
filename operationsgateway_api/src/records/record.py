@@ -1,7 +1,8 @@
 import logging
-from typing import Union
+from typing import List, Union
 
 from pydantic import ValidationError
+import pymongo
 
 from operationsgateway_api.src.exceptions import (
     MissingDocumentError,
@@ -115,6 +116,43 @@ class Record:
         else:
             log.error("Record cannot be found. ID: %s, Conditions: %s", id_, conditions)
             raise MissingDocumentError("Record cannot be found")
+
+    @staticmethod
+    async def get_date_of_channel_data(channel_name: str, direction: List[tuple]):
+        channel_exist_condiion = {f"channels.{channel_name}.data": {"$exists": True}}
+        print(f"cond: {channel_exist_condiion}")
+        print(f"direction: {direction}")
+        data = await MongoDBInterface.find_one(
+            "records",
+            filter_=channel_exist_condiion,
+            sort=direction,
+            projection=["metadata.timestamp"],
+        )
+
+        return data["metadata"]["timestamp"]
+    
+    @staticmethod
+    async def get_recent_channel_values(channel_name: str):
+        channel_path = f"channels.{channel_name}.data"
+        channel_exist_condiion = {channel_path: {"$exists": True}}
+
+        recent_channel_query = MongoDBInterface.find(
+            "records",
+            filter_=channel_exist_condiion,
+            limit=3,
+            sort=[("_id", pymongo.DESCENDING)],
+            projection=[channel_path],
+        )
+        recent_channel_data = await MongoDBInterface.query_to_list(recent_channel_query)
+
+        recent_values = []
+        
+        for record in recent_channel_data:
+            recent_values.append(record["channels"][channel_name]["data"])
+
+        # Reverse the data so the  data is returned in chronological order
+        recent_values.reverse()
+        return recent_values
 
     @staticmethod
     async def count_records(conditions):
