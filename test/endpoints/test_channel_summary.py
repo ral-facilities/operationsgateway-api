@@ -11,11 +11,7 @@ class TestChannelSummary:
                 {
                     "first_date": "2022-04-07T14:16:16",
                     "most_recent_date": "2022-04-08T16:58:57",
-                    "recent_sample": [
-                        -8582000.0,
-                        -8461000.0,
-                        -8535000.0
-                    ],
+                    "recent_sample": [-8582000.0, -8461000.0, -8535000.0],
                 },
                 id="Scalar channel (number) summary",
             ),
@@ -32,7 +28,7 @@ class TestChannelSummary:
                 },
                 id="Scalar channel (string) summary",
             ),
-            #pytest.param(
+            # pytest.param(
             #    "N_COMP_FF_IMAGE",
             #    {
             #        "first_date": "2022-04-07T14:16:16",
@@ -40,8 +36,8 @@ class TestChannelSummary:
             #        "recent_sample": [],
             #    },
             #    id="Image channel summary",
-            #),
-            #pytest.param(
+            # ),
+            # pytest.param(
             #    "N_COMP_SPEC_TRACE",
             #    {
             #        "first_date": "2022-04-07T14:16:16",
@@ -49,8 +45,8 @@ class TestChannelSummary:
             #        "recent_sample": [],
             #    },
             #    id="Waveform channel summary",
-            #),
-        ]
+            # ),
+        ],
     )
     def test_valid_channel_summary(
         self,
@@ -78,7 +74,7 @@ class TestChannelSummary:
                 1234567,
                 id="Integer channel",
             ),
-        ]
+        ],
     )
     def test_invalid_channel_summary(
         self,

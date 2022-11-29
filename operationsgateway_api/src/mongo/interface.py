@@ -80,7 +80,9 @@ class MongoDBInterface:
         return await query.to_list(length=Config.config.mongodb.max_documents)
 
     @staticmethod
-    async def find_one(collection_name, filter_={}, sort=None, projection=None):  # noqa: B006
+    async def find_one(
+        collection_name, filter_={}, sort=None, projection=None
+    ):  # noqa: B006
         """
         Based on a filter, find a single document in the record collection of MongoDB
         """

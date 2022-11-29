@@ -10,6 +10,7 @@ from operationsgateway_api.src.exceptions import ChannelManifestError, ModelErro
 from operationsgateway_api.src.models import ChannelManifestModel, ChannelModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
+
 class ChannelManifest:
     def __init__(self, manifest_input: SpooledTemporaryFile) -> None:
         """
@@ -21,7 +22,7 @@ class ChannelManifest:
             raise ChannelManifestError(
                 f"Channel manifest file not valid JSON. {str(exc)}",
             )
-        
+
         manifest_file["_id"] = self._add_id()
 
         try:
@@ -45,14 +46,15 @@ class ChannelManifest:
         """
 
         return datetime.now().strftime(ID_DATETIME_FORMAT)
-    
+
     @staticmethod
     async def get_most_recent_manifest() -> dict:
         """
         Get the most up to date manifest file from MongoDB and return it to the user
         """
         manifest_data = await MongoDBInterface.find_one(
-            "channels", sort=[("_id", pymongo.DESCENDING)],
+            "channels",
+            sort=[("_id", pymongo.DESCENDING)],
         )
 
         return manifest_data
@@ -68,4 +70,6 @@ class ChannelManifest:
         try:
             return manifest.channels[channel_name]
         except KeyError as exc:
-            raise ChannelManifestError(f"Channel '{channel_name}' cannot be found") from exc
+            raise ChannelManifestError(
+                f"Channel '{channel_name}' cannot be found"
+            ) from exc

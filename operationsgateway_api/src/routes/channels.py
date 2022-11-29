@@ -28,7 +28,7 @@ async def get_channel_summary(
     """
 
     log.info("Getting channel summary for: %s", channel_name)
-    
+
     first_date = await Record.get_date_of_channel_data(
         channel_name,
         [("_id", pymongo.ASCENDING)],

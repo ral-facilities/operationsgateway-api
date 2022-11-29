@@ -145,14 +145,26 @@ class Record:
             filter_=channel_exist_condiion,
             limit=3,
             sort=[("_id", pymongo.DESCENDING)],
+            # TODO - need to add metadata.channel_dtype to projection so you know what
+            # the channel type is
+            # Maybe project entire metadata so we can put it into a model? Then
+            # channel_path needs to change, we'll need the entire channel, not just
+            # .data
             projection=[channel_path],
         )
         recent_channel_data = await MongoDBInterface.query_to_list(recent_channel_query)
 
         recent_values = []
-        
+
         for record in recent_channel_data:
-            recent_values.append(record["channels"][channel_name]["data"])
+            # TODO - extract data depending on channel type
+            if record["metadata"]["channel_dtype"] == "scalar":
+                recent_values.append(record["channels"][channel_name]["data"])
+            elif (
+                record["metadata"]["channel_dtype"] == "image"
+                or record["metadata"]["channel_dtype"] == "waveform"
+            ):
+                recent_values.append(record["channels"][channel_name["thumbnail"]])
 
         # Reverse the data so the  data is returned in chronological order
         recent_values.reverse()
