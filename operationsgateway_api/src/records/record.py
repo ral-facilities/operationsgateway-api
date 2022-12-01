@@ -120,7 +120,7 @@ class Record:
 
     @staticmethod
     async def get_date_of_channel_data(channel_name: str, direction: List[tuple]):
-        channel_exist_condiion = {f"channels.{channel_name}.data": {"$exists": True}}
+        channel_exist_condiion = {f"channels.{channel_name}": {"$exists": True}}
         data = await MongoDBInterface.find_one(
             "records",
             filter_=channel_exist_condiion,
@@ -132,12 +132,12 @@ class Record:
             return data["metadata"]["timestamp"]
         else:
             raise ChannelSummaryError(
-                f"There is no data for timestamp data for {channel_name}",
+                f"There is no timestamp data for {channel_name}",
             )
 
     @staticmethod
     async def get_recent_channel_values(channel_name: str):
-        channel_path = f"channels.{channel_name}.data"
+        channel_path = f"channels.{channel_name}"
         channel_exist_condiion = {channel_path: {"$exists": True}}
 
         recent_channel_query = MongoDBInterface.find(
@@ -145,28 +145,24 @@ class Record:
             filter_=channel_exist_condiion,
             limit=3,
             sort=[("_id", pymongo.DESCENDING)],
-            # TODO - need to add metadata.channel_dtype to projection so you know what
-            # the channel type is
-            # Maybe project entire metadata so we can put it into a model? Then
-            # channel_path needs to change, we'll need the entire channel, not just
-            # .data
-            projection=[channel_path],
+            projection=[f"channels.{channel_name}", "metadata"],
         )
         recent_channel_data = await MongoDBInterface.query_to_list(recent_channel_query)
+        records = [RecordModel(**record) for record in recent_channel_data]
 
         recent_values = []
+        for record in records:
+            channel = record.channels[channel_name]
 
-        for record in recent_channel_data:
-            # TODO - extract data depending on channel type
-            if record["metadata"]["channel_dtype"] == "scalar":
-                recent_values.append(record["channels"][channel_name]["data"])
+            if channel.metadata.channel_dtype == "scalar":
+                recent_values.append(channel.data)
             elif (
-                record["metadata"]["channel_dtype"] == "image"
-                or record["metadata"]["channel_dtype"] == "waveform"
+                channel.metadata.channel_dtype == "image"
+                or channel.metadata.channel_dtype == "waveform"
             ):
-                recent_values.append(record["channels"][channel_name["thumbnail"]])
+                recent_values.append(channel.thumbnail)
 
-        # Reverse the data so the  data is returned in chronological order
+        # Reverse the data so the data is returned in chronological order
         recent_values.reverse()
         return recent_values
 

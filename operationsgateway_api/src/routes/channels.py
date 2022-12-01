@@ -33,7 +33,6 @@ async def get_channel_summary(
         channel_name,
         [("_id", pymongo.ASCENDING)],
     )
-    print(f"First date: {first_date}, Type: {type(first_date)}")
     most_recent_date = await Record.get_date_of_channel_data(
         channel_name,
         [("_id", pymongo.DESCENDING)],
