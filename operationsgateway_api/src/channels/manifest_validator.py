@@ -25,6 +25,11 @@ class ManifestValidator:
 
         if not self.bypass_channel_check:
             self._check_removed_channels()
+        else:
+            log.warning(
+                "Checking whether channels have been removed from the input manifest"
+                " file has been bypassed",
+            )
         self._check_modified_metadata()
 
     def _check_removed_channels(self) -> None:

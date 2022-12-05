@@ -5,7 +5,6 @@ from fastapi.responses import JSONResponse
 
 from operationsgateway_api.src.auth.authorisation import (
     authorise_route,
-    authorise_token,
 )
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.error_handling import endpoint_error_handling
@@ -90,7 +89,6 @@ async def submit_hdf(
 async def submit_manifest(
     file: UploadFile,
     bypass_channel_check: bool = False,
-    # TODO - change to authorise_route
     access_token: str = Depends(authorise_route),  # noqa: B008
 ):
     log.info("Submitting channel manifest file into database")
