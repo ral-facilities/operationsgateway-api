@@ -1,497 +1,654 @@
 {
 	"info": {
-		"_postman_id": "43f8074d-114d-44a4-9f3a-00df34ac5034",
+		"_postman_id": "20d85411-9d10-4250-8baa-9d131848073b",
 		"name": "OperationsGateway API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"name": "Get Records",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{og-access-token}}",
-							"type": "string"
-						}
-					]
-				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{og-api}}/records",
-					"host": [
-						"{{og-api}}"
-					],
-					"path": [
-						"records"
-					],
-					"query": [
-						{
-							"key": "limit",
-							"value": "2",
-							"description": "Limit 2 records",
-							"disabled": true
-						},
-						{
-							"key": "skip",
-							"value": "35",
-							"description": "Skip 35 records",
-							"disabled": true
-						},
-						{
-							"key": "order",
-							"value": "metadata.shotnum asc",
-							"description": "Order by shot number, ascending",
-							"disabled": true
-						},
-						{
-							"key": "order",
-							"value": "_id desc",
-							"description": "Order by id, descending",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"_id\": {\"$eq\": \"20220408132830\"}}",
-							"description": "Return records matching the given ID",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"metadata.shotnum\": 366372}",
-							"description": "Look for records WHERE shot number is 366372",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"metadata.shotnum\": {\"$lt\": 366280}}",
-							"description": "Return records with a shot number < 366285",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"channels.N_COMP_FF_XPOS.data\": {\"$lt\": 310}}",
-							"description": "WHERE N_COMP_FF_XPOS's data < 310",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"channels.N_COMP_SPEC_TRACE.waveform_id\": {\"$eq\": \"20220408132830_N_COMP_SPEC_TRACE\"}}",
-							"description": "Return record that matches the waveform ID",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"$or\": [{\"metadata.shotnum\": {\"$eq\": 366371}}, {\"metadata.shotnum\": {\"$gt\": 366374}}]}",
-							"description": "Condition using OR and equality operators",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"$and\": [{\"metadata.timestamp\": {\"$gt\": \"2022-04-07 14:00:00\", \"$lt\": \"2022-04-08 08:00:00\"}}]}",
-							"description": "Search by date",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"channels.N_COMP_SPEC_TRACE\": {\"$exists\": true}}",
-							"description": "Return records where N_COMP_SPEC_TRACE channel exists",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"channels.N_LEG1_GREEN_NF_YPOS.data\": {\"$exists\": false}}",
-							"description": "Return records that do not have data for the N_LEG1_GREEN_NF_YPOS channel",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"metadata.shotnum\": {\"$exists\": false}}",
-							"description": "Return only environmental data",
-							"disabled": true
-						},
-						{
-							"key": "projection",
-							"value": "metadata.shotnum",
-							"description": "Return shot numbers only. Use multiple projection parameters to select multiple fields",
-							"disabled": true
-						},
-						{
-							"key": "projection",
-							"value": "metadata.timestamp",
-							"description": "Return timestamps only",
-							"disabled": true
-						},
-						{
-							"key": "projection",
-							"value": "channels.N_COMP_FF_E",
-							"description": "Return N_COMP_FF_E only",
-							"disabled": true
-						},
-						{
-							"key": "truncate",
-							"value": "true",
-							"description": "Truncate base64 thumbnail outputs",
-							"disabled": true
-						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Count Records",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{og-access-token}}",
-							"type": "string"
-						}
-					]
-				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{og-api}}/records/count",
-					"host": [
-						"{{og-api}}"
-					],
-					"path": [
-						"records",
-						"count"
-					],
-					"query": [
-						{
-							"key": "conditions",
-							"value": "{\"metadata.shotnum\": 366372}",
-							"description": "WHERE shot number = 366372",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"metadata.shotnum\": {\"$lt\": 366280}}",
-							"description": "WHERE shot number < 366280",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"$or\": [{\"metadata.shotnum\": {\"$eq\": 366371}}, {\"metadata.shotnum\": {\"$gt\": 366372}}]}",
-							"description": "WHERE shot number = 366371 OR shot number >366372",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"channels.N_COMP_FF_XPOS.data\": {\"$lt\": 310}}",
-							"description": "WHERE N_COMP_FF_XPOS's data < 310",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"$and\": [{\"metadata.timestamp\": {\"$gt\": \"2022-04-07 14:00:00\", \"$lt\": \"2022-04-08 08:00:00\"}}]}",
-							"description": "WHERE timestamp > _ AND < _",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"channels.N_COMP_SPEC_TRACE\": {\"$exists\": true}}",
-							"description": "WHERE the N_COMP_SPEC_TRACE channel exists",
-							"disabled": true
-						},
-						{
-							"key": "conditions",
-							"value": "{\"metadata.shotnum\": {\"$exists\": false}}",
-							"description": "WHERE record is environmental data",
-							"disabled": true
-						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Get Record By ID",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{og-access-token}}",
-							"type": "string"
-						}
-					]
-				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{og-api}}/records/20220408132830",
-					"host": [
-						"{{og-api}}"
-					],
-					"path": [
-						"records",
-						"20220408132830"
-					],
-					"query": [
-						{
-							"key": "truncate",
-							"value": "true",
-							"description": "Truncate base64 thumbnail outputs",
-							"disabled": true
-						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Delete Record By ID",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{og-access-token}}",
-							"type": "string"
-						}
-					]
-				},
-				"method": "DELETE",
-				"header": [],
-				"url": {
-					"raw": "{{og-api}}/records/20220408142911",
-					"host": [
-						"{{og-api}}"
-					],
-					"path": [
-						"records",
-						"20220408142911"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Get Image",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{og-access-token}}",
-							"type": "string"
-						}
-					]
-				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{og-api}}/images/20220408132830/N_COMP_FF_IMAGE",
-					"host": [
-						"{{og-api}}"
-					],
-					"path": [
-						"images",
-						"20220408132830",
-						"N_COMP_FF_IMAGE"
-					],
-					"query": [
-						{
-							"key": "string_response",
-							"value": "true",
-							"description": "Response will be a base64 string of the image",
-							"disabled": true
-						},
-						{
-							"key": "string_response",
-							"value": "false",
-							"description": "Response will be the png image",
-							"disabled": true
-						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Get Waveform By ID",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{og-access-token}}",
-							"type": "string"
-						}
-					]
-				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{og-api}}/waveforms/20220408140310/N_COMP_SPEC_TRACE",
-					"host": [
-						"{{og-api}}"
-					],
-					"path": [
-						"waveforms",
-						"20220408140310",
-						"N_COMP_SPEC_TRACE"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Submit HDF File",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "formdata",
-					"formdata": [
-						{
-							"key": "file",
-							"description": "Upload your own HDF file created by the OG-HDF5 converter",
-							"type": "file",
-							"src": [],
-							"disabled": true
-						}
-					]
-				},
-				"url": {
-					"raw": "{{og-api}}/submit_hdf",
-					"host": [
-						"{{og-api}}"
-					],
-					"path": [
-						"submit_hdf"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Login",
-			"event": [
+			"name": "Auth",
+			"item": [
 				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"var jsonData = JSON.parse(responseBody);\r",
-							"pm.globals.set(\"og-access-token\", jsonData);\r",
-							"\r",
-							"var setCookieValue = pm.response.headers.get(\"set-cookie\");\r",
-							"var refreshCookieValue = setCookieValue.substring(setCookieValue.indexOf(\"=\")+1, setCookieValue.indexOf(\";\"));\r",
-							"pm.globals.set(\"og-refresh-token\", refreshCookieValue);\r",
-							""
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);\r",
+									"pm.globals.set(\"og-access-token\", jsonData);\r",
+									"\r",
+									"var setCookieValue = pm.response.headers.get(\"set-cookie\");\r",
+									"var refreshCookieValue = setCookieValue.substring(setCookieValue.indexOf(\"=\")+1, setCookieValue.indexOf(\";\"));\r",
+									"pm.globals.set(\"og-refresh-token\", refreshCookieValue);\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"username\": \"backend\",\r\n  \"password\": \"back\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{og-api}}/login",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"login"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify access token",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"token\": \"{{og-access-token}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{og-api}}/verify",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"verify"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh access token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);\r",
+									"pm.globals.set(\"og-access-token\", jsonData);\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "refresh_token={{og-refresh-token}}",
+								"type": "default"
+							}
 						],
-						"type": "text/javascript"
-					}
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"token\": \"{{og-access-token}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{og-api}}/refresh",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"refresh"
+							]
+						}
+					},
+					"response": []
 				}
 			],
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n  \"username\": \"backend\",\r\n  \"password\": \"back\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{og-api}}/login",
-					"host": [
-						"{{og-api}}"
-					],
-					"path": [
-						"login"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Verify access token",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n  \"token\": \"{{og-access-token}}\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{og-api}}/verify",
-					"host": [
-						"{{og-api}}"
-					],
-					"path": [
-						"verify"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Refresh access token",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"var jsonData = JSON.parse(responseBody);\r",
-							"pm.globals.set(\"og-access-token\", jsonData);\r",
-							""
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
+			"auth": {
+				"type": "bearer",
+				"bearer": [
 					{
-						"key": "Cookie",
-						"value": "refresh_token={{og-refresh-token}}",
-						"type": "default"
+						"key": "token",
+						"value": "{{og-access-token}}",
+						"type": "string"
 					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n  \"token\": \"{{og-access-token}}\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+				]
+			}
+		},
+		{
+			"name": "Channels",
+			"item": [
+				{
+					"name": "Get Channels",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/channels",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"channels"
+							]
 						}
-					}
+					},
+					"response": []
 				},
-				"url": {
-					"raw": "{{og-api}}/refresh",
-					"host": [
-						"{{og-api}}"
-					],
-					"path": [
-						"refresh"
-					]
+				{
+					"name": "Get Channel By Name",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/channels/N_FLUOR_INTEGRATION",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"channels",
+								"N_FLUOR_INTEGRATION"
+							]
+						}
+					},
+					"response": []
 				}
-			},
-			"response": []
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{og-access-token}}",
+						"type": "string"
+					}
+				]
+			}
+		},
+		{
+			"name": "Ingestion",
+			"item": [
+				{
+					"name": "Submit HDF File",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"description": "Upload your own HDF file created by the OG-HDF5 converter",
+									"type": "file",
+									"src": [],
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{og-api}}/submit_hdf",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"submit_hdf"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Submit Channel Manifest",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/C:/Users/XFU59478/Desktop/HDF Files/channel_manifest.json"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{og-api}}/submit/manifest",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"submit",
+								"manifest"
+							],
+							"query": [
+								{
+									"key": "bypass_channel_check",
+									"value": "true",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{og-access-token}}",
+						"type": "string"
+					}
+				]
+			}
+		},
+		{
+			"name": "Records",
+			"item": [
+				{
+					"name": "Get Records",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/records",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"records"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "2",
+									"description": "Limit 2 records",
+									"disabled": true
+								},
+								{
+									"key": "skip",
+									"value": "35",
+									"description": "Skip 35 records",
+									"disabled": true
+								},
+								{
+									"key": "order",
+									"value": "metadata.shotnum asc",
+									"description": "Order by shot number, ascending",
+									"disabled": true
+								},
+								{
+									"key": "order",
+									"value": "_id desc",
+									"description": "Order by id, descending",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"_id\": {\"$eq\": \"20220408132830\"}}",
+									"description": "Return records matching the given ID",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"metadata.shotnum\": 366372}",
+									"description": "Look for records WHERE shot number is 366372",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"metadata.shotnum\": {\"$lt\": 366280}}",
+									"description": "Return records with a shot number < 366285",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"channels.N_COMP_FF_XPOS.data\": {\"$lt\": 310}}",
+									"description": "WHERE N_COMP_FF_XPOS's data < 310",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"channels.N_COMP_SPEC_TRACE.waveform_id\": {\"$eq\": \"20220408132830_N_COMP_SPEC_TRACE\"}}",
+									"description": "Return record that matches the waveform ID",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"$or\": [{\"metadata.shotnum\": {\"$eq\": 366371}}, {\"metadata.shotnum\": {\"$gt\": 366374}}]}",
+									"description": "Condition using OR and equality operators",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"$and\": [{\"metadata.timestamp\": {\"$gt\": \"2022-04-07 14:00:00\", \"$lt\": \"2022-04-08 08:00:00\"}}]}",
+									"description": "Search by date",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"channels.N_COMP_SPEC_TRACE\": {\"$exists\": true}}",
+									"description": "Return records where N_COMP_SPEC_TRACE channel exists",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"channels.N_LEG1_GREEN_NF_YPOS.data\": {\"$exists\": false}}",
+									"description": "Return records that do not have data for the N_LEG1_GREEN_NF_YPOS channel",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"metadata.shotnum\": {\"$exists\": false}}",
+									"description": "Return only environmental data",
+									"disabled": true
+								},
+								{
+									"key": "projection",
+									"value": "metadata.shotnum",
+									"description": "Return shot numbers only. Use multiple projection parameters to select multiple fields",
+									"disabled": true
+								},
+								{
+									"key": "projection",
+									"value": "metadata.timestamp",
+									"description": "Return timestamps only",
+									"disabled": true
+								},
+								{
+									"key": "projection",
+									"value": "channels.N_COMP_FF_E",
+									"description": "Return N_COMP_FF_E only",
+									"disabled": true
+								},
+								{
+									"key": "truncate",
+									"value": "true",
+									"description": "Truncate base64 thumbnail outputs",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Count Records",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/records/count",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"records",
+								"count"
+							],
+							"query": [
+								{
+									"key": "conditions",
+									"value": "{\"metadata.shotnum\": 366372}",
+									"description": "WHERE shot number = 366372",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"metadata.shotnum\": {\"$lt\": 366280}}",
+									"description": "WHERE shot number < 366280",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"$or\": [{\"metadata.shotnum\": {\"$eq\": 366371}}, {\"metadata.shotnum\": {\"$gt\": 366372}}]}",
+									"description": "WHERE shot number = 366371 OR shot number >366372",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"channels.N_COMP_FF_XPOS.data\": {\"$lt\": 310}}",
+									"description": "WHERE N_COMP_FF_XPOS's data < 310",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"$and\": [{\"metadata.timestamp\": {\"$gt\": \"2022-04-07 14:00:00\", \"$lt\": \"2022-04-08 08:00:00\"}}]}",
+									"description": "WHERE timestamp > _ AND < _",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"channels.N_COMP_SPEC_TRACE\": {\"$exists\": true}}",
+									"description": "WHERE the N_COMP_SPEC_TRACE channel exists",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"metadata.shotnum\": {\"$exists\": false}}",
+									"description": "WHERE record is environmental data",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Record By ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/records/20220408132830",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"records",
+								"20220408132830"
+							],
+							"query": [
+								{
+									"key": "truncate",
+									"value": "true",
+									"description": "Truncate base64 thumbnail outputs",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Record By ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/records/20220408142911",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"records",
+								"20220408142911"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Image",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/images/20220408132830/N_COMP_FF_IMAGE",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"images",
+								"20220408132830",
+								"N_COMP_FF_IMAGE"
+							],
+							"query": [
+								{
+									"key": "string_response",
+									"value": "true",
+									"description": "Response will be a base64 string of the image",
+									"disabled": true
+								},
+								{
+									"key": "string_response",
+									"value": "false",
+									"description": "Response will be the png image",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Waveform By ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/waveforms/20220408140310/N_COMP_SPEC_TRACE",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"waveforms",
+								"20220408140310",
+								"N_COMP_SPEC_TRACE"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{og-access-token}}",
+						"type": "string"
+					}
+				]
+			}
 		}
 	],
 	"event": [
