@@ -110,6 +110,7 @@ class ChannelModel(BaseModel):
     # Number of significant figures used to display the value
     precision: Optional[int]
     units: Optional[str]
+    historical: Optional[bool]
 
     @root_validator(pre=True)
     def set_default_type(cls, values):
