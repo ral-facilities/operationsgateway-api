@@ -91,7 +91,7 @@ async def submit_manifest(
     file: UploadFile,
     bypass_channel_check: bool = False,
     # TODO - change to authorise_route
-    # access_token: str = Depends(authorise_token),  # noqa: B008
+    access_token: str = Depends(authorise_route),  # noqa: B008
 ):
     log.info("Submitting channel manifest file into database")
     log.debug("Filename: %s, Content: %s", file.filename, file.content_type)
