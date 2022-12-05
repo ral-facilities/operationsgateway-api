@@ -111,34 +111,10 @@ class ChannelModel(BaseModel):
     precision: Optional[int]
     units: Optional[str]
 
-    x_pixel_units: Optional[str]
-    y_pixel_units: Optional[str]
-    x_pixel_size: Optional[int]
-    y_pixel_size: Optional[int]
-    exposure_time_s: Optional[float]
-    gain: Optional[float]
-
     @root_validator(pre=True)
     def set_default_type(cls, values):
         values.setdefault("type", "scalar")
         return values
-
-    @validator(
-        "x_pixel_units",
-        "y_pixel_units",
-        "x_pixel_size",
-        "y_pixel_size",
-        "exposure_time_s",
-        "gain",
-    )
-    def check_image_channel(cls, v, values):
-        if not values["type"] == "image":
-            raise ChannelManifestError(
-                "Only image channels should contain image channel metadata. Invalid"
-                f" channel is called: {values['name']}",
-            )
-        else:
-            return v
 
 
 class ChannelManifestModel(BaseModel):
