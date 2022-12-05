@@ -1,10 +1,8 @@
 from datetime import datetime
-from typing import Dict, List, Literal, Optional, Union
+from typing import ClassVar, Dict, List, Literal, Optional, Union
 
 import numpy as np
 from pydantic import BaseModel, Field, root_validator, validator
-
-from operationsgateway_api.src.exceptions import ChannelManifestError
 
 
 class ImageModel(BaseModel):
@@ -101,9 +99,12 @@ class UserModel(BaseModel):
 
 
 class ChannelModel(BaseModel):
+    # Field names where modifications to the data cannot be made
+    protected_fields: ClassVar[List[str]] = ["type_", "units"]
+
     name: str
     path: str
-    type: Optional[Literal["scalar", "image", "waveform"]]
+    type_: Optional[Literal["scalar", "image", "waveform"]] = Field(alias="type")
 
     # Should the value be displayed as it is stored or be shown in x10^n format
     notation: Optional[Literal["scientific", "normal"]]
@@ -113,7 +114,7 @@ class ChannelModel(BaseModel):
     historical: Optional[bool]
 
     @root_validator(pre=True)
-    def set_default_type(cls, values):
+    def set_default_type(cls, values):  # noqa: B902, N805
         values.setdefault("type", "scalar")
         return values
 

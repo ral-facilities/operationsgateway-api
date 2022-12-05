@@ -1,12 +1,13 @@
 import logging
 
 from fastapi import APIRouter, Path
-from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 
+from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 
 log = logging.getLogger()
 router = APIRouter()
+
 
 @router.get(
     "/channels",
@@ -33,7 +34,7 @@ async def get_channels():
 )
 @endpoint_error_handling
 async def get_channel_by_system_name(
-    channel_system_name: str = Path(
+    channel_system_name: str = Path(  # noqa: B008
         "",
         description="Channel system name to lookup in manifest file",
     ),
@@ -48,4 +49,3 @@ async def get_channel_by_system_name(
     channel = await ChannelManifest.get_channel(channel_system_name)
 
     return channel.dict(exclude_unset=True)
-
