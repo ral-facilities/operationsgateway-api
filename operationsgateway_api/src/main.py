@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import orjson
 import uvicorn
@@ -39,6 +40,14 @@ app = FastAPI(
     title="OperationsGateway API",
     description=api_description,
     default_response_class=ORJSONResponse,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 setup_logger()
