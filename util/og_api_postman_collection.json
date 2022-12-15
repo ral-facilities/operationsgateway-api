@@ -232,12 +232,13 @@
 							]
 						},
 						"url": {
-							"raw": "{{og-api}}/submit_hdf",
+							"raw": "{{og-api}}/submit/hdf",
 							"host": [
 								"{{og-api}}"
 							],
 							"path": [
-								"submit_hdf"
+								"submit",
+								"hdf"
 							]
 						}
 					},
@@ -254,7 +255,8 @@
 								{
 									"key": "file",
 									"type": "file",
-									"src": "/C:/Users/XFU59478/Desktop/HDF Files/channel_manifest.json"
+									"src": [],
+									"disabled": true
 								}
 							]
 						},

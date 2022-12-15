@@ -4,6 +4,8 @@ from typing import ClassVar, Dict, List, Literal, Optional, Union
 import numpy as np
 from pydantic import BaseModel, Field, root_validator, validator
 
+from operationsgateway_api.src.exceptions import ChannelManifestError
+
 
 class ImageModel(BaseModel):
     path: str
@@ -113,10 +115,23 @@ class ChannelModel(BaseModel):
     units: Optional[str]
     historical: Optional[bool]
 
+    x_units: Optional[str]
+    y_units: Optional[str]
+
     @root_validator(pre=True)
     def set_default_type(cls, values):  # noqa: B902, N805
         values.setdefault("type", "scalar")
         return values
+
+    @validator("x_units", "y_units")
+    def check_waveform_channel(cls, v, values):  # noqa: B902, N805
+        if not values["type_"] == "waveform":
+            raise ChannelManifestError(
+                "Only waveform channels should contain waveform channel metadata."
+                f" Invalid channel is called: {values['name']}",
+            )
+        else:
+            return v
 
 
 class ChannelManifestModel(BaseModel):

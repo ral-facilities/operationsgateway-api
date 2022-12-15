@@ -48,4 +48,4 @@ async def get_channel_by_system_name(
 
     channel = await ChannelManifest.get_channel(channel_system_name)
 
-    return channel.dict(exclude_unset=True)
+    return channel.dict(by_alias=True, exclude_unset=True)
