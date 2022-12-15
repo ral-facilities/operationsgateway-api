@@ -1,0 +1,401 @@
+{
+    "channels": {
+        "GEM_SHOT_NUM_VALUE": {
+            "name": "Gemini shot number",
+            "path": "/CONTROL_SYS/GEM_TA/SHOT_NUM",
+            "type": "scalar"
+        },
+        "GEM_SHOT_SOURCE_STRING": {
+            "name": "Gemini shot source string value",
+            "path": "/CONTROL_SYS/GEM_TA/SHOT_SOURCE",
+            "type": "scalar",
+            "historical": true
+        },
+        "GEM_SHOT_TYPE_STRING": {
+            "name": "Gemini shot type",
+            "path": "/CONTROL_SYS/GEM_TA/SHOT_TYPE",
+            "type": "scalar"
+        },
+        "GEM_WP_POS_VALUE": {
+            "name": "LA3 waveplate setting",
+            "path": "/CONTROL_SYS/GEM_TA/POS",
+            "type": "scalar",
+            "units": "ms",
+            "notation": "normal"
+        },
+        "N_COMP_CALCULATEDE_VALUE": {
+            "name": "North compressed calculated value",
+            "path": "/LA3/N_COMP/ENERGY",
+            "type": "scalar",
+            "units": "mm"
+        },
+        "N_COMP_FF_E": {
+            "name": "North compressed far field energy",
+            "path": "/LA3/N_COMP/IMAGE",
+            "type": "scalar",
+            "units": "mg",
+            "notation": "scientific",
+            "precision": 4
+        },
+        "N_COMP_FF_IMAGE": {
+            "name": "North compressed far field image",
+            "path": "/LA3/N_COMP/IMAGE",
+            "type": "image"
+        },
+        "N_COMP_FF_INTEGRATION": {
+            "name": "North compressed far field integration value",
+            "path": "/LA3/N_COMP/IMAGE",
+            "type": "scalar",
+            "units": "µm",
+            "notation": "normal",
+            "precision": 3
+        },
+        "N_COMP_FF_XPOS": {
+            "name": "North compressed far field - x",
+            "path": "/LA3/N_COMP/IMAGE",
+            "type": "scalar",
+            "units": "mm",
+            "notation": "normal",
+            "precision": 5
+        },
+        "N_COMP_FF_YPOS": {
+            "name": "North compressed far field - x",
+            "path": "/LA3/N_COMP/IMAGE",
+            "type": "scalar",
+            "units": "mm",
+            "notation": "normal",
+            "precision": 6
+        },
+        "N_COMP_THROUGHPUTE_VALUE": {
+            "name": "North beam compressed throughput value",
+            "path": "/LA3/N_COMP/ENERGY",
+            "type": "scalar",
+            "units": "cm"
+        },
+        "TA3_SHOT_NUM_VALUE": {
+            "name": "Target area 3 shot number",
+            "path": "/CONTROL_SYS/GEM_TA/SHOT_NUM",
+            "type": "scalar",
+            "historical": true
+        },
+        "Type": {
+            "name": "Data type",
+            "path": "/Dataset",
+            "type": "scalar"
+        },
+        "N_COMP_NF_E": {
+            "name": "North beam compressed near field energy",
+            "path": "/LA3/N_COMP/IMAGE",
+            "type": "scalar"
+        },
+        "N_COMP_NF_IMAGE": {
+            "name": "North compressed near field image",
+            "path": "/LA3/N_COMP/IMAGE",
+            "type": "image"
+        },
+        "N_COMP_NF_INTEGRATION": {
+            "name": "North compressed near field integration value",
+            "path": "/LA3/N_COMP/IMAGE",
+            "type": "scalar",
+            "notation": "scientific",
+            "precision": 4
+        },
+        "N_COMP_NF_XPOS": {
+            "name": "North compressed near field - x",
+            "path": "/LA3/N_COMP/IMAGE",
+            "type": "scalar",
+            "units": "mm"
+        },
+        "N_COMP_NF_YPOS": {
+            "name": "North compressed near field - y",
+            "path": "/LA3/N_COMP/IMAGE",
+            "type": "scalar",
+            "units": "mm"
+        },
+        "N_COMP_SPEC_TRACE": {
+            "name": "North compressed spec waveform",
+            "path": "/LA3/N_COMP/SPEC",
+            "type": "waveform",
+            "x_units": "s",
+            "y_units": "kJ"
+        },
+        "N_LEG1_GREEN_NF_E": {
+            "name": "North pump near field energy",
+            "path": "/LA3/N_PUMP/IMAGE",
+            "type": "scalar"
+        },
+        "N_LEG1_GREEN_NF_IMAGE": {
+            "name": "North pump R-beam image",
+            "path": "/LA3/N_PUMP/IMAGE",
+            "type": "image"
+        },
+        "N_LEG1_GREEN_NF_INTEGRATION": {
+            "name": "North pump near field integration value",
+            "path": "/LA3/N_PUMP/IMAGE",
+            "type": "scalar",
+            "historical": true
+        },
+        "N_LEG1_GREEN_NF_XPOS": {
+            "name": "North pump near field - x",
+            "path": "/LA3/N_PUMP/IMAGE",
+            "type": "scalar",
+            "units": "µm",
+            "notation": "scientific"
+        },
+        "N_LEG1_GREEN_NF_YPOS": {
+            "name": "North pump near field - y",
+            "path": "/LA3/N_PUMP/IMAGE",
+            "type": "scalar",
+            "units": "µm"
+        },
+        "N_FLUOR_E": {
+            "name": "North beam fluorescence energy",
+            "path": "/LA3/N_UNCOMP/IMAGE",
+            "type": "scalar",
+            "notation": "normal"
+        },
+        "N_FLUOR_IMAGE": {
+            "name": "North beam fluorescence image",
+            "path": "/LA3/N_UNCOMP/IMAGE",
+            "type": "image"
+        },
+        "N_FLUOR_INTEGRATION": {
+            "name": "North beam fluorescence integration value",
+            "path": "/LA3/N_UNCOMP/IMAGE",
+            "type": "scalar",
+            "notation": "scientific"
+        },
+        "N_FLUOR_XPOS": {
+            "name": "North beam fluorescence pointing - x",
+            "path": "/LA3/N_UNCOMP/IMAGE",
+            "type": "scalar"
+        },
+        "N_FLUOR_YPOS": {
+            "name": "North beam fluorescence pointing - y",
+            "path": "/LA3/N_UNCOMP/IMAGE",
+            "type": "scalar"
+        },
+        "N_INP_NF_E": {
+            "name": "North amplifier input near field energy",
+            "path": "/LA3/N_UNCOMP/IMAGE",
+            "type": "scalar"
+        },
+        "N_INP_NF_IMAGE": {
+            "name": "North amplifier input near field image",
+            "path": "/LA3/N_UNCOMP/IMAGE",
+            "type": "image"
+        },
+        "N_INP_NF_INTEGRATION": {
+            "name": "North amplifier input near field integration value",
+            "path": "/LA3/N_UNCOMP/IMAGE",
+            "type": "scalar",
+            "notation": "scientific"
+        },
+        "N_INP_NF_XPOS": {
+            "name": "North amplifier input near field - x",
+            "path": "/LA3/N_UNCOMP/IMAGE",
+            "type": "scalar"
+        },
+        "N_INP_NF_YPOS": {
+            "name": "North amplifier input near field - y",
+            "path": "/LA3/N_UNCOMP/IMAGE",
+            "type": "scalar"
+        },
+        "N_LEG2_GREEN_NF_E": {
+            "name": "North pump R near field energy",
+            "path": "/LA3/N_PUMP/IMAGE",
+            "type": "scalar"
+        },
+        "N_LEG2_GREEN_NF_INTEGRATION": {
+            "name": "North pump R near field integration value",
+            "path": "/LA3/N_PUMP/IMAGE",
+            "type": "scalar",
+            "notation": "scientific",
+            "precision": 4
+        },
+        "N_LEG2_GREEN_NF_XPOS": {
+            "name": "North pump R near field - x",
+            "path": "/LA3/N_PUMP/IMAGE",
+            "type": "scalar",
+            "units": "km"
+        },
+        "N_LEG2_GREEN_NF_YPOS": {
+            "name": "North pump R near field - y",
+            "path": "/LA3/N_PUMP/IMAGE",
+            "type": "scalar",
+            "units": "km"
+        },
+        "N_UNCOMP_FF_E": {
+            "name": "North uncompressed far field energy",
+            "path": "/LA3/N_UNCOMP/IMAGE",
+            "type": "scalar"
+        },
+        "N_UNCOMP_FF_INTEGRATION": {
+            "name": "North uncompressed far field integration value",
+            "path": "/LA3/N_UNCOMP/IMAGE",
+            "type": "scalar",
+            "notation": "scientific"
+        },
+        "N_UNCOMP_FF_XPOS": {
+            "name": "North uncompressed far field - x",
+            "path": "/LA3/N_UNCOMP/IMAGE",
+            "type": "scalar"
+        },
+        "N_UNCOMP_FF_YPOS": {
+            "name": "North uncompressed far field - y",
+            "path": "/LA3/N_UNCOMP/IMAGE",
+            "type": "scalar"
+        },
+        "N_UNCOMP_NF_E": {
+            "name": "North beam amplified energy",
+            "path": "/LA3/N_UNCOMP/IMAGE",
+            "type": "scalar",
+            "notation": "scientific",
+            "precision": 3
+        },
+        "N_UNCOMP_NF_INTEGRATION": {
+            "name": "North uncompressed near field integration value",
+            "path": "/LA3/N_UNCOMP/IMAGE",
+            "type": "scalar",
+            "notation": "scientific",
+            "precision": 2
+        },
+        "N_UNCOMP_NF_XPOS": {
+            "name": "North uncompressed near field - x",
+            "path": "/LA3/N_UNCOMP/IMAGE",
+            "type": "scalar"
+        },
+        "N_UNCOMP_NF_YPOS": {
+            "name": "North uncompressed near field - y",
+            "path": "/LA3/N_UNCOMP/IMAGE",
+            "type": "scalar"
+        },
+        "SAD_DELAY_VALUE": {
+            "name": "SAD stage position",
+            "path": "/LA3/SAD_TABLE/DELAY",
+            "type": "scalar",
+            "historical": true
+        },
+        "SAD_NF_E": {
+            "name": "SAD table near field energy",
+            "path": "/LA3/SAD_TABLE/IMAGE",
+            "type": "scalar"
+        },
+        "SAD_NF_INTEGRATION": {
+            "name": "SAD table near field integration value",
+            "path": "/LA3/SAD_TABLE/IMAGE",
+            "type": "scalar"
+        },
+        "SAD_NF_XPOS": {
+            "name": "SAD table near field - x",
+            "path": "/LA3/SAD_TABLE/IMAGE",
+            "type": "scalar"
+        },
+        "SAD_NF_YPOS": {
+            "name": "SAD table near field - y",
+            "path": "/LA3/SAD_TABLE/IMAGE",
+            "type": "scalar"
+        },
+        "S_UNCOMP_EX_NF_E": {
+            "name": "South uncompressed expanded beam near field energy",
+            "path": "/LA3/S_UNCOMP/IMAGE",
+            "type": "scalar"
+        },
+        "S_UNCOMP_EX_NF_INTEGRATION": {
+            "name": "South uncompressed expanded beam near field integration value",
+            "path": "/LA3/S_UNCOMP/IMAGE",
+            "type": "scalar",
+            "notation": "normal",
+            "precision": 5
+        },
+        "S_UNCOMP_EX_NF_XPOS": {
+            "name": "South uncompressed expanded beam near field - x",
+            "path": "/LA3/S_UNCOMP/IMAGE",
+            "type": "scalar"
+        },
+        "S_UNCOMP_EX_NF_YPOS": {
+            "name": "South uncompressed expanded beam near field - y",
+            "path": "/LA3/S_UNCOMP/IMAGE",
+            "type": "scalar"
+        },
+        "S_UNCOMP_FF_E": {
+            "name": "South uncompressed far field energy",
+            "path": "/LA3/S_UNCOMP/IMAGE",
+            "type": "scalar"
+        },
+        "S_UNCOMP_FF_INTEGRATION": {
+            "name": "South uncompressed far field integration value",
+            "path": "/LA3/S_UNCOMP/IMAGE",
+            "type": "scalar"
+        },
+        "S_UNCOMP_FF_XPOS": {
+            "name": "South uncompressed far field - x",
+            "path": "/LA3/S_UNCOMP/IMAGE",
+            "type": "scalar"
+        },
+        "S_UNCOMP_FF_YPOS": {
+            "name": "South uncompressed far field - y",
+            "path": "/LA3/S_UNCOMP/IMAGE",
+            "type": "scalar"
+        },
+        "AMP2_PUMP_E_PELT_VALUE": {
+            "name": "Amplifier 2 pump energy",
+            "path": "/LA1_AMP_2/PUMP/ENERGY",
+            "type": "scalar",
+            "units": "mV"
+        },
+        "GAS_REM_BOTTLE_A_VALUE": {
+            "name": "Gas bottle A remaining",
+            "path": "/CONTROL_SYS/GAS_SYSTEM/METROLOGY",
+            "type": "scalar",
+            "units": "bar",
+            "historical": true
+        },
+        "GAS_REM_BOTTLE_C_VALUE": {
+            "name": "Gas bottle C remaining",
+            "path": "/CONTROL_SYS/GAS_SYSTEM/METROLOGY",
+            "type": "scalar",
+            "units": "bar"
+        },
+        "LA3_N_COMP_B_PRES_VALUE": {
+            "name": "LA3 north compressed B present",
+            "path": "/CONTROL_SYS/GAS_SYSTEM/METROLOGY",
+            "type": "scalar",
+            "units": "mbara"
+        },
+        "MEZZ_ROOM_T_VALUE": {
+            "name": "Mezzanine room temperature",
+            "path": "/CONTROL_SYS/ROOM/METROLOGY",
+            "type": "scalar",
+            "units": "C"
+        },
+        "REG_3_AT_CHAMBER_VALUE": {
+            "name": "Regulator 3 pressure at chamber",
+            "path": "/CONTROL_SYS/ROOM/METROLOGY",
+            "type": "scalar",
+            "units": "bar"
+        },
+        "SADSTAGE_DELAY_VALUE": {
+            "name": "SAD stage delay",
+            "path": "/LA3/SLIDE/POS",
+            "type": "scalar",
+            "units": "count"
+        },
+        "TA3_ROOM_SUPPLY_BOTTLE_A_VALUE": {
+            "name": "TA3 supply bottle A value",
+            "path": "/CONTROL_SYS/ROOM/METROLOGY",
+            "type": "scalar",
+            "units": "bar",
+            "notation": "scientific",
+            "precision": 2
+        },
+        "VAC_SYS_CHAMBER_B_PRES_VALUE": {
+            "name": "Chamber B vacuum system present value",
+            "path": "/CONTROL_SYS/GEM_TA/PRES",
+            "type": "scalar",
+            "units": "mbar",
+            "notation": "scientific",
+            "precision": 2
+        }
+    }
+}
