@@ -20,7 +20,7 @@ router = APIRouter()
 
 
 @router.post(
-    "/submit_hdf",
+    "/submit/hdf",
     summary="Submit a HDF file for ingestion into MongoDB",
     response_description="ID of the record document that has been inserted/updated",
     tags=["Ingestion"],
