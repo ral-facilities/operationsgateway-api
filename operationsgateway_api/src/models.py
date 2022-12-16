@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Literal, Optional, Union
+from typing import ClassVar, Dict, List, Literal, Optional, Union
 
 import numpy as np
 from pydantic import BaseModel, Field, root_validator, validator
@@ -101,41 +101,34 @@ class UserModel(BaseModel):
 
 
 class ChannelModel(BaseModel):
+    # Field names where modifications to the data cannot be made
+    protected_fields: ClassVar[List[str]] = ["type_", "units"]
+
     name: str
     path: str
-    type: Optional[Literal["scalar", "image", "waveform"]]
+    type_: Optional[Literal["scalar", "image", "waveform"]] = Field(alias="type")
 
     # Should the value be displayed as it is stored or be shown in x10^n format
     notation: Optional[Literal["scientific", "normal"]]
     # Number of significant figures used to display the value
     precision: Optional[int]
     units: Optional[str]
+    historical: Optional[bool]
 
-    x_pixel_units: Optional[str]
-    y_pixel_units: Optional[str]
-    x_pixel_size: Optional[int]
-    y_pixel_size: Optional[int]
-    exposure_time_s: Optional[float]
-    gain: Optional[float]
+    x_units: Optional[str]
+    y_units: Optional[str]
 
     @root_validator(pre=True)
-    def set_default_type(cls, values):
+    def set_default_type(cls, values):  # noqa: B902, N805
         values.setdefault("type", "scalar")
         return values
 
-    @validator(
-        "x_pixel_units",
-        "y_pixel_units",
-        "x_pixel_size",
-        "y_pixel_size",
-        "exposure_time_s",
-        "gain",
-    )
-    def check_image_channel(cls, v, values):
-        if not values["type"] == "image":
+    @validator("x_units", "y_units")
+    def check_waveform_channel(cls, v, values):  # noqa: B902, N805
+        if not values["type_"] == "waveform":
             raise ChannelManifestError(
-                "Only image channels should contain image channel metadata. Invalid"
-                f" channel is called: {values['name']}",
+                "Only waveform channels should contain waveform channel metadata."
+                f" Invalid channel is called: {values['name']}",
             )
         else:
             return v

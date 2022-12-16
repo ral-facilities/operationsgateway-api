@@ -3,10 +3,7 @@ import logging
 from fastapi import APIRouter, Depends, status, UploadFile
 from fastapi.responses import JSONResponse
 
-from operationsgateway_api.src.auth.authorisation import (
-    authorise_route,
-    authorise_token,
-)
+from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
@@ -21,7 +18,7 @@ router = APIRouter()
 
 
 @router.post(
-    "/submit_hdf",
+    "/submit/hdf",
     summary="Submit a HDF file for ingestion into MongoDB",
     response_description="ID of the record document that has been inserted/updated",
     tags=["Ingestion"],
@@ -89,13 +86,14 @@ async def submit_hdf(
 @endpoint_error_handling
 async def submit_manifest(
     file: UploadFile,
-    # TODO - change to authorise_route
-    # access_token: str = Depends(authorise_token),  # noqa: B008
+    bypass_channel_check: bool = False,
+    access_token: str = Depends(authorise_route),  # noqa: B008
 ):
     log.info("Submitting channel manifest file into database")
     log.debug("Filename: %s, Content: %s", file.filename, file.content_type)
 
     channel_manifest = ChannelManifest(file.file)
+    await channel_manifest.validate(bypass_channel_check)
 
     await channel_manifest.insert()
     return JSONResponse(
