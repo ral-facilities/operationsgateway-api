@@ -12,5 +12,5 @@ class ThumbnailHandler:
             return base64.b64encode(buf.getvalue())
 
     @staticmethod
-    def truncate_base64(base64_thumbnail):
+    def truncate_base64(base64_thumbnail: str):
         return base64_thumbnail[:50]

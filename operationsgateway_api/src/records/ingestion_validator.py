@@ -1,12 +1,14 @@
 from collections.abc import MutableMapping
 import logging
 
+from operationsgateway_api.src.models import RecordModel
+
 
 log = logging.getLogger()
 
 
 class IngestionValidator:
-    def __init__(self, ingested_record, stored_record):
+    def __init__(self, ingested_record: RecordModel, stored_record: RecordModel):
         self.ingested_record = ingested_record
         self.stored_record = stored_record
 

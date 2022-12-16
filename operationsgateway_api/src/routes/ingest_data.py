@@ -44,6 +44,8 @@ async def submit_hdf(
     record = Record(record_data)
 
     stored_record = await record.find_existing_record()
+    # TODO - when I implement the validation, it should only run if `stored_record`
+    # actually contains something (i.e. isn't None)
     ingest_checker = IngestionValidator(record_data, stored_record)  # noqa: F841
 
     log.debug("Processing waveforms")
