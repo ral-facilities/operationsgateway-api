@@ -95,5 +95,5 @@ class ChannelManifest:
             return manifest.channels[channel_name]
         except KeyError as exc:
             raise ChannelManifestError(
-                f"Channel '{channel_name}' cannot be found"
+                f"Channel '{channel_name}' cannot be found",
             ) from exc

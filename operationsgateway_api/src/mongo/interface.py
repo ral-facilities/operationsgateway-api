@@ -81,8 +81,11 @@ class MongoDBInterface:
 
     @staticmethod
     async def find_one(
-        collection_name, filter_={}, sort=None, projection=None
-    ):  # noqa: B006
+        collection_name,
+        filter_={},  # noqa: B006
+        sort=None,
+        projection=None,  # noqa: B006
+    ):
         """
         Based on a filter, find a single document in the record collection of MongoDB
         """

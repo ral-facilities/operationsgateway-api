@@ -20,7 +20,10 @@ router = APIRouter()
 )
 @endpoint_error_handling
 async def get_channel_summary(
-    channel_name: str = Path("", description="Channel name to provide a summary for"),
+    channel_name: str = Path(  # noqa: B008
+        "",
+        description="Channel name to provide a summary for",
+    ),
 ):
     """
     Provide the dates of first and most recent pieces of data and the three most recent

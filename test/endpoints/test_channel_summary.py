@@ -1,5 +1,6 @@
 import base64
 import hashlib
+
 from fastapi.testclient import TestClient
 import pytest
 
@@ -46,7 +47,7 @@ class TestChannelSummary:
 
         assert test_response.status_code == 200
         assert test_response.json() == expected_summary
-    
+
     @pytest.mark.parametrize(
         "channel_name, expected_summary",
         [
@@ -76,7 +77,7 @@ class TestChannelSummary:
                 },
                 id="Waveform channel summary",
             ),
-        ]
+        ],
     )
     def test_valid_thumbnail_channel_summary(
         self,
@@ -101,7 +102,9 @@ class TestChannelSummary:
         json_output = test_response.json()
         for i in range(len(json_output["recent_sample"])):
             bytes_thumbnail = base64.b64decode(json_output["recent_sample"][i])
-            json_output["recent_sample"][i] = hashlib.md5(bytes_thumbnail).hexdigest()  # noqa: S303
+            json_output["recent_sample"][i] = hashlib.md5(  # noqa: S303
+                bytes_thumbnail,
+            ).hexdigest()
 
         assert json_output == expected_summary
 
