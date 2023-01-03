@@ -93,7 +93,12 @@ class MongoDBInterface:
         return await collection.find_one(filter_)
 
     @staticmethod
-    async def update_one(collection_name, filter_={}, update={}, upsert=False):  # noqa: B006
+    async def update_one(
+        collection_name,
+        filter_={},  # noqa: B006
+        update={},  # noqa: B006
+        upsert=False,
+    ):
         """
         Update a single document using the data provided. The document selected for the
         update is based on the input of the query filter
@@ -114,9 +119,14 @@ class MongoDBInterface:
                 "Error when updating single document in %s collection",
                 collection_name,
             ) from exc
-    
+
     @staticmethod
-    async def update_many(collection_name, filter_={}, update={}, upsert=False):
+    async def update_many(
+        collection_name,
+        filter_={},  # noqa: B006
+        update={},  # noqa: B006
+        upsert=False,
+    ):
         log.info("Sending update_many() to MongoDB, collection: %s", collection_name)
         log.debug("Filter: %s", filter_)
 
@@ -133,7 +143,6 @@ class MongoDBInterface:
                 "Error when updating multiple documents in %s collection",
                 collection_name,
             ) from exc
-
 
     @staticmethod
     async def insert_one(collection_name, data):

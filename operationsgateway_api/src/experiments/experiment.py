@@ -1,14 +1,14 @@
-from pprint import pprint
 from time import sleep
 from typing import List
 
-from suds.client import Client
 from suds import sudsobject
+from suds.client import Client
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.models import Experiment as ExperimentModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.routes.common_parameters import ParameterHandler
+
 
 class Experiment:
     def __init__(self) -> None:
@@ -19,15 +19,19 @@ class Experiment:
             Config.config.experiments.user_office_wsdl_url,
         )
         self.session_id = user_office_client.service.login(
-            Config.config.experiments.username, Config.config.experiments.password,
+            Config.config.experiments.username,
+            Config.config.experiments.password,
         )
         self.scheduler_client = Client(
             Config.config.experiments.scheduler_wsdl_url,
         )
 
         self.experiments = []
-    
-    def extract_experiment_part_numbers(self, experiments: List[sudsobject.experimentDateDTO]) -> dict:
+
+    def extract_experiment_part_numbers(
+        self,
+        experiments: List[sudsobject.experimentDateDTO],
+    ) -> dict:
         """
         Extracts the rb number (experiment ID) and the experiment's part and puts them
         into a dictionary to get start and end dates for each one.
@@ -39,9 +43,9 @@ class Experiment:
 
         for exp in experiments:
             exp_parts.setdefault(int(exp.rbNumber), []).append(exp.part)
-        
+
         return exp_parts
-    
+
     def get_experiments_from_scheduler(self, start_date, end_date) -> None:
         """
         Get experiments from the scheduler (including start and end dates of each part)
@@ -55,10 +59,15 @@ class Experiment:
 
         # TODO - would it be better to get most recent X weeks to minimise number of
         # requests to scheduler?
-        experiments_data = self.scheduler_client.service.getExperimentDatesForInstrument(
-            self.session_id,
-            Config.config.experiments.instrument_name,
-            {"startDate": "2019-01-01T00:00:00Z", "endDate": "2023-01-01T00:00:00Z"},
+        experiments_data = (
+            self.scheduler_client.service.getExperimentDatesForInstrument(
+                self.session_id,
+                Config.config.experiments.instrument_name,
+                {
+                    "startDate": "2019-01-01T00:00:00Z",
+                    "endDate": "2023-01-01T00:00:00Z",
+                },
+            ),
         )
         exp_parts = self.extract_experiment_part_numbers(experiments_data)
 
@@ -89,7 +98,6 @@ class Experiment:
             req += 1
             print(f"Requests sent: {req}")
 
-        
         """
         Test code that I'm still not sure how it works
         # TODO - work out how this call works and whether it would be better than

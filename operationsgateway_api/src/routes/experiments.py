@@ -8,6 +8,7 @@ from operationsgateway_api.src.experiments.experiment import Experiment
 log = logging.getLogger()
 router = APIRouter()
 
+
 # TODO - add auth to this endpoint
 @router.post(
     "/experiments",
@@ -29,6 +30,7 @@ async def store_experiments_from_scheduler(
     await experiment.store_experiments()
 
     return [e.id_ for e in experiment.experiments]
+
 
 @router.get(
     "/experiments",
