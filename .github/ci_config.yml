@@ -13,13 +13,12 @@ logging:
 mongodb:
   mongodb_url: mongodb://localhost:27017
   database_name: opsgateway
-  collection_name: records
   # Maximum number of documents to return when querying, similar to ICAT's maxEntities
   max_documents: 1000
   image_store_directory: /home/runner/og-images
 auth:
-  private_key_path: /home/runner/og-auth/id_rsa
-  public_key_path: /home/runner/og-auth/id_rsa.pub
+  private_key_path: /home/runner/work/operationsgateway-api/id_rsa
+  public_key_path: /home/runner/work/operationsgateway-api/id_rsa.pub
   jwt_algorithm: RS256
   access_token_validity_mins: 60
   refresh_token_validity_days: 7

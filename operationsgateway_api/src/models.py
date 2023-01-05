@@ -1,11 +1,13 @@
 from datetime import datetime
-from typing import Dict, Optional, Union
+from typing import ClassVar, Dict, List, Literal, Optional, Union
 
 import numpy as np
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, root_validator, validator
+
+from operationsgateway_api.src.exceptions import ChannelManifestError
 
 
-class Image(BaseModel):
+class ImageModel(BaseModel):
     path: str
     data: np.ndarray
 
@@ -13,7 +15,7 @@ class Image(BaseModel):
         arbitrary_types_allowed = True
 
 
-class Waveform(BaseModel):
+class WaveformModel(BaseModel):
     id_: str = Field(alias="_id")
     x: str
     y: str
@@ -28,7 +30,7 @@ class Waveform(BaseModel):
             return value
 
 
-class ImageChannelMetadata(BaseModel):
+class ImageChannelMetadataModel(BaseModel):
     channel_dtype: str
     exposure_time_s: Optional[float]
     gain: Optional[float]
@@ -39,53 +41,108 @@ class ImageChannelMetadata(BaseModel):
     y_pixel_units: Optional[str]
 
 
-class ImageChannel(BaseModel):
-    metadata: ImageChannelMetadata
+class ImageChannelModel(BaseModel):
+    metadata: ImageChannelMetadataModel
     image_path: str
     thumbnail: Optional[str]
 
 
-class ScalarChannelMetadata(BaseModel):
+class ScalarChannelMetadataModel(BaseModel):
     channel_dtype: str
     units: Optional[str]
 
 
-class ScalarChannel(BaseModel):
-    metadata: ScalarChannelMetadata
+class ScalarChannelModel(BaseModel):
+    metadata: ScalarChannelMetadataModel
     data: Union[float, int, str]
 
 
-class WaveformChannelMetadata(BaseModel):
+class WaveformChannelMetadataModel(BaseModel):
     channel_dtype: str
     x_units: Optional[str]
     y_units: Optional[str]
 
 
-class WaveformChannel(BaseModel):
-    metadata: WaveformChannelMetadata
+class WaveformChannelModel(BaseModel):
+    metadata: WaveformChannelMetadataModel
     thumbnail: Optional[str]
     waveform_id: str
 
 
-class RecordMetadata(BaseModel):
+class RecordMetadataModel(BaseModel):
     epac_ops_data_version: str
     shotnum: Optional[int]
     timestamp: datetime
 
 
-class Record(BaseModel):
+class RecordModel(BaseModel):
     id_: str = Field(alias="_id")
-    metadata: RecordMetadata
-    channels: Dict[str, Union[ImageChannel, ScalarChannel, WaveformChannel]]
+    metadata: RecordMetadataModel
+    channels: Dict[
+        str,
+        Union[ImageChannelModel, ScalarChannelModel, WaveformChannelModel],
+    ]
 
 
-class LoginDetails(BaseModel):
+class LoginDetailsModel(BaseModel):
     username: str
     password: str
 
 
-class AccessToken(BaseModel):
+class AccessTokenModel(BaseModel):
     token: str
+
+
+class UserModel(BaseModel):
+    username: str = Field(alias="_id")
+    sha256_password: Optional[str]
+    auth_type: str
+    authorised_routes: Optional[List[str]]
+
+
+class ChannelModel(BaseModel):
+    # Field names where modifications to the data cannot be made
+    protected_fields: ClassVar[List[str]] = ["type_", "units"]
+
+    name: str
+    path: str
+    type_: Optional[Literal["scalar", "image", "waveform"]] = Field(alias="type")
+
+    # Should the value be displayed as it is stored or be shown in x10^n format
+    notation: Optional[Literal["scientific", "normal"]]
+    # Number of significant figures used to display the value
+    precision: Optional[int]
+    units: Optional[str]
+    historical: Optional[bool]
+
+    x_units: Optional[str]
+    y_units: Optional[str]
+
+    @root_validator(pre=True)
+    def set_default_type(cls, values):  # noqa: B902, N805
+        values.setdefault("type", "scalar")
+        return values
+
+    @validator("x_units", "y_units")
+    def check_waveform_channel(cls, v, values):  # noqa: B902, N805
+        if not values["type_"] == "waveform":
+            raise ChannelManifestError(
+                "Only waveform channels should contain waveform channel metadata."
+                f" Invalid channel is called: {values['name']}",
+            )
+        else:
+            return v
+
+
+class ChannelManifestModel(BaseModel):
+    id_: str = Field(alias="_id")
+    channels: Dict[str, ChannelModel]
+
+
+class ChannelSummaryModel(BaseModel):
+    first_date: datetime
+    most_recent_date: datetime
+    recent_sample: List[Union[float, int, str]]
 
 
 class Experiment(BaseModel):

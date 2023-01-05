@@ -5,9 +5,10 @@ from fastapi.responses import JSONResponse
 
 from operationsgateway_api.src.auth.authentication import Authentication
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
+from operationsgateway_api.src.auth.user import User
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import ForbiddenError
-from operationsgateway_api.src.models import AccessToken, LoginDetails
+from operationsgateway_api.src.models import AccessTokenModel, LoginDetailsModel
 
 
 log = logging.getLogger()
@@ -32,7 +33,7 @@ router = APIRouter()
 )
 @endpoint_error_handling
 async def login(
-    login_details: LoginDetails = Body(  # noqa: B008
+    login_details: LoginDetailsModel = Body(  # noqa: B008
         ...,
         description="JSON object containing username and password",
     ),
@@ -42,16 +43,17 @@ async def login(
     returns a JWT access token in the response body and a JWT refresh token in a
     cookie.
     """
-
     log.info("Login request for '%s'", login_details.username)
 
     # authenticate the user
-    authentication = Authentication(login_details)
-    user_document = await Authentication.get_user_document(login_details.username)
-    authentication.authenticate(user_document)
+    user_model = await User.get_user(login_details.username)
+    log.debug("user_model: %s", user_model)
 
-    # create their JWT access and refresh tokens
-    jwt_handler = JwtHandler(user_document)
+    authentication = Authentication(login_details, user_model)
+    authentication.authenticate()
+
+    # # create their JWT access and refresh tokens
+    jwt_handler = JwtHandler(user_model)
     access_token = jwt_handler.get_access_token()
     refresh_token = jwt_handler.get_refresh_token()
     log.info(
@@ -83,7 +85,7 @@ async def login(
 )
 @endpoint_error_handling
 async def verify(
-    token: AccessToken = Body(  # noqa: B008
+    token: AccessTokenModel = Body(  # noqa: B008
         ...,
         description="JSON object containing the token",
     ),
@@ -110,7 +112,7 @@ async def verify(
 )
 @endpoint_error_handling
 async def refresh(
-    token: AccessToken = Body(  # noqa: B008
+    token: AccessTokenModel = Body(  # noqa: B008
         ...,
         description="JSON object containing the existing access token",
     ),

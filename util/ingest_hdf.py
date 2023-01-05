@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 from pprint import pprint
 import shutil
@@ -11,12 +12,27 @@ import requests
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
+    "-U",
+    "--username",
+    type=str,
+    help="Username of a user that has permissions to call the /submit/hdf endpoint",
+    required=True,
+)
+parser.add_argument(
+    "-P",
+    "--password",
+    type=str,
+    help="Password of the user specified by the -U/--username argument",
+    required=True,
+)
+parser.add_argument(
     "-p",
     "--path",
     type=str,
     help="Base directory path containing HDF files to ingest. HDF files should be"
     " stored in subdirectories - no files will be detected in the base directory of the"
-    " path given",
+    " path given. The channel manifest file should be present in the base directory and"
+    " must be called 'channel_manifest.json'.",
     required=True,
 )
 parser.add_argument(
@@ -57,6 +73,8 @@ parser.add_argument(
 
 # Put command line options into variables
 args = parser.parse_args()
+USERNAME = args.username
+PASSWORD = args.password
 BASE_DIR = args.path
 API_URL = args.url
 WIPE_DATABASE = args.wipe_database
@@ -123,6 +141,31 @@ if not args.url:
     API_URL = f"http://{host}:{port}"
     print(f"API started on {API_URL}")
 
+# Login to get an access token
+print(f"Login as '{USERNAME}' to get access token")
+credentials_json = json.dumps({"username": USERNAME, "password": PASSWORD})
+response = requests.post(
+    f"{API_URL}/login",
+    data=credentials_json,
+)
+# strip the first and last characters off the response
+# (the double quotes that surround it)
+token = response.text[1:-1]
+
+
+# Ingesting channel manifest file
+with open(f"{BASE_DIR}/channel_manifest.json", "r") as channel_manifest:
+    response = requests.post(
+        f"{API_URL}/submit/manifest",
+        files={"file": channel_manifest.read()},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    if response.status_code == 201:
+        print(f"Ingested channel manifest file, ID: {response.json()}")
+    else:
+        print(f"{response.status_code} returned")
+        pprint(response.text)
+
 # Ingesting HDF files
 for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
     if entry.is_dir():
@@ -132,8 +175,9 @@ for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
                 start_time = time()
                 with open(file.path, "rb") as hdf_upload:
                     response = requests.post(
-                        f"{API_URL}/submit_hdf",
+                        f"{API_URL}/submit/hdf",
                         files={"file": hdf_upload.read()},
+                        headers={"Authorization": f"Bearer {token}"},
                     )
 
                     end_time = time()

@@ -1,31 +1,33 @@
 from datetime import datetime
 import logging
 from tempfile import SpooledTemporaryFile
+from typing import List, Tuple
 
 import h5py
 from pydantic import ValidationError
 
+from operationsgateway_api.src.constants import ID_DATETIME_FORMAT
 from operationsgateway_api.src.exceptions import HDFDataExtractionError, ModelError
 from operationsgateway_api.src.models import (
-    Image,
-    ImageChannel,
-    ImageChannelMetadata,
-    Record,
-    RecordMetadata,
-    ScalarChannel,
-    ScalarChannelMetadata,
-    Waveform,
-    WaveformChannel,
-    WaveformChannelMetadata,
+    ImageChannelMetadataModel,
+    ImageChannelModel,
+    ImageModel,
+    RecordMetadataModel,
+    RecordModel,
+    ScalarChannelMetadataModel,
+    ScalarChannelModel,
+    WaveformChannelMetadataModel,
+    WaveformChannelModel,
+    WaveformModel,
 )
-from operationsgateway_api.src.records.image import Image as ImageClass
+from operationsgateway_api.src.records.image import Image
 
 
 log = logging.getLogger()
 
 
 class HDFDataHandler:
-    def __init__(self, hdf_temp_file: SpooledTemporaryFile):
+    def __init__(self, hdf_temp_file: SpooledTemporaryFile) -> None:
         """
         Convert a HDF file that comes attached in a HTTP request (not in HDF format)
         into a HDF file via h5py
@@ -35,11 +37,11 @@ class HDFDataHandler:
         self.waveforms = []
         self.images = []
 
-    def extract_data(self):
+    def extract_data(self) -> Tuple[RecordModel, List[WaveformModel], List[ImageModel]]:
         """
         Extract data from a HDF file that is formatted in the OperationsGateway data
         structure format. Metadata of the shot, channel data and its metadata is
-        extracted. The data is then returned in a dictionary
+        extracted
         """
         log.debug("Extracting data from HDF files")
 
@@ -49,19 +51,19 @@ class HDFDataHandler:
                 metadata_hdf["timestamp"],
                 "%Y-%m-%d %H:%M:%S",
             )
-            self.record_id = metadata_hdf["timestamp"].strftime("%Y%m%d%H%M%S")
+            self.record_id = metadata_hdf["timestamp"].strftime(ID_DATETIME_FORMAT)
         except ValueError as exc:
             raise HDFDataExtractionError(
-                "Incorrect timestamp format for metadata timestamp. Use %Y-%m-%d"
-                " %H:%M:%S",
+                "Incorrect timestamp format for metadata timestamp. Use"
+                f" {ID_DATETIME_FORMAT} instead",
             ) from exc
 
         self.extract_channels()
 
         try:
-            record = Record(
+            record = RecordModel(
                 _id=self.record_id,
-                metadata=RecordMetadata(**metadata_hdf),
+                metadata=RecordMetadataModel(**metadata_hdf),
                 channels=self.channels,
             )
         except ValidationError as exc:
@@ -69,22 +71,28 @@ class HDFDataHandler:
 
         return record, self.waveforms, self.images
 
-    def extract_channels(self):
+    def extract_channels(self) -> None:
+        """
+        Extract data from each data channel in the HDF file and place the data into
+        relevant Pydantic models
+        """
         for channel_name, value in self.hdf_file.items():
             channel_metadata = dict(value.attrs)
 
             if value.attrs["channel_dtype"] == "image":
-                image_path = ImageClass.get_image_path(
+                image_path = Image.get_image_path(
                     self.record_id,
                     channel_name,
                     full_path=False,
                 )
 
                 try:
-                    self.images.append(Image(path=image_path, data=value["data"][()]))
+                    self.images.append(
+                        ImageModel(path=image_path, data=value["data"][()]),
+                    )
 
-                    channel = ImageChannel(
-                        metadata=ImageChannelMetadata(**channel_metadata),
+                    channel = ImageChannelModel(
+                        metadata=ImageChannelMetadataModel(**channel_metadata),
                         image_path=image_path,
                     )
                 except ValidationError as exc:
@@ -98,8 +106,8 @@ class HDFDataHandler:
                 raise HDFDataExtractionError("Colour images cannot be ingested")
             elif value.attrs["channel_dtype"] == "scalar":
                 try:
-                    channel = ScalarChannel(
-                        metadata=ScalarChannelMetadata(**channel_metadata),
+                    channel = ScalarChannelModel(
+                        metadata=ScalarChannelMetadataModel(**channel_metadata),
                         data=value["data"][()],
                     )
                 except ValidationError as exc:
@@ -109,13 +117,13 @@ class HDFDataHandler:
                 log.debug("Waveform ID: %s", waveform_id)
 
                 try:
-                    channel = WaveformChannel(
-                        metadata=WaveformChannelMetadata(**channel_metadata),
+                    channel = WaveformChannelModel(
+                        metadata=WaveformChannelMetadataModel(**channel_metadata),
                         waveform_id=waveform_id,
                     )
 
                     self.waveforms.append(
-                        Waveform(
+                        WaveformModel(
                             _id=waveform_id,
                             x=value["x"][()],
                             y=value["y"][()],
