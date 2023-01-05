@@ -1,6 +1,6 @@
 import logging
 
-from operationsgateway_api.src.exceptions import ApiError, ChannelManifestError
+from operationsgateway_api.src.exceptions import ChannelManifestError
 from operationsgateway_api.src.models import ChannelManifestModel, ChannelModel
 
 
@@ -54,35 +54,29 @@ class ManifestValidator:
         For protected fields, check whether they've been modified and return a 400 (by
         raising a `ChannelManifestError` if that's the case.
 
+        Performing a lookup on the input file's channel names ensures that adding
+        channels (anywhere in the file, whether that's at the bottom or in the middle)
+        is supported
+
         There's some defensiveness in this function by ensuring the channel names match
         up. In practice they should be the same but this could be a strange bug that
         with some defensive code, will be much easier to diagnose
         """
 
-        for (input_channel_name, input_metadata), (
-            stored_channel_name,
-            stored_metadata,
-        ) in zip(self.input_file.channels.items(), self.stored_file.channels.items()):
-            if not input_channel_name == stored_channel_name:
-                log.debug(
-                    "Input channel name: %s, Stored channel name: %s",
-                    input_channel_name,
-                    stored_channel_name,
-                )
-                raise ApiError(
-                    "Input and stored channel names for manifest validation not the"
-                    " same",
-                )
-
-            for field_name in ChannelModel.protected_fields:
-                if getattr(input_metadata, field_name) != getattr(
-                    stored_metadata,
-                    field_name,
-                ):
-                    raise ChannelManifestError(
-                        f"{field_name} has been modified on the {input_channel_name}"
-                        " channel. Value stored in database:"
-                        f" {getattr(stored_metadata, field_name)}. Re-submit the"
-                        " channel metadata without the modification. If the metadata"
-                        " must be changed, please create a new channel.",
-                    )
+        for channel_name, channel_metadata in self.input_file.channels.items():
+            # Use get() instead of key lookup to avoid a KeyError when a new channel is
+            # added
+            stored_channel = self.stored_file.channels.get(channel_name)
+            if stored_channel:
+                for field_name in ChannelModel.protected_fields:
+                    if getattr(channel_metadata, field_name) != getattr(
+                        stored_channel,
+                        field_name,
+                    ):
+                        raise ChannelManifestError(
+                            f"{field_name} has been modified on the {channel_name}"
+                            " channel. Value stored in database:"
+                            f" {getattr(stored_channel, field_name)}. Re-submit the"
+                            " channel metadata without the modification. If the"
+                            " metadata must be changed, please create a new channel.",
+                        )
