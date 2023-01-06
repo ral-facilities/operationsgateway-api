@@ -58,6 +58,7 @@ class ExperimentsConfig(BaseModel):
     """Configuration model class to store experiment configuration details"""
 
     # TODO - add this stuff to example config
+    get_experiments_frequency_minutes: float
     user_office_wsdl_url: StrictStr
     username: StrictStr
     password: StrictStr

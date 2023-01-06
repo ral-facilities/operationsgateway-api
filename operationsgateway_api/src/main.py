@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from fastapi import APIRouter, FastAPI
@@ -8,6 +9,9 @@ import uvicorn
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.constants import ROUTE_MAPPINGS
+from operationsgateway_api.src.experiments.backound_scheduler_runner import (
+    BackgroundSchedulerRunner,
+)
 from operationsgateway_api.src.logger_config import setup_logger
 from operationsgateway_api.src.mongo.connection import ConnectionInstance
 from operationsgateway_api.src.routes import (
@@ -55,6 +59,14 @@ app.add_middleware(
 setup_logger()
 log = logging.getLogger()
 log.info("Logging now setup")
+
+runner = BackgroundSchedulerRunner()
+
+
+@app.on_event("startup")
+async def get_experiments_on_startup():
+    log.info("Contacting scheduler on startup")
+    asyncio.create_task(runner.start_task())
 
 
 @app.on_event("startup")
