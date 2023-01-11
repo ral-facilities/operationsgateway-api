@@ -5,7 +5,7 @@ from suds import sudsobject
 from suds.client import Client
 
 from operationsgateway_api.src.config import Config
-from operationsgateway_api.src.models import Experiment as ExperimentModel
+from operationsgateway_api.src.models import ExperimentModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.routes.common_parameters import ParameterHandler
 

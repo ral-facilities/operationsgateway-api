@@ -145,7 +145,7 @@ class ChannelSummaryModel(BaseModel):
     recent_sample: List[Union[float, int, str]]
 
 
-class Experiment(BaseModel):
+class ExperimentModel(BaseModel):
     id_: str = Field(alias="_id")
     experiment_id: str
     part: int
