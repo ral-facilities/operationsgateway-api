@@ -1,10 +1,12 @@
 from datetime import datetime
 import logging
 from tempfile import SpooledTemporaryFile
+from typing import List, Tuple
 
 import h5py
 from pydantic import ValidationError
 
+from operationsgateway_api.src.constants import ID_DATETIME_FORMAT
 from operationsgateway_api.src.exceptions import HDFDataExtractionError, ModelError
 from operationsgateway_api.src.models import (
     ImageChannelMetadataModel,
@@ -25,7 +27,7 @@ log = logging.getLogger()
 
 
 class HDFDataHandler:
-    def __init__(self, hdf_temp_file: SpooledTemporaryFile):
+    def __init__(self, hdf_temp_file: SpooledTemporaryFile) -> None:
         """
         Convert a HDF file that comes attached in a HTTP request (not in HDF format)
         into a HDF file via h5py
@@ -35,11 +37,11 @@ class HDFDataHandler:
         self.waveforms = []
         self.images = []
 
-    def extract_data(self):
+    def extract_data(self) -> Tuple[RecordModel, List[WaveformModel], List[ImageModel]]:
         """
         Extract data from a HDF file that is formatted in the OperationsGateway data
         structure format. Metadata of the shot, channel data and its metadata is
-        extracted. The data is then returned in a dictionary
+        extracted
         """
         log.debug("Extracting data from HDF files")
 
@@ -49,11 +51,11 @@ class HDFDataHandler:
                 metadata_hdf["timestamp"],
                 "%Y-%m-%d %H:%M:%S",
             )
-            self.record_id = metadata_hdf["timestamp"].strftime("%Y%m%d%H%M%S")
+            self.record_id = metadata_hdf["timestamp"].strftime(ID_DATETIME_FORMAT)
         except ValueError as exc:
             raise HDFDataExtractionError(
-                "Incorrect timestamp format for metadata timestamp. Use %Y-%m-%d"
-                " %H:%M:%S",
+                "Incorrect timestamp format for metadata timestamp. Use"
+                f" {ID_DATETIME_FORMAT} instead",
             ) from exc
 
         self.extract_channels()
@@ -69,7 +71,11 @@ class HDFDataHandler:
 
         return record, self.waveforms, self.images
 
-    def extract_channels(self):
+    def extract_channels(self) -> None:
+        """
+        Extract data from each data channel in the HDF file and place the data into
+        relevant Pydantic models
+        """
         for channel_name, value in self.hdf_file.items():
             channel_metadata = dict(value.attrs)
 

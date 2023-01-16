@@ -12,6 +12,7 @@ from operationsgateway_api.src.logger_config import setup_logger
 from operationsgateway_api.src.mongo.connection import ConnectionInstance
 from operationsgateway_api.src.routes import (
     auth,
+    channels,
     images,
     ingest_data,
     records,
@@ -82,6 +83,7 @@ add_router_to_app(ingest_data.router)
 add_router_to_app(records.router)
 add_router_to_app(waveforms.router)
 add_router_to_app(auth.router)
+add_router_to_app(channels.router)
 
 log.debug("ROUTE_MAPPINGS contents:")
 for item in ROUTE_MAPPINGS.items():
