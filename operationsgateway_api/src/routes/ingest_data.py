@@ -3,9 +3,7 @@ import logging
 from fastapi import APIRouter, Depends, status, UploadFile
 from fastapi.responses import JSONResponse
 
-from operationsgateway_api.src.auth.authorisation import (
-    authorise_route,
-)
+from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
@@ -46,6 +44,8 @@ async def submit_hdf(
     record = Record(record_data)
 
     stored_record = await record.find_existing_record()
+    # TODO - when I implement the validation, it should only run if `stored_record`
+    # actually contains something (i.e. isn't None)
     ingest_checker = IngestionValidator(record_data, stored_record)  # noqa: F841
 
     log.debug("Processing waveforms")

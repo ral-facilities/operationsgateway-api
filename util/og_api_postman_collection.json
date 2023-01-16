@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "20d85411-9d10-4250-8baa-9d131848073b",
+		"_postman_id": "fcdbb853-6867-40a9-9bdc-d303c9f3c96f",
 		"name": "OperationsGateway API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -194,6 +194,35 @@
 							"path": [
 								"channels",
 								"N_FLUOR_INTEGRATION"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Channel Summary",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/channels/summary/N_COMP_FF_E",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"channels",
+								"summary",
+								"N_COMP_FF_E"
 							]
 						}
 					},

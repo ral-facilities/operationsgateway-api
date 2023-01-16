@@ -39,6 +39,12 @@ class ChannelManifestError(ApiError):
         self.status_code = 400
 
 
+class ChannelSummaryError(ApiError):
+    def __init__(self, msg="Channel summary error", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 400
+
+
 class ModelError(ApiError):
     def __init__(self, msg="Model creation error", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)
