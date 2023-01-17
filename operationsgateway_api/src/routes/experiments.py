@@ -16,15 +16,7 @@ router = APIRouter()
     response_description="List of experiment IDs",
     tags=["Experiments"],
 )
-async def store_experiments_from_scheduler(
-    start_date: datetime = None,
-    end_date: datetime = None,
-):
-
-    # TODO - dates need to be in correct format: 2023-01-01T00:00:00Z
-    # TODO - should the dates just be in config?
-    # str(start_date) gets you 2023-01-01 00:00:00+00:00, causing unmarshalling error
-
+async def store_experiments_from_scheduler():
     experiment = Experiment()
     await experiment.get_experiments_from_scheduler()
     await experiment.store_experiments()
