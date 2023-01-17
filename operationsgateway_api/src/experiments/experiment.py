@@ -42,9 +42,6 @@ class Experiment:
 
         # TODO - this needs to be a background task as well as a specific endpoint
 
-        # TODO - would it be better to get most recent X weeks to minimise number of
-        # requests to scheduler?
-
         collection_last_updated = await self.get_collection_updated_date()
         experiment_search_start_date = (
             collection_last_updated
@@ -65,11 +62,10 @@ class Experiment:
         )
         # fmt: on
 
-        exp_parts = self.extract_experiment_part_numbers(experiments_data)
-
+        experiment_parts = self._map_experiments_to_part_numbers(experiments_data)
         ids_for_scheduler_call = [
             {"key": experiment_id, "value": Config.config.experiments.instrument_name}
-            for experiment_id in exp_parts.keys()
+            for experiment_id in experiment_parts.keys()
         ]
 
         experiments = self.scheduler_client.service.getExperiments(
@@ -77,21 +73,25 @@ class Experiment:
             ids_for_scheduler_call,
         )
 
-        for experiment in experiments:
-            for part in experiment.experimentPartList:
-                if part.partNumber in exp_parts[int(part.referenceNumber)]:
-                    self.experiments.append(
-                        ExperimentModel(
-                            _id=f"{part.referenceNumber}-{part.partNumber}",
-                            experiment_id=int(part.referenceNumber),
-                            part=part.partNumber,
-                            start_date=part.experimentStartDate,
-                            end_date=part.experimentEndDate,
-                        ),
-                    )
+        self._extract_experiment_data(experiments, experiment_parts)
+
+    async def store_experiments(self) -> None:
+        """
+        Store the experiments into MongoDB, using `upsert` to insert any experiments
+        that haven't yet been inserted into the database
+        """
+
+        for experiment in self.experiments:
+            await MongoDBInterface.update_one(
+                "experiments",
+                {"_id": experiment.id_},
+                {"$set": experiment.dict(by_alias=True)},
+                upsert=True,
+            )
 
         await self.update_modification_time()
-    def extract_experiment_part_numbers(
+
+    def _map_experiments_to_part_numbers(
         self,
         experiments,
         # TODO - fix this type hint
@@ -112,19 +112,34 @@ class Experiment:
 
         return exp_parts
 
-    async def store_experiments(self) -> None:
+    def _extract_experiment_data(self, experiments, experiment_part_mapping):
+        for experiment in experiments:
+            for part in experiment.experimentPartList:
+                if (
+                    part.partNumber
+                    in experiment_part_mapping[int(part.referenceNumber)]
+                ):
+                    self.experiments.append(
+                        ExperimentModel(
+                            _id=f"{part.referenceNumber}-{part.partNumber}",
+                            experiment_id=int(part.referenceNumber),
+                            part=part.partNumber,
+                            start_date=part.experimentStartDate,
+                            end_date=part.experimentEndDate,
+                        ),
+                    )
+
+    async def update_modification_time(self) -> None:
         """
-        Store the experiments into MongoDB, using `upsert` to insert any experiments
-        that haven't yet been inserted into the database
+        TODO
         """
 
-        for experiment in self.experiments:
-            await MongoDBInterface.update_one(
-                "experiments",
-                {"_id": experiment.id_},
-                {"$set": experiment.dict(by_alias=True)},
-                upsert=True,
-            )
+        await MongoDBInterface.update_one(
+            "experiments",
+            {"collection_last_updated": {"$exists": True}},
+            {"$set": {"collection_last_updated": datetime.now()}},
+            upsert=True,
+        )
 
     async def get_collection_updated_date(self) -> Union[datetime, None]:
         """
@@ -139,7 +154,7 @@ class Experiment:
         if collection_update_date:
             return collection_update_date["collection_last_updated"]
         else:
-            # Get get_experiments_from_scheduler() to rely on a config setting as a 
+            # Get get_experiments_from_scheduler() to rely on a config setting as a
             # start date?
             return None
 
