@@ -1,4 +1,4 @@
-from time import sleep
+import logging
 from typing import List
 
 from suds import sudsobject
@@ -8,6 +8,8 @@ from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.models import ExperimentModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.routes.common_parameters import ParameterHandler
+
+log = logging.getLogger()
 
 
 class Experiment:
@@ -30,7 +32,9 @@ class Experiment:
 
     def extract_experiment_part_numbers(
         self,
-        experiments: List[sudsobject.experimentDateDTO],
+        experiments,
+        # TODO - fix this type hint
+        # experiments: List[sudsobject.experimentDateDTO],
     ) -> dict:
         """
         Extracts the rb number (experiment ID) and the experiment's part and puts them
@@ -59,60 +63,43 @@ class Experiment:
 
         # TODO - would it be better to get most recent X weeks to minimise number of
         # requests to scheduler?
-        experiments_data = (
-            self.scheduler_client.service.getExperimentDatesForInstrument(
-                self.session_id,
-                Config.config.experiments.instrument_name,
-                {
-                    "startDate": "2019-01-01T00:00:00Z",
-                    "endDate": "2023-01-01T00:00:00Z",
-                },
-            ),
+
+        # Turning Black formatter off to avoid `experiments_data` turning into a tuple
+        # fmt: off
+        experiments_data = self.scheduler_client.service.getExperimentDatesForInstrument(  # noqa: B950
+            self.session_id,
+            Config.config.experiments.instrument_name,
+            {
+                "startDate": "2019-01-01T00:00:00Z",
+                "endDate": "2022-12-01T00:00:00Z",
+            },
         )
+        # fmt: on
+
         exp_parts = self.extract_experiment_part_numbers(experiments_data)
 
-        req = 0
-        for rb_number, parts in exp_parts.items():
-            if req > 4:
-                break
+        ids_for_scheduler_call = [
+            {"key": experiment_id, "value": "Gemini"}
+            for experiment_id in exp_parts.keys()
+        ]
 
-            experiment = self.scheduler_client.service.getExperiment(
-                self.session_id,
-                rb_number,
-                "Gemini",
-            )
+        experiments = self.scheduler_client.service.getExperiments(
+            self.session_id,
+            ids_for_scheduler_call,
+        )
 
+        for experiment in experiments:
             for part in experiment.experimentPartList:
-                if part.partNumber in parts:
+                if part.partNumber in exp_parts[int(part.referenceNumber)]:
                     self.experiments.append(
                         ExperimentModel(
                             _id=f"{part.referenceNumber}-{part.partNumber}",
-                            experiment_id=part.referenceNumber,
+                            experiment_id=int(part.referenceNumber),
                             part=part.partNumber,
                             start_date=part.experimentStartDate,
                             end_date=part.experimentEndDate,
                         ),
                     )
-
-            sleep(2)
-            req += 1
-            print(f"Requests sent: {req}")
-
-        """
-        Test code that I'm still not sure how it works
-        # TODO - work out how this call works and whether it would be better than
-        # getExperiment
-
-        test = self.scheduler_client.service.getExperiments(
-            self.session_id,
-            #{"key": 19510000, "value": "Gemini"}
-            #{"key": [18325025, 19510000], "value": ["Gemini", "Gemini"]}
-            {"18325025": "Gemini"}
-            #{"key": "Gemini", "value": 19510000}
-            #[18325025]
-        )
-        print(test)
-        """
 
     async def store_experiments(self) -> None:
         """
