@@ -1,5 +1,6 @@
+from datetime import datetime
 import logging
-from typing import List
+from typing import List, Union
 
 from suds import sudsobject
 from suds.client import Client
@@ -30,7 +31,7 @@ class Experiment:
 
         self.experiments = []
 
-    def get_experiments_from_scheduler(self, start_date, end_date) -> None:
+    async def get_experiments_from_scheduler(self) -> None:
         """
         Get experiments from the scheduler (including start and end dates of each part)
         and store a list of experiments in a model, ready to go into MongoDB
@@ -44,14 +45,22 @@ class Experiment:
         # TODO - would it be better to get most recent X weeks to minimise number of
         # requests to scheduler?
 
+        collection_last_updated = await self.get_collection_updated_date()
+        experiment_search_start_date = (
+            collection_last_updated
+            if collection_last_updated
+            else "2019-01-01T00:00:00Z"
+        )
+        print(f"Proposed start date: {experiment_search_start_date}")
+
         # Turning Black formatter off to avoid `experiments_data` turning into a tuple
         # fmt: off
         experiments_data = self.scheduler_client.service.getExperimentDatesForInstrument(  # noqa: B950
             self.session_id,
             Config.config.experiments.instrument_name,
             {
-                "startDate": "2019-01-01T00:00:00Z",
-                "endDate": "2022-12-01T00:00:00Z",
+                "startDate": experiment_search_start_date,
+                "endDate": datetime.now(),
             },
         )
         # fmt: on
@@ -81,6 +90,7 @@ class Experiment:
                         ),
                     )
 
+        await self.update_modification_time()
     def extract_experiment_part_numbers(
         self,
         experiments,
@@ -116,6 +126,23 @@ class Experiment:
                 upsert=True,
             )
 
+    async def get_collection_updated_date(self) -> Union[datetime, None]:
+        """
+        TODO
+        """
+
+        collection_update_date = await MongoDBInterface.find_one(
+            "experiments",
+            filter_={"collection_last_updated": {"$exists": True}},
+        )
+
+        if collection_update_date:
+            return collection_update_date["collection_last_updated"]
+        else:
+            # Get get_experiments_from_scheduler() to rely on a config setting as a 
+            # start date?
+            return None
+
     @staticmethod
     async def get_experiments_from_database() -> List[dict]:
         """
@@ -126,6 +153,7 @@ class Experiment:
 
         experiments_query = MongoDBInterface.find(
             "experiments",
+            filter_={"collection_last_updated": {"$exists": False}},
             sort=ParameterHandler.extract_order_data(["_id asc"]),
         )
         return await MongoDBInterface.query_to_list(experiments_query)

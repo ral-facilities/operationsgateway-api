@@ -26,7 +26,7 @@ async def store_experiments_from_scheduler(
     # str(start_date) gets you 2023-01-01 00:00:00+00:00, causing unmarshalling error
 
     experiment = Experiment()
-    experiment.get_experiments_from_scheduler(start_date, end_date)
+    await experiment.get_experiments_from_scheduler()
     await experiment.store_experiments()
 
     return [e.id_ for e in experiment.experiments]
