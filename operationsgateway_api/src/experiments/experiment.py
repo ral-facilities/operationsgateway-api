@@ -59,7 +59,7 @@ class Experiment:
         exp_parts = self.extract_experiment_part_numbers(experiments_data)
 
         ids_for_scheduler_call = [
-            {"key": experiment_id, "value": "Gemini"}
+            {"key": experiment_id, "value": Config.config.experiments.instrument_name}
             for experiment_id in exp_parts.keys()
         ]
 
