@@ -30,26 +30,6 @@ class Experiment:
 
         self.experiments = []
 
-    def extract_experiment_part_numbers(
-        self,
-        experiments,
-        # TODO - fix this type hint
-        # experiments: List[sudsobject.experimentDateDTO],
-    ) -> dict:
-        """
-        Extracts the rb number (experiment ID) and the experiment's part and puts them
-        into a dictionary to get start and end dates for each one.
-
-        Example output: {19510004: [1], 20310000: [1, 2, 3]}
-        """
-
-        exp_parts = {}
-
-        for exp in experiments:
-            exp_parts.setdefault(int(exp.rbNumber), []).append(exp.part)
-
-        return exp_parts
-
     def get_experiments_from_scheduler(self, start_date, end_date) -> None:
         """
         Get experiments from the scheduler (including start and end dates of each part)
@@ -100,6 +80,27 @@ class Experiment:
                             end_date=part.experimentEndDate,
                         ),
                     )
+
+    def extract_experiment_part_numbers(
+        self,
+        experiments,
+        # TODO - fix this type hint
+        # experiments: List[sudsobject.experimentDateDTO],
+    ) -> dict:
+        """
+        Extracts the rb number (experiment ID) and the experiment's part and puts them
+        into a dictionary to get start and end dates for each one.
+
+        Example output: {19510004: [1], 20310000: [1, 2, 3]}
+        """
+
+        exp_parts = {}
+
+        for exp in experiments:
+            # TODO - try/except AttributeError needed here
+            exp_parts.setdefault(int(exp.rbNumber), []).append(exp.part)
+
+        return exp_parts
 
     async def store_experiments(self) -> None:
         """
