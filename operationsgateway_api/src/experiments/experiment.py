@@ -46,13 +46,10 @@ class Experiment:
         experiment_search_start_date = (
             collection_last_updated
             if collection_last_updated
-            else "2019-01-01T00:00:00Z"
+            else Config.config.experiments.first_scheduler_contact_start_date
         )
-        print(f"Proposed start date: {experiment_search_start_date}")
 
-        # Turning Black formatter off to avoid `experiments_data` turning into a tuple
-        # fmt: off
-        experiments_data = self.scheduler_client.service.getExperimentDatesForInstrument(  # noqa: B950
+        experiment_data = self.scheduler_client.service.getExperimentDatesForInstrument(  # noqa: B950
             self.session_id,
             Config.config.experiments.instrument_name,
             {
@@ -60,9 +57,8 @@ class Experiment:
                 "endDate": datetime.now(),
             },
         )
-        # fmt: on
 
-        experiment_parts = self._map_experiments_to_part_numbers(experiments_data)
+        experiment_parts = self._map_experiments_to_part_numbers(experiment_data)
         ids_for_scheduler_call = [
             {"key": experiment_id, "value": Config.config.experiments.instrument_name}
             for experiment_id in experiment_parts.keys()
