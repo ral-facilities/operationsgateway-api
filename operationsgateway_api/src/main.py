@@ -60,12 +60,14 @@ setup_logger()
 log = logging.getLogger()
 log.info("Logging now setup")
 
-runner = BackgroundSchedulerRunner()
+runner = BackgroundSchedulerRunner("Experiments Contact to Scheduler")
 
 
 @app.on_event("startup")
 async def get_experiments_on_startup():
-    log.info("Contacting scheduler on startup")
+    log.info(
+        "Creating task for Scheduler system to be contacted for experiment details",
+    )
     asyncio.create_task(runner.start_task())
 
 

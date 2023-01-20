@@ -135,6 +135,20 @@ tomli = {version = "*", optional = true, markers = "python_full_version <= \"3.1
 toml = ["tomli"]
 
 [[package]]
+name = "cron-converter"
+version = "1.0.1"
+description = "Cron string parser and scheduler for Python"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.dependencies]
+python-dateutil = "*"
+
+[package.extras]
+test = ["unittest"]
+
+[[package]]
 name = "cryptography"
 version = "3.4.8"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
@@ -885,7 +899,7 @@ standard = ["colorama (>=0.4)", "httptools (>=0.4.0)", "python-dotenv (>=0.13)",
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<4.0"
-content-hash = "b946531c228f6fe10bf5cafddb340c1a373ce3b4b99555e1051651f81604da00"
+content-hash = "c9cff4689b5bd5c013830bc9bedd80a95c859a90b95773210d88ce14da09f503"
 
 [metadata.files]
 anyio = []
@@ -901,6 +915,7 @@ click = []
 colorama = []
 contourpy = []
 coverage = []
+cron-converter = []
 cryptography = [
     {file = "cryptography-3.4.8-cp36-abi3-macosx_10_10_x86_64.whl", hash = "sha256:a00cf305f07b26c351d8d4e1af84ad7501eca8a342dedf24a7acb0e7b7406e14"},
     {file = "cryptography-3.4.8-cp36-abi3-macosx_11_0_arm64.whl", hash = "sha256:f44d141b8c4ea5eb4dbc9b3ad992d45580c1d22bf5e24363f2fbf50c2d7ae8a7"},

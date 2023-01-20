@@ -60,7 +60,8 @@ class ExperimentsConfig(BaseModel):
 
     # TODO - add this stuff to example config
     first_scheduler_contact_start_date: datetime
-    get_experiments_frequency_minutes: float
+    scheduler_background_frequency: StrictStr
+    scheduler_background_timezone: StrictStr
     user_office_wsdl_url: StrictStr
     username: StrictStr
     password: StrictStr
