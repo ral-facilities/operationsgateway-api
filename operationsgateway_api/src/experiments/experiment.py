@@ -15,19 +15,20 @@ log = logging.getLogger()
 
 class Experiment:
     def __init__(self) -> None:
-        # TODO - think some client handling might be needed here, so the same client
-        # can be used throughout the lifetime of the instance. Would something as simple
-        # as class vars work?
+        log.info("Creating clients and logging into Scheduler")
         user_office_client = Client(
             Config.config.experiments.user_office_wsdl_url,
         )
+        log.debug("Created user office client")
         self.session_id = user_office_client.service.login(
             Config.config.experiments.username,
             Config.config.experiments.password,
         )
+        log.debug("Session ID generated")
         self.scheduler_client = Client(
             Config.config.experiments.scheduler_wsdl_url,
         )
+        log.debug("Scheduler client created")
 
         self.experiments = []
 
@@ -38,32 +39,48 @@ class Experiment:
 
         Only 4 entire experiments are called from the scheduler (2 seconds apart from
         each other) to avoid the scheduler returning an error
+
+        TODO - docstring needs updating
         """
 
-        # TODO - this needs to be a background task as well as a specific endpoint
+        log.info("Retrieving experiments from Scheduler")
 
-        collection_last_updated = await self.get_collection_updated_date()
+        collection_last_updated = await self._get_collection_updated_date()
         experiment_search_start_date = (
             collection_last_updated
             if collection_last_updated
             else Config.config.experiments.first_scheduler_contact_start_date
         )
+        experiment_search_end_date = datetime.now()
+        log.debug(
+            "Parameters used for getExperimentDatesForInstrument(). Start date: %s, End"
+            " date: %s",
+            experiment_search_start_date,
+            experiment_search_end_date,
+        )
 
-        experiment_data = self.scheduler_client.service.getExperimentDatesForInstrument(  # noqa: B950
+        # TODO - need exception handling on scheduler calls in case they go wrong
+        log.info("Calling Scheduler getExperimentDatesForInstrument()")
+        experiment_data = self.scheduler_client.service.getExperimentDatesForInstrument(
             self.session_id,
             Config.config.experiments.instrument_name,
             {
                 "startDate": experiment_search_start_date,
-                "endDate": datetime.now(),
+                # TODO - current date plus a buffer, until the next time it runs in the
+                # background
+                "endDate": experiment_search_end_date,
             },
         )
 
         experiment_parts = self._map_experiments_to_part_numbers(experiment_data)
+        log.debug("Experiment parts: %s", experiment_parts)
         ids_for_scheduler_call = [
             {"key": experiment_id, "value": Config.config.experiments.instrument_name}
             for experiment_id in experiment_parts.keys()
         ]
+        log.debug("Experiments to query for: %s", ids_for_scheduler_call)
 
+        log.info("Calling Schedulr getExperiments()")
         experiments = self.scheduler_client.service.getExperiments(
             self.session_id,
             ids_for_scheduler_call,
@@ -85,7 +102,7 @@ class Experiment:
                 upsert=True,
             )
 
-        await self.update_modification_time()
+        await self._update_modification_time()
 
     def _map_experiments_to_part_numbers(
         self,
@@ -109,6 +126,10 @@ class Experiment:
         return exp_parts
 
     def _extract_experiment_data(self, experiments, experiment_part_mapping):
+        """
+        TODO - docstring and type hinting
+        """
+
         for experiment in experiments:
             for part in experiment.experimentPartList:
                 if (
@@ -125,7 +146,7 @@ class Experiment:
                         ),
                     )
 
-    async def update_modification_time(self) -> None:
+    async def _update_modification_time(self) -> None:
         """
         TODO
         """
@@ -137,7 +158,7 @@ class Experiment:
             upsert=True,
         )
 
-    async def get_collection_updated_date(self) -> Union[datetime, None]:
+    async def _get_collection_updated_date(self) -> Union[datetime, None]:
         """
         TODO
         """
