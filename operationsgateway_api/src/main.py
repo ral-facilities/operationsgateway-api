@@ -9,9 +9,7 @@ import uvicorn
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.constants import ROUTE_MAPPINGS
-from operationsgateway_api.src.experiments.backound_scheduler_runner import (
-    BackgroundSchedulerRunner,
-)
+import operationsgateway_api.src.experiments.runners as runners
 from operationsgateway_api.src.logger_config import setup_logger
 from operationsgateway_api.src.mongo.connection import ConnectionInstance
 from operationsgateway_api.src.routes import (
@@ -60,15 +58,13 @@ setup_logger()
 log = logging.getLogger()
 log.info("Logging now setup")
 
-runner = BackgroundSchedulerRunner("Experiments Contact to Scheduler")
-
 
 @app.on_event("startup")
 async def get_experiments_on_startup():
     log.info(
         "Creating task for Scheduler system to be contacted for experiment details",
     )
-    asyncio.create_task(runner.start_task())
+    asyncio.create_task(runners.scheduler_runner.start_task())
 
 
 @app.on_event("startup")

@@ -1,9 +1,10 @@
-from datetime import datetime
-from dateutil import tz
-import logging
 import asyncio
+from copy import copy
+from datetime import datetime
+import logging
 
 from cron_converter import Cron
+from dateutil import tz
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.experiments.experiment import Experiment
@@ -22,7 +23,14 @@ class BackgroundSchedulerRunner:
         self.runner_dates = self.runner_timer.schedule(
             timezone_str=Config.config.experiments.scheduler_background_timezone,
         )
-    
+
+    def get_next_run_task_date(self):
+        """
+        TODO
+        """
+        runner_dates_copy = copy(self.runner_dates)
+        return runner_dates_copy.next()
+
     def _get_wait_interval(self) -> float:
         scheduled_run = self.runner_dates.next()
         log.info(
@@ -34,7 +42,7 @@ class BackgroundSchedulerRunner:
         timezone = tz.gettz(Config.config.experiments.scheduler_background_timezone)
         current_date = datetime.now(tz=timezone)
 
-        wait_time = (scheduled_run-current_date).total_seconds()
+        wait_time = (scheduled_run - current_date).total_seconds()
         log.debug(
             "Number of seconds between now and next task run (%s): %d",
             self.task_name,

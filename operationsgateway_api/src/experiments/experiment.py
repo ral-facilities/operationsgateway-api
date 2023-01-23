@@ -6,6 +6,7 @@ from suds import sudsobject
 from suds.client import Client
 
 from operationsgateway_api.src.config import Config
+import operationsgateway_api.src.experiments.runners as runners
 from operationsgateway_api.src.models import ExperimentModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.routes.common_parameters import ParameterHandler
@@ -51,7 +52,7 @@ class Experiment:
             if collection_last_updated
             else Config.config.experiments.first_scheduler_contact_start_date
         )
-        experiment_search_end_date = datetime.now()
+        experiment_search_end_date = runners.scheduler_runner.get_next_run_task_date()
         log.debug(
             "Parameters used for getExperimentDatesForInstrument(). Start date: %s, End"
             " date: %s",
@@ -66,8 +67,6 @@ class Experiment:
             Config.config.experiments.instrument_name,
             {
                 "startDate": experiment_search_start_date,
-                # TODO - current date plus a buffer, until the next time it runs in the
-                # background
                 "endDate": experiment_search_end_date,
             },
         )
