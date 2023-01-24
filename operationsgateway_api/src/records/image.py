@@ -1,7 +1,7 @@
 from io import BytesIO
 import logging
 import os
-from typing import Tuple, Union
+from typing import Tuple
 
 import numpy as np
 from PIL import Image as PILImage
