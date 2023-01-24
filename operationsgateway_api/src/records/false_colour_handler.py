@@ -7,7 +7,7 @@ import numpy as np
 from PIL import Image as PILImage
 
 from operationsgateway_api.src.config import Config
-from operationsgateway_api.src.exceptions import ImageError
+from operationsgateway_api.src.exceptions import ImageError, QueryParameterError
 
 
 log = logging.getLogger()
@@ -88,7 +88,9 @@ class FalseColourHandler:
         if upper_level is None:
             upper_level = 255
         if upper_level < lower_level:
-            raise ImageError("lower level must be less than or equal to upper level")
+            raise QueryParameterError(
+                "lower_level must be less than or equal to upperlevel",
+            )
         # 8 bit images need the levels to be between 0 and 255
         # 16 bit images need the levels to be between 0 and 65525
         # the pixel multiplier adjusts for this
@@ -99,7 +101,9 @@ class FalseColourHandler:
             # to the system default if one is not set
             colourmap_name = FalseColourHandler.default_colour_map_name
         if colourmap_name not in FalseColourHandler.colourmap_names:
-            raise ImageError(f"{colourmap_name} is not a valid colour map name")
+            raise QueryParameterError(
+                f"{colourmap_name} is not a valid colour map name",
+            )
 
         converted_image_bytes = BytesIO()
         plt.imsave(
