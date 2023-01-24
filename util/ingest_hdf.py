@@ -31,7 +31,8 @@ parser.add_argument(
     type=str,
     help="Base directory path containing HDF files to ingest. HDF files should be"
     " stored in subdirectories - no files will be detected in the base directory of the"
-    " path given",
+    " path given. The channel manifest file should be present in the base directory and"
+    " must be called 'channel_manifest.json'.",
     required=True,
 )
 parser.add_argument(
@@ -150,6 +151,20 @@ response = requests.post(
 # strip the first and last characters off the response
 # (the double quotes that surround it)
 token = response.text[1:-1]
+
+
+# Ingesting channel manifest file
+with open(f"{BASE_DIR}/channel_manifest.json", "r") as channel_manifest:
+    response = requests.post(
+        f"{API_URL}/submit/manifest",
+        files={"file": channel_manifest.read()},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    if response.status_code == 201:
+        print(f"Ingested channel manifest file, ID: {response.json()}")
+    else:
+        print(f"{response.status_code} returned")
+        pprint(response.text)
 
 # Ingesting HDF files
 for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):

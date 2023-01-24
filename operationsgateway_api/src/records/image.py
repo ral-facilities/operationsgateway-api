@@ -1,6 +1,7 @@
 from io import BytesIO
 import logging
 import os
+from typing import Tuple, Union
 
 import numpy as np
 from PIL import Image as PILImage
@@ -17,10 +18,13 @@ log = logging.getLogger()
 
 
 class Image:
-    def __init__(self, image: ImageModel):
+    def __init__(self, image: ImageModel) -> None:
         self.image = image
 
-    def store(self):
+    def store(self) -> None:
+        """
+        Save the image on disk
+        """
         record_id, _ = self.extract_metadata_from_path()
 
         try:
@@ -39,14 +43,23 @@ class Image:
             log.exception(msg=exc)
             raise ImageError("Image data is not in correct format to be read") from exc
 
-    def create_thumbnail(self):
+    def create_thumbnail(self) -> None:
+        """
+        Using the object's image data, create a thumbnail of the image and store it as
+        an attribute of this object
+        """
         img = PILImage.open(
             f"{Config.config.mongodb.image_store_directory}/{self.image.path}",
         )
         img.thumbnail(Config.config.images.image_thumbnail_size)
         self.thumbnail = ThumbnailHandler.convert_to_base64(img)
 
-    def extract_metadata_from_path(self):
+    def extract_metadata_from_path(self) -> Tuple[str, str]:
+        """
+        Small string handler function to extract the record ID and channel name from the
+        image's path
+        """
+
         record_id = self.image.path.split("/")[-2]
         channel_name = self.image.path.split("/")[-1].split(".")[0]
 
@@ -126,7 +139,11 @@ class Image:
                 raise ImageError("Unexpected error finding image on disk") from exc
 
     @staticmethod
-    def get_image_path(record_id, channel_name, full_path=True):
+    def get_image_path(
+        record_id: str,
+        channel_name: str,
+        full_path: bool = True,
+    ) -> str:
         """
         Returns an image path given a record ID and channel name. By default, a full
         path is returned, although this can be changed to not return the base directory

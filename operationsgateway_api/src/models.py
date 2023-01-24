@@ -1,8 +1,10 @@
 from datetime import datetime
-from typing import Dict, List, Optional, Union
+from typing import ClassVar, Dict, List, Literal, Optional, Union
 
 import numpy as np
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, root_validator, validator
+
+from operationsgateway_api.src.exceptions import ChannelManifestError
 
 
 class ImageModel(BaseModel):
@@ -96,3 +98,48 @@ class UserModel(BaseModel):
     sha256_password: Optional[str]
     auth_type: str
     authorised_routes: Optional[List[str]]
+
+
+class ChannelModel(BaseModel):
+    # Field names where modifications to the data cannot be made
+    protected_fields: ClassVar[List[str]] = ["type_", "units"]
+
+    name: str
+    path: str
+    type_: Optional[Literal["scalar", "image", "waveform"]] = Field(alias="type")
+
+    # Should the value be displayed as it is stored or be shown in x10^n format
+    notation: Optional[Literal["scientific", "normal"]]
+    # Number of significant figures used to display the value
+    precision: Optional[int]
+    units: Optional[str]
+    historical: Optional[bool]
+
+    x_units: Optional[str]
+    y_units: Optional[str]
+
+    @root_validator(pre=True)
+    def set_default_type(cls, values):  # noqa: B902, N805
+        values.setdefault("type", "scalar")
+        return values
+
+    @validator("x_units", "y_units")
+    def check_waveform_channel(cls, v, values):  # noqa: B902, N805
+        if not values["type_"] == "waveform":
+            raise ChannelManifestError(
+                "Only waveform channels should contain waveform channel metadata."
+                f" Invalid channel is called: {values['name']}",
+            )
+        else:
+            return v
+
+
+class ChannelManifestModel(BaseModel):
+    id_: str = Field(alias="_id")
+    channels: Dict[str, ChannelModel]
+
+
+class ChannelSummaryModel(BaseModel):
+    first_date: datetime
+    most_recent_date: datetime
+    recent_sample: List[Union[float, int, str]]
