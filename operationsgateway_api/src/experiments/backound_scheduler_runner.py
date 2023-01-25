@@ -7,6 +7,7 @@ from cron_converter import Cron
 from dateutil import tz
 
 from operationsgateway_api.src.config import Config
+from operationsgateway_api.src.exceptions import ExperimentDetailsError
 from operationsgateway_api.src.experiments.experiment import Experiment
 
 log = logging.getLogger()
@@ -50,12 +51,38 @@ class BackgroundSchedulerRunner:
         )
         return wait_time
 
-    # TODO - what happens if the scheduler fails? Does it try again or just wait until
-    # the next time?
     async def start_task(self) -> None:
         while True:
             await asyncio.sleep(self._get_wait_interval())
-            experiment = Experiment()
             log.info("Getting experiments from scheduler via background runner")
-            await experiment.get_experiments_from_scheduler()
-            await experiment.store_experiments()
+            try:
+                experiment = Experiment()
+                await experiment.get_experiments_from_scheduler()
+                await experiment.store_experiments()
+            except ExperimentDetailsError:
+                log.warning(
+                    "Background task to contact Scheduler failed. Retrying in %s "
+                    "minutes",
+                    Config.config.experiments.scheduler_background_retry_mins,
+                )
+                await asyncio.sleep(
+                    Config.config.experiments.scheduler_background_retry_mins * 60,
+                )
+                try:
+                    log.info("Retrying background task to contact Scheduler")
+                    experiment = Experiment()
+                    await experiment.get_experiments_from_scheduler()
+                    await experiment.store_experiments()
+                except ExperimentDetailsError:
+                    # TODO - an admin should be alerted if it fails a second time. The
+                    # JIMP emails someone (or a list of emails) if it fails but an
+                    # Icinga check (write a file to the filesystem upon
+                    # success/failure) might be better. We should work out what else 
+                    # needs monitoring/admins alerting to and decide on the best way to
+                    # do this. Ingestion, 500s are other suggestions where an admin
+                    # needs to be alerted to
+                    log.error(
+                        "Background task to contact Scheduler failed again. Task will "
+                        "next be run at %s",
+                        self.get_next_run_task_date()
+                    )
