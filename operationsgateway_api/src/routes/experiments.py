@@ -2,6 +2,7 @@ import logging
 
 from fastapi import APIRouter
 
+from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.experiments.experiment import Experiment
 
 log = logging.getLogger()
@@ -15,6 +16,7 @@ router = APIRouter()
     response_description="List of experiment IDs",
     tags=["Experiments"],
 )
+@endpoint_error_handling
 async def store_experiments_from_scheduler():
     experiment = Experiment()
     await experiment.get_experiments_from_scheduler()
@@ -29,5 +31,6 @@ async def store_experiments_from_scheduler():
     response_description="List of experiments",
     tags=["Experiments"],
 )
+@endpoint_error_handling
 async def get_experiments():
     return await Experiment.get_experiments_from_database()

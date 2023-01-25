@@ -77,12 +77,12 @@ class BackgroundSchedulerRunner:
                     # TODO - an admin should be alerted if it fails a second time. The
                     # JIMP emails someone (or a list of emails) if it fails but an
                     # Icinga check (write a file to the filesystem upon
-                    # success/failure) might be better. We should work out what else 
+                    # success/failure) might be better. We should work out what else
                     # needs monitoring/admins alerting to and decide on the best way to
                     # do this. Ingestion, 500s are other suggestions where an admin
                     # needs to be alerted to
                     log.error(
                         "Background task to contact Scheduler failed again. Task will "
                         "next be run at %s",
-                        self.get_next_run_task_date()
+                        self.get_next_run_task_date(),
                     )

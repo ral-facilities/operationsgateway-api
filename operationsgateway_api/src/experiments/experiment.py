@@ -1,20 +1,15 @@
 from datetime import datetime
-from http.client import IncompleteRead
 import logging
-from typing import List, Union
+from typing import Dict, List, Union
 
 from pydantic import ValidationError
 from suds import sudsobject
-from suds import TypeNotFound, WebFault
 
-from suds.client import Client
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import ExperimentDetailsError, ModelError
 import operationsgateway_api.src.experiments.runners as runners
-from operationsgateway_api.src.experiments.suds_error_handling import (
-    suds_error_handling,
-)
+from operationsgateway_api.src.experiments.scheduler_interface import SchedulerInterface
 from operationsgateway_api.src.models import ExperimentModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.routes.common_parameters import ParameterHandler
@@ -24,38 +19,7 @@ log = logging.getLogger()
 
 class Experiment:
     def __init__(self) -> None:
-        try:
-            log.info("Creating clients and logging into Scheduler")
-            user_office_client = Client(
-                Config.config.experiments.user_office_wsdl_url,
-            )
-            log.debug("Created user office client")
-            self.scheduler_client = Client(
-                Config.config.experiments.scheduler_wsdl_url,
-            )
-            log.debug("Scheduler client created")
-
-            self.session_id = user_office_client.service.login(
-                Config.config.experiments.username,
-                Config.config.experiments.password,
-            )
-            log.debug("Session ID generated")
-        except WebFault as exc:
-            raise ExperimentDetailsError(
-                "Problem processing current call: %s",
-                str(exc),
-            ) from exc
-        except TypeNotFound as exc:
-            raise ExperimentDetailsError(
-                "WSDL call not constructed properly, could not be processed:"
-                " %s",
-                str(exc),
-            ) from exc
-        except IncompleteRead as exc:
-            raise ExperimentDetailsError(
-                "Incomplete HTTP read when contacting Scheduler",
-            ) from exc
-
+        self.scheduler = SchedulerInterface()
         self.experiments = []
 
     async def get_experiments_from_scheduler(self) -> None:
@@ -85,67 +49,17 @@ class Experiment:
             experiment_search_end_date,
         )
 
-        # TODO - need exception handling on scheduler calls in case they go wrong
-        log.info("Calling Scheduler getExperimentDatesForInstrument()")
-        try:
-            exp_data = self.scheduler_client.service.getExperimentDatesForInstrument(
-                self.session_id,
-                Config.config.experiments.instrument_name,
-                {
-                    "startDate": experiment_search_start_date,
-                    "endDate": experiment_search_end_date,
-                },
-            )
-        except WebFault as exc:
-            raise ExperimentDetailsError(
-                "Problem processing call to getExperimentDatesForInstrument: %s",
-                str(exc),
-            ) from exc
-        except TypeNotFound as exc:
-            raise ExperimentDetailsError(
-                "WSDL call to getExperimentDatesForInstrument not constructed properly,"
-                " could not be processed: "
-                " %s",
-                str(exc),
-            ) from exc
-        except IncompleteRead as exc:
-            raise ExperimentDetailsError(
-                "Incomplete HTTP read when contacting Scheduler. Occurred while"
-                " calling getExperimentDatesForInstrument",
-            ) from exc
+        exp_data = self.scheduler.get_experiment_dates_for_instrument(
+            experiment_search_start_date,
+            experiment_search_end_date,
+        )
 
         experiment_parts = self._map_experiments_to_part_numbers(exp_data)
-        log.debug("Experiment parts: %s", experiment_parts)
-        ids_for_scheduler_call = [
-            {"key": experiment_id, "value": Config.config.experiments.instrument_name}
-            for experiment_id in experiment_parts.keys()
-        ]
-        log.debug("Experiments to query for: %s", ids_for_scheduler_call)
+        ids_for_scheduler_call = self._generate_id_instrument_name_pairs(
+            experiment_parts,
+        )
 
-        log.info("Calling Scheduler getExperiments()")
-        try:
-            experiments = self.scheduler_client.service.getExperiments(
-                self.session_id,
-                ids_for_scheduler_call,
-            )
-        except WebFault as exc:
-            raise ExperimentDetailsError(
-                "Problem processing call to getExperiments: %s",
-                str(exc),
-            ) from exc
-        except TypeNotFound as exc:
-            raise ExperimentDetailsError(
-                "WSDL call to getExperiments not constructed properly,"
-                " could not be processed: "
-                " %s",
-                str(exc),
-            ) from exc
-        except IncompleteRead as exc:
-            raise ExperimentDetailsError(
-                "Incomplete HTTP read when contacting Scheduler. Occurred while calling"
-                " getExperiments",
-            ) from exc
-
+        experiments = self.scheduler.get_experiments(ids_for_scheduler_call)
         self._extract_experiment_data(experiments, experiment_parts)
 
     async def store_experiments(self) -> None:
@@ -169,7 +83,7 @@ class Experiment:
         experiments,
         # TODO - fix this type hint
         # experiments: List[sudsobject.experimentDateDTO],
-    ) -> dict:
+    ) -> Dict[int, List[int]]:
         """
         Extracts the rb number (experiment ID) and the experiment's part and puts them
         into a dictionary to get start and end dates for each one.
@@ -185,9 +99,27 @@ class Experiment:
             except AttributeError as exc:
                 raise ExperimentDetailsError(str(exc)) from exc
 
+        log.debug("Experiment parts: %s", exp_parts)
         return exp_parts
 
-    def _extract_experiment_data(self, experiments, experiment_part_mapping):
+    def _generate_id_instrument_name_pairs(
+        self,
+        experiment_parts: Dict[int, List[int]],
+    ) -> List[Dict[str, Union[str, int]]]:
+        """
+        Generate a list of dictionaries in the format accepted by the Scheduler to get
+        details of multiple experiments
+        """
+
+        id_name_pairs = [
+            {"key": experiment_id, "value": Config.config.experiments.instrument_name}
+            for experiment_id in experiment_parts.keys()
+        ]
+        log.debug("Experiments to query for: %s", id_name_pairs)
+
+        return id_name_pairs
+
+    def _extract_experiment_data(self, experiments, experiment_part_mapping) -> None:
         """
         TODO - docstring and type hinting
         """
@@ -238,8 +170,6 @@ class Experiment:
         if collection_update_date:
             return collection_update_date["collection_last_updated"]
         else:
-            # Get get_experiments_from_scheduler() to rely on a config setting as a
-            # start date?
             return None
 
     @staticmethod
