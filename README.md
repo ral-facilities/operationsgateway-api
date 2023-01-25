@@ -47,23 +47,13 @@ Then edit the ```private_key_path``` and ```public_key_path``` settings in the `
 
 The authentication system requires any users of the system to have an account set up in the database. Two types of user login are currently supported: federal ID logins for "real" users, and "local" logins for functional accounts.
 
-To add some test accounts to the system copy the following text into a file ```users.json```:
-```
-{ "_id" : "rqw38472", "auth_type" : "FedID" }
-{ "_id" : "xfu59478", "auth_type" : "FedID" }
-{ "_id" : "frontend", "auth_type" : "local", "sha256_password" : "2d8d693177ac44895fc02c009ec3f6af32e51eb00783c17000d7051d1662b93a" }
-{ "_id" : "backend", "auth_type" : "local", "sha256_password" : "3c482346f375027677fa8a0d6830a32714d4f13f9e94c2d9e215e0ac205ad4e5", "authorised_routes" : [ "/submit/hdf POST", "/records/{id_} DELETE" ]}
-{ "_id" : "hdf_import", "auth_type" : "local", "sha256_password" : "d942f64886578d8747312e368ed92d9f6b2a8d45556f0f924e2444fe911d15af", "authorised_routes" : [ "/submit/hdf POST" ] }
-{ "_id" : "no_auth_type_user" }
-{ "_id" : "invalid_auth_type_user", "auth_type" : "Invalid" }
-{ "_id" : "local_user_no_password", "auth_type" : "local" }
-```
-
-Then use the following command to import those users into the database:
+To add some test accounts to the system, use the user data stored in `util/users_for_mongoimport.json`. Use the following command to import those users into the database:
 
 ```bash
-mongoimport --db='opsgateway' --collection='users' --file='users.json'
+mongoimport --db='opsgateway' --collection='users' --mode='upsert' --file='util/users_for_mongoimport.json'
 ```
+
+Using the `upsert` mode allows you to update existing users with any changes that are made (e.g. added an authorised route to their entry) and any new users are inserted as normal. The command's output states the number of documents that have been added and how many have been updated.
 
 ## API Startup
 To start the API, use the following command:
