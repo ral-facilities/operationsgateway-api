@@ -1,4 +1,4 @@
-from operationsgateway_api.src.experiments.backound_scheduler_runner import (
+from operationsgateway_api.src.experiments.background_scheduler_runner import (
     BackgroundSchedulerRunner,
 )
 
