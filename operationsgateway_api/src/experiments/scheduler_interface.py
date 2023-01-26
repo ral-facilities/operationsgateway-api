@@ -2,7 +2,7 @@ from datetime import datetime
 import logging
 from typing import Dict, List, Union
 
-from suds.client import Client
+from zeep import Client
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.experiments.suds_error_handling import (

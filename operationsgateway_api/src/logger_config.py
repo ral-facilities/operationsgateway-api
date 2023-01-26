@@ -37,5 +37,5 @@ logger_config = {
 
 def setup_logger():
     # Disable excessive debug logging from suds when contacting the Scheduler via WSDL
-    logging.getLogger("suds").setLevel(logging.INFO)
+    logging.getLogger("zeep").setLevel(logging.INFO)
     logging.config.dictConfig(logger_config)

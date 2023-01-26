@@ -3,7 +3,6 @@ import logging
 from typing import Dict, List, Union
 
 from pydantic import ValidationError
-from suds import sudsobject
 
 
 from operationsgateway_api.src.config import Config
@@ -81,8 +80,6 @@ class Experiment:
     def _map_experiments_to_part_numbers(
         self,
         experiments,
-        # TODO - fix this type hint
-        # experiments: List[sudsobject.experimentDateDTO],
     ) -> Dict[int, List[int]]:
         """
         Extracts the rb number (experiment ID) and the experiment's part and puts them

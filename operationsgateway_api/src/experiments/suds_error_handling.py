@@ -1,8 +1,15 @@
 from functools import wraps
-from http.client import IncompleteRead
 import logging
 
-from suds import MethodNotFound, ServiceNotFound, TypeNotFound, WebFault
+from zeep.exceptions import (
+    DTDForbidden,
+    EntitiesForbidden,
+    Error,
+    Fault,
+    TransportError,
+    ValidationError,
+    XMLParseError,
+)
 
 from operationsgateway_api.src.exceptions import ExperimentDetailsError
 
@@ -20,28 +27,33 @@ def suds_error_handling(wsdl_call):
         def wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
-            except WebFault as exc:
+            except Fault as exc:
                 raise ExperimentDetailsError(
                     f"Problem processing current Scheduler call ({wsdl_call}):"
                     f" {str(exc)}",
                 ) from exc
-            except TypeNotFound as exc:
+            except TransportError as exc:
+                raise ExperimentDetailsError(str(exc)) from exc
+            except XMLParseError as exc:
                 raise ExperimentDetailsError(
-                    f"WSDL call to {wsdl_call} not constructed properly, could not be"
-                    " processed",
+                    "Problem parsing XML during communication with Scheduler:"
+                    f" {str(exc)}",
                 ) from exc
-            except MethodNotFound as exc:
+            except ValidationError as exc:
                 raise ExperimentDetailsError(
-                    f"Could not find WSDL call to {wsdl_call} using client",
+                    "Problem validating communication to the Scheduler",
                 ) from exc
-            except ServiceNotFound as exc:
+            except DTDForbidden as exc:
                 raise ExperimentDetailsError(
-                    f"Could not find WSDL service: {wsdl_call}",
+                    "Document Type Declaration error while contacting Scheduler",
                 ) from exc
-            except IncompleteRead as exc:
+            except EntitiesForbidden as exc:
                 raise ExperimentDetailsError(
-                    "Incomplete read, problem with HTTP request when calling"
-                    f" {wsdl_call}",
+                    f"Entities forbidden in WSDL call: {str(exc)}",
+                ) from exc
+            except Error as exc:
+                raise ExperimentDetailsError(
+                    "Unexpected error from contacting the Scheduler",
                 ) from exc
 
         return wrapper
