@@ -25,18 +25,17 @@ class SchedulerInterface:
         self.session_id = self.login()
 
     @suds_error_handling("create user office client")
-    # TODO - sort out suds type hints across this file
-    def create_user_office_client(self):
+    def create_user_office_client(self) -> Client:
         log.info("Creating user office client")
         return Client(Config.config.experiments.user_office_wsdl_url)
 
     @suds_error_handling("create scheduler client")
-    def create_scheduler_client(self):
+    def create_scheduler_client(self) -> Client:
         log.info("Creating scheduler client")
         return Client(Config.config.experiments.scheduler_wsdl_url)
 
     @suds_error_handling("login")
-    def login(self):
+    def login(self) -> str:
         log.info("Generating session ID for Scheduler system")
         return self.user_office_client.service.login(
             Config.config.experiments.username,
@@ -48,7 +47,7 @@ class SchedulerInterface:
         self,
         start_date: datetime,
         end_date: datetime,
-    ):
+    ) -> list:
         """
         Get a list of experiments (for a given instrument) that are between two dates
         """
@@ -63,7 +62,10 @@ class SchedulerInterface:
         )
 
     @suds_error_handling("getExperiments")
-    def get_experiments(self, id_instrument_pairs: List[Dict[str, Union[str, int]]]):
+    def get_experiments(
+        self,
+        id_instrument_pairs: List[Dict[str, Union[str, int]]],
+    ) -> list:
         """
         Get details of multiple experiments by providing a list of experiment ID,
         instrument name pairs

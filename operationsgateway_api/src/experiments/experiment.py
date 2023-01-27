@@ -4,7 +4,6 @@ from typing import Dict, List, Union
 
 from pydantic import ValidationError
 
-
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import ExperimentDetailsError, ModelError
 import operationsgateway_api.src.experiments.runners as runners
@@ -23,13 +22,16 @@ class Experiment:
 
     async def get_experiments_from_scheduler(self) -> None:
         """
-        Get experiments from the scheduler (including start and end dates of each part)
-        and store a list of experiments in a model, ready to go into MongoDB
+        Get experiments from the Scheduler (including start and end dates of each part)
+        and store a list of experiments in a model, ready to be stored in MongoDB.
 
-        Only 4 entire experiments are called from the scheduler (2 seconds apart from
-        each other) to avoid the scheduler returning an error
+        This is done by sending two calls to the Scheduler, one to get the experiment
+        IDs (and part numbers) that meet the date range and the second to get the start
+        and end dates for each experiment part.
 
-        TODO - docstring needs updating
+        The start and end dates for the first call depend on when the MongoDB collection
+        was last updated (or the appropriate config option if no data exists in the
+        collection) and when the next scheduled task will be run
         """
 
         log.info("Retrieving experiments from Scheduler")
@@ -79,7 +81,7 @@ class Experiment:
 
     def _map_experiments_to_part_numbers(
         self,
-        experiments,
+        experiments: list,
     ) -> Dict[int, List[int]]:
         """
         Extracts the rb number (experiment ID) and the experiment's part and puts them
@@ -116,9 +118,15 @@ class Experiment:
 
         return id_name_pairs
 
-    def _extract_experiment_data(self, experiments, experiment_part_mapping) -> None:
+    def _extract_experiment_data(
+        self,
+        experiments: list,
+        experiment_part_mapping: Dict[int, List[int]],
+    ) -> None:
         """
-        TODO - docstring and type hinting
+        Extract relevant attributes from experiment data that the Scheduler responded
+        with and put them into a Pydantic model, so the data can be easily validation
+        and stored in the database
         """
 
         for experiment in experiments:
@@ -144,7 +152,7 @@ class Experiment:
 
     async def _update_modification_time(self) -> None:
         """
-        TODO
+        Update the modification time for the collection with the current datetime
         """
 
         await MongoDBInterface.update_one(
@@ -156,7 +164,7 @@ class Experiment:
 
     async def _get_collection_updated_date(self) -> Union[datetime, None]:
         """
-        TODO
+        Retrieve the datetime of when the collection was last updated
         """
 
         collection_update_date = await MongoDBInterface.find_one(
