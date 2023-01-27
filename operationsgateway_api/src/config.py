@@ -3,12 +3,14 @@ from pathlib import Path
 import sys
 from typing import Optional, Tuple
 
+from dateutil import tz
 from pydantic import (
     BaseModel,
     StrictBool,
     StrictInt,
     StrictStr,
     ValidationError,
+    validator,
 )
 import yaml
 
@@ -68,6 +70,13 @@ class ExperimentsConfig(BaseModel):
     password: StrictStr
     scheduler_wsdl_url: StrictStr
     instrument_name: StrictStr
+
+    @validator("scheduler_background_timezone")
+    def check_timezone(cls, value):  # noqa: B902, N805
+        if not tz.gettz(value):
+            sys.exit(f"scheduler_background_timezone is not a valid timezone: {value}")
+        else:
+            return value
 
 
 class APIConfig(BaseModel):

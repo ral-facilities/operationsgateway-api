@@ -20,7 +20,6 @@ class BackgroundSchedulerRunner:
             Config.config.experiments.scheduler_background_frequency,
         )
 
-        # TODO - ValueError raised if invalid timezone is given
         self.runner_dates = self.runner_timer.schedule(
             timezone_str=Config.config.experiments.scheduler_background_timezone,
         )
@@ -39,7 +38,6 @@ class BackgroundSchedulerRunner:
             self.task_name,
             scheduled_run,
         )
-        # TODO - if current_date.tzinfo, timezone wasn't recognised. Raise exception?
         timezone = tz.gettz(Config.config.experiments.scheduler_background_timezone)
         current_date = datetime.now(tz=timezone)
 
