@@ -5,8 +5,8 @@ from typing import Dict, List, Union
 from zeep import Client
 
 from operationsgateway_api.src.config import Config
-from operationsgateway_api.src.experiments.suds_error_handling import (
-    suds_error_handling,
+from operationsgateway_api.src.experiments.soap_error_handling import (
+    soap_error_handling,
 )
 
 log = logging.getLogger()
@@ -24,17 +24,17 @@ class SchedulerInterface:
         self.scheduler_client = self.create_scheduler_client()
         self.session_id = self.login()
 
-    @suds_error_handling("create user office client")
+    @soap_error_handling("create user office client")
     def create_user_office_client(self) -> Client:
         log.info("Creating user office client")
         return Client(Config.config.experiments.user_office_wsdl_url)
 
-    @suds_error_handling("create scheduler client")
+    @soap_error_handling("create scheduler client")
     def create_scheduler_client(self) -> Client:
         log.info("Creating scheduler client")
         return Client(Config.config.experiments.scheduler_wsdl_url)
 
-    @suds_error_handling("login")
+    @soap_error_handling("login")
     def login(self) -> str:
         log.info("Generating session ID for Scheduler system")
         return self.user_office_client.service.login(
@@ -42,7 +42,7 @@ class SchedulerInterface:
             Config.config.experiments.password,
         )
 
-    @suds_error_handling("getExperimentDatesForInstrument")
+    @soap_error_handling("getExperimentDatesForInstrument")
     def get_experiment_dates_for_instrument(
         self,
         start_date: datetime,
@@ -61,7 +61,7 @@ class SchedulerInterface:
             },
         )
 
-    @suds_error_handling("getExperiments")
+    @soap_error_handling("getExperiments")
     def get_experiments(
         self,
         id_instrument_pairs: List[Dict[str, Union[str, int]]],

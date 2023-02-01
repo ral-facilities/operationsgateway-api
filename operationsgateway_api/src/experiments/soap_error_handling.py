@@ -16,10 +16,10 @@ from operationsgateway_api.src.exceptions import ExperimentDetailsError
 log = logging.getLogger()
 
 
-def suds_error_handling(wsdl_call):
+def soap_error_handling(wsdl_call):
     """
-    Parameterised decorator to handle errors raised during the use of Suds, currently
-    used to contact the Scheduler system to retrieve experiment details
+    Parameterised decorator to handle errors raised during the use of the Soap client,
+    currently used to contact the Scheduler system to retrieve experiment details
     """
 
     def decorator(func):
