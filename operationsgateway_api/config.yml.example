@@ -24,3 +24,14 @@ auth:
   refresh_token_validity_days: 7
   fedid_server_url: ldap://fed.cclrc.ac.uk:389
   fedid_server_ldap_realm: FED.CCLRC.AC.UK
+experiments:
+  user_office_wsdl_url: https://devapi.facilities.rl.ac.uk/ws/UserOfficeWebService?wsdl
+  scheduler_wsdl_url: https://devapis.facilities.rl.ac.uk/ws/ScheduleWebService?wsdl
+  username: username
+  password: password
+  first_scheduler_contact_start_date: 2019-01-02T00:00:00Z
+  # Cron job string format. Every Monday at 9:00am - 0 9 * * 1
+  scheduler_background_frequency: 0 9 * * 1
+  scheduler_background_timezone: Europe/London
+  scheduler_background_retry_mins: 20
+  instrument_name: Gemini

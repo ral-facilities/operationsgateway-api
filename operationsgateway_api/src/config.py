@@ -60,7 +60,6 @@ class AuthConfig(BaseModel):
 class ExperimentsConfig(BaseModel):
     """Configuration model class to store experiment configuration details"""
 
-    # TODO - add this stuff to example config
     first_scheduler_contact_start_date: datetime
     scheduler_background_frequency: StrictStr
     scheduler_background_timezone: StrictStr
