@@ -1,7 +1,11 @@
 import logging
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from operationsgateway_api.src.auth.authorisation import (
+    authorise_route,
+    authorise_token,
+)
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.experiments.experiment import Experiment
 
@@ -9,7 +13,6 @@ log = logging.getLogger()
 router = APIRouter()
 
 
-# TODO - add auth to this endpoint
 @router.post(
     "/experiments",
     summary="Submit experiments from the scheduler to MongoDB",
@@ -17,7 +20,9 @@ router = APIRouter()
     tags=["Experiments"],
 )
 @endpoint_error_handling
-async def store_experiments_from_scheduler():
+async def store_experiments_from_scheduler(
+    access_token: str = Depends(authorise_route),  # noqa: B008
+):
     experiment = Experiment()
     await experiment.get_experiments_from_scheduler()
     await experiment.store_experiments()
@@ -32,5 +37,7 @@ async def store_experiments_from_scheduler():
     tags=["Experiments"],
 )
 @endpoint_error_handling
-async def get_experiments():
+async def get_experiments(
+    access_token: str = Depends(authorise_token),  # noqa: B008
+):
     return await Experiment.get_experiments_from_database()
