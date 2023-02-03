@@ -14,7 +14,7 @@ class TestChannelSummary:
                 {
                     "first_date": "2022-04-07T14:16:16",
                     "most_recent_date": "2022-04-08T16:58:57",
-                    "recent_sample": [-8582000.0, -8461000.0, -8535000.0],
+                    "recent_sample": [-8535000.0, -8461000.0, -8582000.0],
                 },
                 id="Scalar channel (number) summary",
             ),
@@ -57,9 +57,9 @@ class TestChannelSummary:
                     "first_date": "2022-04-07T14:16:16",
                     "most_recent_date": "2022-04-08T16:58:57",
                     "recent_sample": [
-                        "bdd30e16457f13cd777209a497e5fb0b",
-                        "9cf74f5aec5fe857bad5a79c3ed5e0e8",
                         "10ace7b97cba6d986c5b60250d360988",
+                        "9cf74f5aec5fe857bad5a79c3ed5e0e8",
+                        "bdd30e16457f13cd777209a497e5fb0b",
                     ],
                 },
                 id="Image channel summary",
@@ -70,9 +70,9 @@ class TestChannelSummary:
                     "first_date": "2022-04-07T14:16:16",
                     "most_recent_date": "2022-04-08T16:58:57",
                     "recent_sample": [
-                        "76b91b973c87b877243d237a84c7d40c",
-                        "e30e17ca5249278431cafdb1a250e73c",
                         "3f542031460398a672779bca52a619a8",
+                        "e30e17ca5249278431cafdb1a250e73c",
+                        "76b91b973c87b877243d237a84c7d40c",
                     ],
                 },
                 id="Waveform channel summary",
