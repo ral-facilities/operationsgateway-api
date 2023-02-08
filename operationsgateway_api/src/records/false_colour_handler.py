@@ -33,10 +33,9 @@ class FalseColourHandler:
         chosen.
         The height of the colour bar is set in the config file.
         """
-        array_256 = range(256)
-        image_array = []
-        for _ in range(FalseColourHandler.colourbar_height_pixels):
-            image_array.append(array_256)
+        image_array = [
+            range(256) for _ in range(FalseColourHandler.colourbar_height_pixels)
+        ]
         return FalseColourHandler.apply_false_colour(
             image_array,
             8,
