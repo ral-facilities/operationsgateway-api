@@ -142,7 +142,11 @@ class Record:
         return records_data
 
     @staticmethod
-    async def find_record_by_id(id_: str, conditions: Dict[str, Any]) -> List[dict]:
+    async def find_record_by_id(
+        id_: str,
+        conditions: Dict[str, Any],
+        projection: List[str] = None,
+    ) -> Dict[str, Any]:
         """
         Given an ID and any number of conditions, find a single record and return it. If
         the record cannot be found, a `MissingDocumentError` will be raised instead
@@ -150,6 +154,7 @@ class Record:
         record_data = await MongoDBInterface.find_one(
             "records",
             {"_id": id_, **conditions},
+            projection=projection,
         )
 
         if record_data:
