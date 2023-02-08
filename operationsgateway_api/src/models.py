@@ -54,7 +54,10 @@ class ScalarChannelMetadataModel(BaseModel):
 
 class ScalarChannelModel(BaseModel):
     metadata: ScalarChannelMetadataModel
-    data: Union[float, int, str]
+    data: Union[int, float, str]
+
+    class Config:
+        smart_union = True
 
 
 class WaveformChannelMetadataModel(BaseModel):
@@ -142,4 +145,7 @@ class ChannelManifestModel(BaseModel):
 class ChannelSummaryModel(BaseModel):
     first_date: datetime
     most_recent_date: datetime
-    recent_sample: List[Union[float, int, str]]
+    recent_sample: List[Union[int, float, str]]
+
+    class Config:
+        smart_union = True

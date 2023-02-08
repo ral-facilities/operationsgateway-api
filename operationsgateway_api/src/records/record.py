@@ -220,8 +220,6 @@ class Record:
             ):
                 recent_values.append(channel.thumbnail)
 
-        # Reverse the data so the data is returned in chronological order
-        recent_values.reverse()
         return recent_values
 
     @staticmethod
