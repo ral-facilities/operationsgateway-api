@@ -18,6 +18,8 @@ log = logging.getLogger()
 
 
 class Image:
+    lookup_table_16_to_8_bit = [i / 256 for i in range(65536)]
+
     def __init__(self, image: ImageModel) -> None:
         self.image = image
 
@@ -52,6 +54,9 @@ class Image:
             f"{Config.config.mongodb.image_store_directory}/{self.image.path}",
         )
         img.thumbnail(Config.config.images.image_thumbnail_size)
+        # convert 16 bit greyscale thumbnails to 8 bit to save space
+        if img.mode == "I":
+            img = img.point(Image.lookup_table_16_to_8_bit, "L")
         self.thumbnail = ThumbnailHandler.convert_to_base64(img)
 
     def extract_metadata_from_path(self) -> Tuple[str, str]:
