@@ -274,14 +274,12 @@ class Record:
                 # if a projection has been applied then the record will only contain
                 # the requested fields and probably not the channel_dtype
                 # so it needs to be looked up separately
-                result = await Record.find_record(
-                    {"_id": record_id},
-                    0,
-                    0,
-                    None,
+                record_dict = await Record.find_record_by_id(
+                    record_id,
+                    {},
                     [f"channels.{channel_name}.metadata.channel_dtype"],
                 )
-                channel_dtype = result[0]["channels"][channel_name]["metadata"][
+                channel_dtype = record_dict["channels"][channel_name]["metadata"][
                     "channel_dtype"
                 ]
             try:
