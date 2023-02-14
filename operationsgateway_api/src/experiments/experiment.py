@@ -1,11 +1,14 @@
 from datetime import datetime
 import logging
-from typing import Dict, List, Union
+from typing import Dict, List, Tuple, Union
 
 from pydantic import ValidationError
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import ExperimentDetailsError, ModelError
+from operationsgateway_api.src.experiments.duplicate_part_selector import (
+    DuplicatePartSelector,
+)
 import operationsgateway_api.src.experiments.runners as runners
 from operationsgateway_api.src.experiments.scheduler_interface import SchedulerInterface
 from operationsgateway_api.src.models import ExperimentModel
@@ -131,7 +134,18 @@ class Experiment:
 
         for experiment in experiments:
             try:
-                for part in experiment.experimentPartList:
+                duplicate_selectors, non_duplicate_parts = self._detect_duplicate_parts(
+                    experiment,
+                )
+                selected_parts = (
+                    self._select_duplicate_parts(duplicate_selectors)
+                    if duplicate_selectors
+                    else []
+                )
+                # Combine selected duplicate parts with non duplicates
+                experiment_parts = selected_parts + non_duplicate_parts
+
+                for part in experiment_parts:
                     if (
                         part.partNumber
                         in experiment_part_mapping[int(part.referenceNumber)]
@@ -149,6 +163,37 @@ class Experiment:
                 raise ExperimentDetailsError(str(exc)) from exc
             except ValidationError as exc:
                 raise ModelError(str(exc)) from exc
+
+    def _detect_duplicate_parts(
+        self,
+        experiment,
+    ) -> Tuple[List[DuplicatePartSelector], list]:
+        """
+        Detect which experiment parts are duplicated (i.e. multiple parts with the same
+        part number). For each part number that's a duplicate, create
+        `DuplicatePartSelector` so the part that should be used can be selected. Return
+        a list of these along with the parts that aren't duplicates
+        """
+
+        parts = {}
+        for part in experiment.experimentPartList:
+            parts.setdefault(part.partNumber, []).append(part)
+
+        duplicate_part_selectors = []
+        non_duplicate_parts = []
+
+        for part_number, part in parts.items():
+            if len(part) > 1:
+                duplicate_part_selectors.append(
+                    DuplicatePartSelector(part_number, part),
+                )
+            elif len(part) == 1:
+                non_duplicate_parts.append(part[0])
+
+        return duplicate_part_selectors, non_duplicate_parts
+
+    def _select_duplicate_parts(self, duplicate_selectors):
+        return [selector.select_part() for selector in duplicate_selectors]
 
     async def _update_modification_time(self) -> None:
         """
