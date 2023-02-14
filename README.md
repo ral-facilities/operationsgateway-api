@@ -1,5 +1,5 @@
 # OperationsGateway API
-This is an API built using FastAPI to work with MongoDB and the data stored as part of the OperationsGateway project.
+This is an API built using [FastAPI](https://fastapi.tiangolo.com/) to work with [MongoDB](https://www.mongodb.com/) and the data stored as part of the OperationsGateway project.
 
 
 ## Environment Setup
@@ -8,7 +8,7 @@ This is an API built using FastAPI to work with MongoDB and the data stored as p
 To install the project's dependencies, execute `poetry install`. The dependencies and the code in this repo are compatible with Python 3.6+.
 
 ## Nox Sessions
-Like DataGateway API, this repository contains a Nox file (`noxfile.py`) which exists in the root level of this repository. There are a handful of sessions which help with repetitive tasks during development To install Nox, use the following command:
+Like [DataGateway API](https://github.com/ral-facilities/datagateway-api), this repository contains a [Nox](https://nox.thea.codes) file (`noxfile.py`) which exists in the root level of this repository. There are a handful of sessions which help with repetitive tasks during development To install Nox, use the following command:
 
 ```bash
 pip install --user --upgrade nox
