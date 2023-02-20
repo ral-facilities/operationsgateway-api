@@ -1,8 +1,9 @@
 import logging
 
-from fastapi import APIRouter, Path
+from fastapi import APIRouter, Depends, Path
 import pymongo
 
+from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.models import ChannelSummaryModel
@@ -24,6 +25,7 @@ async def get_channel_summary(
         "",
         description="Channel name to provide a summary for",
     ),
+    access_token: str = Depends(authorise_token),  # noqa: B008
 ):
     """
     Provide the dates of first and most recent pieces of data and the three most recent
@@ -57,7 +59,9 @@ async def get_channel_summary(
     tags=["Channels"],
 )
 @endpoint_error_handling
-async def get_channels():
+async def get_channels(
+    access_token: str = Depends(authorise_token),  # noqa: B008
+):
     """
     Get all the channel metadata from the database and return to the user
     """
@@ -79,6 +83,7 @@ async def get_channel_by_system_name(
         "",
         description="Channel system name to lookup in manifest file",
     ),
+    access_token: str = Depends(authorise_token),  # noqa: B008
 ):
     """
     Given a channel system name, provide the metadata for a single channel in the most

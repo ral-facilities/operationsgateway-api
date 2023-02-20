@@ -59,6 +59,23 @@ async def get_records(
         description="Parameter used for development to reduce the output of thumbnail"
         " strings to 50 characters",
     ),
+    lower_level: Optional[int] = Query(  # noqa: B008
+        0,
+        description="The lower level threshold for false colour (0-255)",
+        ge=0,
+        le=255,
+    ),
+    upper_level: Optional[int] = Query(  # noqa: B008
+        255,
+        description="The upper level threshold for false colour (0-255)",
+        ge=0,
+        le=255,
+    ),
+    colourmap_name: Optional[str] = Query(  # noqa: B008
+        None,
+        description="The name of the matplotlib colour map to apply to the image"
+        " thumbnails",
+    ),
     access_token: str = Depends(authorise_token),  # noqa: B008
 ):
     """
@@ -80,6 +97,14 @@ async def get_records(
         query_order,
         projection,
     )
+
+    for record_data in records_data:
+        await Record.apply_false_colour_to_thumbnails(
+            record_data,
+            lower_level,
+            upper_level,
+            colourmap_name,
+        )
 
     if truncate:
         for record_data in records_data:
@@ -130,6 +155,23 @@ async def get_record_by_id(
         description="Parameter used for development to reduce the output of thumbnail"
         " strings to 50 characters",
     ),
+    lower_level: Optional[int] = Query(  # noqa: B008
+        0,
+        description="The lower level threshold for false colour (0-255)",
+        ge=0,
+        le=255,
+    ),
+    upper_level: Optional[int] = Query(  # noqa: B008
+        255,
+        description="The upper level threshold for false colour (0-255)",
+        ge=0,
+        le=255,
+    ),
+    colourmap_name: Optional[str] = Query(  # noqa: B008
+        None,
+        description="The name of the matplotlib colour map to apply to the image"
+        " thumbnails",
+    ),
     access_token: str = Depends(authorise_token),  # noqa: B008
 ):
     """
@@ -141,6 +183,13 @@ async def get_record_by_id(
     log.info("Getting record by ID: %s", id_)
 
     record_data = await Record.find_record_by_id(id_, conditions)
+
+    await Record.apply_false_colour_to_thumbnails(
+        record_data,
+        lower_level,
+        upper_level,
+        colourmap_name,
+    )
 
     if truncate:
         Record.truncate_thumbnails(record_data)

@@ -1,3 +1,5 @@
+import hashlib
+
 from fastapi.testclient import TestClient
 import pytest
 
@@ -32,3 +34,22 @@ def assert_record(record, expected_channel_count, expected_channel_data):
 
     if not channel_found:
         raise AssertionError("Expected channel not found")
+
+
+def assert_thumbnails(record: dict, expected_thumbnail_md5s: dict):
+    """
+    Iterate through the record looking for the channel names that match the keys in the
+    md5s dictionary. As each channel is found, check that the md5sum of the thumbnail
+    matches the expected value in the md5s dictionary. Ensure all channels in the md5s
+    dictionary are present in the record.
+    """
+    num_channels_found = 0
+    for channel_name, value in record["channels"].items():
+        if channel_name in expected_thumbnail_md5s.keys():
+            num_channels_found += 1
+            b64_thumbnail_string = value["thumbnail"]
+            thumbnail_md5sum = hashlib.md5(
+                b64_thumbnail_string.encode(),
+            ).hexdigest()  # noqa: S303
+            assert thumbnail_md5sum == expected_thumbnail_md5s[channel_name]
+    assert num_channels_found == len(expected_thumbnail_md5s.keys())
