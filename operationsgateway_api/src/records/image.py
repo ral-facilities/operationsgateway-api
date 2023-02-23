@@ -1,15 +1,16 @@
-import base64
+from io import BytesIO
 import logging
 import os
-from typing import Tuple, Union
+from typing import Tuple
 
-from fastapi.responses import FileResponse
+import numpy as np
 from PIL import Image as PILImage
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import ImageError, ImageNotFoundError
 from operationsgateway_api.src.models import ImageModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
+from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
 
 
@@ -17,6 +18,8 @@ log = logging.getLogger()
 
 
 class Image:
+    lookup_table_16_to_8_bit = [i / 256 for i in range(65536)]
+
     def __init__(self, image: ImageModel) -> None:
         self.image = image
 
@@ -50,7 +53,10 @@ class Image:
         img = PILImage.open(
             f"{Config.config.mongodb.image_store_directory}/{self.image.path}",
         )
-        img.thumbnail(Config.config.app.image_thumbnail_size)
+        img.thumbnail(Config.config.images.image_thumbnail_size)
+        # convert 16 bit greyscale thumbnails to 8 bit to save space
+        if img.mode == "I":
+            img = img.point(Image.lookup_table_16_to_8_bit, "L")
         self.thumbnail = ThumbnailHandler.convert_to_base64(img)
 
     def extract_metadata_from_path(self) -> Tuple[str, str]:
@@ -68,23 +74,40 @@ class Image:
     async def get_image(
         record_id: str,
         channel_name: str,
-        string_response: bool,
-    ) -> Union[bytes, FileResponse]:
+        original_image: bool,
+        lower_level: int,
+        upper_level: int,
+        colourmap_name: str,
+    ) -> BytesIO:
         """
-        Retrieve an image from disk and return it in a bytes format or as a
-        `FileResponse` depending on what the user has requested.
+        Retrieve an image from disk and return the bytes of the image in a BytesIO
+        object depending on what the user has requested.
+
+        If 'original_image' is set to True then just return the unprocessed bytes of the
+        image read from disk, otherwise apply false colour to the image either using the
+        parameters provided or using defaults where they are not provided.
 
         If an image cannot be found, some error checking is done by looking to see if
         the record ID exists in the first place. Depending on what is found in the
         database, an appropriate exception (and error message) is raised
         """
         try:
-            if string_response:
-                with open(Image.get_image_path(record_id, channel_name), "rb") as file:
-                    return base64.b64encode(file.read())
+            original_image_path = Image.get_image_path(record_id, channel_name)
+            if original_image:
+                with open(original_image_path, "rb") as fh:
+                    return BytesIO(fh.read())
             else:
-                # TODO - get exception handling to work on this one
-                return FileResponse(Image.get_image_path(record_id, channel_name))
+                img_src = PILImage.open(original_image_path)
+                orig_img_array = np.array(img_src)
+
+                false_colour_image = FalseColourHandler.apply_false_colour(
+                    orig_img_array,
+                    FalseColourHandler.get_pixel_depth(img_src),
+                    lower_level,
+                    upper_level,
+                    colourmap_name,
+                )
+                return false_colour_image
         except (OSError, RuntimeError) as exc:
             # TODO - change to Record.count_records() and fix the circular import
             record_count = await MongoDBInterface.count_documents(

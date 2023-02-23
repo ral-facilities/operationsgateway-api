@@ -1,3 +1,4 @@
+import base64
 from datetime import datetime
 import logging
 from typing import Any, Dict, List, Tuple, Union
@@ -14,6 +15,7 @@ from operationsgateway_api.src.exceptions import (
 )
 from operationsgateway_api.src.models import RecordModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
+from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.waveform import Waveform
 
@@ -140,7 +142,11 @@ class Record:
         return records_data
 
     @staticmethod
-    async def find_record_by_id(id_: str, conditions: Dict[str, Any]) -> List[dict]:
+    async def find_record_by_id(
+        id_: str,
+        conditions: Dict[str, Any],
+        projection: List[str] = None,
+    ) -> Dict[str, Any]:
         """
         Given an ID and any number of conditions, find a single record and return it. If
         the record cannot be found, a `MissingDocumentError` will be raised instead
@@ -148,6 +154,7 @@ class Record:
         record_data = await MongoDBInterface.find_one(
             "records",
             {"_id": id_, **conditions},
+            projection=projection,
         )
 
         if record_data:
@@ -212,10 +219,22 @@ class Record:
 
             if channel.metadata.channel_dtype == "scalar":
                 recent_values.append({record.metadata.timestamp: channel.data})
-            elif (
-                channel.metadata.channel_dtype == "image"
-                or channel.metadata.channel_dtype == "waveform"
-            ):
+            elif channel.metadata.channel_dtype == "image":
+                thumbnail_bytes = FalseColourHandler.apply_false_colour_to_b64_img(
+                    channel.thumbnail,
+                    None,
+                    None,
+                    None,
+                )
+                thumbnail_bytes.seek(0)
+                recent_values.append(
+                    {
+                        record.metadata.timestamp: base64.b64encode(
+                            thumbnail_bytes.getvalue(),
+                        ),
+                    },
+                )
+            elif channel.metadata.channel_dtype == "waveform":
                 recent_values.append({record.metadata.timestamp: channel.thumbnail})
 
         return recent_values
@@ -239,6 +258,55 @@ class Record:
                 value["thumbnail"] = value["thumbnail"][:50]
             except KeyError:
                 # If there's no thumbnails (e.g. if channel isn't an image or waveform)
+                # then a KeyError will be raised. This is normal behaviour, so
+                # acceptable to pass
+                pass
+
+    @staticmethod
+    async def apply_false_colour_to_thumbnails(
+        record: dict,
+        lower_level: int,
+        upper_level: int,
+        colourmap_name: str,
+    ) -> None:
+        """
+        Apply false colour to any greyscale image thumbnails in the record.
+
+        Iterate through the channels in the record looking for ones that have the type
+        'image'.
+        These will be the greyscale images which need to have false colour applied.
+        Note: there will also be "thumbnail" entries in 'rgb-image' and 'waveform'
+        channels but they should not have false colour applied to them.
+        """
+        record_id = record["_id"]
+        for channel_name, value in record["channels"].items():
+            try:
+                channel_dtype = value["metadata"]["channel_dtype"]
+            except KeyError:
+                # if a projection has been applied then the record will only contain
+                # the requested fields and probably not the channel_dtype
+                # so it needs to be looked up separately
+                record_dict = await Record.find_record_by_id(
+                    record_id,
+                    {},
+                    [f"channels.{channel_name}.metadata.channel_dtype"],
+                )
+                channel_dtype = record_dict["channels"][channel_name]["metadata"][
+                    "channel_dtype"
+                ]
+            try:
+                if channel_dtype == "image":
+                    b64_thumbnail_str = value["thumbnail"]
+                    thumbnail_bytes = FalseColourHandler.apply_false_colour_to_b64_img(
+                        b64_thumbnail_str,
+                        lower_level,
+                        upper_level,
+                        colourmap_name,
+                    )
+                    thumbnail_bytes.seek(0)
+                    value["thumbnail"] = base64.b64encode(thumbnail_bytes.getvalue())
+            except KeyError:
+                # If there's no thumbnail (e.g. if channel isn't an image or waveform)
                 # then a KeyError will be raised. This is normal behaviour, so
                 # acceptable to pass
                 pass

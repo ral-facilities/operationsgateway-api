@@ -61,9 +61,9 @@ class TestChannelSummary:
                     "first_date": "2022-04-07T14:16:16",
                     "most_recent_date": "2022-04-08T16:58:57",
                     "recent_sample": [
-                        {"2022-04-08T16:58:57": "10ace7b97cba6d986c5b60250d360988"},
-                        {"2022-04-08T16:41:36": "9cf74f5aec5fe857bad5a79c3ed5e0e8"},
-                        {"2022-04-08T16:29:56": "bdd30e16457f13cd777209a497e5fb0b"},
+                        {"2022-04-08T16:58:57": "7eaa7d72354387dcad367bfaa9ca300f"},
+                        {"2022-04-08T16:41:36": "ee5f3759eb429ba5abd4ad3e1a9bce16"},
+                        {"2022-04-08T16:29:56": "e82a08dbede2ac59f2dfbe427d86a531"},
                     ],
                 },
                 id="Image channel summary",
