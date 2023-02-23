@@ -109,7 +109,8 @@ class Image:
                 )
                 return false_colour_image
         except (OSError, RuntimeError) as exc:
-            # TODO - change to Record.count_records() and fix the circular import
+            # Record.count_records() could not be used because that would cause a
+            # circular import
             record_count = await MongoDBInterface.count_documents(
                 "records",
                 {
