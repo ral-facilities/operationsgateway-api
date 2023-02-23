@@ -12,8 +12,6 @@ log_message_location = (
 )
 log_format = f"[%(asctime)s]{log_message_location}%(levelname)s - %(message)s"
 
-# TODO 2 - try to move to a rotating file handler, while still keeping FastAPI output
-# into both file and stdout
 logger_config = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -26,8 +24,10 @@ logger_config = {
         "default": {
             "level": Config.config.logging.log_level,
             "formatter": "default",
-            "class": "logging.FileHandler",
+            "class": "logging.handlers.RotatingFileHandler",
             "filename": LOG_FILE_NAME,
+            "maxBytes": 5000000,
+            "backupCount": 10,
         },
     },
     "loggers": {"uvicorn.access": {"handlers": ["default"]}},
