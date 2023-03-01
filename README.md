@@ -1,3 +1,7 @@
+[![Build Status](https://github.com/ral-facilities/operationsgateway-api/workflows/CI/badge.svg?branch=main)](https://github.com/ral-facilities/operationsgateway-api/actions?query=workflow%3A%22CI%22)
+[![Codecov](https://codecov.io/gh/ral-facilities/operationsgateway-api/branch/main/graph/badge.svg)](https://codecov.io/gh/ral-facilities/operationsgateway-api)
+
+
 # OperationsGateway API
 This is an API built using [FastAPI](https://fastapi.tiangolo.com/) to work with [MongoDB](https://www.mongodb.com/) and the data stored as part of the OperationsGateway project.
 
