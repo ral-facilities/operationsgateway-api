@@ -35,7 +35,6 @@ class ImageChannelMetadataModel(BaseModel):
     exposure_time_s: Optional[float]
     gain: Optional[float]
     x_pixel_size: Optional[float]
-    # TODO - UTF8 issue? \u00b5m
     x_pixel_units: Optional[str]
     y_pixel_size: Optional[float]
     y_pixel_units: Optional[str]
