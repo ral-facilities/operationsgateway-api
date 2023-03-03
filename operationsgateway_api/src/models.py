@@ -144,7 +144,7 @@ class ChannelManifestModel(BaseModel):
 class ChannelSummaryModel(BaseModel):
     first_date: datetime
     most_recent_date: datetime
-    recent_sample: List[Union[int, float, str]]
+    recent_sample: List[Dict[datetime, Union[int, float, str]]]
 
     class Config:
         smart_union = True
