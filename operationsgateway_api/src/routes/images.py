@@ -24,22 +24,10 @@ async def get_full_image(
     record_id: str = Path(  # noqa: B008
         "",
         description="ID of the record (usually timestamp)",
-        examples={
-            "test_data": {
-                "summary": "Example record ID number",
-                "value": "20220408132830",
-            },
-        },
     ),
     channel_name: str = Path(  # noqa: B008
         "",
         description="Channel name containing the image",
-        examples={
-            "test_data": {
-                "summary": "Example image channel name",
-                "value": "N_COMP_FF_IMAGE",
-            },
-        },
     ),
     original_image: Optional[bool] = Query(  # noqa: B008
         False,
