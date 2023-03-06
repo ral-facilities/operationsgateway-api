@@ -99,8 +99,15 @@ class BackgroundSchedulerRunner:
                     # needs monitoring/admins alerting to and decide on the best way to
                     # do this. Ingestion, 500s are other suggestions where an admin
                     # needs to be alerted to
-                    log.error(
+                    test_break_flag = log.error(
                         "Background task to contact Scheduler failed again. Task will "
                         "next be run at %s",
                         self.get_next_run_task_date(),
                     )
+
+                    # When testing, we need a way to break out of this infinite loop.
+                    # One way to do this is by mocking `log.error` so that it returns
+                    # `True`, which provides a way of breaking out of the loop by using
+                    # the following conditional
+                    if test_break_flag:
+                        break
