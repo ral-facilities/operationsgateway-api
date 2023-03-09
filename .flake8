@@ -9,3 +9,4 @@ import-order-style = google
 enable-extensions=G
 per-file-ignores =
   test/*: S101
+  test/experiments/scheduler_mocking/models.py: N815
