@@ -64,9 +64,12 @@ class DuplicatePartSelector:
         return self.parts[0]
 
     def _remove_parts(self) -> None:
+        to_remove = []
         for part in self.parts:
             if self._get_status_precedence(part) > 4:
-                self.parts.remove(part)
+                to_remove.append(part)
+        for part in to_remove:
+            self.parts.remove(part)
 
     def _order_parts_by_status(self) -> None:
         self.parts.sort(key=self._get_status_precedence)
