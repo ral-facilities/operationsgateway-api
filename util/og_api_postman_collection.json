@@ -497,7 +497,7 @@
 								},
 								{
 									"key": "conditions",
-									"value": "{\"metadata.shotnum\": {\"$exists\": false}}",
+									"value": "{\"metadata.shotnum\": {\"$exists\": true}}",
 									"description": "Return only environmental data",
 									"disabled": true
 								},
@@ -523,6 +523,31 @@
 									"key": "truncate",
 									"value": "true",
 									"description": "Truncate base64 thumbnail outputs",
+									"disabled": true
+								},
+								{
+									"key": "projection",
+									"value": "channels.N_COMP_NF_IMAGE.thumbnail",
+									"disabled": true
+								},
+								{
+									"key": "projection",
+									"value": "channels.N_COMP_FF_IMAGE.metadata.channel_dtype",
+									"disabled": true
+								},
+								{
+									"key": "lower_level",
+									"value": "50",
+									"disabled": true
+								},
+								{
+									"key": "upper_level",
+									"value": "200",
+									"disabled": true
+								},
+								{
+									"key": "colourmap_name",
+									"value": "jet_r",
 									"disabled": true
 								}
 							]
@@ -628,9 +653,18 @@
 							],
 							"query": [
 								{
-									"key": "truncate",
-									"value": "true",
-									"description": "Truncate base64 thumbnail outputs",
+									"key": "lower_level",
+									"value": "50",
+									"disabled": true
+								},
+								{
+									"key": "upper_level",
+									"value": "200",
+									"disabled": true
+								},
+								{
+									"key": "colourmap_name",
+									"value": "jet_r",
 									"disabled": true
 								}
 							]
@@ -661,49 +695,6 @@
 							"path": [
 								"records",
 								"20220408142911"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Image",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{og-access-token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{og-api}}/images/20220408132830/N_COMP_FF_IMAGE",
-							"host": [
-								"{{og-api}}"
-							],
-							"path": [
-								"images",
-								"20220408132830",
-								"N_COMP_FF_IMAGE"
-							],
-							"query": [
-								{
-									"key": "string_response",
-									"value": "true",
-									"description": "Response will be a base64 string of the image",
-									"disabled": true
-								},
-								{
-									"key": "string_response",
-									"value": "false",
-									"description": "Response will be the png image",
-									"disabled": true
-								}
 							]
 						}
 					},
@@ -749,6 +740,135 @@
 					}
 				]
 			}
+		},
+		{
+			"name": "Images",
+			"item": [
+				{
+					"name": "Get Image",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/images/20220408002114/N_LEG1_GREEN_NF_IMAGE",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"images",
+								"20220408002114",
+								"N_LEG1_GREEN_NF_IMAGE"
+							],
+							"query": [
+								{
+									"key": "original_image",
+									"value": "true",
+									"disabled": true
+								},
+								{
+									"key": "lower_level",
+									"value": "50",
+									"disabled": true
+								},
+								{
+									"key": "upper_level",
+									"value": "200",
+									"disabled": true
+								},
+								{
+									"key": "colourmap_name",
+									"value": "jet_r",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get colour bar image",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/images/colour_bar",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"images",
+								"colour_bar"
+							],
+							"query": [
+								{
+									"key": "lower_level",
+									"value": "75",
+									"disabled": true
+								},
+								{
+									"key": "upper_level",
+									"value": "175",
+									"disabled": true
+								},
+								{
+									"key": "colourmap_name",
+									"value": "jet_r",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get colourmap names",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/images/colourmap_names",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"images",
+								"colourmap_names"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"event": [

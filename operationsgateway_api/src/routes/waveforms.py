@@ -22,22 +22,10 @@ async def get_waveform_by_id(
     record_id: str = Path(  # noqa: B008
         "",
         description="ID of the record (usually timestamp)",
-        examples={
-            "test_data": {
-                "summary": "Example record ID number",
-                "value": "20220408140310",
-            },
-        },
     ),
     channel_name: str = Path(  # noqa: B008
         "",
         description="Channel name containing the waveform",
-        examples={
-            "test_data": {
-                "summary": "Example waveform channel name",
-                "value": "N_COMP_SPEC_TRACE",
-            },
-        },
     ),
     access_token: str = Depends(authorise_token),  # noqa: B008
 ):

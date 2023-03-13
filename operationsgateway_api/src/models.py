@@ -35,7 +35,6 @@ class ImageChannelMetadataModel(BaseModel):
     exposure_time_s: Optional[float]
     gain: Optional[float]
     x_pixel_size: Optional[float]
-    # TODO - UTF8 issue? \u00b5m
     x_pixel_units: Optional[str]
     y_pixel_size: Optional[float]
     y_pixel_units: Optional[str]
@@ -54,7 +53,10 @@ class ScalarChannelMetadataModel(BaseModel):
 
 class ScalarChannelModel(BaseModel):
     metadata: ScalarChannelMetadataModel
-    data: Union[float, int, str]
+    data: Union[int, float, str]
+
+    class Config:
+        smart_union = True
 
 
 class WaveformChannelMetadataModel(BaseModel):
@@ -142,7 +144,10 @@ class ChannelManifestModel(BaseModel):
 class ChannelSummaryModel(BaseModel):
     first_date: datetime
     most_recent_date: datetime
-    recent_sample: List[Union[float, int, str]]
+    recent_sample: List[Dict[datetime, Union[int, float, str]]]
+
+    class Config:
+        smart_union = True
 
 
 class ExperimentModel(BaseModel):

@@ -1,6 +1,4 @@
-import base64
 import hashlib
-import json
 
 from fastapi.testclient import TestClient
 import pytest
@@ -8,28 +6,38 @@ import pytest
 
 class TestGetImage:
     @pytest.mark.parametrize(
-        "record_id, channel_name, string_response, expected_image_md5sum",
+        "record_id, channel_name, original_image, "
+        "lower_level, upper_level, colourmap_name, expected_image_md5sum",
         [
             pytest.param(
                 "20220408164136",
                 "N_COMP_FF_IMAGE",
                 True,
+                None,
+                None,
+                None,
                 "9d2fc96084349c5bff10206ef4dfdf3e",
-                id="Output as base64 string",
+                id="Original image",
             ),
             pytest.param(
                 "20220408002114",
                 "N_LEG1_GREEN_NF_IMAGE",
                 False,
-                "47f2e189fcf44cffb010b72a6de153bd",
-                id="Output as image",
+                None,
+                None,
+                None,
+                "1a475f26f7a6ccfa776e5e667869cb2a",
+                id="Image with default false colour settings",
             ),
             pytest.param(
                 "20220408002114",
                 "N_LEG1_GREEN_NF_IMAGE",
                 None,
-                "47f2e189fcf44cffb010b72a6de153bd",
-                id="No string response query parameter",
+                50,
+                200,
+                "jet_r",
+                "c73fb98a7ca21ca9d6966e89e5167565",
+                id="Image with all false colour params specified",
             ),
         ],
     )
@@ -39,28 +47,36 @@ class TestGetImage:
         login_and_get_token,
         record_id,
         channel_name,
-        string_response,
+        original_image,
+        lower_level,
+        upper_level,
+        colourmap_name,
         expected_image_md5sum,
     ):
-        string_response_param = (
-            f"?string_response={json.dumps(string_response)}"
-            if isinstance(string_response, bool)
-            else ""
-        )
+        query_string = ""
+        query_params_array = []
+
+        if original_image is not None:
+            # allow setting of "original_image=False"
+            query_params_array.append(f"original_image={original_image}")
+        if lower_level:
+            query_params_array.append(f"lower_level={lower_level}")
+        if upper_level:
+            query_params_array.append(f"upper_level={upper_level}")
+        if colourmap_name:
+            query_params_array.append(f"colourmap_name={colourmap_name}")
+
+        if len(query_params_array) > 0:
+            query_string = "?" + "&".join(query_params_array)
+
         test_response = test_app.get(
-            f"/images/{record_id}/{channel_name}{string_response_param}",
+            f"/images/{record_id}/{channel_name}{query_string}",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
 
         assert test_response.status_code == 200
 
-        if string_response:
-            assert isinstance(test_response.json(), str)
-            bytes_image = base64.b64decode(test_response.json())
-
-        else:
-            assert isinstance(test_response.content, bytes)
-            bytes_image = test_response.content
+        bytes_image = test_response.content
 
         image_checksum = hashlib.md5(bytes_image).hexdigest()  # noqa: S303
         assert expected_image_md5sum == image_checksum

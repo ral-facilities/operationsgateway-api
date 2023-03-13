@@ -22,10 +22,16 @@ class App(BaseModel):
     host: Optional[StrictStr]
     port: Optional[StrictInt]
     reload: Optional[StrictBool]
+
+
+class ImagesConfig(BaseModel):
     # The dimensions will be stored as a list in the YAML file, but are cast to tuple
     # using `typing.Tuple` because this is the type used by Pillow
     image_thumbnail_size: Tuple[int, int]
     waveform_thumbnail_size: Tuple[int, int]
+    # the system default colour map (used if no user preference is set)
+    default_colour_map: StrictStr
+    colourbar_height_pixels: StrictInt
 
 
 class Logging(BaseModel):
@@ -88,6 +94,7 @@ class APIConfig(BaseModel):
     mongodb: MongoDB
     auth: AuthConfig
     experiments: ExperimentsConfig
+    images: ImagesConfig
 
     @classmethod
     def load(cls, path=Path(__file__).parent.parent / "config.yml"):  # noqa: B008

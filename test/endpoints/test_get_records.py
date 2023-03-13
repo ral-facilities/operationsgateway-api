@@ -3,7 +3,7 @@ import json
 from fastapi.testclient import TestClient
 import pytest
 
-from test.conftest import assert_record
+from test.conftest import assert_record, assert_thumbnails
 
 
 class TestGetRecords:
@@ -78,3 +78,96 @@ class TestGetRecords:
             expected_channels_data,
         ):
             assert_record(record, expected_channel_count, expected_channel_data)
+
+    @pytest.mark.parametrize(
+        "conditions, projection, lower_level, upper_level, colourmap_name, "
+        "expected_thumbnail_md5s",
+        [
+            pytest.param(
+                {"metadata.shotnum": 366372},
+                None,
+                None,
+                None,
+                None,
+                {
+                    "N_COMP_NF_IMAGE": "61fe148278d9c7c1f8a68a00799bbaa5",
+                },
+                id="Whole record: all channels have channel_dtype returned",
+            ),
+            pytest.param(
+                {"metadata.shotnum": 366372},
+                "channels.N_COMP_NF_IMAGE.thumbnail",
+                None,
+                None,
+                None,
+                {
+                    "N_COMP_NF_IMAGE": "61fe148278d9c7c1f8a68a00799bbaa5",
+                },
+                id="Partial record: only N_COMP_NF_IMAGE and no channel_dtype returned",
+            ),
+            pytest.param(
+                {"metadata.shotnum": 366372},
+                None,
+                50,
+                200,
+                "jet_r",
+                {
+                    "N_COMP_NF_IMAGE": "072ce7a74cf201aca4a17278f9faf4cb",
+                },
+                id="Whole record: all channels have channel_dtype returned "
+                "and custom false colour settings applied",
+            ),
+            pytest.param(
+                {"metadata.shotnum": 366372},
+                "channels.N_COMP_NF_IMAGE.thumbnail",
+                50,
+                200,
+                "jet_r",
+                {
+                    "N_COMP_NF_IMAGE": "072ce7a74cf201aca4a17278f9faf4cb",
+                },
+                id="Partial record: only N_COMP_NF_IMAGE and no channel_dtype returned "
+                "and custom false colour settings applied",
+            ),
+        ],
+    )
+    def test_image_thumbnails_get_records(
+        self,
+        test_app: TestClient,
+        login_and_get_token,
+        conditions,
+        projection,
+        lower_level,
+        upper_level,
+        colourmap_name,
+        expected_thumbnail_md5s,
+    ):
+
+        query_string = ""
+        query_params_array = []
+
+        if conditions:
+            query_params_array.append(f"conditions={json.dumps(conditions)}")
+        if projection:
+            query_params_array.append(f"projection={projection}")
+        if lower_level:
+            query_params_array.append(f"lower_level={lower_level}")
+        if upper_level:
+            query_params_array.append(f"upper_level={upper_level}")
+        if colourmap_name:
+            query_params_array.append(f"colourmap_name={colourmap_name}")
+
+        if len(query_params_array) > 0:
+            query_string = "?" + "&".join(query_params_array)
+
+        test_response = test_app.get(
+            f"/records{query_string}",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+        )
+
+        assert test_response.status_code == 200
+
+        assert_thumbnails(
+            test_response.json()[0],  # only one record expected
+            expected_thumbnail_md5s,
+        )
