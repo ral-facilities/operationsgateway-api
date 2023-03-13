@@ -142,8 +142,13 @@ class Experiment:
                     if duplicate_selectors
                     else []
                 )
-                # Combine selected duplicate parts with non duplicates
+                # Combine selected duplicate parts with non duplicates and sort based on
+                # experiment ID and part number
                 experiment_parts = selected_parts + non_duplicate_parts
+                list.sort(
+                    experiment_parts,
+                    key=lambda part: (part.referenceNumber, part.partNumber),
+                )
 
                 for part in experiment_parts:
                     if (
