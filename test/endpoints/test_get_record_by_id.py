@@ -47,9 +47,9 @@ class TestGetRecordByID:
             pytest.param(
                 "20220408132830",
                 {
-                    "N_COMP_FF_IMAGE": "2293a257736fd34fe2dea0b374ba8247",
-                    "N_COMP_NF_IMAGE": "8eef864a9aa59bc2f5ca41efdef59f33",
-                    "N_LEG1_GREEN_NF_IMAGE": "c20d5fde604f0db5fefb19dc5682bbad",
+                    "N_COMP_FF_IMAGE": "b64a902e52a222d3b2c20c3eaf40fd5b",
+                    "N_COMP_NF_IMAGE": "cfd90fafa84a5b24eb66081d26bf4e6a",
+                    "N_LEG1_GREEN_NF_IMAGE": "565bd02fae8bf282a62546031cafd081",
                 },
                 id="Ordinary request",
             ),

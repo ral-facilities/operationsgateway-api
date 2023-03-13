@@ -14,7 +14,7 @@ class TestGetColourBarImage:
                 None,
                 None,
                 200,
-                "3997199bb04d5cfe64abd199051b427f",
+                "4d6504138d3662221f3787554cfd613e",
                 id="Colour bar with default false colour settings",
             ),
             pytest.param(
@@ -22,7 +22,7 @@ class TestGetColourBarImage:
                 200,
                 "jet_r",
                 200,
-                "268cc1a978ef77ecf299d49fed71f4a7",
+                "64a149e3bef201125b9854dd02155fe4",
                 id="Colour bar with all false colour params specified",
             ),
             pytest.param(

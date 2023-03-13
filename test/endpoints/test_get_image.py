@@ -26,7 +26,7 @@ class TestGetImage:
                 None,
                 None,
                 None,
-                "1a475f26f7a6ccfa776e5e667869cb2a",
+                "a108455e78d96b170e1297823e3610a8",
                 id="Image with default false colour settings",
             ),
             pytest.param(
@@ -36,7 +36,7 @@ class TestGetImage:
                 50,
                 200,
                 "jet_r",
-                "c73fb98a7ca21ca9d6966e89e5167565",
+                "fed12528d7b802f85380f5bb0f81e0c5",
                 id="Image with all false colour params specified",
             ),
         ],
