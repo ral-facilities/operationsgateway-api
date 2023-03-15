@@ -70,6 +70,13 @@ parser.add_argument(
     help="Image storage path, used when deleting images before ingestion",
     default=None,
 )
+parser.add_argument(
+    "-e",
+    "--experiments",
+    help="Flag to determine whether stored experiments should be deleted & re-ingested",
+    action="store_true",
+    default=False,
+)
 
 # Put command line options into variables
 args = parser.parse_args()
@@ -82,6 +89,7 @@ DATABASE_CONNECTION_URL = "mongodb://localhost:27017"
 DATABASE_NAME = args.database_name
 DELETE_IMAGES = args.delete_images
 IMAGES_PATH = args.images_path
+REINGEST_EXPERIMENTS = args.experiments
 
 
 # Wipe collections in the database
@@ -93,6 +101,9 @@ if WIPE_DATABASE:
     print("Records collection dropped")
     waveforms_drop = db.waveforms.drop()
     print("Waveforms collection dropped")
+    if REINGEST_EXPERIMENTS:
+        experiments_drop = db.experiments.drop()
+        print("Experiments collection dropped")
 
 # Delete images from disk
 if DELETE_IMAGES:
@@ -196,8 +207,23 @@ for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
                         print(f"{response.status_code} returned")
                         pprint(response.text)
 
-# Kill API process if it was started in this script
-# Using args.url because API_URL will be populated when API process was started
-if not args.url:
-    api_process.kill()
-    print(f"API stopped on {API_URL}")
+# Getting experiments from Scheduler and storing them in the database
+if REINGEST_EXPERIMENTS:
+    response = requests.post(
+        f"{API_URL}/experiments",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    if response.status_code == 200:
+        print(
+            f"Ingested {len(response.json())} experiments from Scheduler. Response from"
+            " API call:")
+        pprint(response.json())
+    else:
+        print(f"{response.status_code} returned")
+        pprint(response.text)
+
+    # Kill API process if it was started in this script
+    # Using args.url because API_URL will be populated when API process was started
+    if not args.url:
+        api_process.kill()
+        print(f"API stopped on {API_URL}")
