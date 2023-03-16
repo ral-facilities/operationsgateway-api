@@ -4,7 +4,8 @@ import os
 from pprint import pprint
 import shutil
 import socket
-from subprocess import Popen, PIPE
+from subprocess import Popen
+import sys
 from time import sleep, time
 
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -127,8 +128,6 @@ if not args.url:
             "--port",
             port,
         ],
-        stdout=PIPE,
-        stderr=PIPE,
     )
 
     print("Checking if API started")
@@ -137,6 +136,10 @@ if not args.url:
         api_alive = is_api_alive(host, port)
         sleep(1)
         print("API not started yet...")
+        # Check for the return code to see if the API started successfully
+        api_process.poll()
+        if api_process.returncode is not None and api_process.returncode != 0:
+            sys.exit("API has failed to start up, please see output above")
 
     API_URL = f"http://{host}:{port}"
     print(f"API started on {API_URL}")
