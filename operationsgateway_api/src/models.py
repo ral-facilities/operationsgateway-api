@@ -21,7 +21,7 @@ class WaveformModel(BaseModel):
     y: str
 
     @validator("x", "y", pre=True, always=True)
-    def encode_values(cls, value):  # noqa: B902, N805
+    def encode_values(cls, value):
         if isinstance(value, np.ndarray):
             return str(list(value))
         else:
@@ -121,12 +121,12 @@ class ChannelModel(BaseModel):
     y_units: Optional[str]
 
     @root_validator(pre=True)
-    def set_default_type(cls, values):  # noqa: B902, N805
+    def set_default_type(cls, values):
         values.setdefault("type", "scalar")
         return values
 
     @validator("x_units", "y_units")
-    def check_waveform_channel(cls, v, values):  # noqa: B902, N805
+    def check_waveform_channel(cls, v, values):
         if not values["type_"] == "waveform":
             raise ChannelManifestError(
                 "Only waveform channels should contain waveform channel metadata."

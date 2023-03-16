@@ -107,9 +107,7 @@ class TestChannelSummary:
         for sample in json_output["recent_sample"]:
             for timestamp, checksum in sample.items():
                 bytes_thumbnail = base64.b64decode(checksum)
-                sample[timestamp] = hashlib.md5(  # noqa: S303
-                    bytes_thumbnail,
-                ).hexdigest()
+                sample[timestamp] = hashlib.md5(bytes_thumbnail).hexdigest()
 
         assert json_output == expected_summary
 

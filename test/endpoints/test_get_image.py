@@ -78,5 +78,5 @@ class TestGetImage:
 
         bytes_image = test_response.content
 
-        image_checksum = hashlib.md5(bytes_image).hexdigest()  # noqa: S303
+        image_checksum = hashlib.md5(bytes_image).hexdigest()
         assert expected_image_md5sum == image_checksum
