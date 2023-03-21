@@ -218,7 +218,7 @@ class Record:
             channel = record.channels[channel_name]
 
             if channel.metadata.channel_dtype == "scalar":
-                recent_values.append(channel.data)
+                recent_values.append({record.metadata.timestamp: channel.data})
             elif channel.metadata.channel_dtype == "image":
                 thumbnail_bytes = FalseColourHandler.apply_false_colour_to_b64_img(
                     channel.thumbnail,
@@ -227,9 +227,15 @@ class Record:
                     None,
                 )
                 thumbnail_bytes.seek(0)
-                recent_values.append(base64.b64encode(thumbnail_bytes.getvalue()))
+                recent_values.append(
+                    {
+                        record.metadata.timestamp: base64.b64encode(
+                            thumbnail_bytes.getvalue(),
+                        ),
+                    },
+                )
             elif channel.metadata.channel_dtype == "waveform":
-                recent_values.append(channel.thumbnail)
+                recent_values.append({record.metadata.timestamp: channel.thumbnail})
 
         return recent_values
 
