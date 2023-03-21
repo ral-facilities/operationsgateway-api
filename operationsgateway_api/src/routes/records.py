@@ -38,21 +38,10 @@ async def get_records(
     order: Optional[List[str]] = Query(  # noqa: B008
         None,
         description="Specify order of results in the format of `field_name ASC`",
-        examples={
-            "asc": {
-                "summary": "Shot number ascending",
-                "value": "metadata.shotnum ASC",
-            },
-            "desc": {"summary": "ID descending", "value": "_id DESC"},
-        },
     ),
     projection: Optional[List[str]] = Query(  # noqa: B008
         None,
         description="Select specific fields in the record e.g. `metadata.shotnum`",
-        examples={
-            "metadata": {"summary": "Shot number", "value": "metadata.shotnum"},
-            "channel_data": {"summary": "Channel data", "value": "channels.data"},
-        },
     ),
     truncate: Optional[bool] = Query(  # noqa: B008
         False,
