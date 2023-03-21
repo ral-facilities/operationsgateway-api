@@ -72,7 +72,7 @@ class TestGetRecords:
 
         assert test_response.status_code == 200
 
-        for record, expected_channel_count, expected_channel_data in zip(
+        for record, expected_channel_count, expected_channel_data in zip(  # noqa: B905
             test_response.json(),
             expected_channels_count,
             expected_channels_data,
