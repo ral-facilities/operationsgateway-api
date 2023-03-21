@@ -7,7 +7,7 @@ authors = ["Matthew Richards <matthew.richards@stfc.ac.uk>"]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
-fastapi = "^0.95.0"
+fastapi = "^0.92.0"
 motor = "^2.5.1"
 uvicorn = "^0.18.2"
 python-multipart = "^0.0.5"
