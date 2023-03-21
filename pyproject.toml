@@ -7,7 +7,7 @@ authors = ["Matthew Richards <matthew.richards@stfc.ac.uk>"]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
-fastapi = "^0.95.0"
+fastapi = "^0.92.0"
 motor = "^2.5.1"
 uvicorn = "^0.18.2"
 python-multipart = "^0.0.5"
@@ -22,6 +22,7 @@ python-dateutil = "^2.8.2"
 PyJWT = "2.4.0"
 cryptography = "^39.0.2"
 python-ldap = "3.4.2"
+httpx = "^0.23.3"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
