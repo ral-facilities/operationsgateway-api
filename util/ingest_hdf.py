@@ -1,11 +1,13 @@
 import argparse
 import json
 import os
+from pathlib import Path
 from pprint import pprint
 import shutil
 import socket
 from subprocess import Popen
 import sys
+import threading
 from time import sleep, time
 
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -115,6 +117,9 @@ def is_api_alive(host, port):
     except Exception:
         return False
 
+def clear_stdout(process):
+    process.stdout.read()
+
 # Start API if an API URL isn't given as a command line option
 if not args.url:
     host = "127.0.0.1"
@@ -127,6 +132,9 @@ if not args.url:
             host,
             "--port",
             port,
+            "--log-config",
+            str(Path(__file__).parent.parent / "operationsgateway_api/logging.ini"),
+
         ],
     )
 
@@ -176,6 +184,11 @@ for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
         for file in sorted(os.scandir(entry.path), key=lambda e: e.name):
             if file.name.endswith(".h5"):
                 start_time = time()
+                # Flushing stdout buffer so it doesn't become full, causing the script
+                # to hang
+                t = threading.Thread(target=clear_stdout, args=(api_process,))
+                t.start()
+
                 with open(file.path, "rb") as hdf_upload:
                     response = requests.post(
                         f"{API_URL}/submit/hdf",
