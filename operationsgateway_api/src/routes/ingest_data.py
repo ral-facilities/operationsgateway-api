@@ -66,6 +66,7 @@ async def submit_hdf(
         log.debug(
             "Record matching ID %s already exists in the database, updating existing"
             " document",
+            record.record.id_,
         )
         await record.update()
         return f"Updated {stored_record.id_}"
