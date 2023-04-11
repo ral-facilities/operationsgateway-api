@@ -44,10 +44,13 @@ class Image:
         Using the object's image data, create a thumbnail of the image and store it as
         an attribute of this object
         """
-        # TODO - look at ingestion time and see if this slows things down
 
-        echo = EchoInterface()
-        image_bytes = echo.download_file_object(self.image.path)
+        # Opening image then saving in a bytes object before using that to open and
+        # generate a thumbnail as you can't produce a thumbnail when opening the image
+        # using `fromarray()`
+        image_bytes = BytesIO()
+        img_temp = PILImage.fromarray(self.image.data)
+        img_temp.save(image_bytes, format="PNG")
 
         img = PILImage.open(image_bytes)
         img.thumbnail(Config.config.images.image_thumbnail_size)
