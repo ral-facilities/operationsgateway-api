@@ -1,6 +1,5 @@
 from io import BytesIO
 import logging
-import os
 from typing import Tuple
 
 import numpy as np
@@ -10,6 +9,7 @@ from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import ImageError, ImageNotFoundError
 from operationsgateway_api.src.models import ImageModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
+from operationsgateway_api.src.records.echo_interface import EchoInterface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
 
@@ -25,34 +25,31 @@ class Image:
 
     def store(self) -> None:
         """
-        Save the image on disk
+        Save the image on Echo an instance of S3 object storage
         """
-        record_id, _ = self.extract_metadata_from_path()
 
+        image_bytes = BytesIO()
         try:
-            os.makedirs(
-                f"{Config.config.mongodb.image_store_directory}/{record_id}",
-                exist_ok=True,
-            )
-            image_buffer = PILImage.fromarray(self.image.data)
-            image_buffer.save(
-                f"{Config.config.mongodb.image_store_directory}/{self.image.path}",
-            )
-        except OSError as exc:
-            log.exception(msg=exc)
-            raise ImageError("Image folder structure has failed") from exc
+            image = PILImage.fromarray(self.image.data)
+            image.save(image_bytes, format="PNG")
         except TypeError as exc:
             log.exception(msg=exc)
             raise ImageError("Image data is not in correct format to be read") from exc
+
+        echo = EchoInterface()
+        echo.upload_file_object(image_bytes, self.image.path)
 
     def create_thumbnail(self) -> None:
         """
         Using the object's image data, create a thumbnail of the image and store it as
         an attribute of this object
         """
-        img = PILImage.open(
-            f"{Config.config.mongodb.image_store_directory}/{self.image.path}",
-        )
+        # TODO - look at ingestion time and see if this slows things down
+
+        echo = EchoInterface()
+        image_bytes = echo.download_file_object(self.image.path)
+
+        img = PILImage.open(image_bytes)
         img.thumbnail(Config.config.images.image_thumbnail_size)
         # convert 16 bit greyscale thumbnails to 8 bit to save space
         if img.mode == "I":
@@ -92,12 +89,19 @@ class Image:
         database, an appropriate exception (and error message) is raised
         """
         try:
-            original_image_path = Image.get_image_path(record_id, channel_name)
+            original_image_path = Image.get_image_path(
+                record_id,
+                channel_name,
+                full_path=False,
+            )
+
+            echo = EchoInterface()
+            image_bytes = echo.download_file_object(original_image_path)
+
             if original_image:
-                with open(original_image_path, "rb") as fh:
-                    return BytesIO(fh.read())
+                return image_bytes
             else:
-                img_src = PILImage.open(original_image_path)
+                img_src = PILImage.open(image_bytes)
                 orig_img_array = np.array(img_src)
 
                 false_colour_image = FalseColourHandler.apply_false_colour(
@@ -121,11 +125,12 @@ class Image:
 
             if record_count == 1:
                 log.error(
-                    "Image could not be found on disk. Record ID: %s, channel name: %s",
+                    "Image could not be found on object storage. Record ID: %s, channel"
+                    " name: %s",
                     record_id,
                     channel_name,
                 )
-                raise ImageError("Image could not be found on disk") from exc
+                raise ImageError("Image could not be found on object storage") from exc
             elif record_count == 0:
                 log.error(
                     "Image not available due to invalid record ID (%s) or channel name"
@@ -139,10 +144,12 @@ class Image:
             else:
                 log.error(
                     "Unexpected number of records (%d) found when verifying whether the"
-                    " image should be available on disk",
+                    " image should be available on object storage",
                     record_count,
                 )
-                raise ImageError("Unexpected error finding image on disk") from exc
+                raise ImageError(
+                    "Unexpected error finding image on object storage",
+                ) from exc
 
     @staticmethod
     def get_image_path(
@@ -156,6 +163,7 @@ class Image:
         by using the `full_path` argument.
         """
 
+        # TODO - `full_path` not needed, should just be a single liner now
         if full_path:
             return (
                 f"{Config.config.mongodb.image_store_directory}/{record_id}/"
