@@ -13,7 +13,7 @@ from operationsgateway_api.src.exceptions import (
     ModelError,
     RecordError,
 )
-from operationsgateway_api.src.models import RecordModel
+from operationsgateway_api.src.models import ConverterRange, RecordModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.image import Image
@@ -310,3 +310,54 @@ class Record:
                 # then a KeyError will be raised. This is normal behaviour, so
                 # acceptable to pass
                 pass
+
+    @staticmethod
+    async def convert_search_ranges(date_range, shotnum_range):
+        if date_range:
+            # Convert date range to shot number range
+            comparison_field_name = "metadata.timestamp"
+            output_field_name = "$metadata.shotnum"
+
+            try:
+                range = ConverterRange(**date_range)
+            except ValidationError as exc:
+                raise ModelError(str(exc)) from exc
+        elif shotnum_range:
+            # Convert shot number range to date range
+            comparison_field_name = "metadata.shotnum"
+            output_field_name = "$metadata.timestamp"
+
+            try:
+                range = ConverterRange(**shotnum_range)
+            except ValidationError as exc:
+                raise ModelError(str(exc)) from exc
+        else:
+            raise RecordError("Both date range and shot number range are None")
+
+        pipeline = [
+            {
+                "$match": {
+                    "$and": [
+                        {
+                            comparison_field_name: {
+                                "$gte": range.min,
+                                "$lte": range.max,
+                            },
+                        },
+                    ],
+                },
+            },
+            {
+                "$group": {
+                    "_id": None,
+                    "min": {"$min": output_field_name},
+                    "max": {"$max": output_field_name},
+                },
+            },
+        ]
+
+        converted_range = await MongoDBInterface.aggregate("records", pipeline)
+        try:
+            return ConverterRange(**converted_range[0])
+        except ValidationError as exc:
+                raise ModelError(str(exc)) from exc

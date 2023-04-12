@@ -148,3 +148,8 @@ class ChannelSummaryModel(BaseModel):
 
     class Config:
         smart_union = True
+
+
+class ConverterRange(BaseModel):
+    min: Union[int, datetime]
+    max: Union[int, datetime]

@@ -229,3 +229,12 @@ class MongoDBInterface:
                 "Error counting the number of documents in collection %s",
                 collection_name,
             ) from exc
+
+    @staticmethod
+    async def aggregate(
+        collection_name: str,
+        pipeline,
+    ):
+        collection = MongoDBInterface.get_collection_object(collection_name)
+        aggregate_query = collection.aggregate(pipeline)
+        return await MongoDBInterface.query_to_list(aggregate_query)

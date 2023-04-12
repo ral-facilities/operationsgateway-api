@@ -79,3 +79,17 @@ class ParameterHandler:
                 ) from exc
 
             return new_date
+
+    # TODO - refactor this so there's a single function to do this. Probably need to
+    # read about `Depends()` on FastAPI's documentation
+    @staticmethod
+    async def parse_date_range(
+        date_range: Optional[str] = None,
+    ):
+        return json.loads(date_range) if date_range is not None else {}
+
+    @staticmethod
+    async def parse_shotnum_range(
+        shotnum_range: Optional[str] = None,
+    ):
+        return json.loads(shotnum_range) if shotnum_range is not None else {}

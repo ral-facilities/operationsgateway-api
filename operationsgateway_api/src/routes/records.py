@@ -9,6 +9,7 @@ from operationsgateway_api.src.auth.authorisation import (
     authorise_token,
 )
 from operationsgateway_api.src.error_handling import endpoint_error_handling
+from operationsgateway_api.src.exceptions import QueryParameterError
 from operationsgateway_api.src.records.record import Record as Record
 from operationsgateway_api.src.routes.common_parameters import ParameterHandler
 
@@ -124,6 +125,28 @@ async def count_records(
     ParameterHandler.encode_date_for_conditions(conditions)
 
     return await Record.count_records(conditions)
+
+
+@router.get(
+    "/records/range_converter",
+    summary="Convert shot number range to date range and vice versa",
+    response_description="Range opposite to input",
+    tags=["Records"],
+)
+@endpoint_error_handling
+async def convert_search_ranges(
+    date_range: dict = Depends(ParameterHandler.parse_date_range),  # noqa: B008
+    shotnum_range: dict = Depends(ParameterHandler.parse_shotnum_range),  # noqa: B008
+    access_token: str = Depends(authorise_token),  # noqa: B008
+):
+    # TODO - check min and max are correct way round (so min > max isn't allowed)
+    # Should be able to validate this in the Pydantic model
+    if date_range and shotnum_range:
+        raise QueryParameterError(
+            "Input cannot contain both date_range and shotnum_range",
+        )
+
+    return await Record.convert_search_ranges(date_range, shotnum_range)
 
 
 @router.get(
