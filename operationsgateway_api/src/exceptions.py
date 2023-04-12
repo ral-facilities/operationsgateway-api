@@ -79,3 +79,8 @@ class QueryParameterError(ApiError):
     def __init__(self, msg="Problem with query parameter input", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)
         self.status_code = 400
+
+class EchoS3Error(ApiError):
+    def __init__(self, msg="Echo S3 error", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 500

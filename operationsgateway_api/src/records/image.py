@@ -28,6 +28,7 @@ class Image:
         Save the image on Echo an instance of S3 object storage
         """
 
+        log.info("Storing image in a Bytes object: %s", self.image.path)
         image_bytes = BytesIO()
         try:
             image = PILImage.fromarray(self.image.data)
@@ -37,6 +38,7 @@ class Image:
             raise ImageError("Image data is not in correct format to be read") from exc
 
         echo = EchoInterface()
+        log.info("Storing image on S3: %s", self.image.path)
         echo.upload_file_object(image_bytes, self.image.path)
 
     def create_thumbnail(self) -> None:
@@ -44,6 +46,8 @@ class Image:
         Using the object's image data, create a thumbnail of the image and store it as
         an attribute of this object
         """
+
+        log.info("Creating image thumbnail for %s", self.image.path)
 
         # Opening image then saving in a bytes object before using that to open and
         # generate a thumbnail as you can't produce a thumbnail when opening the image
@@ -56,6 +60,7 @@ class Image:
         img.thumbnail(Config.config.images.image_thumbnail_size)
         # convert 16 bit greyscale thumbnails to 8 bit to save space
         if img.mode == "I":
+            log.debug("Converting 16 bit greyscale thumbnail to 8 bit")
             img = img.point(Image.lookup_table_16_to_8_bit, "L")
         self.thumbnail = ThumbnailHandler.convert_to_base64(img)
 
@@ -80,17 +85,19 @@ class Image:
         colourmap_name: str,
     ) -> BytesIO:
         """
-        Retrieve an image from disk and return the bytes of the image in a BytesIO
+        Retrieve an image from Echo S3 and return the bytes of the image in a BytesIO
         object depending on what the user has requested.
 
         If 'original_image' is set to True then just return the unprocessed bytes of the
-        image read from disk, otherwise apply false colour to the image either using the
-        parameters provided or using defaults where they are not provided.
+        image read from Echo S3, otherwise apply false colour to the image either using
+        the parameters provided or using defaults where they are not provided.
 
         If an image cannot be found, some error checking is done by looking to see if
         the record ID exists in the first place. Depending on what is found in the
         database, an appropriate exception (and error message) is raised
         """
+
+        log.info("Retrieving image and returning BytesIO object")
         try:
             original_image_path = Image.get_image_path(
                 record_id,
@@ -102,8 +109,16 @@ class Image:
             image_bytes = echo.download_file_object(original_image_path)
 
             if original_image:
+                log.debug(
+                    "Original image requested, return unmodified image bytes: %s",
+                    original_image_path,
+                )
                 return image_bytes
             else:
+                log.debug(
+                    "False colour requested, applying false colour to image: %s",
+                    original_image_path,
+                )
                 img_src = PILImage.open(image_bytes)
                 orig_img_array = np.array(img_src)
 

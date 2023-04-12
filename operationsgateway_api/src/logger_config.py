@@ -36,4 +36,14 @@ logger_config = {
 
 
 def setup_logger():
+    libraries_info_logging = [
+        "boto3",
+        "botocore",
+        "nose",
+        "s3transfer",
+        "matplotlib.font_manager",
+    ]
+    for name in libraries_info_logging:
+        logging.getLogger(name).setLevel(logging.INFO)
+
     logging.config.dictConfig(logger_config)
