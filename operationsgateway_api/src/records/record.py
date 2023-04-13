@@ -14,7 +14,11 @@ from operationsgateway_api.src.exceptions import (
     ModelError,
     RecordError,
 )
-from operationsgateway_api.src.models import ConverterRange, RecordModel
+from operationsgateway_api.src.models import (
+    DateConverterRange,
+    RecordModel,
+    ShotnumConverterRange,
+)
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.image import Image
@@ -318,18 +322,22 @@ class Record:
             # Convert date range to shot number range
             comparison_field_name = "metadata.timestamp"
             output_field_name = "$metadata.shotnum"
+            min_field_name = "min"
+            max_field_name = "max"
 
             try:
-                range_input = ConverterRange(**date_range)
+                range_input = DateConverterRange(**date_range)
             except ValidationError as exc:
                 raise ModelError(str(exc)) from exc
         elif shotnum_range:
             # Convert shot number range to date range
             comparison_field_name = "metadata.shotnum"
             output_field_name = "$metadata.timestamp"
+            min_field_name = "from"
+            max_field_name = "to"
 
             try:
-                range_input = ConverterRange(**shotnum_range)
+                range_input = ShotnumConverterRange(**shotnum_range)
             except ValidationError as exc:
                 raise ModelError(str(exc)) from exc
         else:
@@ -341,8 +349,14 @@ class Record:
                     "$and": [
                         {
                             comparison_field_name: {
-                                "$gte": range_input.min_,
-                                "$lte": range_input.max_,
+                                "$gte": getattr(
+                                    range_input,
+                                    range_input.opposite_range_fields[min_field_name],
+                                ),
+                                "$lte": getattr(
+                                    range_input,
+                                    range_input.opposite_range_fields[max_field_name],
+                                ),
                             },
                         },
                     ],
@@ -351,8 +365,8 @@ class Record:
             {
                 "$group": {
                     "_id": None,
-                    "min": {"$min": output_field_name},
-                    "max": {"$max": output_field_name},
+                    min_field_name: {"$min": output_field_name},
+                    max_field_name: {"$max": output_field_name},
                 },
             },
         ]
@@ -365,6 +379,9 @@ class Record:
             raise DatabaseError("No results have been found from database query")
 
         try:
-            return ConverterRange(**converted_range[0])
+            if shotnum_range:
+                return DateConverterRange(**converted_range[0])
+            else:
+                return ShotnumConverterRange(**converted_range[0])
         except ValidationError as exc:
             raise ModelError(str(exc)) from exc
