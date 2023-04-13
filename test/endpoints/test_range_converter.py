@@ -3,6 +3,7 @@ import json
 from fastapi.testclient import TestClient
 import pytest
 
+
 class TestRangeConverter:
     @pytest.mark.parametrize(
         "date_range, shotnum_range, expected_response",
@@ -70,7 +71,7 @@ class TestRangeConverter:
         assert test_response.status_code == 200
 
         assert test_response.json() == expected_response
-    
+
     @pytest.mark.parametrize(
         "date_range, shotnum_range, expected_status_code",
         [
@@ -127,13 +128,15 @@ class TestRangeConverter:
         expected_status_code,
     ):
         if shotnum_range and date_range:
-            input_range_query_params = f"shotnum_range={json.dumps(shotnum_range)}&date_range={json.dumps(date_range)}"
+            input_range_query_params = (
+                f"shotnum_range={json.dumps(shotnum_range)}"
+                f"&date_range={json.dumps(date_range)}"
+            )
         elif shotnum_range:
             input_range_query_params = f"shotnum_range={json.dumps(shotnum_range)}"
         elif date_range:
             input_range_query_params = f"date_range={json.dumps(date_range)}"
 
-        print(f"/records/range_converter?{input_range_query_params}")
         test_response = test_app.get(
             f"/records/range_converter?{input_range_query_params}",
             headers={"Authorization": f"Bearer {login_and_get_token}"},

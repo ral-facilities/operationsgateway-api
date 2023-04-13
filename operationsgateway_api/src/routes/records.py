@@ -11,7 +11,10 @@ from operationsgateway_api.src.auth.authorisation import (
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import QueryParameterError
 from operationsgateway_api.src.records.record import Record as Record
-from operationsgateway_api.src.routes.common_parameters import ParameterHandler
+from operationsgateway_api.src.routes.common_parameters import (
+    ParameterHandler,
+    QueryParameterJSONParser,
+)
 
 
 log = logging.getLogger()
@@ -27,7 +30,7 @@ router = APIRouter()
 @endpoint_error_handling
 async def get_records(
     # TODO - investigate linting errors
-    conditions: dict = Depends(ParameterHandler.filter_conditions),  # noqa: B008
+    conditions: dict = Depends(QueryParameterJSONParser("conditions")),  # noqa: B008
     skip: int = Query(  # noqa: B008
         0,
         description="How many documents should be skipped before returning results",
@@ -112,7 +115,7 @@ async def get_records(
 )
 @endpoint_error_handling
 async def count_records(
-    conditions: dict = Depends(ParameterHandler.filter_conditions),  # noqa: B008
+    conditions: dict = Depends(QueryParameterJSONParser("conditions")),  # noqa: B008
     access_token: str = Depends(authorise_token),  # noqa: B008
 ):
     """
@@ -135,8 +138,10 @@ async def count_records(
 )
 @endpoint_error_handling
 async def convert_search_ranges(
-    date_range: dict = Depends(ParameterHandler.parse_date_range),  # noqa: B008
-    shotnum_range: dict = Depends(ParameterHandler.parse_shotnum_range),  # noqa: B008
+    shotnum_range: dict = Depends(  # noqa: B008
+        QueryParameterJSONParser("shotnum_range"),  # noqa: B008
+    ),
+    date_range: dict = Depends(QueryParameterJSONParser("date_range")),  # noqa: B008
     access_token: str = Depends(authorise_token),  # noqa: B008
 ):
     if date_range and shotnum_range:
@@ -159,7 +164,7 @@ async def get_record_by_id(
         ...,
         description="`_id` of the record to fetch from the database",
     ),
-    conditions: dict = Depends(ParameterHandler.filter_conditions),  # noqa: B008
+    conditions: dict = Depends(QueryParameterJSONParser("conditions")),  # noqa: B008
     truncate: Optional[bool] = Query(  # noqa: B008
         False,
         description="Parameter used for development to reduce the output of thumbnail"

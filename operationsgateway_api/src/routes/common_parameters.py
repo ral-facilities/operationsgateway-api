@@ -1,28 +1,14 @@
 from datetime import datetime
 import json
-from typing import Optional
 
 from dateutil.parser import parse
+from fastapi import Request
 import pymongo
 
 from operationsgateway_api.src.exceptions import QueryParameterError
 
 
 class ParameterHandler:
-    @staticmethod
-    async def filter_conditions(
-        conditions: Optional[str] = None,
-    ):
-        """
-        Converts a JSON string that comes from a query parameter into a Python dict
-
-        FastAPI doesn't directly support dictionary query parameters, so they must be
-        converted using `json.loads()` and 'injected' into the endpoint function using
-        `Depends()`
-        """
-
-        return json.loads(conditions) if conditions is not None else {}
-
     @staticmethod
     def extract_order_data(orders):
         """
@@ -80,16 +66,11 @@ class ParameterHandler:
 
             return new_date
 
-    # TODO - refactor this so there's a single function to do this. Probably need to
-    # read about `Depends()` on FastAPI's documentation
-    @staticmethod
-    async def parse_date_range(
-        date_range: Optional[str] = None,
-    ):
-        return json.loads(date_range) if date_range is not None else {}
 
-    @staticmethod
-    async def parse_shotnum_range(
-        shotnum_range: Optional[str] = None,
-    ):
-        return json.loads(shotnum_range) if shotnum_range is not None else {}
+class QueryParameterJSONParser:
+    def __init__(self, query_param_name: str) -> None:
+        self.query_param_name = query_param_name
+
+    def __call__(self, req: Request) -> dict:
+        query_param_value = req.query_params.get(self.query_param_name)
+        return json.loads(query_param_value) if query_param_value is not None else {}
