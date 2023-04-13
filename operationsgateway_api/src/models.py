@@ -4,7 +4,7 @@ from typing import ClassVar, Dict, List, Literal, Optional, Union
 import numpy as np
 from pydantic import BaseModel, Field, root_validator, validator
 
-from operationsgateway_api.src.exceptions import ChannelManifestError
+from operationsgateway_api.src.exceptions import ChannelManifestError, ModelError
 
 
 class ImageModel(BaseModel):
@@ -151,5 +151,12 @@ class ChannelSummaryModel(BaseModel):
 
 
 class ConverterRange(BaseModel):
-    min: Union[int, datetime]
-    max: Union[int, datetime]
+    min_: Union[int, datetime] = Field(alias="min")
+    max_: Union[int, datetime] = Field(alias="max")
+
+    @validator("max_")
+    def validate_min_max(cls, value, values):  # noqa: B902, N805
+        if value < values["min_"]:
+            raise ModelError("max cannot be less than min value")
+        else:
+            return value

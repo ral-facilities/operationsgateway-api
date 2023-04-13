@@ -139,11 +139,9 @@ async def convert_search_ranges(
     shotnum_range: dict = Depends(ParameterHandler.parse_shotnum_range),  # noqa: B008
     access_token: str = Depends(authorise_token),  # noqa: B008
 ):
-    # TODO - check min and max are correct way round (so min > max isn't allowed)
-    # Should be able to validate this in the Pydantic model
     if date_range and shotnum_range:
         raise QueryParameterError(
-            "Input cannot contain both date_range and shotnum_range",
+            "Query parameters cannot contain both date_range and shotnum_range",
         )
 
     return await Record.convert_search_ranges(date_range, shotnum_range)

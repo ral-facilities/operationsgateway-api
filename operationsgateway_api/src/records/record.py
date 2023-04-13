@@ -9,6 +9,7 @@ from pymongo.results import DeleteResult
 
 from operationsgateway_api.src.exceptions import (
     ChannelSummaryError,
+    DatabaseError,
     MissingDocumentError,
     ModelError,
     RecordError,
@@ -319,7 +320,7 @@ class Record:
             output_field_name = "$metadata.shotnum"
 
             try:
-                range = ConverterRange(**date_range)
+                range_input = ConverterRange(**date_range)
             except ValidationError as exc:
                 raise ModelError(str(exc)) from exc
         elif shotnum_range:
@@ -328,7 +329,7 @@ class Record:
             output_field_name = "$metadata.timestamp"
 
             try:
-                range = ConverterRange(**shotnum_range)
+                range_input = ConverterRange(**shotnum_range)
             except ValidationError as exc:
                 raise ModelError(str(exc)) from exc
         else:
@@ -340,8 +341,8 @@ class Record:
                     "$and": [
                         {
                             comparison_field_name: {
-                                "$gte": range.min,
-                                "$lte": range.max,
+                                "$gte": range_input.min_,
+                                "$lte": range_input.max_,
                             },
                         },
                     ],
@@ -357,7 +358,13 @@ class Record:
         ]
 
         converted_range = await MongoDBInterface.aggregate("records", pipeline)
+        if len(converted_range) == 0:
+            # This could be because dates/shot numbers provided are out of range, i.e.
+            # there's no records stored in the ranges provided by the request, hence
+            # the database is unable to find anything from the query
+            raise DatabaseError("No results have been found from database query")
+
         try:
             return ConverterRange(**converted_range[0])
         except ValidationError as exc:
-                raise ModelError(str(exc)) from exc
+            raise ModelError(str(exc)) from exc
