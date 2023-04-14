@@ -1,4 +1,5 @@
 import logging
+from multiprocessing.pool import ThreadPool
 
 from fastapi import APIRouter, Depends, status, UploadFile
 from fastapi.responses import JSONResponse
@@ -56,11 +57,16 @@ async def submit_hdf(
         record.store_thumbnail(waveform)
 
     log.debug("Processing images")
-    for i in images:
-        image = Image(i)
-        image.store()
+    image_instances = [Image(i) for i in images]
+    for image in image_instances:
         image.create_thumbnail()
         record.store_thumbnail(image)
+
+    # Upload images to Echo S3 using a thread pool to be more efficent when uploading
+    # multiple images from the same HDF file
+    if len(image_instances) > 0:
+        pool = ThreadPool(processes=len(image_instances))
+        pool.map(Image.upload_image, image_instances)
 
     if stored_record:
         log.debug(

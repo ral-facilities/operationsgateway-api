@@ -170,6 +170,7 @@ with open(f"{BASE_DIR}/channel_manifest.json", "r") as channel_manifest:
 for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
     if entry.is_dir():
         print(f"Iterating through {entry.path}")
+        directory_start_time = time()
         for file in sorted(os.scandir(entry.path), key=lambda e: e.name):
             if file.name.endswith(".h5"):
                 start_time = time()
@@ -195,6 +196,13 @@ for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
                     else:
                         print(f"{response.status_code} returned")
                         pprint(response.text)
+        directory_end_time = time()
+        directory_duration = directory_end_time - directory_start_time
+        
+        print(
+            f"Ingestion of {entry.path} complete, time taken:"
+            f" {directory_duration:0.2f} seconds",
+        )
 
 # Kill API process if it was started in this script
 # Using args.url because API_URL will be populated when API process was started

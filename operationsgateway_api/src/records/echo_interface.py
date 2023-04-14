@@ -37,7 +37,6 @@ class EchoInterface:
             )
             raise EchoS3Error("Bucket for image storage cannot be found") from exc
 
-
     def download_file_object(self, image_path: str) -> BytesIO:
         """
         Download an image from S3 using `download_fileobj()`. An image stored in a bytes
