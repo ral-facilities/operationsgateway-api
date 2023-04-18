@@ -50,6 +50,14 @@ jobs:
         run: mongoimport --db='${{ env.DATABASE_NAME }}' --collection='users' --file='util/users_for_mongoimport.json'
 
       # Configuration for API
+      - name: Configure echo access key
+        run: yq -i '.images.echo_access_key = "$ECHO_S3_ACCESS_KEY"' .github/ci_config.yml
+        env:
+          ECHO_S3_ACCESS_KEY: ${{secrets.ECHO_S3_ACCESS_KEY}}
+      - name: Configure echo secret key
+        run: yq -i '.images.echo_secret_key = "$ECHO_S3_SECRET_KEY"' .github/ci_config.yml
+        env:
+          ECHO_S3_SECRET_KEY: ${{secrets.ECHO_S3_SECRET_KEY}}
       - name: Move CI config.yml to correct place
         run: cp .github/ci_config.yml operationsgateway_api/config.yml
       - name: Create log file

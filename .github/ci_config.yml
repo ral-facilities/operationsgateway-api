@@ -8,6 +8,11 @@ images:
   waveform_thumbnail_size: [100, 100]
   default_colour_map: viridis
   colourbar_height_pixels: 16
+  echo_url: https://s3.echo.stfc.ac.uk
+  echo_username: operationsgateway
+  echo_access_key: access_key
+  echo_secret_key: secret_key
+  image_bucket_name: test-bucket
 logging:
   log_level: DEBUG
   log_location: /home/runner/work/operationsgateway-api/operationsgateway-api/logs.log
