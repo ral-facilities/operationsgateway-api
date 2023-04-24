@@ -59,7 +59,7 @@
             "precision": 5
         },
         "N_COMP_FF_YPOS": {
-            "name": "North compressed far field - x",
+            "name": "North compressed far field - y",
             "path": "/LA3/N_COMP/IMAGE",
             "type": "scalar",
             "units": "mm",
