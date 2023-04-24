@@ -24,7 +24,8 @@ mongodb:
   max_documents: 1000
   image_store_directory: /home/user/og-images
 auth:
-  # Create a private/public key pair for the auth functionality
+  # Path to a private/public key pair for the auth functionality. This key pair should
+  # be created before running the API, see instructions in README.md
   private_key_path: /home/user/og-auth/id_rsa
   public_key_path: /home/user/og-auth/id_rsa.pub
   jwt_algorithm: RS256
