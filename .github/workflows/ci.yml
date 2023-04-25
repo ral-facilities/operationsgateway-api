@@ -52,6 +52,8 @@ jobs:
       # Configuration for API
       - name: Move CI config.yml to correct place
         run: cp .github/ci_config.yml operationsgateway_api/config.yml
+      - name: Setup logging configuration
+        run: cp operationsgateway_api/logging.ini.example operationsgateway_api/logging.ini
       - name: Create log file
         run: touch "$GITHUB_WORKSPACE/logs.log"
 

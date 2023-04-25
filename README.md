@@ -27,7 +27,7 @@ Currently, the following Nox sessions have been created:
 - `tests` - this uses [pytest](https://docs.pytest.org/en/stable/) to execute the automated tests in `test/`. There are currently no automated tests written for this repository however.
 
 ## API Configuration
-In `operationsgateway_api/`, there is an example config file (`config.yml.example`). Copy this example so `config.yml` exists in the same directory level and edit the configuration as needed for your system.
+In `operationsgateway_api/`, there is an example config file (`config.yml.example`). Copy this example so `config.yml` exists in the same directory level and edit the configuration as needed for your system. There is also a logging configuration file (`logging.ini.example`). Follow the same procedure as the config file as to set up the logging.
 
 ## Authentication Configuration
 

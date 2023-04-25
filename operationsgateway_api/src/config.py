@@ -31,14 +31,6 @@ class ImagesConfig(BaseModel):
     colourbar_height_pixels: StrictInt
 
 
-class Logging(BaseModel):
-    """Configuration model class to store configuration of logging"""
-
-    log_level: StrictStr
-    log_location: StrictStr
-    log_message_location: StrictBool
-
-
 class MongoDB(BaseModel):
     """Configuration model class to store MongoDB configuration details"""
 
@@ -66,7 +58,6 @@ class APIConfig(BaseModel):
     """
 
     app: Optional[App]
-    logging: Logging
     mongodb: MongoDB
     auth: AuthConfig
     images: ImagesConfig
