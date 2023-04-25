@@ -63,7 +63,7 @@ class APIConfig(BaseModel):
     images: ImagesConfig
 
     @classmethod
-    def load(cls, path=Path(__file__).parent.parent / "config.yml"):  # noqa: B008
+    def load(cls, path=Path(__file__).parent.parent / "config.yml"):
         """
         Load the config data from the .yml file and store it as a dict
         """

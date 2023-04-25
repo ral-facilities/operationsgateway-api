@@ -48,8 +48,6 @@ def assert_thumbnails(record: dict, expected_thumbnail_md5s: dict):
         if channel_name in expected_thumbnail_md5s.keys():
             num_channels_found += 1
             b64_thumbnail_string = value["thumbnail"]
-            thumbnail_md5sum = hashlib.md5(
-                b64_thumbnail_string.encode(),
-            ).hexdigest()  # noqa: S303
+            thumbnail_md5sum = hashlib.md5(b64_thumbnail_string.encode()).hexdigest()
             assert thumbnail_md5sum == expected_thumbnail_md5s[channel_name]
     assert num_channels_found == len(expected_thumbnail_md5s.keys())

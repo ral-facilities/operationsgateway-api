@@ -15,7 +15,7 @@ security = HTTPBearer()
 
 @endpoint_error_handling
 async def authorise_token(
-    credentials: HTTPAuthorizationCredentials = Depends(security),  # noqa: B008
+    credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> str:
     """
     Method to check that a valid access token is passed as a Bearer token in the
@@ -31,7 +31,7 @@ async def authorise_token(
 @endpoint_error_handling
 async def authorise_route(
     request: Request,
-    credentials: HTTPAuthorizationCredentials = Depends(security),  # noqa: B008
+    credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> str:
     """
     Method to check that a valid access token is passed as a Bearer token in the
