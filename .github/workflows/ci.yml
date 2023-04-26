@@ -49,6 +49,21 @@ jobs:
       - name: Add test users to OperationsGateway database
         run: mongoimport --db='${{ env.DATABASE_NAME }}' --collection='users' --file='util/users_for_mongoimport.json'
 
+      # Install & configure s3cmd
+      - name: Install s3cmd
+        run: sudo apt-get install -y s3cmd
+      - name: Add keys to s3cmd config
+        run: sed -i -e 's/replace_with_access_key/"$ECHO_S3_ACCESS_KEY"/' -e 's/replace_with_secret_key/"$ECHO_S3_SECRET_KEY"/' .github/ci_s3cfg
+        env:
+          ECHO_S3_ACCESS_KEY: ${{secrets.ECHO_S3_ACCESS_KEY}}
+          ECHO_S3_SECRET_KEY: ${{secrets.ECHO_S3_SECRET_KEY}}
+      - name: Move s3cfg to correct place
+        run: cp .github/ci_s3cfg /home/runner/.s3cfg
+
+      # Create a bucket for image storage
+      - name: Create bucket for current job
+        run: s3cmd mb s3://og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}
+
       # Configuration for API
       - name: Configure echo access key
         run: yq -i '.images.echo_access_key = "$ECHO_S3_ACCESS_KEY"' .github/ci_config.yml
@@ -58,6 +73,8 @@ jobs:
         run: yq -i '.images.echo_secret_key = "$ECHO_S3_SECRET_KEY"' .github/ci_config.yml
         env:
           ECHO_S3_SECRET_KEY: ${{secrets.ECHO_S3_SECRET_KEY}}
+      - name: Configure bucket name for current run
+        run: yq -i '.images.image_bucket_name = og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}' .github/ci_config.yml
       - name: Move CI config.yml to correct place
         run: cp .github/ci_config.yml operationsgateway_api/config.yml
       - name: Create log file
@@ -111,6 +128,10 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Remove bucket for current job
+        run: s3cmd rb s3://og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}
+        if: ${{ always() }}
 
 
   linting:
