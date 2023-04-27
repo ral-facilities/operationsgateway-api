@@ -2,13 +2,16 @@ import argparse
 import json
 import os
 from pprint import pprint
-import shutil
 import socket
 from subprocess import Popen, PIPE
+import sys
 from time import sleep, time
 
+import boto3
 from motor.motor_asyncio import AsyncIOMotorClient
 import requests
+
+from operationsgateway_api.src.config import Config
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -63,13 +66,6 @@ parser.add_argument(
     action="store_true",
     default=False,
 )
-parser.add_argument(
-    "-i",
-    "--images-path",
-    type=str,
-    help="Image storage path, used when deleting images before ingestion",
-    default=None,
-)
 
 # Put command line options into variables
 args = parser.parse_args()
@@ -81,8 +77,7 @@ WIPE_DATABASE = args.wipe_database
 DATABASE_CONNECTION_URL = "mongodb://localhost:27017"
 DATABASE_NAME = args.database_name
 DELETE_IMAGES = args.delete_images
-IMAGES_PATH = args.images_path
-
+BUCKET_NAME = Config.config.images.image_bucket_name
 
 # Wipe collections in the database
 if WIPE_DATABASE:
@@ -94,16 +89,21 @@ if WIPE_DATABASE:
     waveforms_drop = db.waveforms.drop()
     print("Waveforms collection dropped")
 
-# Delete images from disk
+# Delete images from S3 object storage
 if DELETE_IMAGES:
-    for root, dirs, files in os.walk(IMAGES_PATH):
-        for f in files:
-            os.unlink(os.path.join(root, f))
-        print(f"Removed {len(files)} file(s) from base level of image path")
+    s3_resource = boto3.resource(
+        "s3",
+        endpoint_url=Config.config.images.echo_url,
+        aws_access_key_id=Config.config.images.echo_access_key,
+        aws_secret_access_key=Config.config.images.echo_secret_key,
+    )
 
-        for d in dirs:
-            shutil.rmtree(os.path.join(root, d))
-        print(f"Removed {len(dirs)} directorie(s) and their contents from image path")
+
+    bucket = s3_resource.Bucket(BUCKET_NAME)
+    print(f"Retrieved '{BUCKET_NAME}' bucket, going to delete all files in the bucket")
+    bucket.objects.all().delete()
+    print(f"Remove all files from the '{BUCKET_NAME}' bucket")
+
 
 def is_api_alive(host, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
