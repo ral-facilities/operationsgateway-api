@@ -16,9 +16,6 @@ class EchoInterface:
     OperationsGateway API, this is used to store and retrieve full-size images
     """
 
-    # TODO - I'll need to create a brand new bucket at the end of development, deleting
-    # 'test-bucket' while I'm at it
-
     def __init__(self) -> None:
         log.debug("Creating S3 resource to connect to Echo")
         self.resource = boto3.resource(
@@ -59,13 +56,3 @@ class EchoInterface:
     def delete_file_object(self) -> None:
         # TODO - this will be implemented when DELETE /records is implemented
         pass
-
-    def list_objects(self, prefix: str = "") -> None:
-        """
-        Given a prefix/directory level, print objects and a couple of metadata
-        attributes. This is used as a development helper function to provide an easier
-        way of seeing what's stored in the bucket
-        """
-        objects = self.bucket.objects.filter(Prefix=prefix)
-        for o in objects:
-            print(f"Key: {o.key}, Last Modified: {o.last_modified}, Size: {o.size}")

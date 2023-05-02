@@ -80,11 +80,7 @@ class HDFDataHandler:
             channel_metadata = dict(value.attrs)
 
             if value.attrs["channel_dtype"] == "image":
-                image_path = Image.get_image_path(
-                    self.record_id,
-                    channel_name,
-                    full_path=False,
-                )
+                image_path = Image.get_image_path(self.record_id, channel_name)
 
                 try:
                     self.images.append(

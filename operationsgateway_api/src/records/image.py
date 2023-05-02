@@ -102,11 +102,7 @@ class Image:
 
         log.info("Retrieving image and returning BytesIO object")
         try:
-            original_image_path = Image.get_image_path(
-                record_id,
-                channel_name,
-                full_path=False,
-            )
+            original_image_path = Image.get_image_path(record_id, channel_name)
 
             echo = EchoInterface()
             image_bytes = echo.download_file_object(original_image_path)
@@ -173,22 +169,9 @@ class Image:
                 ) from exc
 
     @staticmethod
-    def get_image_path(
-        record_id: str,
-        channel_name: str,
-        full_path: bool = True,
-    ) -> str:
+    def get_image_path(record_id: str, channel_name: str) -> str:
         """
-        Returns an image path given a record ID and channel name. By default, a full
-        path is returned, although this can be changed to not return the base directory
-        by using the `full_path` argument.
+        Returns an image path given a record ID and channel name
         """
 
-        # TODO - `full_path` not needed, should just be a single liner now
-        if full_path:
-            return (
-                f"{Config.config.mongodb.image_store_directory}/{record_id}/"
-                f"{channel_name}.png"
-            )
-        else:
-            return f"{record_id}/{channel_name}.png"
+        return f"{record_id}/{channel_name}.png"
