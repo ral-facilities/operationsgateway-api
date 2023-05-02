@@ -33,7 +33,7 @@ router = APIRouter()
 )
 @endpoint_error_handling
 async def login(
-    login_details: LoginDetailsModel = Body(  # noqa: B008
+    login_details: LoginDetailsModel = Body(
         ...,
         description="JSON object containing username and password",
     ),
@@ -85,7 +85,7 @@ async def login(
 )
 @endpoint_error_handling
 async def verify(
-    token: AccessTokenModel = Body(  # noqa: B008
+    token: AccessTokenModel = Body(
         ...,
         description="JSON object containing the token",
     ),
@@ -112,11 +112,11 @@ async def verify(
 )
 @endpoint_error_handling
 async def refresh(
-    token: AccessTokenModel = Body(  # noqa: B008
+    token: AccessTokenModel = Body(
         ...,
         description="JSON object containing the existing access token",
     ),
-    refresh_token: str = Cookie(  # noqa: B008
+    refresh_token: str = Cookie(
         None,
         description="The JWT refresh token from a cookie",
     ),

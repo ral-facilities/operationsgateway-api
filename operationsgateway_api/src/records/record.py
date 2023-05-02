@@ -9,11 +9,16 @@ from pymongo.results import DeleteResult
 
 from operationsgateway_api.src.exceptions import (
     ChannelSummaryError,
+    DatabaseError,
     MissingDocumentError,
     ModelError,
     RecordError,
 )
-from operationsgateway_api.src.models import RecordModel
+from operationsgateway_api.src.models import (
+    DateConverterRange,
+    RecordModel,
+    ShotnumConverterRange,
+)
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.image import Image
@@ -310,3 +315,73 @@ class Record:
                 # then a KeyError will be raised. This is normal behaviour, so
                 # acceptable to pass
                 pass
+
+    @staticmethod
+    async def convert_search_ranges(date_range, shotnum_range):
+        if date_range:
+            # Convert date range to shot number range
+            comparison_field_name = "metadata.timestamp"
+            output_field_name = "$metadata.shotnum"
+            min_field_name = "min"
+            max_field_name = "max"
+
+            try:
+                range_input = DateConverterRange(**date_range)
+            except ValidationError as exc:
+                raise ModelError(str(exc)) from exc
+        elif shotnum_range:
+            # Convert shot number range to date range
+            comparison_field_name = "metadata.shotnum"
+            output_field_name = "$metadata.timestamp"
+            min_field_name = "from"
+            max_field_name = "to"
+
+            try:
+                range_input = ShotnumConverterRange(**shotnum_range)
+            except ValidationError as exc:
+                raise ModelError(str(exc)) from exc
+        else:
+            raise RecordError("Both date range and shot number range are None")
+
+        pipeline = [
+            {
+                "$match": {
+                    "$and": [
+                        {
+                            comparison_field_name: {
+                                "$gte": getattr(
+                                    range_input,
+                                    range_input.opposite_range_fields[min_field_name],
+                                ),
+                                "$lte": getattr(
+                                    range_input,
+                                    range_input.opposite_range_fields[max_field_name],
+                                ),
+                            },
+                        },
+                    ],
+                },
+            },
+            {
+                "$group": {
+                    "_id": None,
+                    min_field_name: {"$min": output_field_name},
+                    max_field_name: {"$max": output_field_name},
+                },
+            },
+        ]
+
+        converted_range = await MongoDBInterface.aggregate("records", pipeline)
+        if len(converted_range) == 0:
+            # This could be because dates/shot numbers provided are out of range, i.e.
+            # there's no records stored in the ranges provided by the request, hence
+            # the database is unable to find anything from the query
+            raise DatabaseError("No results have been found from database query")
+
+        try:
+            if shotnum_range:
+                return DateConverterRange(**converted_range[0])
+            else:
+                return ShotnumConverterRange(**converted_range[0])
+        except ValidationError as exc:
+            raise ModelError(str(exc)) from exc

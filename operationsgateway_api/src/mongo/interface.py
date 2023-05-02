@@ -45,11 +45,11 @@ class MongoDBInterface:
     @staticmethod
     def find(
         collection_name: str = "images",
-        filter_: dict = {},  # noqa: B006
+        filter_: dict = None,
         skip: int = 0,
         limit: int = 0,
         sort: Union[str, List[Tuple[str, int]]] = "",
-        projection: Union[None, List[str]] = None,  # noqa: B006
+        projection: Union[None, List[str]] = None,
     ) -> Cursor:
         """
         Creates a query to find documents in a given collection, based on filters
@@ -58,6 +58,9 @@ class MongoDBInterface:
         Due to Motor being asynchronous, the query is executed in `query_to_list()`, not
         in this function
         """
+
+        if filter_ is None:
+            filter_ = {}
 
         log.info("Sending find() to MongoDB, collection: %s", collection_name)
         log.debug(
@@ -97,13 +100,16 @@ class MongoDBInterface:
     @staticmethod
     async def find_one(
         collection_name: str,
-        filter_: Dict[str, Any] = {},  # noqa: B006
+        filter_: Dict[str, Any] = None,
         sort: List[Tuple[str, int]] = None,
-        projection: List[str] = None,  # noqa: B006
+        projection: List[str] = None,
     ) -> Dict[str, Any]:
         """
         Based on a filter, find a single document in the record collection of MongoDB
         """
+
+        if filter_ is None:
+            filter_ = {}
 
         log.info("Sending find_one() to MongoDB, collection: %s", collection_name)
         log.debug("Filter: %s, Sort: %s, Projection: %s", filter_, sort, projection)
@@ -115,13 +121,18 @@ class MongoDBInterface:
     @staticmethod
     async def update_one(
         collection_name: str,
-        filter_: Dict[str, Any] = {},  # noqa: B006
-        update: Dict[str, Any] = {},  # noqa: B006
+        filter_: Dict[str, Any] = None,
+        update: Dict[str, Any] = None,
     ) -> UpdateResult:
         """
         Update a single document using the data provided. The document selected for the
         update is based on the input of the query filter
         """
+
+        if filter_ is None:
+            filter_ = {}
+        if update is None:
+            update = {}
 
         log.info("Sending update_one() to MongoDB, collection: %s", collection_name)
         log.debug("Filter: %s", filter_)
@@ -181,11 +192,14 @@ class MongoDBInterface:
     @staticmethod
     async def delete_one(
         collection_name: str,
-        filter_: Dict[str, Any] = {},  # noqa: B006
+        filter_: Dict[str, Any] = None,
     ) -> DeleteResult:
         """
         Given a condition, delete a single document from a collection
         """
+
+        if filter_ is None:
+            filter_ = {}
 
         log.info("Sending delete_one() to MongoDB, collection: %s", collection_name)
 
@@ -208,12 +222,15 @@ class MongoDBInterface:
     @staticmethod
     async def count_documents(
         collection_name: str,
-        filter_: Dict[str, Any] = {},  # noqa: B006
+        filter_: Dict[str, Any] = None,
     ) -> int:
         log.info(
             "Sending count_documents() to MongoDB, collection: %s",
             collection_name,
         )
+
+        if filter_ is None:
+            filter_ = {}
 
         collection = MongoDBInterface.get_collection_object(collection_name)
         try:
@@ -229,3 +246,12 @@ class MongoDBInterface:
                 "Error counting the number of documents in collection %s",
                 collection_name,
             ) from exc
+
+    @staticmethod
+    async def aggregate(
+        collection_name: str,
+        pipeline,
+    ):
+        collection = MongoDBInterface.get_collection_object(collection_name)
+        aggregate_query = collection.aggregate(pipeline)
+        return await MongoDBInterface.query_to_list(aggregate_query)

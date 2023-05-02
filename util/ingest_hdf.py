@@ -1,10 +1,12 @@
 import argparse
 import json
 import os
+from pathlib import Path
 from pprint import pprint
 import socket
 from subprocess import Popen, PIPE
 import sys
+import threading
 from time import sleep, time
 
 import boto3
@@ -114,6 +116,13 @@ def is_api_alive(host, port):
     except Exception:
         return False
 
+def clear_buffers(process, output=False):
+    out = process.stdout.read()
+    err = process.stderr.read()
+    if output:
+        print(out.decode("utf-8"))
+        print(err.decode("utf-8"))
+
 # Start API if an API URL isn't given as a command line option
 if not args.url:
     host = "127.0.0.1"
@@ -126,6 +135,8 @@ if not args.url:
             host,
             "--port",
             port,
+            "--log-config",
+            str(Path(__file__).parent.parent / "operationsgateway_api/logging.ini"),
         ],
         stdout=PIPE,
         stderr=PIPE,
@@ -137,6 +148,12 @@ if not args.url:
         api_alive = is_api_alive(host, port)
         sleep(1)
         print("API not started yet...")
+        # Check for the return code to see if the API started successfully
+        api_process.poll()
+        if api_process.returncode is not None and api_process.returncode != 0:
+            t = threading.Thread(target=clear_buffers, args=(api_process, True))
+            t.start()
+            sys.exit("API has failed to start up, please see output above")
 
     API_URL = f"http://{host}:{port}"
     print(f"API started on {API_URL}")
@@ -174,6 +191,11 @@ for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
         for file in sorted(os.scandir(entry.path), key=lambda e: e.name):
             if file.name.endswith(".h5"):
                 start_time = time()
+                # Flushing stdout buffer so it doesn't become full, causing the script
+                # to hang
+                t = threading.Thread(target=clear_buffers, args=(api_process,))
+                t.start()
+
                 with open(file.path, "rb") as hdf_upload:
                     response = requests.post(
                         f"{API_URL}/submit/hdf",

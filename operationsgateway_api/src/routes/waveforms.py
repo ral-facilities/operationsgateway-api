@@ -19,15 +19,15 @@ router = APIRouter()
 )
 @endpoint_error_handling
 async def get_waveform_by_id(
-    record_id: str = Path(  # noqa: B008
+    record_id: str = Path(
         "",
         description="ID of the record (usually timestamp)",
     ),
-    channel_name: str = Path(  # noqa: B008
+    channel_name: str = Path(
         "",
         description="Channel name containing the waveform",
     ),
-    access_token: str = Depends(authorise_token),  # noqa: B008
+    access_token: str = Depends(authorise_token),
 ):
     """
     This endpoint gets a single waveform object by channel name and the record ID that

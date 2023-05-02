@@ -77,6 +77,8 @@ jobs:
         run: yq -i '.images.image_bucket_name = "og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}"' .github/ci_config.yml
       - name: Move CI config.yml to correct place
         run: cp .github/ci_config.yml operationsgateway_api/config.yml
+      - name: Setup logging configuration
+        run: cp operationsgateway_api/logging.ini.example operationsgateway_api/logging.ini
       - name: Create log file
         run: touch "$GITHUB_WORKSPACE/logs.log"
 

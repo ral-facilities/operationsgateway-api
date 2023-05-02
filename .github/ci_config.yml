@@ -13,11 +13,6 @@ images:
   echo_access_key: access_key
   echo_secret_key: secret_key
   image_bucket_name: test-bucket
-logging:
-  log_level: DEBUG
-  log_location: /home/runner/work/operationsgateway-api/operationsgateway-api/logs.log
-  # Enables/disables information about the origin of the log message
-  log_message_location: true
 mongodb:
   mongodb_url: mongodb://localhost:27017
   database_name: opsgateway

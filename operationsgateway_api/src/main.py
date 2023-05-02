@@ -7,8 +7,7 @@ import orjson
 import uvicorn
 
 from operationsgateway_api.src.config import Config
-from operationsgateway_api.src.constants import ROUTE_MAPPINGS
-from operationsgateway_api.src.logger_config import setup_logger
+from operationsgateway_api.src.constants import LOG_CONFIG_LOCATION, ROUTE_MAPPINGS
 from operationsgateway_api.src.mongo.connection import ConnectionInstance
 from operationsgateway_api.src.routes import (
     auth,
@@ -50,6 +49,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def setup_logger():
+    libraries_info_logging = [
+        "boto3",
+        "botocore",
+        "nose",
+        "s3transfer",
+        "matplotlib.font_manager",
+    ]
+    for name in libraries_info_logging:
+        logging.getLogger(name).setLevel(logging.INFO)
+    logging.config.fileConfig(LOG_CONFIG_LOCATION)
+
 
 setup_logger()
 log = logging.getLogger()
@@ -96,5 +109,5 @@ if __name__ == "__main__":
         host=Config.config.app.host,
         port=Config.config.app.port,
         reload=Config.config.app.reload,
-        access_log=False,
+        log_config=LOG_CONFIG_LOCATION,
     )

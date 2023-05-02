@@ -9,8 +9,12 @@ from operationsgateway_api.src.auth.authorisation import (
     authorise_token,
 )
 from operationsgateway_api.src.error_handling import endpoint_error_handling
+from operationsgateway_api.src.exceptions import QueryParameterError
 from operationsgateway_api.src.records.record import Record as Record
-from operationsgateway_api.src.routes.common_parameters import ParameterHandler
+from operationsgateway_api.src.routes.common_parameters import (
+    ParameterHandler,
+    QueryParameterJSONParser,
+)
 
 
 log = logging.getLogger()
@@ -25,47 +29,46 @@ router = APIRouter()
 )
 @endpoint_error_handling
 async def get_records(
-    # TODO - investigate linting errors
-    conditions: dict = Depends(ParameterHandler.filter_conditions),  # noqa: B008
-    skip: int = Query(  # noqa: B008
+    conditions: dict = Depends(QueryParameterJSONParser("conditions")),
+    skip: int = Query(
         0,
         description="How many documents should be skipped before returning results",
     ),
-    limit: int = Query(  # noqa: B008
+    limit: int = Query(
         0,
         description="How many documents the result should be limited to",
     ),
-    order: Optional[List[str]] = Query(  # noqa: B008
+    order: Optional[List[str]] = Query(
         None,
         description="Specify order of results in the format of `field_name ASC`",
     ),
-    projection: Optional[List[str]] = Query(  # noqa: B008
+    projection: Optional[List[str]] = Query(
         None,
         description="Select specific fields in the record e.g. `metadata.shotnum`",
     ),
-    truncate: Optional[bool] = Query(  # noqa: B008
+    truncate: Optional[bool] = Query(
         False,
         description="Parameter used for development to reduce the output of thumbnail"
         " strings to 50 characters",
     ),
-    lower_level: Optional[int] = Query(  # noqa: B008
+    lower_level: Optional[int] = Query(
         0,
         description="The lower level threshold for false colour (0-255)",
         ge=0,
         le=255,
     ),
-    upper_level: Optional[int] = Query(  # noqa: B008
+    upper_level: Optional[int] = Query(
         255,
         description="The upper level threshold for false colour (0-255)",
         ge=0,
         le=255,
     ),
-    colourmap_name: Optional[str] = Query(  # noqa: B008
+    colourmap_name: Optional[str] = Query(
         None,
         description="The name of the matplotlib colour map to apply to the image"
         " thumbnails",
     ),
-    access_token: str = Depends(authorise_token),  # noqa: B008
+    access_token: str = Depends(authorise_token),
 ):
     """
     This endpoint uses MongoDB's find() method to query the records
@@ -111,8 +114,8 @@ async def get_records(
 )
 @endpoint_error_handling
 async def count_records(
-    conditions: dict = Depends(ParameterHandler.filter_conditions),  # noqa: B008
-    access_token: str = Depends(authorise_token),  # noqa: B008
+    conditions: dict = Depends(QueryParameterJSONParser("conditions")),
+    access_token: str = Depends(authorise_token),
 ):
     """
     This endpoint uses the `conditions` query parameter (i.e. like a WHERE filter) in
@@ -127,6 +130,28 @@ async def count_records(
 
 
 @router.get(
+    "/records/range_converter",
+    summary="Convert shot number range to date range and vice versa",
+    response_description="Range opposite to input",
+    tags=["Records"],
+)
+@endpoint_error_handling
+async def convert_search_ranges(
+    shotnum_range: dict = Depends(  # noqa: B008
+        QueryParameterJSONParser("shotnum_range"),  # noqa: B008
+    ),
+    date_range: dict = Depends(QueryParameterJSONParser("date_range")),  # noqa: B008
+    access_token: str = Depends(authorise_token),  # noqa: B008
+):
+    if date_range and shotnum_range:
+        raise QueryParameterError(
+            "Query parameters cannot contain both date_range and shotnum_range",
+        )
+
+    return await Record.convert_search_ranges(date_range, shotnum_range)
+
+
+@router.get(
     "/records/{id_}",
     summary="Get a record specified by its ID",
     response_description="Single record object",
@@ -134,34 +159,34 @@ async def count_records(
 )
 @endpoint_error_handling
 async def get_record_by_id(
-    id_: str = Path(  # noqa: B008
+    id_: str = Path(
         ...,
         description="`_id` of the record to fetch from the database",
     ),
-    conditions: dict = Depends(ParameterHandler.filter_conditions),  # noqa: B008
-    truncate: Optional[bool] = Query(  # noqa: B008
+    conditions: dict = Depends(QueryParameterJSONParser("conditions")),
+    truncate: Optional[bool] = Query(
         False,
         description="Parameter used for development to reduce the output of thumbnail"
         " strings to 50 characters",
     ),
-    lower_level: Optional[int] = Query(  # noqa: B008
+    lower_level: Optional[int] = Query(
         0,
         description="The lower level threshold for false colour (0-255)",
         ge=0,
         le=255,
     ),
-    upper_level: Optional[int] = Query(  # noqa: B008
+    upper_level: Optional[int] = Query(
         255,
         description="The upper level threshold for false colour (0-255)",
         ge=0,
         le=255,
     ),
-    colourmap_name: Optional[str] = Query(  # noqa: B008
+    colourmap_name: Optional[str] = Query(
         None,
         description="The name of the matplotlib colour map to apply to the image"
         " thumbnails",
     ),
-    access_token: str = Depends(authorise_token),  # noqa: B008
+    access_token: str = Depends(authorise_token),
 ):
     """
     Get a single record by its ID. The `conditions` query parameter exists but a
@@ -195,11 +220,11 @@ async def get_record_by_id(
 )
 @endpoint_error_handling
 async def delete_record_by_id(
-    id_: str = Path(  # noqa: B008
+    id_: str = Path(
         ...,
         description="`_id` of the record to delete from the database",
     ),
-    access_token: str = Depends(authorise_route),  # noqa: B008
+    access_token: str = Depends(authorise_route),
 ):
     # TODO 2 - full implementation will require searching through waveform channels to
     # remove the documents in the waveforms collection. The images will need to be
