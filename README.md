@@ -55,6 +55,30 @@ mongoimport --db='opsgateway' --collection='users' --mode='upsert' --file='util/
 
 Using the `upsert` mode allows you to update existing users with any changes that are made (e.g. added an authorised route to their entry) and any new users are inserted as normal. The command's output states the number of documents that have been added and how many have been updated.
 
+## Image Storage
+Configuration for image storage is stored in the `images` section of the config file. Images are stored using S3 object storage, currently the STFC Echo instance. Lots of documentation online references the AWS offering, but as S3 is the underlying storage technique, we can interact with Echo in the same way that a user would interact with AWS S3.
+
+Credentials to connect to Echo are provided in `config.yml`, as well as a bucket name, which is the location on S3 storage where images will be stored.
+
+For the API, we have multiple buckets, used for different purposes. For example, there's a bucket used for the dev server, a bucket per developer for their development environment, as well as buckets that are created for a short period of time for specific testing. This ensures that we're not overwriting each other's data and causing issues. For GitHub Actions, each run will create a new bucket, ingest data for testing and delete the bucket at the end of the run.
+
+To manage buckets, [s3cmd](https://s3tools.org/s3cmd) is a good command line utility. It provides an Unix-like interface to S3 storage, ___. This can be installed using `yum`, `apt-get` etc. There's an example configuration file in `.github/ci_s3cfg` which can be placed in `~/.s3cfg` and used for your own development environment.
+
+Here's a few useful example commands:
+```bash
+# Create a bucket called 'og-my-test-bucket'
+s3cmd mb s3://og-my-test-bucket
+
+# List everything that the current user can see
+s3cmd ls
+
+# List everything inside 'og-my-test-bucket'
+s3cmd ls s3://og-my-test-bucket
+
+# Remove bucket called 'og-my-test-bucket'. --recursive will remove all objects from the bucket if it isn't empty
+s3cmd rb --recursive s3://og-my-test-bucket
+```
+
 ## API Startup
 To start the API, use the following command:
 
