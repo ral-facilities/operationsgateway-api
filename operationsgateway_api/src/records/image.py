@@ -4,11 +4,16 @@ from io import BytesIO
 import logging
 from typing import Tuple
 
+from botocore.exceptions import ClientError
 import numpy as np
 from PIL import Image as PILImage
 
 from operationsgateway_api.src.config import Config
-from operationsgateway_api.src.exceptions import ImageError, ImageNotFoundError
+from operationsgateway_api.src.exceptions import (
+    EchoS3Error,
+    ImageError,
+    ImageNotFoundError,
+)
 from operationsgateway_api.src.models import ImageModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.echo_interface import EchoInterface
@@ -129,7 +134,7 @@ class Image:
                     colourmap_name,
                 )
                 return false_colour_image
-        except (OSError, RuntimeError) as exc:
+        except (ClientError, EchoS3Error) as exc:
             # Record.count_records() could not be used because that would cause a
             # circular import
             record_count = await MongoDBInterface.count_documents(

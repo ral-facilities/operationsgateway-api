@@ -42,6 +42,12 @@ class EchoInterface:
         log.info("Download image from Echo: %s", image_path)
         image = BytesIO()
         self.bucket.download_fileobj(Fileobj=image, Key=image_path)
+        if len(image.getvalue()) == 0:
+            log.warning(
+                "Image bytes array is empty, image download from S3 might have been"
+                " unsuccessful: %s",
+                image_path,
+            )
         return image
 
     def upload_file_object(self, image_object: BytesIO, image_path: str) -> None:
