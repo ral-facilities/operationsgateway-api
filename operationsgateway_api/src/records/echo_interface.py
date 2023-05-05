@@ -24,15 +24,19 @@ class EchoInterface:
             aws_access_key_id=Config.config.images.echo_access_key,
             aws_secret_access_key=Config.config.images.echo_secret_key,
         )
+
         log.debug("Retrieving bucket '%s'", Config.config.images.image_bucket_name)
-        try:
-            self.bucket = self.resource.Bucket(Config.config.images.image_bucket_name)
-        except self.resource.meta.client.exceptions.NoSuchBucket as exc:
+        self.bucket = self.resource.Bucket(Config.config.images.image_bucket_name)
+        # If a bucket doesn't exist, Bucket() won't raise an exception, so we have to
+        # check ourselves. Checking for a creation date means we don't need to make a
+        # second call using boto, where a low-level client API call would be needed.
+        # See https://stackoverflow.com/a/49817544
+        if not self.bucket.creation_date:
             log.error(
                 "Bucket cannot be found: %s",
                 Config.config.images.image_bucket_name,
             )
-            raise EchoS3Error("Bucket for image storage cannot be found") from exc
+            raise EchoS3Error("Bucket for image storage cannot be found")
 
     def download_file_object(self, image_path: str) -> BytesIO:
         """

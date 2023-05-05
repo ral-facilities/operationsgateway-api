@@ -106,10 +106,10 @@ class Image:
         """
 
         log.info("Retrieving image and returning BytesIO object")
+        echo = EchoInterface()
+
         try:
             original_image_path = Image.get_image_path(record_id, channel_name)
-
-            echo = EchoInterface()
             image_bytes = echo.download_file_object(original_image_path)
 
             if original_image:
