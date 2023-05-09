@@ -8,9 +8,8 @@ import orjson
 import uvicorn
 
 from operationsgateway_api.src.config import Config
-from operationsgateway_api.src.constants import ROUTE_MAPPINGS
+from operationsgateway_api.src.constants import LOG_CONFIG_LOCATION, ROUTE_MAPPINGS
 import operationsgateway_api.src.experiments.runners as runners
-from operationsgateway_api.src.logger_config import setup_logger
 from operationsgateway_api.src.mongo.connection import ConnectionInstance
 from operationsgateway_api.src.routes import (
     auth,
@@ -53,6 +52,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def setup_logger():
+    # Disable excessive debug logging from suds when contacting the Scheduler via WSDL
+    logging.getLogger("zeep").setLevel(logging.INFO)
+    logging.config.fileConfig(LOG_CONFIG_LOCATION)
+
 
 setup_logger()
 log = logging.getLogger()
@@ -108,5 +114,5 @@ if __name__ == "__main__":
         host=Config.config.app.host,
         port=Config.config.app.port,
         reload=Config.config.app.reload,
-        access_log=False,
+        log_config=LOG_CONFIG_LOCATION,
     )

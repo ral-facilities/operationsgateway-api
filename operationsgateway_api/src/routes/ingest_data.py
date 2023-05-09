@@ -26,7 +26,7 @@ router = APIRouter()
 @endpoint_error_handling
 async def submit_hdf(
     file: UploadFile,
-    access_token: str = Depends(authorise_route),  # noqa: B008
+    access_token: str = Depends(authorise_route),
 ):
     """
     This endpoint accepts a HDF file, processes it and stores the data in MongoDB (with
@@ -89,7 +89,7 @@ async def submit_hdf(
 async def submit_manifest(
     file: UploadFile,
     bypass_channel_check: bool = False,
-    access_token: str = Depends(authorise_route),  # noqa: B008
+    access_token: str = Depends(authorise_route),
 ):
     log.info("Submitting channel manifest file into database")
     log.debug("Filename: %s, Content: %s", file.filename, file.content_type)

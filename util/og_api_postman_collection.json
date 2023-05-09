@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "1577454a-579b-46d8-9c25-89fde00002e5",
+		"_postman_id": "7ddd3777-519b-4ad8-a53b-eae761747861",
 		"name": "OperationsGateway API",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "5024263"
 	},
 	"item": [
 		{
@@ -724,6 +725,46 @@
 								"waveforms",
 								"20220408140310",
 								"N_COMP_SPEC_TRACE"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Convert Date Range & Shot Number Range",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/records/range_converter",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"records",
+								"range_converter"
+							],
+							"query": [
+								{
+									"key": "date_range",
+									"value": "{\"from\": \"2022-04-07 14:16:19\", \"to\": \"2022-04-07 21:00:00\"}",
+									"disabled": true
+								},
+								{
+									"key": "shotnum_range",
+									"value": "{\"min\": 366272, \"max\": 366279}",
+									"disabled": true
+								}
 							]
 						}
 					},

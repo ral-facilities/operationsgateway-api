@@ -8,11 +8,6 @@ images:
   waveform_thumbnail_size: [100, 100]
   default_colour_map: viridis
   colourbar_height_pixels: 16
-logging:
-  log_level: DEBUG
-  log_location: /home/runner/work/operationsgateway-api/operationsgateway-api/logs.log
-  # Enables/disables information about the origin of the log message
-  log_message_location: true
 mongodb:
   mongodb_url: mongodb://localhost:27017
   database_name: opsgateway

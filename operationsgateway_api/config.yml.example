@@ -1,18 +1,17 @@
+# app section is optional for dev/production instances where these values are configured
+# using the systemd unit file
 app:
   host: 127.0.0.1
   port: 8000
   # API will auto-reload when changes on code files are detected
   reload: true
 images:
+  # Thumbnail sizes should only ever be two element lists, of a x, y resolution
   image_thumbnail_size: [50, 50]
   waveform_thumbnail_size: [100, 100]
+  # Colour maps for Matplotlib can be used
   default_colour_map: viridis
   colourbar_height_pixels: 16
-logging:
-  log_level: DEBUG
-  log_location: /var/log/operationsgateway-api.log
-  # Enables/disables information about the origin of the log message
-  log_message_location: true
 mongodb:
   mongodb_url: mongodb://localhost:27017
   database_name: opsgateway
@@ -20,6 +19,8 @@ mongodb:
   max_documents: 1000
   image_store_directory: /home/user/og-images
 auth:
+  # Path to a private/public key pair for the auth functionality. This key pair should
+  # be created before running the API, see instructions in README.md
   private_key_path: /home/user/og-auth/id_rsa
   public_key_path: /home/user/og-auth/id_rsa.pub
   jwt_algorithm: RS256
