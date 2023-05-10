@@ -239,14 +239,15 @@ if REINGEST_EXPERIMENTS:
     if response.status_code == 200:
         print(
             f"Ingested {len(response.json())} experiments from Scheduler. Response from"
-            " API call:")
+            " API call:",
+        )
         pprint(response.json())
     else:
         print(f"{response.status_code} returned")
         pprint(response.text)
 
-    # Kill API process if it was started in this script
-    # Using args.url because API_URL will be populated when API process was started
-    if not args.url:
-        api_process.kill()
-        print(f"API stopped on {API_URL}")
+# Kill API process if it was started in this script
+# Using args.url because API_URL will be populated when API process was started
+if not args.url:
+    api_process.kill()
+    print(f"API stopped on {API_URL}")
