@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import ClassVar, Dict, List, Literal, Optional, Union
+from typing import Any, ClassVar, Dict, List, Literal, Optional, Union
 
 import numpy as np
 from pydantic import BaseModel, Field, root_validator, validator
@@ -176,3 +176,15 @@ class DateConverterRange(BaseModel):
             raise ModelError("to cannot be less than from value")
         else:
             return value
+
+
+class UserSessionModel(BaseModel):
+    id_: Optional[str] = Field(alias="_id")
+    username: str
+    name: str
+    summary: str
+    timestamp: datetime
+    session: Dict[str, Any]
+
+    class Config:
+        arbitrary_types_allowed = True

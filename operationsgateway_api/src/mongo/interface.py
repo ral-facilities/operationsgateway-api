@@ -123,6 +123,7 @@ class MongoDBInterface:
         collection_name: str,
         filter_: Dict[str, Any] = None,
         update: Dict[str, Any] = None,
+        upsert: bool = False,
     ) -> UpdateResult:
         """
         Update a single document using the data provided. The document selected for the
@@ -142,6 +143,7 @@ class MongoDBInterface:
             return await collection.update_one(
                 filter_,
                 update,
+                upsert=upsert,
             )
         except WriteError as exc:
             log.exception(msg=exc)
