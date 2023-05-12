@@ -67,10 +67,13 @@ log.info("Logging now setup")
 
 @app.on_event("startup")
 async def get_experiments_on_startup():
-    log.info(
-        "Creating task for Scheduler system to be contacted for experiment details",
-    )
-    asyncio.create_task(runners.scheduler_runner.start_task())
+    if Config.config.experiments.scheduler_background_task_enabled:
+        log.info(
+            "Creating task for Scheduler system to be contacted for experiment details",
+        )
+        asyncio.create_task(runners.scheduler_runner.start_task())
+    else:
+        log.info("Scheduler background task has not been enabled")
 
 
 @app.on_event("startup")

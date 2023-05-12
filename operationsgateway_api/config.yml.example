@@ -38,6 +38,8 @@ experiments:
   # contacting the Scheduler for the 'new experiments'. This setting is only used the
   # first time that experiments are being populated into the database
   first_scheduler_contact_start_date: 2019-01-02T00:00:00Z
+  # Flag to enable/disable the background task to contact the Scheduler
+  scheduler_background_task_enabled: false
   # Cron job string format. Every Monday at 9:00am - 0 9 * * 1
   scheduler_background_frequency: 0 9 * * 1
   # Timezones as per dateutil.tz. https://stackoverflow.com/a/15454186 provides a way of

@@ -59,6 +59,7 @@ class ExperimentsConfig(BaseModel):
     """Configuration model class to store experiment configuration details"""
 
     first_scheduler_contact_start_date: datetime
+    scheduler_background_task_enabled: StrictBool
     scheduler_background_frequency: StrictStr
     scheduler_background_timezone: StrictStr
     scheduler_background_retry_mins: float
