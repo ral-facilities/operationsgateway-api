@@ -1,4 +1,8 @@
+import logging
+
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
+
+log = logging.getLogger()
 
 
 class UserSessionList:
@@ -11,13 +15,15 @@ class UserSessionList:
         Get a list of user sessions that belong to a particular user
         """
 
+        log.info(
+            "Finding sessions of user '%s' and querying for the metadata",
+            self.username,
+        )
         session_list_query = MongoDBInterface.find(
             "sessions",
             filter_={"username": self.username},
-            projection="name",
+            projection=["name", "summary", "timestamp"],
         )
 
-        # TODO - decide what should be included in the list
         results = await MongoDBInterface.query_to_list(session_list_query)
-        session_ids = [result["_id"] for result in results]
-        return session_ids
+        return results

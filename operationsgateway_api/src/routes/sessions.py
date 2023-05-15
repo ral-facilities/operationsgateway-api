@@ -30,7 +30,8 @@ async def get_user_sessions_list(
     access_token: str = Depends(authorise_token),
 ):
     """
-    Get a list of user sessions that belong to the current user
+    Get a list of user sessions that belong to the current user and respond with the
+    sessions' metadata
     """
 
     token_payload = JwtHandler.get_payload(access_token)
