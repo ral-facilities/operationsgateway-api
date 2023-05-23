@@ -94,6 +94,16 @@ class UserSession:
         if update_result.modified_count != 1:
             raise DatabaseError(f"Update to {self.session.id_} has been unsuccessful")
 
+    async def insert(self) -> None:
+        """
+        Insert a new user session in the database
+        """
+
+        await MongoDBInterface.insert_one(
+            "sessions",
+            self.session.dict(by_alias=True, exclude_unset=True),
+        )
+
     async def upsert(self) -> None:
         """
         Upsert a user session in the database

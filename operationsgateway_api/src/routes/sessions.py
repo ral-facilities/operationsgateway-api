@@ -19,6 +19,7 @@ log = logging.getLogger()
 router = APIRouter()
 
 
+# TODO - update Postman collection
 @router.get(
     "/sessions/list",
     summary="Get a list of session names that belong to the given user",
@@ -86,7 +87,7 @@ async def delete_user_session(
     return Response(status_code=HTTPStatus.NO_CONTENT.value)
 
 
-@router.put(
+@router.post(
     "/sessions",
     summary="Store a session into the database",
     response_description="ID of the user session that's been inserted/updated",
@@ -130,18 +131,14 @@ async def save_user_session(
     )
 
     log.debug("Session: %s", session_data)
-
     user_session = UserSession(session_data)
-    inserted = await user_session.upsert()
+    await user_session.insert()
 
-    if inserted:
-        return JSONResponse(
-            str(user_session.session.id_),
-            status_code=status.HTTP_201_CREATED,
-            headers={"Location": f"/sessions/{user_session.session.id_}"},
-        )
-    else:
-        return f"Updated {user_session.session.id_}"
+    return JSONResponse(
+        str(user_session.session.id_),
+        status_code=status.HTTP_201_CREATED,
+        headers={"Location": f"/sessions/{user_session.session.id_}"},
+    )
 
 
 @router.patch(
