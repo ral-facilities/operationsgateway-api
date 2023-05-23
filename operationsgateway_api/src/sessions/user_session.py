@@ -4,6 +4,7 @@ from pydantic import ValidationError
 
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.exceptions import (
+    DatabaseError,
     ForbiddenError,
     MissingDocumentError,
     ModelError,
@@ -56,7 +57,7 @@ class UserSession:
         )
         if not username_match:
             raise ForbiddenError(
-                "Session attempted to be deleted does not belong to current user",
+                "Session attempting to be deleted does not belong to current user",
             )
 
         delete_result = await MongoDBInterface.delete_one(
@@ -64,6 +65,34 @@ class UserSession:
             filter_={"_id": id_},
         )
         log.debug("Number of sessions deleted: %d", delete_result.deleted_count)
+
+    async def update(self, access_token: str) -> None:
+        """
+        Update a user session, checking the session belongs to the user performing the
+        update before doing a database transaction
+        """
+
+        username_match = UserSession._is_user_authorised(
+            access_token,
+            self.session.username,
+        )
+        if not username_match:
+            raise ForbiddenError(
+                "Session attempting to be updated does not belong to current user",
+            )
+
+        # TODO - remove upsert parameter from update_one?
+        update_result = await MongoDBInterface.update_one(
+            "sessions",
+            {"_id": self.session.id_},
+            {"$set": self.session.dict(by_alias=True, exclude_unset=True)},
+            upsert=False,
+        )
+
+        if update_result.matched_count != 1:
+            raise MissingDocumentError("User session cannot be found in the database")
+        if update_result.modified_count != 1:
+            raise DatabaseError(f"Update to {self.session.id_} has been unsuccessful")
 
     async def upsert(self) -> None:
         """

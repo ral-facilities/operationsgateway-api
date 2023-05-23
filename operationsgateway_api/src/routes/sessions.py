@@ -142,3 +142,55 @@ async def save_user_session(
         )
     else:
         return f"Updated {user_session.session.id_}"
+
+
+@router.patch(
+    "/sessions/{id_}",
+    summary="Update a session given its ID",
+    response_description="Confirmation that the user session has been successfully"
+    "updated",
+    tags=["Sessions"],
+)
+@endpoint_error_handling
+async def update_user_session(
+    id_: str = Path(
+        ...,
+        description="`_id` of the user session to remove from the database",
+    ),
+    data: Dict[str, Any] = Body(...),
+    name: str = Query(
+        "",
+        description="Name of the user session",
+    ),
+    summary: Optional[str] = Query(
+        None,
+        description="Summary of the user session",
+    ),
+    auto_saved: bool = Query(
+        description="Flag to show whether the session has been manually or"
+        " automatically saved",
+    ),
+    access_token: str = Depends(authorise_token),
+):
+    """
+    Update a user session (and its metadata) given its ID as a path parameter
+    """
+
+    token_payload = JwtHandler.get_payload(access_token)
+    username = token_payload["username"]
+
+    # TODO - move this into init of UserSession?
+    session_data = UserSessionModel(
+        _id=id_,
+        username=username,
+        name=name,
+        summary=summary,
+        auto_saved=auto_saved,
+        timestamp=datetime.strftime(datetime.now(), DATA_DATETIME_FORMAT),
+        session=data,
+    )
+
+    user_session = UserSession(session_data)
+
+    await user_session.update(access_token)
+    return f"Updated {user_session.session.id_}"
