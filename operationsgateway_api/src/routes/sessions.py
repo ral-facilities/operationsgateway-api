@@ -3,13 +3,17 @@ from http import HTTPStatus
 import logging
 from typing import Any, Dict, Optional
 
+from bson import ObjectId
+from bson.errors import InvalidId
 from fastapi import APIRouter, Body, Depends, Path, Query, Response, status
 from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 
 from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.constants import DATA_DATETIME_FORMAT
 from operationsgateway_api.src.error_handling import endpoint_error_handling
+from operationsgateway_api.src.exceptions import ModelError
 from operationsgateway_api.src.models import UserSessionModel
 from operationsgateway_api.src.sessions.user_session import UserSession
 from operationsgateway_api.src.sessions.user_session_list import UserSessionList
@@ -48,7 +52,6 @@ async def get_user_sessions_list(
 )
 @endpoint_error_handling
 async def get_user_session(
-    # TODO - what happens if the ID contains /? Same for DELETE endpoint
     id_: str = Path(
         ...,
         description="`_id` of the user session to fetch from the database",
@@ -121,7 +124,6 @@ async def save_user_session(
     username = token_payload["username"]
 
     session_data = UserSessionModel(
-        _id=f"{username}_{name}",
         username=username,
         name=name,
         summary=summary,
@@ -132,12 +134,12 @@ async def save_user_session(
 
     log.debug("Session: %s", session_data)
     user_session = UserSession(session_data)
-    await user_session.insert()
+    inserted_id = await user_session.insert()
 
     return JSONResponse(
-        str(user_session.session.id_),
+        str(inserted_id),
         status_code=status.HTTP_201_CREATED,
-        headers={"Location": f"/sessions/{user_session.session.id_}"},
+        headers={"Location": f"/sessions/{inserted_id}"},
     )
 
 
@@ -176,16 +178,20 @@ async def update_user_session(
     token_payload = JwtHandler.get_payload(access_token)
     username = token_payload["username"]
 
-    # TODO - move this into init of UserSession?
-    session_data = UserSessionModel(
-        _id=id_,
-        username=username,
-        name=name,
-        summary=summary,
-        auto_saved=auto_saved,
-        timestamp=datetime.strftime(datetime.now(), DATA_DATETIME_FORMAT),
-        session=data,
-    )
+    try:
+        session_data = UserSessionModel(
+            _id=ObjectId(id_),
+            username=username,
+            name=name,
+            summary=summary,
+            auto_saved=auto_saved,
+            timestamp=datetime.strftime(datetime.now(), DATA_DATETIME_FORMAT),
+            session=data,
+        )
+    except ValidationError as exc:
+        raise ModelError(str(exc)) from exc
+    except InvalidId as exc:
+        raise ModelError("ID provided is not a valid ObjectId") from exc
 
     user_session = UserSession(session_data)
 

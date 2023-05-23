@@ -148,8 +148,7 @@ class MongoDBInterface:
         except WriteError as exc:
             log.exception(msg=exc)
             raise DatabaseError(
-                "Error when updating single document in %s collection",
-                collection_name,
+                f"Error when updating single document in {collection_name} collection",
             ) from exc
 
     @staticmethod

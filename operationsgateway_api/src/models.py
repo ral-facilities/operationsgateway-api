@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Literal, Optional, Union
 
+from bson.objectid import ObjectId
 import numpy as np
 from pydantic import BaseModel, Field, root_validator, validator
 
@@ -178,8 +179,20 @@ class DateConverterRange(BaseModel):
             return value
 
 
+class PyObjectId(ObjectId):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v):
+        if not isinstance(v, ObjectId):
+            raise TypeError("ObjectId required")
+        return str(v)
+
+
 class UserSessionModel(BaseModel):
-    id_: Optional[str] = Field(alias="_id")
+    id_: Optional[PyObjectId] = Field(alias="_id")
     username: str
     name: str
     summary: str
@@ -189,3 +202,13 @@ class UserSessionModel(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+
+
+class UserSessionListModel(UserSessionModel):
+    # Make fields optional that aren't needed in the session list and exclude them from
+    # displaying on output
+    username: Optional[str]
+    session: Optional[Dict[str, Any]]
+
+    class Config:
+        fields = {"username": {"exclude": True}, "session": {"exclude": True}}

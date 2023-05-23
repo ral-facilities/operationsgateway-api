@@ -1,5 +1,8 @@
 import logging
+from typing import Any
 
+from bson.errors import InvalidId
+from bson.objectid import ObjectId
 from pydantic import ValidationError
 
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
@@ -17,7 +20,6 @@ log = logging.getLogger()
 
 class UserSession:
     # TODO - logging
-    # TODO - try inheriting this class from UserSession
     def __init__(self, session: UserSessionModel) -> None:
         self.session = session
 
@@ -28,10 +30,13 @@ class UserSession:
         `UserSessionModel`
         """
 
-        session_dict = await MongoDBInterface.find_one(
-            "sessions",
-            filter_={"_id": id_},
-        )
+        try:
+            session_dict = await MongoDBInterface.find_one(
+                "sessions",
+                filter_={"_id": ObjectId(id_)},
+            )
+        except InvalidId as exc:
+            raise ModelError("ID provided is not a valid ObjectId") from exc
 
         if session_dict:
             try:
@@ -60,11 +65,24 @@ class UserSession:
                 "Session attempting to be deleted does not belong to current user",
             )
 
-        delete_result = await MongoDBInterface.delete_one(
-            "sessions",
-            filter_={"_id": id_},
+        try:
+            delete_result = await MongoDBInterface.delete_one(
+                "sessions",
+                filter_={"_id": ObjectId(id_)},
+            )
+        except InvalidId as exc:
+            raise ModelError("ID provided is not a valid ObjectId") from exc
+
+        log.debug(
+            "Number of sessions deleted: %d. _id: %s",
+            delete_result.deleted_count,
+            id_,
         )
-        log.debug("Number of sessions deleted: %d", delete_result.deleted_count)
+        if delete_result.deleted_count != 1:
+            raise DatabaseError(
+                "Unexpected result when deleting. Number of results deleted:"
+                f"{delete_result.deleted_count}",
+            )
 
     async def update(self, access_token: str) -> None:
         """
@@ -81,42 +99,37 @@ class UserSession:
                 "Session attempting to be updated does not belong to current user",
             )
 
-        # TODO - remove upsert parameter from update_one?
-        update_result = await MongoDBInterface.update_one(
-            "sessions",
-            {"_id": self.session.id_},
-            {"$set": self.session.dict(by_alias=True, exclude_unset=True)},
-            upsert=False,
-        )
+        try:
+            update_result = await MongoDBInterface.update_one(
+                "sessions",
+                {"_id": ObjectId(self.session.id_)},
+                {
+                    "$set": self.session.dict(
+                        by_alias=True,
+                        exclude_unset=True,
+                        exclude={"id_"},
+                    ),
+                },
+                upsert=False,
+            )
+        except InvalidId as exc:
+            raise ModelError("ID provided is not a valid ObjectId") from exc
 
         if update_result.matched_count != 1:
             raise MissingDocumentError("User session cannot be found in the database")
         if update_result.modified_count != 1:
             raise DatabaseError(f"Update to {self.session.id_} has been unsuccessful")
 
-    async def insert(self) -> None:
+    async def insert(self) -> Any:
         """
-        Insert a new user session in the database
+        Insert a new user session in the database and return the inserted ID
         """
 
-        await MongoDBInterface.insert_one(
+        insert_result = await MongoDBInterface.insert_one(
             "sessions",
             self.session.dict(by_alias=True, exclude_unset=True),
         )
-
-    async def upsert(self) -> None:
-        """
-        Upsert a user session in the database
-        """
-
-        update_result = await MongoDBInterface.update_one(
-            "sessions",
-            {"_id": self.session.id_},
-            {"$set": self.session.dict(by_alias=True, exclude_unset=True)},
-            upsert=True,
-        )
-
-        return True if update_result.upserted_id else False
+        return insert_result.inserted_id
 
     @staticmethod
     def _is_user_authorised(access_token: str, session_username: str) -> bool:
