@@ -23,7 +23,6 @@ log = logging.getLogger()
 router = APIRouter()
 
 
-# TODO - update Postman collection
 @router.get(
     "/sessions/list",
     summary="Get a list of session names that belong to the given user",
