@@ -103,6 +103,10 @@ async def save_user_session(
         None,
         description="Summary of the user session",
     ),
+    auto_saved: bool = Query(
+        description="Flag to show whether the session has been manually or"
+        " automatically saved",
+    ),
     access_token: str = Depends(authorise_token),
 ):
     """
@@ -120,6 +124,7 @@ async def save_user_session(
         username=username,
         name=name,
         summary=summary,
+        auto_saved=auto_saved,
         timestamp=datetime.strftime(datetime.now(), DATA_DATETIME_FORMAT),
         session=data,
     )

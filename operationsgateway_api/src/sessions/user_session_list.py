@@ -22,7 +22,7 @@ class UserSessionList:
         session_list_query = MongoDBInterface.find(
             "sessions",
             filter_={"username": self.username},
-            projection=["name", "summary", "timestamp"],
+            projection=["name", "summary", "timestamp", "auto_saved"],
         )
 
         results = await MongoDBInterface.query_to_list(session_list_query)

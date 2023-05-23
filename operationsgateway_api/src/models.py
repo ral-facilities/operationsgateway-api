@@ -184,6 +184,7 @@ class UserSessionModel(BaseModel):
     name: str
     summary: str
     timestamp: datetime
+    auto_saved: bool
     session: Dict[str, Any]
 
     class Config:
