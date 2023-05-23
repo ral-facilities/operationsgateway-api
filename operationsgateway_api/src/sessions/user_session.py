@@ -19,7 +19,6 @@ log = logging.getLogger()
 
 
 class UserSession:
-    # TODO - logging
     def __init__(self, session: UserSessionModel) -> None:
         self.session = session
 
@@ -31,6 +30,7 @@ class UserSession:
         """
 
         try:
+            log.info("Finding user session from database: %s", id_)
             session_dict = await MongoDBInterface.find_one(
                 "sessions",
                 filter_={"_id": ObjectId(id_)},
@@ -39,6 +39,10 @@ class UserSession:
             raise ModelError("ID provided is not a valid ObjectId") from exc
 
         if session_dict:
+            log.debug(
+                "User session found (ID: %s), putting data into UserSessionModel",
+                id_,
+            )
             try:
                 return UserSessionModel(**session_dict)
             except ValidationError as exc:
@@ -55,11 +59,14 @@ class UserSession:
         where a user can delete remove a another user's session
         """
 
+        log.info("Retrieving user session from database before deleting it")
+        # Getting user session for the username, to ensure authorisation
         user_session = await UserSession.get(id_)
         username_match = UserSession._is_user_authorised(
             access_token,
             user_session.username,
         )
+        log.debug("Is the user authorised to delete this session? %s", username_match)
         if not username_match:
             raise ForbiddenError(
                 "Session attempting to be deleted does not belong to current user",
@@ -94,6 +101,7 @@ class UserSession:
             access_token,
             self.session.username,
         )
+        log.debug("Is the user authorised to update this session? %s", username_match)
         if not username_match:
             raise ForbiddenError(
                 "Session attempting to be updated does not belong to current user",
@@ -115,6 +123,11 @@ class UserSession:
         except InvalidId as exc:
             raise ModelError("ID provided is not a valid ObjectId") from exc
 
+        log.debug(
+            "Number of sessions matched with id_: %s, number of sessions modified: %s",
+            update_result.matched_count,
+            update_result.modified_count,
+        )
         if update_result.matched_count != 1:
             raise MissingDocumentError("User session cannot be found in the database")
         if update_result.modified_count != 1:
@@ -125,10 +138,12 @@ class UserSession:
         Insert a new user session in the database and return the inserted ID
         """
 
+        log.info("Inserting session into database. Session name: %s", self.session.name)
         insert_result = await MongoDBInterface.insert_one(
             "sessions",
             self.session.dict(by_alias=True, exclude_unset=True),
         )
+        log.debug("id_ of inserted session: %s", insert_result.inserted_id)
         return insert_result.inserted_id
 
     @staticmethod
@@ -138,6 +153,12 @@ class UserSession:
         method of authorisation when deleting sessions
         """
 
+        log.info("Checking if user session belongs to user sending request")
         token_payload = JwtHandler.get_payload(access_token)
         client_userame = token_payload["username"]
+        log.debug(
+            "Username of session: %s, username inside token: %s",
+            session_username,
+            client_userame,
+        )
         return True if client_userame == session_username else False

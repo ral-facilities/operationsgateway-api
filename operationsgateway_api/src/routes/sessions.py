@@ -39,6 +39,7 @@ async def get_user_sessions_list(
     sessions' metadata
     """
 
+    log.info("Getting list of user sessions")
     token_payload = JwtHandler.get_payload(access_token)
     user_sessions_list = UserSessionList(token_payload["username"])
     return await user_sessions_list.get_session_list()
@@ -62,6 +63,7 @@ async def get_user_session(
     Get a single user session by its ID and return it as a JSON response
     """
 
+    log.info("Getting user session: %s", id_)
     return await UserSession.get(id_)
 
 
@@ -86,6 +88,7 @@ async def delete_user_session(
     could delete the user session of user Y
     """
 
+    log.info("Request to delete user session: %s", id_)
     await UserSession.delete(id_, access_token)
     return Response(status_code=HTTPStatus.NO_CONTENT.value)
 
@@ -117,8 +120,8 @@ async def save_user_session(
     Save/update a user session (and its metadata) into the database
     """
 
-    log.debug("Name: %s, Summary: %s", name, summary)
-    log.debug("Data: %s", data)
+    log.info("Saving user session")
+    log.debug("Name: %s, summary: %s, auto saved: %s", name, summary, auto_saved)
 
     token_payload = JwtHandler.get_payload(access_token)
     username = token_payload["username"]
@@ -132,7 +135,6 @@ async def save_user_session(
         session=data,
     )
 
-    log.debug("Session: %s", session_data)
     user_session = UserSession(session_data)
     inserted_id = await user_session.insert()
 
@@ -174,6 +176,8 @@ async def update_user_session(
     """
     Update a user session (and its metadata) given its ID as a path parameter
     """
+
+    log.info("Updating user session: %s", id_)
 
     token_payload = JwtHandler.get_payload(access_token)
     username = token_payload["username"]

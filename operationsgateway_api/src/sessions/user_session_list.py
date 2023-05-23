@@ -27,4 +27,5 @@ class UserSessionList:
         )
 
         results = await MongoDBInterface.query_to_list(session_list_query)
+        log.debug("Number of sessions found: %d", len(results))
         return [UserSessionListModel(**result) for result in results]
