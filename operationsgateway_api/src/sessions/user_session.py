@@ -91,6 +91,8 @@ class UserSession:
                 f"{delete_result.deleted_count}",
             )
 
+        return delete_result.deleted_count
+
     async def update(self, access_token: str) -> None:
         """
         Update a user session, checking the session belongs to the user performing the
