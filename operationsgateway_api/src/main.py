@@ -10,6 +10,10 @@ import uvicorn
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.constants import LOG_CONFIG_LOCATION, ROUTE_MAPPINGS
 import operationsgateway_api.src.experiments.runners as runners
+from operationsgateway_api.src.experiments.unique_worker import (
+    assign_event_to_single_worker,
+    UniqueWorker,
+)
 from operationsgateway_api.src.mongo.connection import ConnectionInstance
 from operationsgateway_api.src.routes import (
     auth,
@@ -66,6 +70,7 @@ log.info("Logging now setup")
 
 
 @app.on_event("startup")
+@assign_event_to_single_worker()
 async def get_experiments_on_startup():
     if Config.config.experiments.scheduler_background_task_enabled:
         log.info(
@@ -74,6 +79,11 @@ async def get_experiments_on_startup():
         asyncio.create_task(runners.scheduler_runner.start_task())
     else:
         log.info("Scheduler background task has not been enabled")
+
+
+@app.on_event("shutdown")
+async def remove_event_file():
+    UniqueWorker.remove_file()
 
 
 @app.on_event("startup")

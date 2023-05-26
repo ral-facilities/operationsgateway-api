@@ -68,6 +68,7 @@ class ExperimentsConfig(BaseModel):
     password: StrictStr
     scheduler_wsdl_url: StrictStr
     instrument_name: StrictStr
+    worker_file_path: StrictStr
 
     @validator("scheduler_background_timezone")
     def check_timezone(cls, value):  # noqa: B902, N805
