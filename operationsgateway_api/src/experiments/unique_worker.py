@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 from operationsgateway_api.src.config import Config
+from operationsgateway_api.src.exceptions import ApiError
 
 
 log = logging.getLogger()
@@ -49,7 +50,7 @@ class UniqueWorker:
         try:
             log.debug(
                 "Worker file attempting to be deleted: %s",
-                Config.config.experiments.worker_file_path,
+                UniqueWorker.worker_file_path,
             )
             os.remove(UniqueWorker.worker_file_path)
         except FileNotFoundError:
@@ -80,9 +81,12 @@ class UniqueWorker:
         """
         'Assign' the event to the PID by writing the PID to the file
         """
-        with open(UniqueWorker.worker_file_path, "w") as f:
-            f.write(self.id_)
-            log.info("Worker assigned to PID: %s", self.id_)
+        try:
+            with open(UniqueWorker.worker_file_path, "w") as f:
+                f.write(self.id_)
+                log.info("Worker assigned to PID: %s", self.id_)
+        except OSError as exc:
+            raise ApiError(f"Cannot open PID file: {self.worker_file_path}") from exc
 
     def _read_file(self) -> str:
         with open(UniqueWorker.worker_file_path, "r") as f:
