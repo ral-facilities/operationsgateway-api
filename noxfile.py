@@ -21,6 +21,14 @@ def install_with_constraints(session, *args, **kwargs):
             f"--output={requirements.name}",
             external=True,
         )
+        # Using sed to remove extras from the constraints file, thereby fixing the
+        # error "Constraints cannot have extras". A better solution might be to
+        # use `poetry install --only dev` but this requires a newer version of
+        # Poetry than we're using in our development environments. See
+        # https://github.com/jazzband/pip-tools/issues/1300#issuecomment-818122483
+        # for more info relating to the sed solution
+        sed_expression = r"s/\[.*\]//g"
+        session.run("sed", "-i", sed_expression, requirements.name, external=True)
         session.install(f"--constraint={requirements.name}", *args, **kwargs)
 
         try:
