@@ -27,6 +27,7 @@ class JwtHandler:
         :return: The encoded JWT
         """
         bytes_key = bytes(PRIVATE_KEY, encoding="utf8")
+        # Load OpenSSH encoded private key
         loaded_private_key = serialization.load_ssh_private_key(
             bytes_key,
             password=None,
