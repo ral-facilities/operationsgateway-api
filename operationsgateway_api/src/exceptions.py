@@ -75,6 +75,12 @@ class MissingDocumentError(ApiError):
         self.status_code = 404
 
 
+class MissingAttributeError(ApiError):
+    def __init__(self, msg="No such attribute in database", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 404
+
+
 class QueryParameterError(ApiError):
     def __init__(self, msg="Problem with query parameter input", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)
