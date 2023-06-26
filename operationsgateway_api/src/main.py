@@ -52,6 +52,7 @@ app.add_middleware(
 
 
 def setup_logger():
+    logging.getLogger("multipart").setLevel(logging.INFO)
     logging.config.fileConfig(LOG_CONFIG_LOCATION)
 
 
