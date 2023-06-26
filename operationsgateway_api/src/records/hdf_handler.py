@@ -46,16 +46,17 @@ class HDFDataHandler:
         log.debug("Extracting data from HDF files")
 
         metadata_hdf = dict(self.hdf_file.attrs)
+        timestamp_format = "%Y-%m-%dT%H:%M:%S"
         try:
             metadata_hdf["timestamp"] = datetime.strptime(
                 metadata_hdf["timestamp"],
-                "%Y-%m-%d %H:%M:%S",
+                timestamp_format,
             )
             self.record_id = metadata_hdf["timestamp"].strftime(ID_DATETIME_FORMAT)
         except ValueError as exc:
             raise HDFDataExtractionError(
                 "Incorrect timestamp format for metadata timestamp. Use"
-                f" {ID_DATETIME_FORMAT} instead",
+                f" {timestamp_format} instead",
             ) from exc
 
         self.extract_channels()
