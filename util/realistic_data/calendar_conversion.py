@@ -1,10 +1,7 @@
+import argparse
 from datetime import datetime, time
 
 import yaml
-
-
-with open("resources/schedule_calendar.yml", encoding="utf-8") as calendar_file:
-    schedule = yaml.safe_load(calendar_file)
 
 
 def extract_experiment_metadata(experiment):
@@ -23,26 +20,44 @@ def extract_experiment_metadata(experiment):
     }
 
 
-experiments = []
-for experiment_areas in schedule.values():
-    # Searching for the experiment areas that will contain experiments
-    if isinstance(experiment_areas, list):
-        experiments.extend(
-            [
-                extract_experiment_metadata(experiment)
-                for experiment in experiment_areas
-            ],
-        )
-
-
 def experiment_start_date(e):
     return e["start_date"]["$date"]
 
 
-# The ordering of experiments in the database has no impact to functionality but helps
-# readability for anyone trying to debug with this data
-experiments.sort(key=experiment_start_date)
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-r", "--resource-directory", type=str, required=True)
+    args = parser.parse_args()
+    RESOURCE_PATH = args.resource_directory
 
-with open("resources/experiments_for_mongoimport.json", "w") as f:
-    for experiment in experiments:
-        f.write(str(experiment).replace("'", '"') + "\n")
+    print(f"Path: {RESOURCE_PATH}")
+
+    with open(
+        f"{RESOURCE_PATH}/schedule_calendar.yml",
+        encoding="utf-8",
+    ) as calendar_file:
+        schedule = yaml.safe_load(calendar_file)
+
+    experiments = []
+    for experiment_areas in schedule.values():
+        # Searching for the experiment areas that will contain experiments
+        if isinstance(experiment_areas, list):
+            experiments.extend(
+                [
+                    extract_experiment_metadata(experiment)
+                    for experiment in experiment_areas
+                ],
+            )
+
+    # The ordering of experiments in the database has no impact to functionality but
+    # helps readability for anyone trying to debug with this data
+    experiments.sort(key=experiment_start_date)
+
+    with open(f"{RESOURCE_PATH}/experiments_for_mongoimport.json", "w") as f:
+        for experiment in experiments:
+            f.write(str(experiment).replace("'", '"') + "\n")
+
+
+
+if __name__ == "__main__":
+    main()
