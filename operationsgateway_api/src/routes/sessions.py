@@ -130,6 +130,7 @@ async def save_user_session(
         "Saving user session for user '%s'. Session name: %s, auto saved: %s,"
         " summary: %s",
         username,
+        name,
         auto_saved,
         summary,
     )
