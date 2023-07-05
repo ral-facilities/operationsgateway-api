@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 from typing import Union
 
+from cryptography.hazmat.primitives import serialization
 import jwt
 
 from operationsgateway_api.src.auth.auth_keys import PRIVATE_KEY, PUBLIC_KEY
@@ -26,7 +27,13 @@ class JwtHandler:
         :param payload: the payload to be packed
         :return: The encoded JWT
         """
-        token = jwt.encode(payload, PRIVATE_KEY, algorithm=algorithm)
+        bytes_key = bytes(PRIVATE_KEY, encoding="utf8")
+        # Load OpenSSH encoded private key
+        loaded_private_key = serialization.load_ssh_private_key(
+            bytes_key,
+            password=None,
+        )
+        token = jwt.encode(payload, loaded_private_key, algorithm=algorithm)
         return token
 
     def get_access_token(self):
