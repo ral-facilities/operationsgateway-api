@@ -36,7 +36,7 @@ def main():
 
     echo = S3Interface()
     channel_manifest = echo.download_manifest_file()
-    og_api = APIClient(api_url)
+    og_api = APIClient(api_url, starter.process)
     og_api.submit_manifest(channel_manifest)
 
     experiments_import = echo.download_experiments()

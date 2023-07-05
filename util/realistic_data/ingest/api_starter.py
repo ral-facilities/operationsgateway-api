@@ -34,6 +34,7 @@ class APIStarter:
             self.check_if_alive()
         else:
             self.api_alive = True
+            self.process = None
 
     def check_if_alive(self) -> None:
         print("Checking if API started")

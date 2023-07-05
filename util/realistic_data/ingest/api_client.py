@@ -1,17 +1,20 @@
 from io import BytesIO
 import json
 from pprint import pprint
+import threading
 from time import time
 from typing import Dict
 
 import requests
+from util.realistic_data.ingest.api_starter import APIStarter
 from util.realistic_data.ingest.config import Config
 
 
 class APIClient:
-    def __init__(self, url: str) -> None:
+    def __init__(self, url: str, process) -> None:
         self.url = url
         self.token = self.login()
+        self.process = process
 
     def login(self) -> str:
         # Login to get an access token
@@ -44,6 +47,10 @@ class APIClient:
             pprint(response.text)
 
     def submit_hdf(self, hdf_file: Dict[str, BytesIO]) -> None:
+        if self.process:
+            t = threading.Thread(target=APIStarter.clear_buffers, args=(self.process,))
+            t.start()
+
         filename, file = list(hdf_file.items())[0]
         ingest_start_time = time()
         response = requests.post(
