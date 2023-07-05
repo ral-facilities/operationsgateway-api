@@ -1,7 +1,7 @@
 from io import BytesIO
 from time import time
-import boto3
 
+import boto3
 from util.realistic_data.ingest.config import Config
 
 
@@ -47,7 +47,7 @@ class S3Interface:
         # "data/" should work
         return paginator.paginate(
             Bucket=Config.config.echo.simulated_data_bucket,
-            #Prefix="2022-06-20/",
+            # Prefix="2022-06-20/",
             Prefix="2022-06-06/",
             PaginationConfig={"PageSize": Config.config.echo.page_size},
         )

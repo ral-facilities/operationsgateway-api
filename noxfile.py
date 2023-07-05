@@ -5,7 +5,7 @@ import nox
 
 # Separating Black away from the rest of the sessions
 nox.options.sessions = "lint", "safety", "tests"
-code_locations = "operationsgateway_api", "test", "noxfile.py"
+code_locations = "operationsgateway_api", "test", "noxfile.py", "util"
 
 
 def install_with_constraints(session, *args, **kwargs):

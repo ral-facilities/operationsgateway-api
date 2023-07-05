@@ -4,6 +4,7 @@ import sys
 from pydantic import BaseModel, ValidationError
 import yaml
 
+
 class ScriptOptions(BaseModel):
     wipe_database: bool
     delete_images: bool
@@ -34,6 +35,7 @@ class API(BaseModel):
     log_config_path: str
     gunicorn_num_workers: str
 
+
 class IngestEchoDataConfig(BaseModel):
     script_options: ScriptOptions
     database: Database
@@ -48,6 +50,7 @@ class IngestEchoDataConfig(BaseModel):
                 return cls(**config)
         except (IOError, ValidationError, yaml.YAMLError) as e:
             sys.exit(f"An error occurred while loading the config data: {e}")
+
 
 class Config:
     config = IngestEchoDataConfig.load()

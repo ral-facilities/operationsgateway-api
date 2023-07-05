@@ -1,11 +1,12 @@
 from pathlib import Path
 import socket
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
 import sys
 import threading
 from time import sleep
 
 from util.realistic_data.ingest.config import Config
+
 
 class APIStarter:
     def __init__(self) -> None:
@@ -33,7 +34,6 @@ class APIStarter:
             self.check_if_alive()
         else:
             self.api_alive = True
-            
 
     def check_if_alive(self) -> None:
         print("Checking if API started")
@@ -44,7 +44,10 @@ class APIStarter:
             # Check for the return code to see if the API started successfully
             self.process.poll()
             if self.process.returncode is not None and self.process.returncode != 0:
-                t = threading.Thread(target=APIStarter.clear_buffers, args=(self.process, True))
+                t = threading.Thread(
+                    target=APIStarter.clear_buffers,
+                    args=(self.process, True),
+                )
                 t.start()
                 sys.exit("API has failed to start up, please see output above")
 

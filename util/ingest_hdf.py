@@ -5,7 +5,7 @@ from pathlib import Path
 from pprint import pprint
 import shutil
 import socket
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
 import sys
 import threading
 from time import sleep, time
@@ -108,6 +108,7 @@ if DELETE_IMAGES:
             shutil.rmtree(os.path.join(root, d))
         print(f"Removed {len(dirs)} directorie(s) and their contents from image path")
 
+
 def is_api_alive(host, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(2)
@@ -117,12 +118,14 @@ def is_api_alive(host, port):
     except Exception:
         return False
 
+
 def clear_buffers(process, output=False):
     out = process.stdout.read()
     err = process.stderr.read()
     if output:
         print(out.decode("utf-8"))
         print(err.decode("utf-8"))
+
 
 # Start API if an API URL isn't given as a command line option
 if not args.url:
@@ -208,12 +211,12 @@ for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
                     if response.status_code == 201:
                         print(
                             f"Ingested {file.name}, time taken: {duration:0.2f}"
-                            " seconds"
+                            " seconds",
                         )
                     elif response.status_code == 200:
                         print(
                             f"Updated {file.name}, time taken: {duration:0.2f}"
-                            " seconds"
+                            " seconds",
                         )
                     else:
                         print(f"{response.status_code} returned")

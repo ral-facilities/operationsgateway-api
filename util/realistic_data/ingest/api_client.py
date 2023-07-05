@@ -5,7 +5,6 @@ from time import time
 from typing import Dict
 
 import requests
-
 from util.realistic_data.ingest.config import Config
 
 
@@ -17,7 +16,12 @@ class APIClient:
     def login(self) -> str:
         # Login to get an access token
         print(f"Login as '{Config.config.api.username}' to get access token")
-        credentials_json = json.dumps({"username": Config.config.api.username, "password": Config.config.api.password})
+        credentials_json = json.dumps(
+            {
+                "username": Config.config.api.username,
+                "password": Config.config.api.password,
+            },
+        )
         response = requests.post(
             f"{self.url}/login",
             data=credentials_json,
@@ -51,15 +55,9 @@ class APIClient:
 
         duration = ingest_end_time - ingest_start_time
         if response.status_code == 201:
-            print(
-                f"Ingested {filename}, time taken: {duration:0.2f}"
-                " seconds"
-            )
+            print(f"Ingested {filename}, time taken: {duration:0.2f}" " seconds")
         elif response.status_code == 200:
-            print(
-                f"Updated {filename}, time taken: {duration:0.2f}"
-                " seconds"
-            )
+            print(f"Updated {filename}, time taken: {duration:0.2f}" " seconds")
         else:
             print(f"{response.status_code} returned")
             pprint(response.text)
