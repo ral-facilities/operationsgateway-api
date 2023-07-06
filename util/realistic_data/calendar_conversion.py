@@ -28,12 +28,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--resource-directory", type=str, required=True)
     args = parser.parse_args()
-    RESOURCE_PATH = args.resource_directory
-
-    print(f"Path: {RESOURCE_PATH}")
+    resource_path = args.resource_directory
 
     with open(
-        f"{RESOURCE_PATH}/schedule_calendar.yml",
+        f"{resource_path}/schedule_calendar.yml",
         encoding="utf-8",
     ) as calendar_file:
         schedule = yaml.safe_load(calendar_file)
@@ -53,10 +51,9 @@ def main():
     # helps readability for anyone trying to debug with this data
     experiments.sort(key=experiment_start_date)
 
-    with open(f"{RESOURCE_PATH}/experiments_for_mongoimport.json", "w") as f:
+    with open(f"{resource_path}/experiments_for_mongoimport.json", "w") as f:
         for experiment in experiments:
             f.write(str(experiment).replace("'", '"') + "\n")
-
 
 
 if __name__ == "__main__":
