@@ -46,7 +46,7 @@ class HDFDataHandler:
         log.debug("Extracting data from HDF files")
 
         metadata_hdf = dict(self.hdf_file.attrs)
-        timestamp_format = "%Y-%m-%dT%H:%M:%S"
+        timestamp_format = "%Y-%m-%dT%H:%M:%S%z"
         try:
             metadata_hdf["timestamp"] = datetime.strptime(
                 metadata_hdf["timestamp"],
