@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "7ddd3777-519b-4ad8-a53b-eae761747861",
+		"_postman_id": "b301a23a-d431-40d4-b408-2ee783d4a3f1",
 		"name": "OperationsGateway API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "5024263"
@@ -910,6 +910,186 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "User Sessions",
+			"item": [
+				{
+					"name": "Save Session",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"config\": {\r\n    \"urls\": {\r\n      \"apiUrl\": \"\"\r\n    },\r\n    \"recordLimitWarning\": 20,\r\n    \"pluginHost\": \"http://localhost:3000\",\r\n    \"settingsLoaded\": true\r\n  },\r\n  \"table\": {\r\n    \"columnStates\": {},\r\n    \"selectedColumnIds\": [\r\n      \"timestamp\",\r\n      \"CHANNEL_ABCDE\"\r\n    ],\r\n    \"page\": 0,\r\n    \"resultsPerPage\": 25,\r\n    \"sort\": {}\r\n  },\r\n  \"search\": {\r\n    \"searchParams\": {\r\n      \"dateRange\": {},\r\n      \"shotnumRange\": {},\r\n      \"maxShots\": 50\r\n    }\r\n  },\r\n  \"plots\": {},\r\n  \"filter\": {\r\n    \"appliedFilters\": [\r\n      []\r\n    ]\r\n  },\r\n  \"windows\": {}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{og-api}}/sessions?summary=Summary of my session&auto_saved=true&name=My User Session",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"sessions"
+							],
+							"query": [
+								{
+									"key": "summary",
+									"value": "Summary of my session"
+								},
+								{
+									"key": "auto_saved",
+									"value": "true"
+								},
+								{
+									"key": "name",
+									"value": "My User Session"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Session",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"config\": {\r\n    \"urls\": {\r\n      \"apiUrl\": \"\"\r\n    },\r\n    \"recordLimitWarning\": 20,\r\n    \"pluginHost\": \"http://localhost:3000\",\r\n    \"settingsLoaded\": true\r\n  },\r\n  \"table\": {\r\n    \"columnStates\": {},\r\n    \"selectedColumnIds\": [\r\n      \"timestamp\",\r\n      \"CHANNEL_ABCDE\"\r\n    ],\r\n    \"page\": 0,\r\n    \"resultsPerPage\": 25,\r\n    \"sort\": {}\r\n  },\r\n  \"search\": {\r\n    \"searchParams\": {\r\n      \"dateRange\": {},\r\n      \"shotnumRange\": {},\r\n      \"maxShots\": 50\r\n    }\r\n  },\r\n  \"plots\": {},\r\n  \"filter\": {\r\n    \"appliedFilters\": [\r\n      []\r\n    ]\r\n  },\r\n  \"windows\": {}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{og-api}}/sessions/646cdda1a393909af29784fa?name=My Session&summary=Summary of my session&auto_saved=false",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"sessions",
+								"646cdda1a393909af29784fa"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "My Session"
+								},
+								{
+									"key": "summary",
+									"value": "Summary of my session"
+								},
+								{
+									"key": "auto_saved",
+									"value": "false"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Session",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/sessions/646cdda1a393909af29784fa",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"sessions",
+								"646cdda1a393909af29784fa"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Session List",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/sessions/list",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"sessions",
+								"list"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Session",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/sessions/646cdda1a393909af29784fa",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"sessions",
+								"646cdda1a393909af29784fa"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{og-access-token}}",
+						"type": "string"
+					}
+				]
+			}
 		}
 	],
 	"event": [
