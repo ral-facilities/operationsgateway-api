@@ -123,6 +123,7 @@ class MongoDBInterface:
         collection_name: str,
         filter_: Dict[str, Any] = None,
         update: Dict[str, Any] = None,
+        upsert: bool = False,
     ) -> UpdateResult:
         """
         Update a single document using the data provided. The document selected for the
@@ -142,12 +143,12 @@ class MongoDBInterface:
             return await collection.update_one(
                 filter_,
                 update,
+                upsert=upsert,
             )
         except WriteError as exc:
             log.exception(msg=exc)
             raise DatabaseError(
-                "Error when updating single document in %s collection",
-                collection_name,
+                f"Error when updating single document in {collection_name} collection",
             ) from exc
 
     @staticmethod
@@ -164,8 +165,7 @@ class MongoDBInterface:
         except WriteError as exc:
             log.exception(msg=exc)
             raise DatabaseError(
-                "Error when inserting single document in %s collection",
-                collection_name,
+                f"Error when inserting single document in {collection_name} collection",
             ) from exc
 
     @staticmethod
@@ -185,8 +185,8 @@ class MongoDBInterface:
         except WriteError as exc:
             log.exception(msg=exc)
             raise DatabaseError(
-                "Error when inserting multiple documents in %s collection",
-                collection_name,
+                f"Error when inserting multiple documents in {collection_name}"
+                " collection",
             ) from exc
 
     @staticmethod

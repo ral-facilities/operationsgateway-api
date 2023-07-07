@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 import logging
 from pathlib import Path
+from typing import Union
 
 from cryptography.hazmat.primitives import serialization
 import jwt
@@ -68,7 +69,7 @@ class JwtHandler:
         :return: a dictionary containing the token's payload
         """
         try:
-            return jwt.decode(token, PUBLIC_KEY, algorithms=[algorithm])
+            return JwtHandler.get_payload(token)
         except Exception as exc:
             message = "Invalid token"
             log.warning(message, exc_info=1)
@@ -90,12 +91,7 @@ class JwtHandler:
             log.warning(message)
             raise ForbiddenError(message)
         try:
-            payload = jwt.decode(
-                access_token,
-                PUBLIC_KEY,
-                algorithms=[algorithm],
-                options={"verify_exp": False},
-            )
+            payload = JwtHandler.get_payload(access_token, {"verify_exp": False})
             payload["exp"] = datetime.now(timezone.utc) + timedelta(
                 minutes=Config.config.auth.access_token_validity_mins,
             )
@@ -129,3 +125,15 @@ class JwtHandler:
                 blacklisted_tokens_filename,
             )
             return []
+
+    @staticmethod
+    def get_payload(access_token: str, options: Union[dict, None] = None) -> dict:
+        """
+        Get payload from JWT to be used elsewhere in the API
+        """
+        return jwt.decode(
+            access_token,
+            PUBLIC_KEY,
+            algorithms=[algorithm],
+            options=options,
+        )
