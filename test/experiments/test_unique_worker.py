@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest.mock import mock_open, patch
 
 import pytest
@@ -9,10 +10,10 @@ from operationsgateway_api.src.experiments.unique_worker import (
 
 
 class TestUniqueWorker:
-    # TODO - path doesn't seem to be mocking correctly
     @patch(
-        "operationsgateway_api.src.config.Config.config.experiments.worker_file_path",
-        "test/path",
+        "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
+        ".worker_file_path",
+        Path("test/path"),
     )
     @patch("os.getpid", return_value=10)
     @patch(
@@ -26,14 +27,16 @@ class TestUniqueWorker:
     def test_init(self, mock_assign, _, __, remove_background_pid_file):
         test_worker = UniqueWorker()
 
+        assert test_worker.worker_file_path == Path("test/path")
         assert test_worker.id_ == "10"
         assert test_worker.file_empty
         assert test_worker.is_assigned
         assert mock_assign.call_count == 1
 
     @patch(
-        "operationsgateway_api.src.config.Config.config.experiments.worker_file_path",
-        "test/path",
+        "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
+        ".worker_file_path",
+        Path("test/path"),
     )
     @patch("os.getpid", return_value=10)
     @patch(
@@ -71,8 +74,9 @@ class TestUniqueWorker:
             assert pid_match == expected_return
 
     @patch(
-        "operationsgateway_api.src.config.Config.config.experiments.worker_file_path",
-        "test/path",
+        "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
+        ".worker_file_path",
+        Path("test/path"),
     )
     @pytest.mark.parametrize(
         "expected_exception",
@@ -87,8 +91,9 @@ class TestUniqueWorker:
             assert mock_remove.call_count == 1
 
     @patch(
-        "operationsgateway_api.src.config.Config.config.experiments.worker_file_path",
-        "test/path",
+        "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
+        ".worker_file_path",
+        Path("test/path"),
     )
     @patch("os.getpid", return_value=10)
     @patch(
@@ -136,8 +141,9 @@ class TestUniqueWorker:
             assert file_empty == expected_return
 
     @patch(
-        "operationsgateway_api.src.config.Config.config.experiments.worker_file_path",
-        "test/path",
+        "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
+        ".worker_file_path",
+        Path("test/path"),
     )
     @patch("os.getpid", return_value=10)
     @patch(
@@ -157,8 +163,9 @@ class TestUniqueWorker:
 
     @pytest.mark.asyncio
     @patch(
-        "operationsgateway_api.src.config.Config.config.experiments.worker_file_path",
-        "test/path",
+        "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
+        ".worker_file_path",
+        Path("test/path"),
     )
     @patch(
         "operationsgateway_api.src.config.Config.config.app.reload",
@@ -200,7 +207,8 @@ class TestUniqueWorker:
     @pytest.mark.asyncio
     @patch("operationsgateway_api.src.config.Config.config.app.reload", True)
     @patch(
-        "operationsgateway_api.src.config.Config.config.experiments.worker_file_path",
+        "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
+        ".worker_file_path",
         "test/path",
     )
     @patch("os.getpid", return_value=10)

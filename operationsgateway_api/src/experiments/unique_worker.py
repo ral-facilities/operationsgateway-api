@@ -15,8 +15,13 @@ class UniqueWorker:
     Where multiple workers are launched for this API (by uvicorn for example), this
     class is used to assign a task to a single worker. For example, the background task
     to contact the Scheduler on a regular basis only needs to be performed by a single
-    worker. A process ID is to the 'assigned worker' is written to a file and checked
-    before running the task in a decorator, also in this file.
+    worker. The worker chosen to perform the task (i.e. the 'assigned worker') is
+    selected by checking whether a particular file is empty or not. If the object finds
+    an empty file, it becomes the assigned worker and writes its process ID to the file.
+
+    The decorator (not in this class but at the bottom of this file) checks the contents
+    of the file (looking to match the process ID in the file with the process ID of the
+    worker) as a 'double check' to prevent race conditions.
     """
 
     worker_file_path = Path(Config.config.experiments.worker_file_path)
