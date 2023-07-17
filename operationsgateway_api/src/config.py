@@ -83,7 +83,10 @@ class APIConfig(BaseModel):
     Class to store the API's configuration settings
     """
 
-    app: Optional[App]
+    # When in production, there's no `app` section in the config file. A default value
+    # (i.e. an empty instance of `App`) has been assigned so that if the code attempts
+    # to access a config value in this section, an error is prevented
+    app: Optional[App] = App()
     mongodb: MongoDB
     auth: AuthConfig
     experiments: ExperimentsConfig
