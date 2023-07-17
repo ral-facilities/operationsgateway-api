@@ -56,19 +56,17 @@ class TestColourmapMapping:
         flat_colourmap_list = [
             colourmap for group in colourmap_mapping.values() for colourmap in group
         ]
-        mpl_colourmaps = plt.colormaps()
 
-        # Checking the all colourmaps listed in the mapping file are valid colourmaps
+        # Checking all colourmaps listed in the mapping file are valid colourmaps
         for colourmap in flat_colourmap_list:
-            assert colourmap in mpl_colourmaps
+            assert colourmap in plt.colormaps()
 
     def test_mapping_file_contains_all_colourmaps(self):
         colourmap_mapping = self.load_mapping_file()
-        mpl_colourmaps = plt.colormaps()
         flat_colourmap_list = [
             colourmap for group in colourmap_mapping.values() for colourmap in group
         ]
 
         # Checking the mapping file contains all colourmaps available in Matplotlib
-        for colourmap in mpl_colourmaps:
+        for colourmap in plt.colormaps():
             assert colourmap in flat_colourmap_list
