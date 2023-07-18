@@ -47,8 +47,7 @@ class S3Interface:
         # "data/" should work
         return paginator.paginate(
             Bucket=Config.config.echo.simulated_data_bucket,
-            # Prefix="2022-06-20/",
-            Prefix="2022-06-06/",
+            Prefix="data/",
             PaginationConfig={"PageSize": Config.config.echo.page_size},
         )
 
