@@ -242,6 +242,75 @@
 			}
 		},
 		{
+			"name": "Experiments",
+			"item": [
+				{
+					"name": "Get Scheduler Experiments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/experiments",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"experiments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Store Scheduler Experiments",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/experiments",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"experiments"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{og-access-token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
 			"name": "Ingestion",
 			"item": [
 				{

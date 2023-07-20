@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from fastapi import APIRouter, FastAPI
@@ -8,10 +9,16 @@ import uvicorn
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.constants import LOG_CONFIG_LOCATION, ROUTE_MAPPINGS
+import operationsgateway_api.src.experiments.runners as runners
+from operationsgateway_api.src.experiments.unique_worker import (
+    assign_event_to_single_worker,
+    UniqueWorker,
+)
 from operationsgateway_api.src.mongo.connection import ConnectionInstance
 from operationsgateway_api.src.routes import (
     auth,
     channels,
+    experiments,
     images,
     ingest_data,
     records,
@@ -53,12 +60,31 @@ app.add_middleware(
 
 
 def setup_logger():
+    # Disable excessive debug logging from suds when contacting the Scheduler via WSDL
+    logging.getLogger("zeep").setLevel(logging.INFO)
     logging.config.fileConfig(LOG_CONFIG_LOCATION)
 
 
 setup_logger()
 log = logging.getLogger()
 log.info("Logging now setup")
+
+
+@app.on_event("startup")
+@assign_event_to_single_worker()
+async def get_experiments_on_startup():
+    if Config.config.experiments.scheduler_background_task_enabled:
+        log.info(
+            "Creating task for Scheduler system to be contacted for experiment details",
+        )
+        asyncio.create_task(runners.scheduler_runner.start_task())
+    else:
+        log.info("Scheduler background task has not been enabled")
+
+
+@app.on_event("shutdown")
+async def remove_event_file():
+    UniqueWorker.remove_file()
 
 
 @app.on_event("startup")
@@ -89,6 +115,7 @@ add_router_to_app(records.router)
 add_router_to_app(waveforms.router)
 add_router_to_app(auth.router)
 add_router_to_app(channels.router)
+add_router_to_app(experiments.router)
 add_router_to_app(sessions.router)
 
 log.debug("ROUTE_MAPPINGS contents:")

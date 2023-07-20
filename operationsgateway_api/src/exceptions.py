@@ -79,3 +79,9 @@ class QueryParameterError(ApiError):
     def __init__(self, msg="Problem with query parameter input", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)
         self.status_code = 400
+
+
+class ExperimentDetailsError(ApiError):
+    def __init__(self, msg="Error during handling of experiments", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 500

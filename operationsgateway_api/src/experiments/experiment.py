@@ -1,0 +1,243 @@
+from datetime import datetime
+import logging
+from typing import Dict, List, Tuple, Union
+
+from pydantic import ValidationError
+
+from operationsgateway_api.src.config import Config
+from operationsgateway_api.src.exceptions import ExperimentDetailsError, ModelError
+from operationsgateway_api.src.experiments.duplicate_part_selector import (
+    DuplicatePartSelector,
+)
+import operationsgateway_api.src.experiments.runners as runners
+from operationsgateway_api.src.experiments.scheduler_interface import SchedulerInterface
+from operationsgateway_api.src.models import ExperimentModel
+from operationsgateway_api.src.mongo.interface import MongoDBInterface
+from operationsgateway_api.src.routes.common_parameters import ParameterHandler
+
+log = logging.getLogger()
+
+
+class Experiment:
+    def __init__(self) -> None:
+        self.scheduler = SchedulerInterface()
+        self.experiments = []
+
+    async def get_experiments_from_scheduler(self) -> None:
+        """
+        Get experiments from the Scheduler (including start and end dates of each part)
+        and store a list of experiments in a model, ready to be stored in MongoDB.
+
+        This is done by sending two calls to the Scheduler, one to get the experiment
+        IDs (and part numbers) that meet the date range and the second to get the start
+        and end dates for each experiment part.
+
+        The start and end dates for the first call depend on when the MongoDB collection
+        was last updated (or the appropriate config option if no data exists in the
+        collection) and when the next scheduled task will be run
+        """
+
+        log.info("Retrieving experiments from Scheduler")
+
+        collection_last_updated = await self._get_collection_updated_date()
+        experiment_search_start_date = (
+            collection_last_updated
+            if collection_last_updated
+            else Config.config.experiments.first_scheduler_contact_start_date
+        )
+        experiment_search_end_date = runners.scheduler_runner.get_next_run_task_date()
+        log.debug(
+            "Parameters used for getExperimentDatesForInstrument(). Start date: %s, End"
+            " date: %s",
+            experiment_search_start_date,
+            experiment_search_end_date,
+        )
+
+        exp_data = self.scheduler.get_experiment_dates_for_instrument(
+            experiment_search_start_date,
+            experiment_search_end_date,
+        )
+
+        experiment_parts = self._map_experiments_to_part_numbers(exp_data)
+        ids_for_scheduler_call = self._generate_id_instrument_name_pairs(
+            experiment_parts,
+        )
+
+        experiments = self.scheduler.get_experiments(ids_for_scheduler_call)
+        self._extract_experiment_data(experiments, experiment_parts)
+
+    async def store_experiments(self) -> None:
+        """
+        Store the experiments into MongoDB, using `upsert` to insert any experiments
+        that haven't yet been inserted into the database
+        """
+
+        for experiment in self.experiments:
+            await MongoDBInterface.update_one(
+                "experiments",
+                {"_id": experiment.id_},
+                {"$set": experiment.dict(by_alias=True)},
+                upsert=True,
+            )
+
+        await self._update_modification_time()
+
+    def _map_experiments_to_part_numbers(
+        self,
+        experiments: list,
+    ) -> Dict[int, List[int]]:
+        """
+        Extracts the rb number (experiment ID) and the experiment's part and puts them
+        into a dictionary to get start and end dates for each one.
+
+        Example output: {19510004: [1], 20310000: [1, 2, 3]}
+        """
+
+        exp_parts = {}
+
+        for exp in experiments:
+            try:
+                exp_parts.setdefault(int(exp.rbNumber), []).append(exp.part)
+            except AttributeError as exc:
+                raise ExperimentDetailsError(str(exc)) from exc
+
+        log.debug("Experiment parts: %s", exp_parts)
+        return exp_parts
+
+    def _generate_id_instrument_name_pairs(
+        self,
+        experiment_parts: Dict[int, List[int]],
+    ) -> List[Dict[str, Union[str, int]]]:
+        """
+        Generate a list of dictionaries in the format accepted by the Scheduler to get
+        details of multiple experiments
+        """
+
+        id_name_pairs = [
+            {"key": experiment_id, "value": Config.config.experiments.instrument_name}
+            for experiment_id in experiment_parts.keys()
+        ]
+        log.debug("Experiments to query for: %s", id_name_pairs)
+
+        return id_name_pairs
+
+    def _extract_experiment_data(
+        self,
+        experiments: list,
+        experiment_part_mapping: Dict[int, List[int]],
+    ) -> None:
+        """
+        Extract relevant attributes from experiment data that the Scheduler responded
+        with and put them into a Pydantic model, so the data can be easily validation
+        and stored in the database
+        """
+
+        for experiment in experiments:
+            try:
+                duplicate_selectors, non_duplicate_parts = self._detect_duplicate_parts(
+                    experiment,
+                )
+                selected_parts = (
+                    self._select_duplicate_parts(duplicate_selectors)
+                    if duplicate_selectors
+                    else []
+                )
+                # Combine selected duplicate parts with non duplicates and sort based on
+                # experiment ID and part number
+                experiment_parts = selected_parts + non_duplicate_parts
+                list.sort(
+                    experiment_parts,
+                    key=lambda part: (part.referenceNumber, part.partNumber),
+                )
+
+                for part in experiment_parts:
+                    if (
+                        part.partNumber
+                        in experiment_part_mapping[int(part.referenceNumber)]
+                    ):
+                        self.experiments.append(
+                            ExperimentModel(
+                                _id=f"{part.referenceNumber}-{part.partNumber}",
+                                experiment_id=int(part.referenceNumber),
+                                part=part.partNumber,
+                                start_date=part.experimentStartDate,
+                                end_date=part.experimentEndDate,
+                            ),
+                        )
+            except AttributeError as exc:
+                raise ExperimentDetailsError(str(exc)) from exc
+            except ValidationError as exc:
+                raise ModelError(str(exc)) from exc
+
+    def _detect_duplicate_parts(
+        self,
+        experiment,
+    ) -> Tuple[List[DuplicatePartSelector], list]:
+        """
+        Detect which experiment parts are duplicated (i.e. multiple parts with the same
+        part number). For each part number that's a duplicate, create
+        `DuplicatePartSelector` so the part that should be used can be selected. Return
+        a list of these along with the parts that aren't duplicates
+        """
+
+        parts = {}
+        for part in experiment.experimentPartList:
+            parts.setdefault(part.partNumber, []).append(part)
+
+        duplicate_part_selectors = []
+        non_duplicate_parts = []
+
+        for part_number, part in parts.items():
+            if len(part) > 1:
+                duplicate_part_selectors.append(
+                    DuplicatePartSelector(part_number, part),
+                )
+            elif len(part) == 1:
+                non_duplicate_parts.append(part[0])
+
+        return duplicate_part_selectors, non_duplicate_parts
+
+    def _select_duplicate_parts(self, duplicate_selectors):
+        return [selector.select_part() for selector in duplicate_selectors]
+
+    async def _update_modification_time(self) -> None:
+        """
+        Update the modification time for the collection with the current datetime
+        """
+
+        await MongoDBInterface.update_one(
+            "experiments",
+            {"collection_last_updated": {"$exists": True}},
+            {"$set": {"collection_last_updated": datetime.now()}},
+            upsert=True,
+        )
+
+    async def _get_collection_updated_date(self) -> Union[datetime, None]:
+        """
+        Retrieve the datetime of when the collection was last updated
+        """
+
+        collection_update_date = await MongoDBInterface.find_one(
+            "experiments",
+            filter_={"collection_last_updated": {"$exists": True}},
+        )
+
+        if collection_update_date:
+            return collection_update_date["collection_last_updated"]
+        else:
+            return None
+
+    @staticmethod
+    async def get_experiments_from_database() -> List[dict]:
+        """
+        Get a list of experiments from the database, ordered by their ID.
+
+        `_id` is the RB number and part number combined with a dash
+        """
+
+        experiments_query = MongoDBInterface.find(
+            "experiments",
+            filter_={"collection_last_updated": {"$exists": False}},
+            sort=ParameterHandler.extract_order_data(["_id asc"]),
+        )
+        return await MongoDBInterface.query_to_list(experiments_query)
