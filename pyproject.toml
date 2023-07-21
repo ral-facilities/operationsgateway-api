@@ -6,7 +6,7 @@ readme = "README.md"
 authors = ["Matthew Richards <matthew.richards@stfc.ac.uk>"]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<4.0"
+python = ">=3.8,<3.12"
 fastapi = "^0.92.0"
 motor = "^2.5.1"
 uvicorn = "^0.18.2"
@@ -43,6 +43,8 @@ requests = "2.27.1"
 pytest-cov = "^3.0.0"
 coverage = "^6.4.4"
 fabric = "^3.1.0"
+epac-data-sim = {git = "git@github.com:CentralLaserFacility/EPAC-DataSim.git"}
+s4cmd = "^2.1.0"
 
 [tool.coverage.paths]
 source = ["operationsgateway_api"]
