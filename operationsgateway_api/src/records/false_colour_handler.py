@@ -8,15 +8,16 @@ from PIL import Image as PILImage
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import ImageError, QueryParameterError
+from operationsgateway_api.src.records.colourmap_mapping import ColourmapMapping
 
 
 log = logging.getLogger()
 
 
 class FalseColourHandler:
-    colourmap_names = sorted(plt.colormaps())
     default_colour_map_name = Config.config.images.default_colour_map
     colourbar_height_pixels = Config.config.images.colourbar_height_pixels
+    colourmap_names = ColourmapMapping.get_colourmap_mappings()
 
     @staticmethod
     def create_colourbar(
@@ -99,7 +100,10 @@ class FalseColourHandler:
             # TODO: check for a user preference before defaulting
             # to the system default if one is not set
             colourmap_name = FalseColourHandler.default_colour_map_name
-        if colourmap_name not in FalseColourHandler.colourmap_names:
+        if not ColourmapMapping.is_colourmap_available(
+            FalseColourHandler.colourmap_names,
+            colourmap_name,
+        ):
             raise QueryParameterError(
                 f"{colourmap_name} is not a valid colour map name",
             )

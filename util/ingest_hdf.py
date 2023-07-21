@@ -68,6 +68,13 @@ parser.add_argument(
     action="store_true",
     default=False,
 )
+parser.add_argument(
+    "-e",
+    "--experiments",
+    help="Flag to determine whether stored experiments should be deleted & re-ingested",
+    action="store_true",
+    default=False,
+)
 
 # Put command line options into variables
 args = parser.parse_args()
@@ -80,6 +87,8 @@ DATABASE_CONNECTION_URL = "mongodb://localhost:27017"
 DATABASE_NAME = args.database_name
 DELETE_IMAGES = args.delete_images
 BUCKET_NAME = Config.config.images.image_bucket_name
+REINGEST_EXPERIMENTS = args.experiments
+
 
 # Wipe collections in the database
 if WIPE_DATABASE:
@@ -90,6 +99,9 @@ if WIPE_DATABASE:
     print("Records collection dropped")
     waveforms_drop = db.waveforms.drop()
     print("Waveforms collection dropped")
+    if REINGEST_EXPERIMENTS:
+        experiments_drop = db.experiments.drop()
+        print("Experiments collection dropped")
 
 # Delete images from S3 object storage
 if DELETE_IMAGES:
@@ -225,6 +237,22 @@ for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
             f"Ingestion of {entry.path} complete, time taken:"
             f" {directory_duration:0.2f} seconds",
         )
+
+# Getting experiments from Scheduler and storing them in the database
+if REINGEST_EXPERIMENTS:
+    response = requests.post(
+        f"{API_URL}/experiments",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    if response.status_code == 200:
+        print(
+            f"Ingested {len(response.json())} experiments from Scheduler. Response from"
+            " API call:",
+        )
+        pprint(response.json())
+    else:
+        print(f"{response.status_code} returned")
+        pprint(response.text)
 
 # Kill API process if it was started in this script
 # Using args.url because API_URL will be populated when API process was started

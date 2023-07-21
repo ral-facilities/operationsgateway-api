@@ -1,13 +1,16 @@
+from datetime import datetime
 from pathlib import Path
 import sys
 from typing import Optional, Tuple
 
+from dateutil import tz
 from pydantic import (
     BaseModel,
     StrictBool,
     StrictInt,
     StrictStr,
     ValidationError,
+    validator,
 )
 import yaml
 
@@ -57,14 +60,41 @@ class AuthConfig(BaseModel):
     fedid_server_ldap_realm: StrictStr
 
 
+class ExperimentsConfig(BaseModel):
+    """Configuration model class to store experiment configuration details"""
+
+    first_scheduler_contact_start_date: datetime
+    scheduler_background_task_enabled: StrictBool
+    scheduler_background_frequency: StrictStr
+    scheduler_background_timezone: StrictStr
+    scheduler_background_retry_mins: float
+    user_office_wsdl_url: StrictStr
+    username: StrictStr
+    password: StrictStr
+    scheduler_wsdl_url: StrictStr
+    instrument_name: StrictStr
+    worker_file_path: StrictStr
+
+    @validator("scheduler_background_timezone")
+    def check_timezone(cls, value):  # noqa: B902, N805
+        if not tz.gettz(value):
+            sys.exit(f"scheduler_background_timezone is not a valid timezone: {value}")
+        else:
+            return value
+
+
 class APIConfig(BaseModel):
     """
     Class to store the API's configuration settings
     """
 
-    app: Optional[App]
+    # When in production, there's no `app` section in the config file. A default value
+    # (i.e. an empty instance of `App`) has been assigned so that if the code attempts
+    # to access a config value in this section, an error is prevented
+    app: Optional[App] = App()
     mongodb: MongoDB
     auth: AuthConfig
+    experiments: ExperimentsConfig
     images: ImagesConfig
 
     @classmethod

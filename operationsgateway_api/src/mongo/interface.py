@@ -152,6 +152,30 @@ class MongoDBInterface:
             ) from exc
 
     @staticmethod
+    async def update_many(
+        collection_name: str,
+        filter_: Dict[str, Any] = {},  # noqa: B006
+        update: Dict[str, Any] = {},  # noqa: B006
+        upsert: bool = False,
+    ):
+        log.info("Sending update_many() to MongoDB, collection: %s", collection_name)
+        log.debug("Filter: %s", filter_)
+
+        collection = MongoDBInterface.get_collection_object(collection_name)
+
+        try:
+            return await collection.update_many(
+                filter_,
+                update,
+                upsert=upsert,
+            )
+        except WriteError as exc:
+            raise DatabaseError(
+                "Error when updating multiple documents in %s collection",
+                collection_name,
+            ) from exc
+
+    @staticmethod
     async def insert_one(collection_name: str, data: Dict[str, Any]) -> InsertOneResult:
         """
         Using the input data, insert a single document into a given collection
