@@ -43,8 +43,6 @@ class S3Interface:
 
     def paginate_hdf_data(self):
         paginator = self.client.get_paginator("list_objects_v2")
-        # TODO - change Prefix so it can deal with multiple days of data. Changing it to
-        # "data/" should work
         return paginator.paginate(
             Bucket=Config.config.echo.simulated_data_bucket,
             Prefix="data/",

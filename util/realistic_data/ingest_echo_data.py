@@ -55,6 +55,7 @@ def main():
         page_end_time = time()
         page_duration = page_end_time - page_start_time
         print(f"Page ingestion duration: {page_duration:0.2f} seconds")
+        og_api.refresh()
 
     total_ingestion_end_time = time()
     ingestion_duration = total_ingestion_end_time - total_ingestion_start_time

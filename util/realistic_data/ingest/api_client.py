@@ -14,7 +14,7 @@ from util.realistic_data.ingest.config import Config
 class APIClient:
     def __init__(self, url: str, process=None) -> None:
         self.url = url
-        self.token = self.login()
+        self.access_token, self.refresh_token = self.login()
         self.process = process
 
     def login(self) -> str:
@@ -36,10 +36,31 @@ class APIClient:
 
             # strip the first and last characters off the response
             # (the double quotes that surround it)
-            token = response.text[1:-1]
-            return token
+            access_token = response.text[1:-1]
+
+            cookie_header = response.headers["set-cookie"]
+            refresh_token = cookie_header.split("=")[1].split(";")[0]
+
+            return access_token, refresh_token
         except ConnectionError:
             print(f"Cannot connect with API at {self.url} for {endpoint}")
+    
+    def refresh(self) -> str:
+        print(f"Refresh token as '{Config.config.api.username}'")
+
+        endpoint = "/refresh"
+
+        try:
+            response = requests.post(
+                f"{self.url}{endpoint}",
+                data=json.dumps({"token": f"{self.access_token}"}),
+                headers={"Cookie": f"refresh_token={self.refresh_token}"}
+            )
+            self.access_token = response.text[1:-1]
+
+        except ConnectionError:
+            print(f"Cannot connect with API at {self.url} for {endpoint}")
+
 
     def submit_manifest(self, manifest_bytes: BytesIO) -> None:
         endpoint = "/submit/manifest"
@@ -47,7 +68,7 @@ class APIClient:
             response = requests.post(
                 f"{self.url}{endpoint}",
                 files={"file": manifest_bytes.read()},
-                headers={"Authorization": f"Bearer {self.token}"},
+                headers={"Authorization": f"Bearer {self.access_token}"},
             )
 
             if response.status_code == 201:
@@ -70,17 +91,17 @@ class APIClient:
             response = requests.post(
                 f"{self.url}{endpoint}",
                 files={"file": file.read()},
-                headers={"Authorization": f"Bearer {self.token}"},
+                headers={"Authorization": f"Bearer {self.access_token}"},
             )
 
             ingest_end_time = time()
 
             duration = ingest_end_time - ingest_start_time
             if response.status_code == 201:
-                print(f"Ingested {filename}, time taken: {duration:0.2f}" " seconds")
+                print(f"Ingested {filename}, time taken: {duration:0.2f} seconds")
                 return 201
             elif response.status_code == 200:
-                print(f"Updated {filename}, time taken: {duration:0.2f}" " seconds")
+                print(f"Updated {filename}, time taken: {duration:0.2f} seconds")
                 return 200
             else:
                 print(f"{response.status_code} returned")
