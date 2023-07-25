@@ -46,6 +46,7 @@ requests = "2.31.0"
 pytest-cov = "^3.0.0"
 coverage = "^6.4.4"
 pytest-asyncio = "^0.21.0"
+s4cmd = "^2.1.0"
 
 [tool.coverage.paths]
 source = ["operationsgateway_api"]

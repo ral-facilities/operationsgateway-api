@@ -2009,6 +2009,20 @@ botocore = ">=1.12.36,<2.0a.0"
 crt = ["botocore[crt] (>=1.20.29,<2.0a.0)"]
 
 [[package]]
+name = "s4cmd"
+version = "2.1.0"
+description = "Super S3 command line tool"
+optional = false
+python-versions = "*"
+files = [
+    {file = "s4cmd-2.1.0.tar.gz", hash = "sha256:42566058a74d3e1e553351966efaaffa08e4b6ac28a19e72a51be21151ea9534"},
+]
+
+[package.dependencies]
+boto3 = ">=1.3.1"
+pytz = ">=2016.4"
+
+[[package]]
 name = "safety"
 version = "2.3.5"
 description = "Checks installed dependencies for known vulnerabilities and licenses."
@@ -2199,4 +2213,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4.0"
-content-hash = "80ac381c6c2137d99b216123e984f08f554f23c0de1ff0ec105c7e8857226722"
+content-hash = "726241e01f26fc80eb669659007b449930f65c4adbe116e4aadef4639c2b59b3"

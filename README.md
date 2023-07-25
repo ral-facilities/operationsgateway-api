@@ -69,21 +69,21 @@ Credentials to connect to Echo are provided in `config.yml`, as well as a bucket
 
 For the API, we have multiple buckets, used for different purposes. For example, there's a bucket used for the dev server, a bucket per developer for their development environment, as well as buckets that are created for a short period of time for specific testing. This ensures that we're not overwriting each other's data and causing issues. For GitHub Actions, each run will create a new bucket, ingest data for testing and delete the bucket at the end of the run.
 
-To manage buckets, [s3cmd](https://s3tools.org/s3cmd) is a good command line utility. It provides an Unix-like interface to S3 storage, ___. This can be installed using `yum`, `apt-get` etc. There's an example configuration file in `.github/ci_s3cfg` which can be placed in `~/.s3cfg` and used for your own development environment.
+To manage buckets, [s4cmd](https://github.com/bloomreach/s4cmd) is a good command line utility. It provides an Unix-like interface to S3 storage, based off of `s3cmd` but has higher performance when interacting with large files. It is a development dependency for this repository but can also be installed using `pip`. There's an example configuration file in `.github/ci_s3cfg` which can be placed in `~/.s3cfg` and used for your own development environment.
 
 Here's a few useful example commands:
 ```bash
-# Create a bucket called 'og-my-test-bucket'
-s3cmd mb s3://og-my-test-bucket
+# Create a bucket called 'og-my-test-bucket' on STFC's Echo S3
+s4cmd --endpoint-url https://s3.echo.stfc.ac.uk mb s3://og-my-test-bucket
 
 # List everything that the current user can see
-s3cmd ls
+s4cmd --endpoint-url https://s3.echo.stfc.ac.uk ls
 
 # List everything inside 'og-my-test-bucket'
-s3cmd ls s3://og-my-test-bucket
+s4cmd --endpoint-url https://s3.echo.stfc.ac.uk ls s3://og-my-test-bucket
 
 # Remove bucket called 'og-my-test-bucket'. --recursive will remove all objects from the bucket if it isn't empty
-s3cmd rb --recursive s3://og-my-test-bucket
+s4cmd --endpoint-url https://s3.echo.stfc.ac.uk del --recursive s3://og-my-test-bucket
 ```
 
 ## API Startup
