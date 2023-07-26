@@ -24,17 +24,15 @@ s4cmd --endpoint-url https://s3.echo.stfc.ac.uk put $resources_path/ $s3_bucket 
 for (( day=1; day<=$num_days_to_generate; day++ ))
 do
     echo "Data to be generated for $date"
-    current_day_directory="${output_dir}/${date}/"
-    mkdir -p $current_day_directory
-    epac-data-sim generator -s "${date}T00:00:00" -e "${date}T23:59:59" --schedule $resources_path/$schedule_file --channel-config $resources_path/$channels_config -o $current_day_directory -P
+    epac-data-sim generator -s "${date}T00:00:00" -e "${date}T23:59:59" --schedule $resources_path/$schedule_file --channel-config $resources_path/$channels_config -o $output_dir -P
 
     # Put the data onto Echo and remove the data from local disk
     s3_start_time=`date +%s`
-    s4cmd --endpoint-url https://s3.echo.stfc.ac.uk put $current_day_directory $s3_bucket --recursive --force
+    s4cmd --endpoint-url https://s3.echo.stfc.ac.uk put $output_dir $s3_bucket --recursive --force
     s3_end_time=`date +%s`
 
-    echo "Removing $current_day_directory from disk"
-    rm -rf $current_day_directory
+    echo "Removing HDF files from disk"
+    rm $output_dir/*.h5
 
     # Iterate the day ready for the next day of data to be generated
     date=$(date -I -d "$date + 1 day")
