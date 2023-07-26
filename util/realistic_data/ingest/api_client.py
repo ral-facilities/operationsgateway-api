@@ -44,7 +44,7 @@ class APIClient:
             return access_token, refresh_token
         except ConnectionError:
             print(f"Cannot connect with API at {self.url} for {endpoint}")
-    
+
     def refresh(self) -> str:
         print(f"Refresh token as '{Config.config.api.username}'")
 
@@ -54,13 +54,12 @@ class APIClient:
             response = requests.post(
                 f"{self.url}{endpoint}",
                 data=json.dumps({"token": f"{self.access_token}"}),
-                headers={"Cookie": f"refresh_token={self.refresh_token}"}
+                headers={"Cookie": f"refresh_token={self.refresh_token}"},
             )
             self.access_token = response.text[1:-1]
 
         except ConnectionError:
             print(f"Cannot connect with API at {self.url} for {endpoint}")
-
 
     def submit_manifest(self, manifest_bytes: BytesIO) -> None:
         endpoint = "/submit/manifest"

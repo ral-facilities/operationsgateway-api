@@ -27,7 +27,13 @@ def experiment_start_date(e):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--resource-directory", type=str, required=True)
-    parser.add_argument("-s", "--schedule-file", action="append", type=str, required=True)
+    parser.add_argument(
+        "-s",
+        "--schedule-file",
+        action="append",
+        type=str,
+        required=True,
+    )
 
     args = parser.parse_args()
     resource_path = args.resource_directory
