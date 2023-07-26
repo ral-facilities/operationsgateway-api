@@ -129,9 +129,16 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
+      # s3cmd is installed only to remove the bucket as this functionality isn't present
+      # in s4cmd. There is an issue open regarding this functionality:
+      # https://github.com/bloomreach/s4cmd/issues/316
+      # s3cmd is easy to install and uses the same config file as s4cmd so is workaround
+      # until the feature is implemented
+      - name: Install s3cmd
+        run: sudo apt-get install -y s3cmd
       # --recursive & --force used so non-empty buckets can be deleted
       - name: Remove bucket for current job
-        run: poetry run s4cmd --endpoint-url https://s3.echo.stfc.ac.uk del --recursive --force s3://og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}
+        run: s3cmd rb --recursive --force s3://og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}
         if: ${{ always() }}
 
 
