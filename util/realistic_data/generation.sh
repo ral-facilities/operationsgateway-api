@@ -15,7 +15,7 @@ s3_bucket="s3://og-directory-test/"
 cd $og_api_path
 
 # Convert calendar schedule into format ready to be imported into MongoDB
-poetry run python $og_api_path/util/realistic_data/calendar_conversion.py -r $resources_path
+poetry run python $og_api_path/util/realistic_data/calendar_conversion.py -r $resources_path -s $resources_path/schedule_calendar.yml -s $resources_path/daily_data_schedule.yml
 # Upload files related to the data to Echo
 poetry run s4cmd --endpoint-url https://s3.echo.stfc.ac.uk put $resources_path/ $s3_bucket --recursive --force
 

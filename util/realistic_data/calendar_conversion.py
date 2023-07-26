@@ -27,25 +27,28 @@ def experiment_start_date(e):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--resource-directory", type=str, required=True)
+    parser.add_argument("-s", "--schedule-file", action="append", type=str, required=True)
+
     args = parser.parse_args()
     resource_path = args.resource_directory
+    schedule_files = args.schedule_file
 
-    with open(
-        f"{resource_path}/schedule_calendar.yml",
-        encoding="utf-8",
-    ) as calendar_file:
-        schedule = yaml.safe_load(calendar_file)
+    schedules = []
+    for file_path in schedule_files:
+        with open(file_path, encoding="utf-8") as calendar_file:
+            schedules.append(yaml.safe_load(calendar_file))
 
     experiments = []
-    for experiment_areas in schedule.values():
-        # Searching for the experiment areas that will contain experiments
-        if isinstance(experiment_areas, list):
-            experiments.extend(
-                [
-                    extract_experiment_metadata(experiment)
-                    for experiment in experiment_areas
-                ],
-            )
+    for schedule in schedules:
+        for experiment_areas in schedule.values():
+            # Searching for the experiment areas that will contain experiments
+            if isinstance(experiment_areas, list):
+                experiments.extend(
+                    [
+                        extract_experiment_metadata(experiment)
+                        for experiment in experiment_areas
+                    ],
+                )
 
     # The ordering of experiments in the database has no impact to functionality but
     # helps readability for anyone trying to debug with this data
