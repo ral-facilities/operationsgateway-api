@@ -24,17 +24,20 @@ def download_and_ingest(
 def main():
     ssh = SSHHandler()
     if Config.config.script_options.wipe_database:
+        print("Wiping database")
         collection_names = ["channels", "experiments", "records", "waveforms"]
         ssh.drop_database_collections(collection_names)
 
+    echo = S3Interface()
+
     if Config.config.script_options.delete_images:
-        pass
+        print(f"Deleting images from Echo, bucket: {Config.config.echo.images_bucket}")
+        echo.delete_images()
 
     starter = APIStarter()
     api_url = f"http://{Config.config.api.host}:{Config.config.api.port}"
     print(f"API started on {api_url}")
 
-    echo = S3Interface()
     channel_manifest = echo.download_manifest_file()
     og_api = APIClient(api_url, starter.process)
     og_api.submit_manifest(channel_manifest)

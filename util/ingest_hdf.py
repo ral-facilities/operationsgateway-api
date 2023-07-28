@@ -112,12 +112,10 @@ if DELETE_IMAGES:
         aws_secret_access_key=Config.config.images.echo_secret_key,
     )
 
-
     bucket = s3_resource.Bucket(BUCKET_NAME)
     print(f"Retrieved '{BUCKET_NAME}' bucket, going to delete all files in the bucket")
     bucket.objects.all().delete()
     print(f"Remove all files from the '{BUCKET_NAME}' bucket")
-
 
 
 def is_api_alive(host, port):
@@ -235,7 +233,7 @@ for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
                         pprint(response.text)
         directory_end_time = time()
         directory_duration = directory_end_time - directory_start_time
-        
+
         print(
             f"Ingestion of {entry.path} complete, time taken:"
             f" {directory_duration:0.2f} seconds",

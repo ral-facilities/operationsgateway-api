@@ -6,7 +6,7 @@ from typing import List, Tuple
 import h5py
 from pydantic import ValidationError
 
-from operationsgateway_api.src.constants import DATA_DATETIME_FORMAT, ID_DATETIME_FORMAT
+from operationsgateway_api.src.constants import ID_DATETIME_FORMAT
 from operationsgateway_api.src.exceptions import HDFDataExtractionError, ModelError
 from operationsgateway_api.src.models import (
     ImageChannelMetadataModel,
