@@ -82,7 +82,7 @@ s4cmd --endpoint-url https://s3.echo.stfc.ac.uk ls
 # List everything inside 'og-my-test-bucket'
 s4cmd --endpoint-url https://s3.echo.stfc.ac.uk ls s3://og-my-test-bucket
 
-# Remove bucket called 'og-my-test-bucket'. --recursive will remove all objects from the bucket if it isn't empty
+# Remove all objects in bucket
 s4cmd --endpoint-url https://s3.echo.stfc.ac.uk del --recursive s3://og-my-test-bucket
 ```
 
