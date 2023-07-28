@@ -27,7 +27,12 @@ class SSHHandler:
 
     def drop_database_collections(self, collection_names: List[str]) -> None:
         for collection_name in collection_names:
+            print(
+                f"Dropping collection '{collection_name}' in"
+                f" {Config.config.database.name}",
+            )
             self.connection.run(
-                f"mongo {Config.config.database.connection_url} --eval"
-                f' "db.{collection_name}.drop()"',
+                f"mongo --host {Config.config.database.hostname}"
+                f" --port {Config.config.database.port} {Config.config.database.name}"
+                f' --eval "db.{collection_name}.drop()"',
             )

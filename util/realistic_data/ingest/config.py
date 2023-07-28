@@ -13,7 +13,8 @@ class ScriptOptions(BaseModel):
 
 
 class Database(BaseModel):
-    connection_url: str
+    hostname: str
+    port: int
     name: str
     remote_experiments_file_path: str
 
