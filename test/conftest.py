@@ -3,6 +3,7 @@ import hashlib
 from fastapi.testclient import TestClient
 import pytest
 
+from operationsgateway_api.src.experiments.unique_worker import UniqueWorker
 from operationsgateway_api.src.main import app
 
 
@@ -19,6 +20,16 @@ def login_and_get_token(test_app: TestClient):
     # (the double quotes that surround it)
     token = response.text[1:-1]
     return token
+
+
+@pytest.fixture()
+def remove_background_pid_file():
+    """
+    Remove background file for experiments task after tests relating to it have run
+    """
+    yield
+
+    UniqueWorker.remove_file()
 
 
 def assert_record(record, expected_channel_count, expected_channel_data):

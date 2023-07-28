@@ -90,7 +90,7 @@ class TestGetRecords:
                 None,
                 None,
                 {
-                    "N_COMP_NF_IMAGE": "4af510e9fd82d97ef43cce13cbe674af",
+                    "N_COMP_NF_IMAGE": "9c938bb51dd810a00b619f425182b08d",
                 },
                 id="Whole record: all channels have channel_dtype returned",
             ),
@@ -101,7 +101,7 @@ class TestGetRecords:
                 None,
                 None,
                 {
-                    "N_COMP_NF_IMAGE": "4af510e9fd82d97ef43cce13cbe674af",
+                    "N_COMP_NF_IMAGE": "9c938bb51dd810a00b619f425182b08d",
                 },
                 id="Partial record: only N_COMP_NF_IMAGE and no channel_dtype returned",
             ),
@@ -112,7 +112,7 @@ class TestGetRecords:
                 200,
                 "jet_r",
                 {
-                    "N_COMP_NF_IMAGE": "5950045e637a7a85460bf379385a99b4",
+                    "N_COMP_NF_IMAGE": "128f9668b04185e9b5ba868854535992",
                 },
                 id="Whole record: all channels have channel_dtype returned "
                 "and custom false colour settings applied",
@@ -124,7 +124,7 @@ class TestGetRecords:
                 200,
                 "jet_r",
                 {
-                    "N_COMP_NF_IMAGE": "5950045e637a7a85460bf379385a99b4",
+                    "N_COMP_NF_IMAGE": "128f9668b04185e9b5ba868854535992",
                 },
                 id="Partial record: only N_COMP_NF_IMAGE and no channel_dtype returned "
                 "and custom false colour settings applied",

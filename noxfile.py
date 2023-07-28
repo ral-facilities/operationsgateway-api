@@ -79,7 +79,17 @@ def safety(session):
             f"--output={requirements.name}",
             external=True,
         )
-        session.run("safety", "check", f"--file={requirements.name}", "--full-report")
+        session.run(
+            "safety",
+            "check",
+            f"--file={requirements.name}",
+            "--full-report",
+            # TODO - upgrade to FastAPI 0.95.2+ (thereby upgrading Starlette)
+            "--ignore",
+            "58704",
+            "--ignore",
+            "58713",
+        )
 
         try:
             # Due to delete=False, the file must be deleted manually

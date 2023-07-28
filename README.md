@@ -62,6 +62,30 @@ mongoimport --db='opsgateway' --collection='users' --mode='upsert' --file='util/
 
 Using the `upsert` mode allows you to update existing users with any changes that are made (e.g. added an authorised route to their entry) and any new users are inserted as normal. The command's output states the number of documents that have been added and how many have been updated.
 
+## Image Storage
+Configuration for image storage is stored in the `images` section of the config file. Images are stored using S3 object storage, currently the STFC Echo instance. Lots of documentation online references the AWS offering, but as S3 is the underlying storage technique, we can interact with Echo in the same way that a user would interact with AWS S3.
+
+Credentials to connect to Echo are provided in `config.yml`, as well as a bucket name, which is the location on S3 storage where images will be stored.
+
+For the API, we have multiple buckets, used for different purposes. For example, there's a bucket used for the dev server, a bucket per developer for their development environment, as well as buckets that are created for a short period of time for specific testing. This ensures that we're not overwriting each other's data and causing issues. For GitHub Actions, each run will create a new bucket, ingest data for testing and delete the bucket at the end of the run.
+
+To manage buckets, [s4cmd](https://github.com/bloomreach/s4cmd) is a good command line utility. It provides an Unix-like interface to S3 storage, based off of `s3cmd` but has higher performance when interacting with large files. It is a development dependency for this repository but can also be installed using `pip`. There's an example configuration file in `.github/ci_s3cfg` which can be placed in `~/.s3cfg` and used for your own development environment.
+
+Here's a few useful example commands:
+```bash
+# Create a bucket called 'og-my-test-bucket' on STFC's Echo S3
+s4cmd --endpoint-url https://s3.echo.stfc.ac.uk mb s3://og-my-test-bucket
+
+# List everything that the current user can see
+s4cmd --endpoint-url https://s3.echo.stfc.ac.uk ls
+
+# List everything inside 'og-my-test-bucket'
+s4cmd --endpoint-url https://s3.echo.stfc.ac.uk ls s3://og-my-test-bucket
+
+# Remove all objects in bucket
+s4cmd --endpoint-url https://s3.echo.stfc.ac.uk del --recursive s3://og-my-test-bucket
+```
+
 ## API Startup
 To start the API, use the following command:
 

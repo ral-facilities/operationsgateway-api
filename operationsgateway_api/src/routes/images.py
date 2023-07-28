@@ -125,8 +125,9 @@ async def get_colourmap_names(
     access_token: str = Depends(authorise_token),
 ):
     """
-    This endpoint returns an ordered list of the colourmap names that can be used in
-    various API calls. They are those available in matplotlib and more detail is at:
+    This endpoint returns an ordered dictionary of the colourmap names (grouped into a
+    number of categories) that can be used in various API calls. They are those
+    available in matplotlib and more detail is at:
     https://matplotlib.org/stable/gallery/color/colormap_reference.html.
     Those with '_r' appended to them are the reversed versions of the colourmap with
     the same name. This is also explained on the matplotlib page.

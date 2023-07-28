@@ -123,6 +123,7 @@ class MongoDBInterface:
         collection_name: str,
         filter_: Dict[str, Any] = None,
         update: Dict[str, Any] = None,
+        upsert: bool = False,
     ) -> UpdateResult:
         """
         Update a single document using the data provided. The document selected for the
@@ -142,11 +143,35 @@ class MongoDBInterface:
             return await collection.update_one(
                 filter_,
                 update,
+                upsert=upsert,
             )
         except WriteError as exc:
             log.exception(msg=exc)
             raise DatabaseError(
-                "Error when updating single document in %s collection",
+                f"Error when updating single document in {collection_name} collection",
+            ) from exc
+
+    @staticmethod
+    async def update_many(
+        collection_name: str,
+        filter_: Dict[str, Any] = {},  # noqa: B006
+        update: Dict[str, Any] = {},  # noqa: B006
+        upsert: bool = False,
+    ):
+        log.info("Sending update_many() to MongoDB, collection: %s", collection_name)
+        log.debug("Filter: %s", filter_)
+
+        collection = MongoDBInterface.get_collection_object(collection_name)
+
+        try:
+            return await collection.update_many(
+                filter_,
+                update,
+                upsert=upsert,
+            )
+        except WriteError as exc:
+            raise DatabaseError(
+                "Error when updating multiple documents in %s collection",
                 collection_name,
             ) from exc
 
@@ -164,8 +189,7 @@ class MongoDBInterface:
         except WriteError as exc:
             log.exception(msg=exc)
             raise DatabaseError(
-                "Error when inserting single document in %s collection",
-                collection_name,
+                f"Error when inserting single document in {collection_name} collection",
             ) from exc
 
     @staticmethod
@@ -185,8 +209,8 @@ class MongoDBInterface:
         except WriteError as exc:
             log.exception(msg=exc)
             raise DatabaseError(
-                "Error when inserting multiple documents in %s collection",
-                collection_name,
+                f"Error when inserting multiple documents in {collection_name}"
+                " collection",
             ) from exc
 
     @staticmethod

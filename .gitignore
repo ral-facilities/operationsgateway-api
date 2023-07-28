@@ -1,7 +1,7 @@
 venv/
 .idea/
 *.pyc
-*.log
+*.log*
 config.yml*
 !config.yml.example
 .vscode/
