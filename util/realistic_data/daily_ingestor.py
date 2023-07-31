@@ -2,8 +2,9 @@ import argparse
 from datetime import datetime
 import os
 from pathlib import Path
-import sys
+from pprint import pprint
 
+from dateutil import tz
 from util.realistic_data.ingest.api_client import APIClient
 
 
@@ -21,35 +22,43 @@ def main():
 
     hdf_files = sorted(Path(hdf_data_directory).iterdir(), key=os.path.getmtime)
 
-    try:
-        file_to_ingest = hdf_files[0]
-    except IndexError:
-        sys.exit(
-            "No HDF files in data directory so cannot ingest anything."
-            f" Searched in: {hdf_data_directory}",
+    hdf_file_date_format = "%Y-%m-%dT%H%M"
+    hdf_file_dates = {
+        file: datetime.strptime(file.name.split(".")[0], hdf_file_date_format).replace(
+            tzinfo=tz.gettz("Europe/London"),
         )
+        for file in hdf_files
+    }
+    files_to_ingest = []
+    for file_path, file_datetime in hdf_file_dates.items():
+        if file_datetime < datetime.now(tz=tz.gettz("Europe/London")):
+            files_to_ingest.append(file_path)
 
-    print(f"Going to ingest: {file_to_ingest.name}. Current time: {datetime.now()}")
+    print("Files to ingest:")
+    pprint([file.name for file in files_to_ingest])
 
     og_api = APIClient(og_api_url)
 
-    with open(file_to_ingest, "rb") as hdf_file:
-        response_code = og_api.submit_hdf({file_to_ingest.name: hdf_file})
+    for file_to_ingest in files_to_ingest:
+        pass
 
-    if response_code == 201 or response_code == 200:
-        print(
-            f"Successfully ingested ({response_code}) '{file_to_ingest.name}'."
-            " HDF file will be deleted",
-        )
-        file_to_ingest.unlink(missing_ok=True)
-    else:
-        print(
-            f"Ingestion unsuccessful for: {file_to_ingest.name},"
-            f" Response: {response_code}. Moving this file to so it can be investigated"
-            f" by a human: {failed_ingests_directory}",
-        )
+        with open(file_to_ingest, "rb") as hdf_file:
+            response_code = og_api.submit_hdf({file_to_ingest.name: hdf_file})
 
-        file_to_ingest.rename(f"{failed_ingests_directory}/{file_to_ingest.name}")
+        if response_code == 201 or response_code == 200:
+            print(
+                f"Successfully ingested ({response_code}) '{file_to_ingest.name}'."
+                " HDF file will be deleted",
+            )
+            file_to_ingest.unlink(missing_ok=True)
+        else:
+            print(
+                f"Ingestion unsuccessful for: {file_to_ingest.name},"
+                f" Response: {response_code}. Moving this file to so it can be"
+                f" investigated by a human: {failed_ingests_directory}",
+            )
+
+            file_to_ingest.rename(f"{failed_ingests_directory}/{file_to_ingest.name}")
 
 
 if __name__ == "__main__":
