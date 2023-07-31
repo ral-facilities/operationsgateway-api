@@ -14,6 +14,7 @@ echo:
   secret_key: secret_key
   simulated_data_bucket: og-realistic-data
   images_bucket: na-bucket
+  # Number of HDF files downloaded & ingested in one go
   page_size: 30
 api:
   host: 127.0.0.1
@@ -21,4 +22,6 @@ api:
   username: backend
   password: back
   log_config_path: /home/user/operationsgateway-api/operationsgateway_api/logging.ini
+  # If the API is launched by the script, this defines how many gunicorn workers are
+  # assigned to the instance
   gunicorn_num_workers: 8

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# Start date that data will be generated from
 date="2022-06-20"
 num_days_to_generate=1
 
