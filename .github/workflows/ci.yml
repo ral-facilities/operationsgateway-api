@@ -70,6 +70,7 @@ jobs:
       # Create a bucket for image storage
       - name: Create bucket for current job
         run: poetry run s4cmd --endpoint-url https://s3.echo.stfc.ac.uk mb s3://og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}
+        id: create_bucket
 
       # Configuration for API
       - name: Configure echo access key
@@ -136,11 +137,11 @@ jobs:
       # until the feature is implemented
       - name: Install s3cmd
         run: sudo apt-get install -y s3cmd
-        if: ${{ always() }}
+        if: steps.create_bucket.outcome == 'success'
       # --recursive & --force used so non-empty buckets can be deleted
       - name: Remove bucket for current job
         run: s3cmd rb --recursive --force s3://og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}
-        if: ${{ always() }}
+        if: steps.create_bucket.outcome == 'success'
 
 
   linting:
