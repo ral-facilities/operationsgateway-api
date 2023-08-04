@@ -102,5 +102,5 @@ def safety(session):
 @nox.session(python=["3.8", "3.9", "3.10"], reuse_venv=True)
 def tests(session):
     args = session.posargs
-    session.run("poetry", "install", external=True)
+    session.run("poetry", "install", "--without", "simulated-data", external=True)
     session.run("pytest", *args)

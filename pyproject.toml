@@ -45,9 +45,11 @@ requests = "2.31.0"
 pytest-cov = "^3.0.0"
 coverage = "^6.4.4"
 fabric = "^3.1.0"
-epac-data-sim = {git = "git@github.com:CentralLaserFacility/EPAC-DataSim.git"}
 pytest-asyncio = "^0.21.0"
 s4cmd = "^2.1.0"
+
+[tool.poetry.group.simulated-data.dependencies]
+epac-data-sim = {git = "git@github.com:CentralLaserFacility/EPAC-DataSim.git"}
 
 [tool.coverage.paths]
 source = ["operationsgateway_api"]

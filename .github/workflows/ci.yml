@@ -56,7 +56,7 @@ jobs:
           path: ~/.cache/pypoetry/virtualenvs
           key: ${{ runner.os }}-poetry-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --without simulated-data
 
       # Configure s4cmd
       - name: Add keys to s4cmd config
