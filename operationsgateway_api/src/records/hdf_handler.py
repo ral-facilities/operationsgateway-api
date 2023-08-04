@@ -6,7 +6,7 @@ from typing import List, Tuple
 import h5py
 from pydantic import ValidationError
 
-from operationsgateway_api.src.constants import ID_DATETIME_FORMAT
+from operationsgateway_api.src.constants import DATA_DATETIME_FORMAT, ID_DATETIME_FORMAT
 from operationsgateway_api.src.exceptions import HDFDataExtractionError, ModelError
 from operationsgateway_api.src.models import (
     ImageChannelMetadataModel,
@@ -52,13 +52,24 @@ class HDFDataHandler:
                 metadata_hdf["timestamp"],
                 timestamp_format,
             )
-            self.record_id = metadata_hdf["timestamp"].strftime(ID_DATETIME_FORMAT)
-        except ValueError as exc:
-            raise HDFDataExtractionError(
-                "Incorrect timestamp format for metadata timestamp. Use"
-                f" {timestamp_format} instead",
-            ) from exc
+        except ValueError:
+            # Try using alternative timestamp format that might be used for older HDF
+            # files such as old Gemini test data
+            # TODO - when Gemini test data is needed, remove this try/except block to
+            # have a second attempt to convert the timestamp - go straight
+            # to raising an exception
+            try:
+                metadata_hdf["timestamp"] = datetime.strptime(
+                    metadata_hdf["timestamp"],
+                    DATA_DATETIME_FORMAT,
+                )
+            except ValueError as exc:
+                raise HDFDataExtractionError(
+                    "Incorrect timestamp format for metadata timestamp. Use"
+                    f" {timestamp_format} instead",
+                ) from exc
 
+        self.record_id = metadata_hdf["timestamp"].strftime(ID_DATETIME_FORMAT)
         self.extract_channels()
 
         try:
