@@ -55,9 +55,9 @@ class HDFDataHandler:
         except ValueError:
             # Try using alternative timestamp format that might be used for older HDF
             # files such as old Gemini test data
-            # TODO - when Gemini test data is needed, remove this try/except block to
-            # have a second attempt to convert the timestamp - go straight
-            # to raising an exception
+            # TODO - when Gemini test data is no longer needed, remove this try/except
+            # block that attempts to convert the timestamp for a second time. Go
+            # straight to raising the exception instead
             try:
                 metadata_hdf["timestamp"] = datetime.strptime(
                     metadata_hdf["timestamp"],
