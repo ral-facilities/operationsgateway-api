@@ -40,8 +40,6 @@ def main():
     og_api = APIClient(og_api_url)
 
     for file_to_ingest in files_to_ingest:
-        pass
-
         with open(file_to_ingest, "rb") as hdf_file:
             response_code = og_api.submit_hdf({file_to_ingest.name: hdf_file})
 
