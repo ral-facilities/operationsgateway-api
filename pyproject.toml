@@ -9,7 +9,7 @@ authors = ["Matthew Richards <matthew.richards@stfc.ac.uk>"]
 python = ">=3.8,<4.0"
 fastapi = "^0.92.0"
 motor = "^2.5.1"
-uvicorn = "^0.18.2"
+uvicorn = "^0.20.0"
 python-multipart = "^0.0.5"
 PyYAML = "^6.0"
 numpy = "^1.23.1"
@@ -20,8 +20,10 @@ gunicorn = "^20.1.0"
 orjson = "3.6.1"
 python-dateutil = "^2.8.2"
 PyJWT = "2.4.0"
-cryptography = "^39.0.2"
+cryptography = "^41.0.0"
 python-ldap = "3.4.2"
+cron-converter = "^1.0.1"
+zeep = "^4.2.1"
 httpx = "^0.23.3"
 
 [tool.poetry.dev-dependencies]
@@ -38,9 +40,10 @@ flake8-logging-format = "^0.6.0"
 pep8-naming = "^0.12.1"
 safety = "^2.3.1"
 pytest = "^7.2.0"
-requests = "2.27.1"
+requests = "2.31.0"
 pytest-cov = "^3.0.0"
 coverage = "^6.4.4"
+pytest-asyncio = "^0.21.0"
 
 [tool.coverage.paths]
 source = ["operationsgateway_api"]

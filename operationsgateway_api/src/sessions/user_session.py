@@ -91,6 +91,8 @@ class UserSession:
                 f"{delete_result.deleted_count}",
             )
 
+        return delete_result.deleted_count
+
     async def update(self, access_token: str) -> None:
         """
         Update a user session, checking the session belongs to the user performing the
@@ -107,16 +109,17 @@ class UserSession:
                 "Session attempting to be updated does not belong to current user",
             )
 
+        user_session_update = self.session.dict(
+            by_alias=True,
+            exclude_unset=True,
+            exclude={"id_"},
+        )
         try:
             update_result = await MongoDBInterface.update_one(
                 "sessions",
                 {"_id": ObjectId(self.session.id_)},
                 {
-                    "$set": self.session.dict(
-                        by_alias=True,
-                        exclude_unset=True,
-                        exclude={"id_"},
-                    ),
+                    "$set": user_session_update,
                 },
                 upsert=False,
             )
@@ -129,8 +132,19 @@ class UserSession:
             update_result.modified_count,
         )
         if update_result.matched_count != 1:
+            log.error(
+                "User session of ID '%s' couldn't be found in the database."
+                " Session: %s",
+                self.session.id_,
+                user_session_update,
+            )
             raise MissingDocumentError("User session cannot be found in the database")
         if update_result.modified_count != 1:
+            log.error(
+                "Updating session '%s' was unsucessful. Session: %s",
+                self.session.id_,
+                user_session_update,
+            )
             raise DatabaseError(f"Update to {self.session.id_} has been unsuccessful")
 
     async def insert(self) -> Any:

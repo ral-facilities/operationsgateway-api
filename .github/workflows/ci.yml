@@ -61,7 +61,7 @@ jobs:
         run: 'echo "$SSH_KEY_PRIVATE" > /home/runner/work/operationsgateway-api/id_rsa'
         shell: bash
         env:
-          SSH_KEY_PRIVATE: ${{secrets.SSH_PRIVATE_KEY_FOR_AUTH}}
+          SSH_KEY_PRIVATE: ${{secrets.SSH_PRIVATE_KEY_FOR_AUTH_OPENSSH}}
 
       - name: Set permissions on private key file
         run: chmod 600 /home/runner/work/operationsgateway-api/id_rsa
@@ -70,7 +70,7 @@ jobs:
         run: 'echo "$SSH_KEY_PUBLIC" > /home/runner/work/operationsgateway-api/id_rsa.pub'
         shell: bash
         env:
-          SSH_KEY_PUBLIC: ${{secrets.SSH_PUBLIC_KEY_FOR_AUTH}}
+          SSH_KEY_PUBLIC: ${{secrets.SSH_PUBLIC_KEY_FOR_AUTH_OPENSSH}}
 
       # Load Poetry virtual environment dependencies and install API dependencies
       - name: Load Poetry cache

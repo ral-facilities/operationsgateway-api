@@ -25,7 +25,8 @@ router = APIRouter()
 
 @router.get(
     "/sessions/list",
-    summary="Get a list of session names that belong to the given user",
+    summary="Get a list of sessions (metadata only, not the actual session data)"
+    " that belong to the given user",
     response_description="List of session names",
     tags=["Sessions"],
 )
@@ -38,8 +39,11 @@ async def get_user_sessions_list(
     sessions' metadata
     """
 
-    log.info("Getting list of user sessions")
     token_payload = JwtHandler.get_payload(access_token)
+    log.info(
+        "Getting list of user session metadata for user '%s'",
+        token_payload["username"],
+    )
     user_sessions_list = UserSessionList(token_payload["username"])
     return await user_sessions_list.get_session_list()
 
@@ -119,11 +123,17 @@ async def save_user_session(
     Save/update a user session (and its metadata) into the database
     """
 
-    log.info("Saving user session")
-    log.debug("Name: %s, summary: %s, auto saved: %s", name, summary, auto_saved)
-
     token_payload = JwtHandler.get_payload(access_token)
     username = token_payload["username"]
+
+    log.info(
+        "Saving user session for user '%s'. Session name: %s, auto saved: %s,"
+        " summary: %s",
+        username,
+        name,
+        auto_saved,
+        summary,
+    )
 
     session_data = UserSessionModel(
         username=username,

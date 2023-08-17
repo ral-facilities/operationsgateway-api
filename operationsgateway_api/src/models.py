@@ -151,6 +151,14 @@ class ChannelSummaryModel(BaseModel):
         smart_union = True
 
 
+class ExperimentModel(BaseModel):
+    id_: str = Field(alias="_id")
+    experiment_id: str
+    part: int
+    start_date: datetime
+    end_date: datetime
+
+
 class ShotnumConverterRange(BaseModel):
     opposite_range_fields: ClassVar[Dict[str, str]] = {"from": "min_", "to": "max_"}
 
