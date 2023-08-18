@@ -27,11 +27,13 @@ class TestExperiment:
     experiment_search_end_date = "2020-05-01T00:00:00Z"
 
     @patch(
-        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface.__init__",
+        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface"
+        ".__init__",
         return_value=None,
     )
     @patch(
-        "operationsgateway_api.src.experiments.experiment.Experiment._get_collection_updated_date",
+        "operationsgateway_api.src.experiments.experiment.Experiment"
+        "._get_collection_updated_date",
         return_value=datetime(2023, 3, 1, 10, 0),
     )
     @patch(
@@ -40,7 +42,8 @@ class TestExperiment:
         config_scheduler_contact_date,
     )
     @patch(
-        "operationsgateway_api.src.experiments.background_scheduler_runner.BackgroundSchedulerRunner.get_next_run_task_date",
+        "operationsgateway_api.src.experiments.background_scheduler_runner"
+        ".BackgroundSchedulerRunner.get_next_run_task_date",
         return_value=datetime(2023, 3, 10, 10, 0),
     )
     @patch(
@@ -71,7 +74,8 @@ class TestExperiment:
         assert test_experiment.experiments == expected_experiments
 
     @patch(
-        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface.__init__",
+        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface"
+        ".__init__",
         return_value=None,
     )
     @patch(
@@ -85,7 +89,10 @@ class TestExperiment:
             TestExperiment.experiment_search_start_date,
             TestExperiment.experiment_search_end_date,
         )
-        parts = experiment._map_experiments_to_part_numbers(data, self.config_instrument_names[0])
+        parts = experiment._map_experiments_to_part_numbers(
+            data,
+            self.config_instrument_names[0],
+        )
         assert parts == [
             ExperimentPartMappingModel(
                 experiment_id=20310000,
@@ -110,7 +117,8 @@ class TestExperiment:
         ]
 
     @patch(
-        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface.__init__",
+        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface"
+        ".__init__",
         return_value=None,
     )
     @patch(
@@ -126,7 +134,10 @@ class TestExperiment:
         )
 
         with pytest.raises(ExperimentDetailsError):
-            experiment._map_experiments_to_part_numbers(data, self.config_instrument_names[0])
+            experiment._map_experiments_to_part_numbers(
+                data,
+                self.config_instrument_names[0],
+            )
 
     @patch(
         "operationsgateway_api.src.config.Config.config.experiments.instrument_names",
@@ -224,14 +235,22 @@ class TestExperiment:
             ),
         ],
     )
-    def test_generate_id_instrument_pairs(self, _, experiment_part_mappings, expected_pairs):
+    def test_generate_id_instrument_pairs(
+        self,
+        _,
+        experiment_part_mappings,
+        expected_pairs,
+    ):
         experiment = Experiment()
-        test_pairs = experiment._generate_id_instrument_name_pairs(experiment_part_mappings)
+        test_pairs = experiment._generate_id_instrument_name_pairs(
+            experiment_part_mappings,
+        )
         assert len(test_pairs) == len(expected_pairs)
         assert test_pairs == expected_pairs
 
     @patch(
-        "operationsgateway_api.src.experiments.experiment.Experiment._generate_id_instrument_name_pairs",
+        "operationsgateway_api.src.experiments.experiment.Experiment"
+        "._generate_id_instrument_name_pairs",
         return_value=[
             {"key": 20310000, "value": config_instrument_names[0]},
             {"key": 20310001, "value": config_instrument_names[0]},
@@ -240,7 +259,8 @@ class TestExperiment:
         ],
     )
     @patch(
-        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface.__init__",
+        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface"
+        ".__init__",
         return_value=None,
     )
     @pytest.mark.parametrize(
@@ -322,16 +342,20 @@ class TestExperiment:
             assert experiment.experiments == expected_experiments
 
     @patch(
-        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface.__init__",
+        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface"
+        ".__init__",
         return_value=None,
     )
     def test_valid_non_selected_extract_experiment_data(self, _):
         test_experiment = Experiment()
-        experiment_mocks = get_experiments_mock({18325019: [1, 2, 3, 4, 5]}, return_duplicate_parts=False)
+        experiment_mocks = get_experiments_mock(
+            {18325019: [1, 2, 3, 4, 5]},
+            return_duplicate_parts=False,
+        )
         selected_parts = [4, 5]
 
         experiment_mappings = [
-            ExperimentPartMappingModel( 
+            ExperimentPartMappingModel(
                 experiment_id=18325019,
                 parts=selected_parts,
                 instrument_name="Gemini",
@@ -339,19 +363,23 @@ class TestExperiment:
         ]
 
         test_experiment._extract_experiment_data(experiment_mocks, experiment_mappings)
-        expected_experiments = get_expected_experiment_models({18325019: selected_parts})
+        expected_experiments = get_expected_experiment_models(
+            {18325019: selected_parts},
+        )
 
         assert len(test_experiment.experiments) == len(expected_experiments)
         assert test_experiment.experiments == expected_experiments
 
     @patch(
-        "operationsgateway_api.src.experiments.experiment.Experiment._generate_id_instrument_name_pairs",
+        "operationsgateway_api.src.experiments.experiment.Experiment"
+        "._generate_id_instrument_name_pairs",
         return_value=[
             {"key": 20310000, "value": config_instrument_names[0]},
         ],
     )
     @patch(
-        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface.__init__",
+        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface"
+        ".__init__",
         return_value=None,
     )
     @pytest.mark.parametrize(
@@ -411,7 +439,8 @@ class TestExperiment:
                 experiment._extract_experiment_data(experiments, part_mappings)
 
     @patch(
-        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface.__init__",
+        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface"
+        ".__init__",
         return_value=None,
     )
     @pytest.mark.parametrize(
@@ -488,10 +517,11 @@ class TestExperiment:
                         instrument_name=self.config_instrument_names[0],
                     ),
                 ],
-            )    
+            )
 
     @patch(
-        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface.__init__",
+        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface"
+        ".__init__",
         return_value=None,
     )
     @pytest.mark.parametrize(
@@ -575,7 +605,8 @@ class TestExperiment:
         assert non_duplicate_parts == expected_non_duplicates
 
     @patch(
-        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface.__init__",
+        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface"
+        ".__init__",
         return_value=None,
     )
     @pytest.mark.parametrize(

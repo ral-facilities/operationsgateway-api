@@ -90,7 +90,7 @@ class Experiment:
         self,
         # List of zeep experimentDateDTO's
         experiments: List[Any],
-        instrument_name: str
+        instrument_name: str,
     ) -> List[ExperimentPartMappingModel]:
         """
         Given a list of experiments retrieved from the Scheduler, extract RB numbers

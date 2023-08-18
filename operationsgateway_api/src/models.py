@@ -164,6 +164,7 @@ class ExperimentPartMappingModel(BaseModel):
     parts: List[int]
     instrument_name: str
 
+
 class ShotnumConverterRange(BaseModel):
     opposite_range_fields: ClassVar[Dict[str, str]] = {"from": "min_", "to": "max_"}
 
