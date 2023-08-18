@@ -169,6 +169,31 @@ class Experiment:
             except ValidationError as exc:
                 raise ModelError(str(exc)) from exc
 
+    def _get_mapping_model_by_experiment_id(
+        self,
+        experiment_id: int,
+        mapping_models: List[ExperimentPartMappingModel],
+    ):
+        """
+        Search through a list of experiment part mapping models and return the one with
+        a matching experiment ID
+        """
+
+        part_mapping = None
+        for mapping in mapping_models:
+            if mapping.experiment_id == experiment_id:
+                return mapping
+
+        if not part_mapping:
+            log.error(
+                "Part mapping for %s failed. Mapping to search through: %s",
+                experiment_id,
+                mapping_models,
+            )
+            raise ExperimentDetailsError(
+                f"Lookup of part mapping {experiment_id} failed",
+            )
+
     def _detect_duplicate_parts(
         self,
         experiment,
