@@ -4,7 +4,7 @@ from operationsgateway_api.src.experiments.scheduler_interface import SchedulerI
 
 
 class TestSchedulerInterface:
-    config_instrument_names = ["Test Instrument"]
+    config_instrument_names = ["Test Instrument", "Test Instrument #2"]
     config_user_office_username = "Test Username"
     config_user_office_password = "Test Password"
     config_user_office_wsdl = "Test User Office URL"

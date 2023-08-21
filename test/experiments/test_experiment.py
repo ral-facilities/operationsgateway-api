@@ -21,7 +21,7 @@ from test.experiments.scheduler_mocking.get_exp_dates_mocks import (
 
 class TestExperiment:
     # Variables that are used for mocking
-    config_instrument_names = ["Test Instrument"]
+    config_instrument_names = ["Test Instrument", "Test Instrument #2"]
     config_scheduler_contact_date = datetime(2023, 3, 2, 10, 0)
     experiment_search_start_date = "2020-01-01T00:00:00Z"
     experiment_search_end_date = "2020-05-01T00:00:00Z"
@@ -200,20 +200,20 @@ class TestExperiment:
                     ExperimentPartMappingModel(
                         experiment_id=20310002,
                         parts=[2, 3, 4, 5, 6],
-                        instrument_name=config_instrument_names[0],
+                        instrument_name=config_instrument_names[1],
                     ),
                     ExperimentPartMappingModel(
                         experiment_id=20310003,
                         parts=[1, 2],
-                        instrument_name=config_instrument_names[0],
+                        instrument_name=config_instrument_names[1],
                     ),
                 ],
                 [
                     {"key": 19510004, "value": config_instrument_names[0]},
                     {"key": 20310000, "value": config_instrument_names[0]},
                     {"key": 20310001, "value": config_instrument_names[0]},
-                    {"key": 20310002, "value": config_instrument_names[0]},
-                    {"key": 20310003, "value": config_instrument_names[0]},
+                    {"key": 20310002, "value": config_instrument_names[1]},
+                    {"key": 20310003, "value": config_instrument_names[1]},
                 ],
                 id="Multiple experiments",
             ),
@@ -254,8 +254,8 @@ class TestExperiment:
         return_value=[
             {"key": 20310000, "value": config_instrument_names[0]},
             {"key": 20310001, "value": config_instrument_names[0]},
-            {"key": 18325019, "value": config_instrument_names[0]},
-            {"key": 20310002, "value": config_instrument_names[0]},
+            {"key": 18325019, "value": config_instrument_names[1]},
+            {"key": 20310002, "value": config_instrument_names[1]},
         ],
     )
     @patch(
@@ -281,12 +281,12 @@ class TestExperiment:
                     ExperimentPartMappingModel(
                         experiment_id=18325019,
                         parts=[4],
-                        instrument_name=config_instrument_names[0],
+                        instrument_name=config_instrument_names[1],
                     ),
                     ExperimentPartMappingModel(
                         experiment_id=20310002,
                         parts=[1],
-                        instrument_name=config_instrument_names[0],
+                        instrument_name=config_instrument_names[1],
                     ),
                 ],
                 {
@@ -308,7 +308,7 @@ class TestExperiment:
                     ExperimentPartMappingModel(
                         experiment_id=18325019,
                         parts=[3, 4, 5],
-                        instrument_name=config_instrument_names[0],
+                        instrument_name=config_instrument_names[1],
                     ),
                 ],
                 {20310000: [1, 2], 18325019: [3, 4, 5]},
@@ -468,7 +468,7 @@ class TestExperiment:
                     ExperimentPartMappingModel(
                         experiment_id=20310000,
                         parts=[3, 2, 1],
-                        instrument_name=config_instrument_names[0],
+                        instrument_name=config_instrument_names[1],
                     ),
                     ExperimentPartMappingModel(
                         experiment_id=20310001,
@@ -484,7 +484,7 @@ class TestExperiment:
                 ExperimentPartMappingModel(
                     experiment_id=20310000,
                     parts=[3, 2, 1],
-                    instrument_name=config_instrument_names[0],
+                    instrument_name=config_instrument_names[1],
                 ),
                 id="Multi-part list",
             ),
