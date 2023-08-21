@@ -1,0 +1,661 @@
+areas:
+  ea1:
+  - EA1-001-LM-CAM-1
+  - EA1-001-LM-CAM-2
+  - EA1-001-LM-SP
+  - EA1-001-LM-EM
+  - EA1-001-EX-CAM-1
+  - EA1-001-EX-CAM-2
+  - EA1-001-EX-SP
+  - EA1-001-EX-EM
+  - EA1-001-PL-GOI
+  - EA1-001-PL-PR1-CAM
+  - EA1-001-PL-SP
+  - EA1-002-EL-BPM-X
+  - EA1-002-EL-BPM-Y
+  - EA1-002-EL-ICT
+  - EA1-002-EL-SP
+  ea2:
+  - EA2-003-LM-CAM-1
+  - EA2-003-LM-CAM-2
+  - EA2-003-LM-SP
+  - EA2-003-LM-EM
+  - EA2-003-EX-CAM-1
+  - EA2-003-EX-CAM-2
+  - EA2-003-EX-SP
+  - EA2-003-EX-EM
+  - EA2-003-PL-GOI
+  - EA2-003-PL-PR1-CAM
+  - EA2-003-PL-SP
+  env:
+  - SER-001-BI-T
+  - SER-002-BI-T
+  - SER-003-BI-T
+  - SER-201-BI-T
+  - SER-202-BI-T
+  - SER-204-BI-T
+  - SER-209-BI-T
+  las:
+  - PM-201-FE-CAM-1
+  - PM-201-FE-CAM-2
+  - PM-201-FE-SP
+  - PM-201-FE-EM
+  - PM-201-TJ-P1-CAM-1
+  - PM-201-TJ-P1-CAM-2
+  - PM-201-TJ-P2-CAM-1
+  - PM-201-TJ-P2-CAM-2
+  - PM-201-TJ-P7-CAM-1
+  - PM-201-TJ-P7-CAM-2
+  - PM-201-TJ-P7-EM
+  - PM-201-TJ-P8-CAM-1
+  - PM-201-TJ-P8-CAM-2
+  - PM-201-TJ-P8-EM
+  - PM-201-HJ-P1-CAM-1
+  - PM-201-HJ-P1-CAM-2
+  - PM-201-HJ-P4-CAM-1
+  - PM-201-HJ-P4-CAM-2
+  - PM-201-HJ-P4-EM
+  - PM-201-HJ-P5-CAM-1
+  - PM-201-HJ-P5-CAM-2
+  - PM-201-HJ-P5-EM
+  - TS-202-TSP-IR-CAM-1
+  - TS-202-TSP-IR-CAM-2
+  - TS-202-TSP-IR-EM
+  - TS-202-TSP-GR-CAM-1
+  - TS-202-TSP-GR-CAM-2
+  - TS-202-TSP-GR-EM
+  - TS-202-TSM-P1-CAM-1
+  - TS-202-TSM-P1-CAM-2
+  - TS-202-TSM-P1-EM
+  - TS-202-TSM-P1-SP
+  - TS-202-TSM-P2-CAM-1
+  - TS-202-TSM-P2-CAM-2
+  - TS-202-TSM-P2-EM
+  - TS-202-TSM-P2-SP
+  - TS-202-TSM-CAM-1
+  - TS-202-TSM-CAM-2
+  - TS-202-TSM-EM
+  - TS-202-TSM-SP
+  - FE-204-FE-SP
+  - FE-204-PSO-P1-CAM-1
+  - FE-204-PSO-P1-CAM-2
+  - FE-204-PSO-P2-CAM-1
+  - FE-204-PSO-P2-CAM-2
+  - FE-204-PSO-P2-SP
+  - FE-204-PSO-P2-EM
+  - FE-204-PSO-P3-CAM-1
+  - FE-204-PSO-P3-CAM-2
+  - FE-204-PSO-P3-SP
+  - FE-204-PSO-P3-EM
+  - FE-204-NSO-P1-CAM-1
+  - FE-204-NSO-P1-CAM-2
+  - FE-204-NSO-P2-CAM-1
+  - FE-204-NSO-P2-CAM-2
+  - FE-204-NSO-P2-SP
+  - FE-204-NSO-P2-EM
+  - FE-204-NSO-P3-CAM-1
+  - FE-204-NSO-P3-CAM-2
+  - FE-204-NSO-P3-SP
+  - FE-204-NSO-P3-EM
+  - CM-202-CVC-P0-CAM-1
+  - CM-202-CVC-P0-CAM-2
+  - CM-202-CVC-P1-CAM-1
+  - CM-202-CVC-P1-CAM-2
+  - CM-202-CVC-P1-SP
+  - CM-202-CVC-P1-EM
+channels:
+  images:
+  - depth: 8
+    name: PM-201-FE-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: PM-201-FE-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: PM-201-TJ-P1-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: PM-201-TJ-P1-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: PM-201-TJ-P2-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: PM-201-TJ-P2-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: PM-201-TJ-P7-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: PM-201-TJ-P7-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: PM-201-TJ-P8-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: PM-201-TJ-P8-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: PM-201-HJ-P1-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: PM-201-HJ-P1-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: PM-201-HJ-P4-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: PM-201-HJ-P4-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: PM-201-HJ-P5-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: PM-201-HJ-P5-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: TS-202-TSP-IR-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: TS-202-TSP-IR-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: TS-202-TSP-GR-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: TS-202-TSP-GR-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: TS-202-TSM-P1-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: TS-202-TSM-P1-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: TS-202-TSM-P2-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: TS-202-TSM-P2-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: TS-202-TSM-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: TS-202-TSM-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: FE-204-PSO-P1-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: FE-204-PSO-P1-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: FE-204-PSO-P2-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: FE-204-PSO-P2-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: FE-204-PSO-P3-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: FE-204-PSO-P3-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: FE-204-NSO-P1-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: FE-204-NSO-P1-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: FE-204-NSO-P2-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: FE-204-NSO-P2-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: FE-204-NSO-P3-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: FE-204-NSO-P3-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: CM-202-CVC-P0-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: CM-202-CVC-P0-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: CM-202-CVC-P1-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: CM-202-CVC-P1-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: EA1-001-LM-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: EA1-001-LM-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: EA1-001-EX-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: EA1-001-EX-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 16
+    name: EA1-001-PL-GOI
+    size_x: 1024
+    size_y: 1024
+  - depth: 8
+    name: EA1-001-PL-PR1-CAM
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: EA1-001-PL-SP
+    size_x: 1024
+    size_y: 200
+  - depth: 16
+    name: EA1-002-EL-SP
+    size_x: 1024
+    size_y: 256
+  - depth: 8
+    name: EA2-003-LM-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: EA2-003-LM-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 8
+    name: EA2-003-EX-CAM-1
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: EA2-003-EX-CAM-2
+    size_x: 100
+    size_y: 100
+  - depth: 16
+    name: EA2-003-PL-GOI
+    size_x: 1024
+    size_y: 1024
+  - depth: 8
+    name: EA2-003-PL-PR1-CAM
+    size_x: 1456
+    size_y: 1088
+  - depth: 16
+    name: EA2-003-PL-SP
+    size_x: 1024
+    size_y: 200
+  scalars:
+  - max: 10
+    min: 0
+    name: PM-201-FE-EM
+    units: J
+  - max: 10
+    min: 0
+    name: PM-201-TJ-P7-EM
+    units: J
+  - max: 10
+    min: 0
+    name: PM-201-TJ-P8-EM
+    units: J
+  - max: 10
+    min: 0
+    name: PM-201-HJ-P4-EM
+    units: J
+  - max: 10
+    min: 0
+    name: PM-201-HJ-P5-EM
+    units: J
+  - max: 10
+    min: 0
+    name: TS-202-TSP-IR-EM
+    units: J
+  - max: 10
+    min: 0
+    name: TS-202-TSP-GR-EM
+    units: J
+  - max: 10
+    min: 0
+    name: TS-202-TSM-P1-EM
+    units: J
+  - max: 10
+    min: 0
+    name: TS-202-TSM-P2-EM
+    units: J
+  - max: 10
+    min: 0
+    name: TS-202-TSM-EM
+    units: J
+  - max: 10
+    min: 0
+    name: FE-204-PSO-P2-EM
+    units: J
+  - max: 10
+    min: 0
+    name: FE-204-PSO-P3-EM
+    units: J
+  - max: 10
+    min: 0
+    name: FE-204-NSO-P2-EM
+    units: J
+  - max: 10
+    min: 0
+    name: FE-204-NSO-P3-EM
+    units: J
+  - max: 10
+    min: 0
+    name: CM-202-CVC-P1-EM
+    units: J
+  - max: 10
+    min: 0
+    name: EA1-001-LM-EM
+    units: J
+  - max: 10
+    min: 0
+    name: EA1-001-EX-EM
+    units: J
+  - max: 0.5
+    min: -0.5
+    name: EA1-002-EL-BPM-X
+  - max: 0.5
+    min: -0.5
+    name: EA1-002-EL-BPM-Y
+  - max: 6.0
+    min: 0
+    name: EA1-002-EL-ICT
+    units: nC
+  - max: 10
+    min: 0
+    name: EA2-003-LM-EM
+    units: J
+  - max: 10
+    min: 0
+    name: EA2-003-EX-EM
+    units: J
+  - max: 22
+    min: 20
+    name: SER-001-BI-T
+    units: "\xB0C"
+  - max: 22
+    min: 20
+    name: SER-002-BI-T
+    units: "\xB0C"
+  - max: 22
+    min: 20
+    name: SER-003-BI-T
+    units: "\xB0C"
+  - max: 22
+    min: 20
+    name: SER-201-BI-T
+    units: "\xB0C"
+  - max: 22
+    min: 20
+    name: SER-202-BI-T
+    units: "\xB0C"
+  - max: 22
+    min: 20
+    name: SER-204-BI-T
+    units: "\xB0C"
+  - max: 22
+    min: 20
+    name: SER-209-BI-T
+    units: "\xB0C"
+  waveforms:
+  - centre:
+      mean: 800
+      std: 8
+    end_x: 1085
+    max_y: 8125
+    min_y: 972
+    name: PM-201-FE-SP
+    noise: 0.04
+    npoints: 1516
+    shape: GAUSSIAN
+    start_x: 645
+    units_x: nm
+    width:
+      mean: 20
+      std: 4
+  - centre:
+      mean: 800
+      std: 8
+    end_x: 1085
+    max_y: 8125
+    min_y: 972
+    name: TS-202-TSM-P1-SP
+    noise: 0.04
+    npoints: 1516
+    shape: GAUSSIAN
+    start_x: 645
+    units_x: nm
+    width:
+      mean: 20
+      std: 4
+  - centre:
+      mean: 800
+      std: 8
+    end_x: 1085
+    max_y: 8125
+    min_y: 972
+    name: TS-202-TSM-P2-SP
+    noise: 0.04
+    npoints: 1516
+    shape: GAUSSIAN
+    start_x: 645
+    units_x: nm
+    width:
+      mean: 20
+      std: 4
+  - centre:
+      mean: 800
+      std: 8
+    end_x: 1085
+    max_y: 8125
+    min_y: 972
+    name: TS-202-TSM-SP
+    noise: 0.04
+    npoints: 1516
+    shape: GAUSSIAN
+    start_x: 645
+    units_x: nm
+    width:
+      mean: 20
+      std: 4
+  - centre:
+      mean: 800
+      std: 8
+    end_x: 1085
+    max_y: 8125
+    min_y: 972
+    name: FE-204-FE-SP
+    noise: 0.04
+    npoints: 1516
+    shape: GAUSSIAN
+    start_x: 645
+    units_x: nm
+    width:
+      mean: 20
+      std: 4
+  - centre:
+      mean: 800
+      std: 8
+    end_x: 1085
+    max_y: 8125
+    min_y: 972
+    name: FE-204-PSO-P2-SP
+    noise: 0.04
+    npoints: 1516
+    shape: GAUSSIAN
+    start_x: 645
+    units_x: nm
+    width:
+      mean: 20
+      std: 4
+  - centre:
+      mean: 800
+      std: 8
+    end_x: 1085
+    max_y: 8125
+    min_y: 972
+    name: FE-204-PSO-P3-SP
+    noise: 0.04
+    npoints: 1516
+    shape: GAUSSIAN
+    start_x: 645
+    units_x: nm
+    width:
+      mean: 20
+      std: 4
+  - centre:
+      mean: 800
+      std: 8
+    end_x: 1085
+    max_y: 8125
+    min_y: 972
+    name: FE-204-NSO-P2-SP
+    noise: 0.04
+    npoints: 1516
+    shape: GAUSSIAN
+    start_x: 645
+    units_x: nm
+    width:
+      mean: 20
+      std: 4
+  - centre:
+      mean: 800
+      std: 8
+    end_x: 1085
+    max_y: 8125
+    min_y: 972
+    name: FE-204-NSO-P3-SP
+    noise: 0.04
+    npoints: 1516
+    shape: GAUSSIAN
+    start_x: 645
+    units_x: nm
+    width:
+      mean: 20
+      std: 4
+  - centre:
+      mean: 800
+      std: 8
+    end_x: 1085
+    max_y: 8125
+    min_y: 972
+    name: CM-202-CVC-P1-SP
+    noise: 0.04
+    npoints: 1516
+    shape: GAUSSIAN
+    start_x: 645
+    units_x: nm
+    width:
+      mean: 20
+      std: 4
+  - centre:
+      mean: 800
+      std: 8
+    end_x: 1085
+    max_y: 8125
+    min_y: 972
+    name: EA1-001-LM-SP
+    noise: 0.04
+    npoints: 1516
+    shape: GAUSSIAN
+    start_x: 645
+    units_x: nm
+    width:
+      mean: 20
+      std: 4
+  - centre:
+      mean: 800
+      std: 8
+    end_x: 1085
+    max_y: 8125
+    min_y: 972
+    name: EA1-001-EX-SP
+    noise: 0.04
+    npoints: 1516
+    shape: GAUSSIAN
+    start_x: 645
+    units_x: nm
+    width:
+      mean: 20
+      std: 4
+  - centre:
+      mean: 800
+      std: 8
+    end_x: 1085
+    max_y: 8125
+    min_y: 972
+    name: EA2-003-LM-SP
+    noise: 0.04
+    npoints: 1516
+    shape: GAUSSIAN
+    start_x: 645
+    units_x: nm
+    width:
+      mean: 20
+      std: 4
+  - centre:
+      mean: 800
+      std: 8
+    end_x: 1085
+    max_y: 8125
+    min_y: 972
+    name: EA2-003-EX-SP
+    noise: 0.04
+    npoints: 1516
+    shape: GAUSSIAN
+    start_x: 645
+    units_x: nm
+    width:
+      mean: 20
+      std: 4
