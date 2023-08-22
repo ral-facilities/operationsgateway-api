@@ -504,7 +504,12 @@ class TestExperiment:
         )
         assert mapping == expected_mapping
 
-    def test_invalid_get_mapping_model_by_experiment_id(self):
+    @patch(
+        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface"
+        ".__init__",
+        return_value=None,
+    )
+    def test_invalid_get_mapping_model_by_experiment_id(self, _):
         test_experiment = Experiment()
 
         with pytest.raises(ExperimentDetailsError):
