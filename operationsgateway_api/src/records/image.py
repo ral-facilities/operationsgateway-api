@@ -64,24 +64,23 @@ class Image:
 
         return record_id, channel_name
 
-    @staticmethod
-    def upload_image(input_image: Image) -> None:
+    def upload(self: Image) -> None:
         """
         Save the image on Echo S3 object storage
         """
 
-        log.info("Storing image in a Bytes object: %s", input_image.image.path)
+        log.info("Storing image in a Bytes object: %s", self.image.path)
         image_bytes = BytesIO()
         try:
-            image = PILImage.fromarray(input_image.image.data)
+            image = PILImage.fromarray(self.image.data)
             image.save(image_bytes, format="PNG")
         except TypeError as exc:
             log.exception(msg=exc)
             raise ImageError("Image data is not in correct format to be read") from exc
 
         echo = EchoInterface()
-        log.info("Storing image on S3: %s", input_image.image.path)
-        echo.upload_file_object(image_bytes, input_image.image.path)
+        log.info("Storing image on S3: %s", self.image.path)
+        echo.upload_file_object(image_bytes, self.image.path)
 
     @staticmethod
     async def get_image(
