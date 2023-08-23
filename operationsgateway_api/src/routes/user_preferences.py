@@ -41,7 +41,6 @@ async def get_user_preference(
     username = token_payload["username"]
 
     log.info("Getting user preference %s for user %s", name, username)
-    #    return await UserPreferences.get(username, name)
     return JSONResponse(content=await UserPreferences.get(username, name))
 
 
