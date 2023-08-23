@@ -8,8 +8,10 @@ from operationsgateway_api.src.auth.authorisation import (
     authorise_route,
     authorise_token,
 )
+from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import QueryParameterError
+from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.record import Record as Record
 from operationsgateway_api.src.routes.common_parameters import (
     ParameterHandler,
@@ -89,6 +91,11 @@ async def get_records(
         query_order,
         projection,
     )
+
+    if colourmap_name is None:
+        username = JwtHandler.get_payload(access_token)["username"]
+        colourmap_name = await FalseColourHandler.get_preferred_colourmap(username)
+        log.debug("Preferred colour map after user prefs check is %s", colourmap_name)
 
     for record_data in records_data:
         await Record.apply_false_colour_to_thumbnails(
@@ -197,6 +204,11 @@ async def get_record_by_id(
     log.info("Getting record by ID: %s", id_)
 
     record_data = await Record.find_record_by_id(id_, conditions)
+
+    if colourmap_name is None:
+        username = JwtHandler.get_payload(access_token)["username"]
+        colourmap_name = await FalseColourHandler.get_preferred_colourmap(username)
+        log.info("Preferred colour map after user prefs check is %s", colourmap_name)
 
     await Record.apply_false_colour_to_thumbnails(
         record_data,
