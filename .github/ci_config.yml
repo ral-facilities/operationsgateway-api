@@ -8,6 +8,7 @@ images:
   waveform_thumbnail_size: [100, 100]
   default_colour_map: viridis
   colourbar_height_pixels: 16
+  preferred_colour_map_pref_name: PREFERRED_COLOUR_MAP
 mongodb:
   mongodb_url: mongodb://localhost:27017
   database_name: opsgateway
