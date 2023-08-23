@@ -1,11 +1,13 @@
 import base64
 import hashlib
+import json
 
 from fastapi.testclient import TestClient
 import pytest
 
 from operationsgateway_api.src.experiments.unique_worker import UniqueWorker
 from operationsgateway_api.src.main import app
+from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 
 
 @pytest.fixture()
@@ -64,3 +66,33 @@ def assert_thumbnails(record: dict, expected_thumbnail_md5s: dict):
             thumbnail_md5sum = hashlib.md5(thumbnail_bytes).hexdigest()
             assert thumbnail_md5sum == expected_thumbnail_md5s[channel_name]
     assert num_channels_found == len(expected_thumbnail_md5s.keys())
+
+
+def set_preferred_colourmap(test_app: TestClient, auth_token: str, do_it: bool):
+    """
+    Set the preferred colour map via the user preferences endpoint.
+    Note that the 'do_it' argument allows the method to be called by all iterations of
+    a test run even where it is set to false and the preference should not be set.
+    """
+    if do_it:
+        test_app.post(
+            "/user_preferences",
+            content=json.dumps(
+                {
+                    "name": FalseColourHandler.preferred_colour_map_pref_name,
+                    "value": "coolwarm",
+                },
+            ),
+            headers={"Authorization": f"Bearer {auth_token}"},
+        )
+
+
+def unset_preferred_colourmap(test_app: TestClient, auth_token: str, do_it: bool):
+    """
+    Unset the preferred colour map via the user preferences endpoint.
+    """
+    if do_it:
+        test_app.delete(
+            f"/user_preferences/{FalseColourHandler.preferred_colour_map_pref_name}",
+            headers={"Authorization": f"Bearer {auth_token}"},
+        )
