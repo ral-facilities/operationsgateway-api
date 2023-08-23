@@ -15,7 +15,7 @@ def test_app():
 @pytest.fixture()
 def login_and_get_token(test_app: TestClient):
     json = '{"username": "backend", "password": "back"}'
-    response = test_app.post("/login", data=json)
+    response = test_app.post("/login", content=json)
     # strip the first and last characters off the response
     # (the double quotes that surround it)
     token = response.text[1:-1]
