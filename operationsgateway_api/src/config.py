@@ -32,6 +32,7 @@ class ImagesConfig(BaseModel):
     # the system default colour map (used if no user preference is set)
     default_colour_map: StrictStr
     colourbar_height_pixels: StrictInt
+    preferred_colour_map_pref_name: StrictStr
 
 
 class MongoDB(BaseModel):
