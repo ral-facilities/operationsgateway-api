@@ -3,7 +3,12 @@ import json
 from fastapi.testclient import TestClient
 import pytest
 
-from test.conftest import assert_record, assert_thumbnails
+from test.conftest import (
+    assert_record,
+    assert_thumbnails,
+    set_preferred_colourmap,
+    unset_preferred_colourmap,
+)
 
 
 class TestGetRecords:
@@ -81,7 +86,7 @@ class TestGetRecords:
 
     @pytest.mark.parametrize(
         "conditions, projection, lower_level, upper_level, colourmap_name, "
-        "expected_thumbnail_md5s",
+        "use_preferred_colourmap, expected_thumbnail_md5s",
         [
             pytest.param(
                 {"metadata.shotnum": 366372},
@@ -89,10 +94,26 @@ class TestGetRecords:
                 None,
                 None,
                 None,
+                False,
                 {
                     "N_COMP_NF_IMAGE": "873bba89298596e3fe22d2d27a0321ef",
                 },
                 id="Whole record: all channels have channel_dtype returned",
+            ),
+            # ensure setting the user's preferred colour map overrides the system
+            # default
+            pytest.param(
+                {"metadata.shotnum": 366372},
+                None,
+                None,
+                None,
+                None,
+                True,
+                {
+                    "N_COMP_NF_IMAGE": "80c8586a5978d0fb2c2c627f654a3ea1",
+                },
+                id="Whole record: all channels have channel_dtype returned and user's "
+                "preferred colour map is set",
             ),
             pytest.param(
                 {"metadata.shotnum": 366372},
@@ -100,6 +121,7 @@ class TestGetRecords:
                 None,
                 None,
                 None,
+                False,
                 {
                     "N_COMP_NF_IMAGE": "873bba89298596e3fe22d2d27a0321ef",
                 },
@@ -111,11 +133,28 @@ class TestGetRecords:
                 50,
                 200,
                 "jet_r",
+                False,
                 {
                     "N_COMP_NF_IMAGE": "2b723ce7d677482ff018087a1080d5bf",
                 },
                 id="Whole record: all channels have channel_dtype returned "
                 "and custom false colour settings applied",
+            ),
+            # repeat the test above but with the user's preferred colour map set
+            # ensure this does not affect the outcome
+            pytest.param(
+                {"metadata.shotnum": 366372},
+                None,
+                50,
+                200,
+                "jet_r",
+                True,
+                {
+                    "N_COMP_NF_IMAGE": "2b723ce7d677482ff018087a1080d5bf",
+                },
+                id="Whole record: all channels have channel_dtype returned "
+                "and custom false colour settings applied even with user's "
+                "preferred colour map set",
             ),
             pytest.param(
                 {"metadata.shotnum": 366372},
@@ -123,6 +162,7 @@ class TestGetRecords:
                 50,
                 200,
                 "jet_r",
+                False,
                 {
                     "N_COMP_NF_IMAGE": "2b723ce7d677482ff018087a1080d5bf",
                 },
@@ -140,8 +180,10 @@ class TestGetRecords:
         lower_level,
         upper_level,
         colourmap_name,
+        use_preferred_colourmap,
         expected_thumbnail_md5s,
     ):
+        set_preferred_colourmap(test_app, login_and_get_token, use_preferred_colourmap)
 
         query_string = ""
         query_params_array = []
@@ -163,6 +205,12 @@ class TestGetRecords:
         test_response = test_app.get(
             f"/records{query_string}",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
+        )
+
+        unset_preferred_colourmap(
+            test_app,
+            login_and_get_token,
+            use_preferred_colourmap,
         )
 
         assert test_response.status_code == 200
