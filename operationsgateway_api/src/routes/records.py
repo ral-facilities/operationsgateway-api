@@ -91,16 +91,16 @@ async def get_records(
     )
 
     for record_data in records_data:
-        await Record.apply_false_colour_to_thumbnails(
-            record_data,
-            lower_level,
-            upper_level,
-            colourmap_name,
-        )
+        if record_data.get("channels"):
+            await Record.apply_false_colour_to_thumbnails(
+                record_data,
+                lower_level,
+                upper_level,
+                colourmap_name,
+            )
 
-    if truncate:
-        for record_data in records_data:
-            Record.truncate_thumbnails(record_data)
+            if truncate:
+                Record.truncate_thumbnails(record_data)
 
     return records_data
 
@@ -198,12 +198,13 @@ async def get_record_by_id(
 
     record_data = await Record.find_record_by_id(id_, conditions)
 
-    await Record.apply_false_colour_to_thumbnails(
-        record_data,
-        lower_level,
-        upper_level,
-        colourmap_name,
-    )
+    if record_data.get("channels"):
+        await Record.apply_false_colour_to_thumbnails(
+            record_data,
+            lower_level,
+            upper_level,
+            colourmap_name,
+        )
 
     if truncate:
         Record.truncate_thumbnails(record_data)
