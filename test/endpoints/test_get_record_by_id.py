@@ -3,7 +3,12 @@ import json
 from fastapi.testclient import TestClient
 import pytest
 
-from test.conftest import assert_record, assert_thumbnails
+from test.conftest import (
+    assert_record,
+    assert_thumbnails,
+    set_preferred_colourmap,
+    unset_preferred_colourmap,
+)
 
 
 class TestGetRecordByID:
@@ -42,16 +47,27 @@ class TestGetRecordByID:
         )
 
     @pytest.mark.parametrize(
-        "record_id, expected_thumbnail_md5s",
+        "record_id, expected_thumbnail_md5s, use_preferred_colourmap",
         [
             pytest.param(
                 "20220408132830",
                 {
-                    "N_COMP_FF_IMAGE": "641ae5031ac0dd22bac9c7ed8159d404",
-                    "N_COMP_NF_IMAGE": "ebb99b10d9a278560f5f7eccec4c5672",
-                    "N_LEG1_GREEN_NF_IMAGE": "4f79d3311ee264d7580d891c0318e4b4",
+                    "N_COMP_FF_IMAGE": "d040b1f2d55f3fa6f2cbb93fda4f2e97",
+                    "N_COMP_NF_IMAGE": "eb2a2c7044ae520b258f6bc567a38e77",
+                    "N_LEG1_GREEN_NF_IMAGE": "345cffbd027ca3097bf3efa92a087439",
                 },
-                id="Ordinary request",
+                False,
+                id="Ordinary request (preferred colour map not set)",
+            ),
+            pytest.param(
+                "20220408132830",
+                {
+                    "N_COMP_FF_IMAGE": "99fd2686879c9939a45869c7399e8b2d",
+                    "N_COMP_NF_IMAGE": "02a231b2d5452703d39e78d4084e9e04",
+                    "N_LEG1_GREEN_NF_IMAGE": "24bb527a7e8b80770a88bfccc0a03180",
+                },
+                True,
+                id="Ordinary request (with preferred colour map set)",
             ),
         ],
     )
@@ -61,10 +77,19 @@ class TestGetRecordByID:
         login_and_get_token,
         record_id,
         expected_thumbnail_md5s,
+        use_preferred_colourmap,
     ):
+        set_preferred_colourmap(test_app, login_and_get_token, use_preferred_colourmap)
+
         test_response = test_app.get(
             f"/records/{record_id}",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
+        )
+
+        unset_preferred_colourmap(
+            test_app,
+            login_and_get_token,
+            use_preferred_colourmap,
         )
 
         assert test_response.status_code == 200

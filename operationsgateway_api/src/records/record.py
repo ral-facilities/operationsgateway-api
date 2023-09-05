@@ -196,6 +196,7 @@ class Record:
     @staticmethod
     async def get_recent_channel_values(
         channel_name: str,
+        colourmap_name: str,
     ) -> List[Union[str, int, float]]:
         """
         Return the most recent three values for a particular channel
@@ -229,7 +230,7 @@ class Record:
                     channel.thumbnail,
                     None,
                     None,
-                    None,
+                    colourmap_name,
                 )
                 thumbnail_bytes.seek(0)
                 recent_values.append(
