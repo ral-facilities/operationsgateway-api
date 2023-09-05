@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 from fastapi import APIRouter, Depends
 
@@ -8,6 +9,7 @@ from operationsgateway_api.src.auth.authorisation import (
 )
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.experiments.experiment import Experiment
+from operationsgateway_api.src.models import ExperimentModel
 
 log = logging.getLogger()
 router = APIRouter()
@@ -25,9 +27,8 @@ async def store_experiments_from_scheduler(
 ):
     experiment = Experiment()
     await experiment.get_experiments_from_scheduler()
-    await experiment.store_experiments()
-
-    return [e.id_ for e in experiment.experiments]
+    experiment_ids = await experiment.store_experiments()
+    return experiment_ids
 
 
 @router.get(
@@ -35,6 +36,7 @@ async def store_experiments_from_scheduler(
     summary="Get experiments stored in database",
     response_description="List of experiments",
     tags=["Experiments"],
+    response_model=List[ExperimentModel],
 )
 @endpoint_error_handling
 async def get_experiments(

@@ -17,21 +17,18 @@ class TestGetExperiments:
         # single experiment
         expected_experiments_snippet = [
             {
-                "_id": "18325019-4",
                 "end_date": "2020-01-06T18:00:00",
                 "experiment_id": "18325019",
                 "part": 4,
                 "start_date": "2020-01-03T10:00:00",
             },
             {
-                "_id": "18325019-5",
                 "end_date": "2019-06-12T17:00:00",
                 "experiment_id": "18325019",
                 "part": 5,
                 "start_date": "2019-06-12T09:00:00",
             },
             {
-                "_id": "20310001-1",
                 "end_date": "2020-02-24T18:00:00",
                 "experiment_id": "20310001",
                 "part": 1,
@@ -50,8 +47,18 @@ class TestGetExperiments:
         for expected_experiment in expected_experiments_snippet:
             experiment_found = False
             for experiment in test_experiments:
-                if experiment["_id"] == expected_experiment["_id"]:
+                if (
+                    experiment["experiment_id"] == expected_experiment["experiment_id"]
+                    and experiment["part"] == expected_experiment["part"]
+                ):
                     experiment_found = True
+
+                    try:
+                        # _id is an object ID so cannot be asserted against
+                        del experiment["_id"]
+                    except KeyError:
+                        pass
+
                     assert experiment == expected_experiment
                     break
 

@@ -16,6 +16,7 @@ from test.experiments.scheduler_mocking.get_exp_dates_mocks import (
     general_mock,
     missing_rb_number,
 )
+from test.sessions.mock_models import MockUpdateResult
 
 
 class TestExperiment:
@@ -68,6 +69,54 @@ class TestExperiment:
             {20310001: [1, 2, 3], 18325019: [4], 20310002: [1]},
         )
         assert test_experiment.experiments == expected_experiments
+
+    @patch(
+        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface.__init__",
+        return_value=None,
+    )
+    @pytest.mark.asyncio
+    async def test_store_experiments(self, _):
+        test_experiment = Experiment()
+        test_experiment.experiments = get_expected_experiment_models(
+            {20310001: [1, 2, 3], 18325019: [4], 20310002: [1]},
+        )
+
+        upserted_ids = ["ObjectId 1", "ObjectId 2", None, "ObjectId 3", "ObjectId 4"]
+        update_results = [
+            MockUpdateResult(
+                acknowledged=True,
+                matched_count=1,
+                modified_count=1,
+                upserted_id=_id,
+            )
+            for _id in upserted_ids
+        ]
+        # For some reason, you need to have an additional element in the list in order
+        # to prevent a StopAsyncIteration exception from being raised. It doesn't
+        # actually get used in the test, hence `None` is used
+        update_results.append(None)
+
+        find_one_result = test_experiment.experiments[2].dict()
+        find_one_result["_id"] = "Pre-existing ObjectId 1"
+
+        expected_ids = [
+            "ObjectId 1",
+            "ObjectId 2",
+            "Updated Pre-existing ObjectId 1",
+            "ObjectId 3",
+            "ObjectId 4",
+        ]
+
+        with patch(
+            "operationsgateway_api.src.mongo.interface.MongoDBInterface.update_one",
+            side_effect=update_results,
+        ):
+            with patch(
+                "operationsgateway_api.src.mongo.interface.MongoDBInterface.find_one",
+                return_value=find_one_result,
+            ):
+                inserted_ids = await test_experiment.store_experiments()
+                assert inserted_ids == expected_ids
 
     @patch(
         "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface.__init__",
