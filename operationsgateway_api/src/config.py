@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 import sys
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 from dateutil import tz
 from pydantic import (
@@ -67,7 +67,7 @@ class ExperimentsConfig(BaseModel):
     username: StrictStr
     password: StrictStr
     scheduler_wsdl_url: StrictStr
-    instrument_name: StrictStr
+    instrument_names: List[StrictStr]
     worker_file_path: StrictStr
 
     @validator("scheduler_background_timezone")

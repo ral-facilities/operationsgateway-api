@@ -4,7 +4,7 @@ from operationsgateway_api.src.experiments.scheduler_interface import SchedulerI
 
 
 class TestSchedulerInterface:
-    config_instrument_name = "Test Instrument"
+    config_instrument_names = ["Test Instrument", "Test Instrument #2"]
     config_user_office_username = "Test Username"
     config_user_office_password = "Test Password"
     config_user_office_wsdl = "Test User Office URL"
@@ -90,8 +90,8 @@ class TestSchedulerInterface:
             assert args == expected_args
 
     @patch(
-        "operationsgateway_api.src.config.Config.config.experiments.instrument_name",
-        config_instrument_name,
+        "operationsgateway_api.src.config.Config.config.experiments.instrument_names",
+        config_instrument_names,
     )
     @patch(
         "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface"
@@ -115,6 +115,7 @@ class TestSchedulerInterface:
 
         with patch.object(test_scheduler, "scheduler_client") as mock_client:
             test_scheduler.get_experiment_dates_for_instrument(
+                self.config_instrument_names[0],
                 date_range["startDate"],
                 date_range["endDate"],
             )
