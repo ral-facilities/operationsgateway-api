@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from typing import Dict, List
 
 from operationsgateway_api.src.exceptions import ImageError
@@ -21,7 +22,7 @@ class ColourmapMapping:
 
         try:
             with open(
-                "operationsgateway_api/src/records/colourmap_mapping.json",
+                Path(__file__).parent / "colourmap_mapping.json",
             ) as mapping_file:
                 colourmap_mapping = json.load(mapping_file)
         except OSError as exc:
