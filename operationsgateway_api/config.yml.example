@@ -22,7 +22,6 @@ mongodb:
   database_name: opsgateway
   # Maximum number of documents to return when querying, similar to ICAT's maxEntities
   max_documents: 1000
-  image_store_directory: /home/user/og-images
 auth:
   # Path to a private/public key pair for the auth functionality. This key pair should
   # be created before running the API, see instructions in README.md
