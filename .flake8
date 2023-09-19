@@ -12,6 +12,6 @@ per-file-ignores =
   test/experiments/scheduler_mocking/models.py: N815
   operationsgateway_api/src/models.py: B902
 # As recommended on https://github.com/tiangolo/fastapi/discussions/7463
-extend-immutable-calls = Depends, fastapi.Depends, Query, fastapi.Query, Body, fastapi.Body, Cookie, fastapi.Cookie, Path, fastapi.Path, QueryParameterJSONParser
+extend-immutable-calls = Depends, fastapi.Depends, Query, fastapi.Query, Body, fastapi.Body, Cookie, fastapi.Cookie, Path, fastapi.Path
 # As recommended on https://github.com/pydantic/pydantic/issues/568
 classmethod-decorators = classmethod, validator, root_validator
