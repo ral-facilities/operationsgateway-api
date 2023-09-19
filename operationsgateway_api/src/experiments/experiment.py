@@ -66,7 +66,7 @@ class Experiment:
         experiments = self.scheduler.get_experiments(ids_for_scheduler_call)
         self._extract_experiment_data(experiments, experiment_parts)
 
-    async def store_experiments(self) -> None:
+    async def store_experiments(self) -> List[str]:
         """
         Store the experiments into MongoDB, using `upsert` to insert any experiments
         that haven't yet been inserted into the database

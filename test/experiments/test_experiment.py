@@ -71,11 +71,21 @@ class TestExperiment:
         assert test_experiment.experiments == expected_experiments
 
     @patch(
-        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface.__init__",
+        "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface"
+        ".__init__",
         return_value=None,
     )
     @pytest.mark.asyncio
     async def test_store_experiments(self, _):
+        """
+        This test covers `Experiment.store_experiments()` by mocking the storage of 5
+        experiments. The third experiment is mocked to not have an upserted ID returned
+        from the database (hence the `None` value in `upserted_ids`) which means the
+        document was updated, not inserted. `store_experiments()` has some specific
+        logic for this use case - it makes a query to the database to find the `_id` and
+        adds it to a list of IDs which are returned by `store_experiments()`
+        """
+
         test_experiment = Experiment()
         test_experiment.experiments = get_expected_experiment_models(
             {20310001: [1, 2, 3], 18325019: [4], 20310002: [1]},
@@ -96,6 +106,8 @@ class TestExperiment:
         # actually get used in the test, hence `None` is used
         update_results.append(None)
 
+        # The third experiment was inserted, not updated. We want to mock this query and
+        # force `_id` tha we can assert against
         find_one_result = test_experiment.experiments[2].dict()
         find_one_result["_id"] = "Pre-existing ObjectId 1"
 
