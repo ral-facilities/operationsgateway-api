@@ -230,20 +230,16 @@ class Experiment:
         a matching experiment ID
         """
 
-        part_mapping = None
         for mapping in mapping_models:
             if mapping.experiment_id == experiment_id:
                 return mapping
 
-        if not part_mapping:
-            log.error(
-                "Part mapping for %s failed. Mapping to search through: %s",
-                experiment_id,
-                mapping_models,
-            )
-            raise ExperimentDetailsError(
-                f"Lookup of part mapping {experiment_id} failed",
-            )
+        log.error(
+            "Part mapping for %s failed. Mapping to search through: %s",
+            experiment_id,
+            mapping_models,
+        )
+        raise ExperimentDetailsError(f"Lookup of part mapping {experiment_id} failed")
 
     def _detect_duplicate_parts(
         self,
