@@ -23,6 +23,84 @@ class TestGetRecords:
                 id="Simple example",
             ),
             pytest.param(
+                {"metadata.shotnum": {"$exists": True}},
+                0,
+                2,
+                "metadata.shotnum ASC",
+                ["metadata"],
+                False,
+                None,
+                [
+                    {
+                        "_id": "20220407141616",
+                        "metadata": {
+                            "epac_ops_data_version": "1.0",
+                            "shotnum": 366271,
+                            "timestamp": "2022-04-07T14:16:16",
+                        },
+                    },
+                    {
+                        "_id": "20220407142816",
+                        "metadata": {
+                            "epac_ops_data_version": "1.0",
+                            "shotnum": 366272,
+                            "timestamp": "2022-04-07T14:28:16",
+                        },
+                    },
+                ],
+                id="Query using a single projection",
+            ),
+            pytest.param(
+                {"metadata.shotnum": {"$exists": True}},
+                0,
+                2,
+                "metadata.shotnum ASC",
+                ["metadata.shotnum", "metadata.timestamp"],
+                False,
+                None,
+                [
+                    {
+                        "_id": "20220407141616",
+                        "metadata": {
+                            "shotnum": 366271,
+                            "timestamp": "2022-04-07T14:16:16",
+                        },
+                    },
+                    {
+                        "_id": "20220407142816",
+                        "metadata": {
+                            "shotnum": 366272,
+                            "timestamp": "2022-04-07T14:28:16",
+                        },
+                    },
+                ],
+                id="Query using a multiple projections",
+            ),
+            pytest.param(
+                {"metadata.shotnum": {"$exists": True}},
+                0,
+                2,
+                "metadata.shotnum ASC",
+                ["channels.N_COMP_FF_YPOS.data"],
+                False,
+                None,
+                [
+                    {
+                        "_id": "20220407141616",
+                        "channels": {
+                            "N_COMP_FF_YPOS": {"data": 235.734},
+                        },
+                    },
+                    {
+                        "_id": "20220407142816",
+                        "channels": {
+                            "N_COMP_FF_YPOS": {"data": 243.771},
+                        },
+                    },
+                ],
+                id="Query using a single channels projection",
+            ),
+            pytest.param(
                 {"metadata.shotnum": 366351},
                 0,
                 2,
@@ -59,10 +137,14 @@ class TestGetRecords:
         expected_channels_count,
         expected_channels_data,
     ):
+        if isinstance(projection, list):
+            projection_param = "".join(
+                [f"&projection={field_name}" for field_name in projection],
+            )
+        else:
+            projection_param = ""
 
-        projection_param = (
-            f"&projection={projection}" if isinstance(projection, list) else ""
-        )
+        print(f"Projection Param: {projection_param}")
 
         test_response = test_app.get(
             f"/records?{projection_param}&conditions={json.dumps(conditions)}"
@@ -72,12 +154,21 @@ class TestGetRecords:
 
         assert test_response.status_code == 200
 
-        for record, expected_channel_count, expected_channel_data in zip(  # noqa: B905
-            test_response.json(),
-            expected_channels_count,
-            expected_channels_data,
-        ):
-            assert_record(record, expected_channel_count, expected_channel_data)
+        if not expected_channels_count:
+            # Testing a request with no channels, most likely a query containing
+            # projection so we cannot assume assert_record() will work
+            assert test_response.json() == expected_channels_data
+        else:
+            for (
+                record,
+                expected_channel_count,
+                expected_channel_data,
+            ) in zip(  # noqa: B905
+                test_response.json(),
+                expected_channels_count,
+                expected_channels_data,
+            ):
+                assert_record(record, expected_channel_count, expected_channel_data)
 
     @pytest.mark.parametrize(
         "conditions, projection, lower_level, upper_level, colourmap_name, "
