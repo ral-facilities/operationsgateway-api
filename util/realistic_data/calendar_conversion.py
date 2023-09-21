@@ -3,11 +3,18 @@ from datetime import datetime, time
 
 import yaml
 
+# Dictionary counter to keep track of how many parts each experiment have
+experiment_part_tracker = {}
+
 
 def extract_experiment_metadata(experiment):
-    # As EPAC-DataSim doesn't have the concept of multi-part experiments, we're setting
-    # every experiment to be part 1
-    part_number = 1
+    part_counter = experiment_part_tracker.get(experiment["experiment_id"])
+    if part_counter is None:
+        experiment_part_tracker[experiment["experiment_id"]] = 1
+    else:
+        experiment_part_tracker[experiment["experiment_id"]] += 1
+
+    part_number = experiment_part_tracker[experiment["experiment_id"]]
     start_date = datetime.combine(experiment["start"], time(23, 59, 59, 0))
     end_date = datetime.combine(experiment["stop"], time(0, 0, 0, 0, tzinfo=None))
 
@@ -21,7 +28,7 @@ def extract_experiment_metadata(experiment):
 
 
 def experiment_start_date(e):
-    return e["start_date"]["$date"]
+    return e["start"]
 
 
 def main():
@@ -44,21 +51,18 @@ def main():
         with open(file_path, encoding="utf-8") as calendar_file:
             schedules.append(yaml.safe_load(calendar_file))
 
-    experiments = []
+    input_experiments = []
     for schedule in schedules:
         for experiment_areas in schedule.values():
-            # Searching for the experiment areas that will contain experiments
             if isinstance(experiment_areas, list):
-                experiments.extend(
-                    [
-                        extract_experiment_metadata(experiment)
-                        for experiment in experiment_areas
-                    ],
-                )
+                input_experiments.extend(experiment_areas)
 
-    # The ordering of experiments in the database has no impact to functionality but
-    # helps readability for anyone trying to debug with this data
-    experiments.sort(key=experiment_start_date)
+    # Sort experiments from YAML file so they're sorted by date rather than experiment
+    # area - EA1 and EA2 have no relevance for our data
+    input_experiments.sort(key=experiment_start_date)
+    experiments = [
+        extract_experiment_metadata(experiment) for experiment in input_experiments
+    ]
 
     with open(f"{resource_path}/experiments_for_mongoimport.json", "w") as f:
         for experiment in experiments:
