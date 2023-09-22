@@ -11,6 +11,7 @@ channels_config="channels_config.yml"
 
 output_dir="${og_api_path}/util/realistic_data/data"
 s3_bucket="s3://og-directory-test/"
+s4cmd_threads=6
 
 # Moving to the OG API directory so Poetry can be used to execute other scripts
 cd $og_api_path
@@ -28,7 +29,7 @@ do
 
     # Put the data onto Echo and remove the data from local disk
     s3_start_time=`date +%s`
-    poetry run s4cmd --endpoint-url https://s3.echo.stfc.ac.uk put $output_dir $s3_bucket --recursive --force
+    poetry run s4cmd --endpoint-url https://s3.echo.stfc.ac.uk -c $s4cmd_threads put $output_dir $s3_bucket --recursive --force
     s3_end_time=`date +%s`
 
     echo "Removing HDF files from disk"
