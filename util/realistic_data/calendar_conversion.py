@@ -15,8 +15,8 @@ def extract_experiment_metadata(experiment):
         experiment_part_tracker[experiment["experiment_id"]] += 1
 
     part_number = experiment_part_tracker[experiment["experiment_id"]]
-    start_date = datetime.combine(experiment["start"], time(23, 59, 59, 0))
-    end_date = datetime.combine(experiment["stop"], time(0, 0, 0, 0, tzinfo=None))
+    start_date = datetime.combine(experiment["start"], time(0, 0, 0, 0))
+    end_date = datetime.combine(experiment["stop"], time(23, 59, 59, 0, tzinfo=None))
 
     return {
         "_id": f"{experiment['experiment_id']}-{part_number}",
