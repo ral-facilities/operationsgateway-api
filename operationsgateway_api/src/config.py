@@ -45,7 +45,6 @@ class MongoDB(BaseModel):
     mongodb_url: StrictStr
     database_name: StrictStr
     max_documents: StrictInt
-    image_store_directory: StrictStr
 
 
 class AuthConfig(BaseModel):
