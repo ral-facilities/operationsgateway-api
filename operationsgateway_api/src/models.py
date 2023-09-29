@@ -8,6 +8,18 @@ from pydantic import BaseModel, Field, root_validator, validator
 from operationsgateway_api.src.exceptions import ChannelManifestError, ModelError
 
 
+class PyObjectId(ObjectId):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v):
+        if not isinstance(v, ObjectId):
+            raise TypeError("ObjectId required")
+        return str(v)
+
+
 class ImageModel(BaseModel):
     path: str
     data: np.ndarray
@@ -152,11 +164,20 @@ class ChannelSummaryModel(BaseModel):
 
 
 class ExperimentModel(BaseModel):
-    id_: str = Field(alias="_id")
+    id_: Optional[PyObjectId] = Field(alias="_id")
     experiment_id: str
     part: int
     start_date: datetime
     end_date: datetime
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+class ExperimentPartMappingModel(BaseModel):
+    experiment_id: int
+    parts: List[int]
+    instrument_name: str
 
 
 class ShotnumConverterRange(BaseModel):
@@ -185,18 +206,6 @@ class DateConverterRange(BaseModel):
             raise ModelError("to cannot be less than from value")
         else:
             return value
-
-
-class PyObjectId(ObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, v):
-        if not isinstance(v, ObjectId):
-            raise TypeError("ObjectId required")
-        return str(v)
 
 
 class UserSessionModel(BaseModel):
