@@ -25,3 +25,4 @@ api:
   # If the API is launched by the script, this defines how many gunicorn workers are
   # assigned to the instance
   gunicorn_num_workers: 8
+  timeout_seconds: 300

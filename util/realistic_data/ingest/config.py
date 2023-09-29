@@ -35,6 +35,7 @@ class API(BaseModel):
     password: str
     log_config_path: str
     gunicorn_num_workers: str
+    timeout_seconds: int
 
 
 class IngestEchoDataConfig(BaseModel):

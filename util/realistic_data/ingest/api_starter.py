@@ -26,6 +26,8 @@ class APIStarter:
                     f"{Config.config.api.host}:{Config.config.api.port}",
                     "--log-config",
                     str(Path(Config.config.api.log_config_path)),
+                    "--timeout",
+                    str(Config.config.api.timeout_seconds),
                 ],
                 stdout=PIPE,
                 stderr=PIPE,
