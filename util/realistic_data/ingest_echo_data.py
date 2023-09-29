@@ -64,7 +64,7 @@ def main():
     ingestion_duration = total_ingestion_end_time - total_ingestion_start_time
     print(f"Total ingestion duration: {ingestion_duration:0.2f} seconds")
 
-    if not Config.config.script_options.launch_api:
+    if Config.config.script_options.launch_api:
         starter.kill()
 
 
