@@ -137,11 +137,11 @@ jobs:
       # until the feature is implemented
       - name: Install s3cmd
         run: sudo apt-get install -y s3cmd
-        if: steps.create_bucket.outcome == 'success'
+        if: steps.create_bucket.outcome == 'success' || failure()
       # --recursive & --force used so non-empty buckets can be deleted
       - name: Remove bucket for current job
         run: s3cmd rb --recursive --force s3://og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}
-        if: steps.create_bucket.outcome == 'success'
+        if: steps.create_bucket.outcome == 'success' || failure()
 
 
   linting:
