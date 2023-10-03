@@ -43,7 +43,7 @@ mkdir ~/dev/operationsgateway-api/util/realistic_data/data
 To ingest the data from Echo and setup daily data ingestion, run OG Ansible (which gets everything in place) and run the following commands on the dev server:
 ```bash
 # If you don't have the API running already and the `launch_api` option is set to false, start up an instance. `-t` increases the time allowed for workers to respond to a request, handy for these bigger HDF files
-poetry run gunicorn operationsgateway_api.src.main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker -b 127.0.0.1:8000 --log-config /root/dev/operationsgateway-api/operationsgateway_api/logging.ini -t 100
+poetry run gunicorn operationsgateway_api.src.main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker -b 127.0.0.1:8000 -t 100
 
 # Set appropriate config in util/realistic_data/config.yml beforehand
 poetry run python util/realistic_data/ingest_echo_data.py
