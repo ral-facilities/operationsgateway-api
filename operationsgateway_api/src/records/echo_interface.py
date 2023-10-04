@@ -36,12 +36,15 @@ class EchoInterface:
             self.bucket = self.resource.Bucket(Config.config.images.image_bucket_name)
         except ClientError as exc:
             log.error(
-                f"{exc.response['Error']['Code']}: {exc.response['Error']['Message']}",
+                "%s: %s",
+                exc.response["Error"]["Code"],
+                exc.response["Error"]["Message"],
             )
             raise EchoS3Error(
-                f"Error '{exc.response['Error']['Code']} caught when creating a boto3"
-                " resource and retrieving a bucket called"
-                f" '{Config.config.images.image_bucket_name}'",
+                "Error '%s' caught when creating a boto3 resource and retrieving a"
+                " bucket called '%s'",
+                exc.response["Error"]["Code"],
+                Config.config.images.image_bucket_name,
             ) from exc
 
         # If a bucket doesn't exist, Bucket() won't raise an exception, so we have to
@@ -66,11 +69,13 @@ class EchoInterface:
             self.bucket.download_fileobj(Fileobj=image, Key=image_path)
         except ClientError as exc:
             log.error(
-                f"{exc.response['Error']['Code']}: {exc.response['Error']['Message']}",
+                "%s: %s",
+                exc.response["Error"]["Code"],
+                exc.response["Error"]["Message"],
             )
             raise EchoS3Error(
                 f"{exc.response['Error']['Code']} when downloading file at"
-                f" '{image_path}'"
+                f" '{image_path}'",
             ) from exc
         if len(image.getvalue()) == 0:
             log.warning(
@@ -90,11 +95,13 @@ class EchoInterface:
             self.bucket.upload_fileobj(image_object, image_path)
         except ClientError as exc:
             log.error(
-                f"{exc.response['Error']['Code']}: {exc.response['Error']['Message']}",
+                "%s: %s",
+                exc.response["Error"]["Code"],
+                exc.response["Error"]["Message"],
             )
             raise EchoS3Error(
                 f"{exc.response['Error']['Code']} when uploading file at"
-                f" '{image_path}'"
+                f" '{image_path}'",
             ) from exc
         log.debug("Uploaded image successfully to %s", image_path)
 
