@@ -3,6 +3,7 @@ import logging
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Path, Query, Response
+from pydantic import Json
 
 from operationsgateway_api.src.auth.authorisation import (
     authorise_route,
@@ -11,10 +12,7 @@ from operationsgateway_api.src.auth.authorisation import (
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import QueryParameterError
 from operationsgateway_api.src.records.record import Record as Record
-from operationsgateway_api.src.routes.common_parameters import (
-    ParameterHandler,
-    QueryParameterJSONParser,
-)
+from operationsgateway_api.src.routes.common_parameters import ParameterHandler
 
 
 log = logging.getLogger()
@@ -29,7 +27,7 @@ router = APIRouter()
 )
 @endpoint_error_handling
 async def get_records(
-    conditions: dict = Depends(QueryParameterJSONParser("conditions")),
+    conditions: Json = Query({}, description="Conditions to apply to the query"),
     skip: int = Query(
         0,
         description="How many documents should be skipped before returning results",
@@ -91,16 +89,16 @@ async def get_records(
     )
 
     for record_data in records_data:
-        await Record.apply_false_colour_to_thumbnails(
-            record_data,
-            lower_level,
-            upper_level,
-            colourmap_name,
-        )
+        if record_data.get("channels"):
+            await Record.apply_false_colour_to_thumbnails(
+                record_data,
+                lower_level,
+                upper_level,
+                colourmap_name,
+            )
 
-    if truncate:
-        for record_data in records_data:
-            Record.truncate_thumbnails(record_data)
+            if truncate:
+                Record.truncate_thumbnails(record_data)
 
     return records_data
 
@@ -114,7 +112,7 @@ async def get_records(
 )
 @endpoint_error_handling
 async def count_records(
-    conditions: dict = Depends(QueryParameterJSONParser("conditions")),
+    conditions: Json = Query({}, description="Conditions to apply to the query"),
     access_token: str = Depends(authorise_token),
 ):
     """
@@ -137,10 +135,15 @@ async def count_records(
 )
 @endpoint_error_handling
 async def convert_search_ranges(
-    shotnum_range: dict = Depends(  # noqa: B008
-        QueryParameterJSONParser("shotnum_range"),  # noqa: B008
+    shotnum_range: Json = Query(
+        {},
+        description='Min and max shot number range (e.g. {"min": 200, "max": 500})',
     ),
-    date_range: dict = Depends(QueryParameterJSONParser("date_range")),  # noqa: B008
+    date_range: Json = Query(
+        {},
+        description="From and to date range (e.g."
+        ' {"from": "2022-04-07 14:16:19", "to": "2022-04-07 21:00:00"})',
+    ),
     access_token: str = Depends(authorise_token),  # noqa: B008
 ):
     if date_range and shotnum_range:
@@ -163,7 +166,7 @@ async def get_record_by_id(
         ...,
         description="`_id` of the record to fetch from the database",
     ),
-    conditions: dict = Depends(QueryParameterJSONParser("conditions")),
+    conditions: Json = Query({}, description="Conditions to apply to the query"),
     truncate: Optional[bool] = Query(
         False,
         description="Parameter used for development to reduce the output of thumbnail"
@@ -198,12 +201,13 @@ async def get_record_by_id(
 
     record_data = await Record.find_record_by_id(id_, conditions)
 
-    await Record.apply_false_colour_to_thumbnails(
-        record_data,
-        lower_level,
-        upper_level,
-        colourmap_name,
-    )
+    if record_data.get("channels"):
+        await Record.apply_false_colour_to_thumbnails(
+            record_data,
+            lower_level,
+            upper_level,
+            colourmap_name,
+        )
 
     if truncate:
         Record.truncate_thumbnails(record_data)
