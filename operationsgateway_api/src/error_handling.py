@@ -21,6 +21,7 @@ def endpoint_error_handling(method):
             return await method(*args, **kwargs)
         except ApiError as exc:
             log.error("Error in endpoint '%s': %s", method.__name__, exc.args[0])
+            log.exception(msg=exc.args)
             raise HTTPException(exc.status_code, exc.args[0]) from exc
         except Exception as exc:
             log.exception(msg=exc.args)
