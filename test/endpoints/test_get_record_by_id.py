@@ -11,10 +11,10 @@ class TestGetRecordByID:
         "record_id, truncate, expected_channel_count, expected_channel_data",
         [
             pytest.param(
-                "20220408094341",
+                "20230605100000",
                 True,
-                59,
-                {"SAD_NF_E": -14.122},
+                353,
+                {"FE-204-LT-CAM-2-CENX": 5.83075538293604},
                 id="Ordinary request",
             ),
         ],
@@ -45,11 +45,11 @@ class TestGetRecordByID:
         "record_id, expected_thumbnail_md5s",
         [
             pytest.param(
-                "20220408132830",
+                "20230605100000",
                 {
-                    "N_COMP_FF_IMAGE": "641ae5031ac0dd22bac9c7ed8159d404",
-                    "N_COMP_NF_IMAGE": "ebb99b10d9a278560f5f7eccec4c5672",
-                    "N_LEG1_GREEN_NF_IMAGE": "4f79d3311ee264d7580d891c0318e4b4",
+                    "FE-204-NSO-P1-CAM-1": "fc0a9e9718b13c576b438e4cc5fb4792",
+                    "FE-204-NSO-P2-CAM-1": "a0807135ff922913c4086996888c289d",
+                    "TS-202-TSM-CAM-2": "daf14902db6b51ceb472397407e53c42",
                 },
                 id="Ordinary request",
             ),

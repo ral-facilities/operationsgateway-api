@@ -10,30 +10,17 @@ class TestChannelSummary:
         "channel_name, expected_summary",
         [
             pytest.param(
-                "N_COMP_FF_E",
+                "SER-202-BI-RH-1",
                 {
-                    "first_date": "2022-04-07T14:16:16",
-                    "most_recent_date": "2022-04-08T16:58:57",
+                    "first_date": "2023-06-04T00:00:00",
+                    "most_recent_date": "2023-06-05T23:54:00",
                     "recent_sample": [
-                        {"2022-04-08T16:58:57": -8535000.0},
-                        {"2022-04-08T16:41:36": -8461000.0},
-                        {"2022-04-08T16:29:56": -8582000.0},
+                        {"2023-06-05T23:54:00": 45.105075954471815},
+                        {"2023-06-05T23:48:00": 42.7879518924901},
+                        {"2023-06-05T23:42:00": 40.592569128241514},
                     ],
                 },
                 id="Scalar channel (number) summary",
-            ),
-            pytest.param(
-                "GEM_SHOT_TYPE_STRING",
-                {
-                    "first_date": "2022-04-07T14:16:16",
-                    "most_recent_date": "2022-04-08T16:58:57",
-                    "recent_sample": [
-                        {"2022-04-08T16:58:57": "FP"},
-                        {"2022-04-08T16:41:36": "FP"},
-                        {"2022-04-08T16:29:56": "FP"},
-                    ],
-                },
-                id="Scalar channel (string) summary",
             ),
         ],
     )
@@ -56,27 +43,27 @@ class TestChannelSummary:
         "channel_name, expected_summary",
         [
             pytest.param(
-                "N_COMP_FF_IMAGE",
+                "FE-204-PSO-P2-CAM-2",
                 {
-                    "first_date": "2022-04-07T14:16:16",
-                    "most_recent_date": "2022-04-08T16:58:57",
+                    "first_date": "2023-06-05T08:00:00",
+                    "most_recent_date": "2023-06-05T16:00:00",
                     "recent_sample": [
-                        {"2022-04-08T16:58:57": "1c3b60291929cd4b7ddbd8e2d718ee2c"},
-                        {"2022-04-08T16:41:36": "015c6decfa5f493005905c223e99fdea"},
-                        {"2022-04-08T16:29:56": "9c34c7cecedd1f6e46fe277a027e8ad7"},
+                        {"2023-06-05T16:00:00": "239a3d9cfc2877d7e9b148ba637b9daf"},
+                        {"2023-06-05T15:00:00": "59f7b273e95ceb48ec6934f2b6b6ea2e"},
+                        {"2023-06-05T14:00:00": "c2087bfb3c938dd65ff7cc1264c77d55"},
                     ],
                 },
                 id="Image channel summary",
             ),
             pytest.param(
-                "N_COMP_SPEC_TRACE",
+                "FE-204-PSO-P1-PD",
                 {
-                    "first_date": "2022-04-07T14:16:16",
-                    "most_recent_date": "2022-04-08T16:58:57",
+                    "first_date": "2023-06-05T08:00:00",
+                    "most_recent_date": "2023-06-05T16:00:00",
                     "recent_sample": [
-                        {"2022-04-08T16:58:57": "d3fe6a390d9a10b87cadba980224d4f8"},
-                        {"2022-04-08T16:41:36": "4f0be833b33ac301a87a6278305cce13"},
-                        {"2022-04-08T16:29:56": "9cf9c60b9c300fc9545b83a52dd72fa6"},
+                        {"2023-06-05T16:00:00": "0fb865ea1e9a2b21f943c9dfa85b2899"},
+                        {"2023-06-05T15:00:00": "b38d616911ede91ad98f7a2605246082"},
+                        {"2023-06-05T14:00:00": "8def24d48ac4142ba8975bc018391164"},
                     ],
                 },
                 id="Waveform channel summary",

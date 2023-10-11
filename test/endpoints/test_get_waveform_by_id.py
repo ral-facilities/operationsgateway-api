@@ -9,10 +9,10 @@ class TestGetWaveformByID:
         "record_id, channel_name, expected_first_x, expected_first_y",
         [
             pytest.param(
-                "20220407141616",
-                "N_COMP_SPEC_TRACE",
-                649.8,
-                713.0,
+                "20230605100000",
+                "CM-202-CVC-SP",
+                645.0,
+                1803.1355895081488,
                 id="Ordinary request",
             ),
         ],

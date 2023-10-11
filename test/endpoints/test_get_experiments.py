@@ -17,22 +17,22 @@ class TestGetExperiments:
         # single experiment
         expected_experiments_snippet = [
             {
-                "end_date": "2020-01-06T18:00:00",
-                "experiment_id": "18325019",
-                "part": 4,
-                "start_date": "2020-01-03T10:00:00",
-            },
-            {
-                "end_date": "2019-06-12T17:00:00",
-                "experiment_id": "18325019",
-                "part": 5,
-                "start_date": "2019-06-12T09:00:00",
-            },
-            {
-                "end_date": "2020-02-24T18:00:00",
-                "experiment_id": "20310001",
+                "end_date": "2023-06-21T23:59:59",
+                "experiment_id": "51982713",
                 "part": 1,
-                "start_date": "2020-02-24T10:00:00",
+                "start_date": "2023-06-05T00:00:00",
+            },
+            {
+                "end_date": "2023-06-09T23:59:59",
+                "experiment_id": "maintenance",
+                "part": 23,
+                "start_date": "2023-06-08T00:00:00",
+            },
+            {
+                "end_date": "2023-06-30T23:59:59",
+                "experiment_id": "22042898",
+                "part": 2,
+                "start_date": "2023-06-12T00:00:00",
             },
         ]
 
@@ -63,4 +63,4 @@ class TestGetExperiments:
                     break
 
             if not experiment_found:
-                raise AssertionError("Expected experiment not found")
+                raise AssertionError(f"Expected experiment not found, looking for experiment ID: {expected_experiment['experiment_id']}")
