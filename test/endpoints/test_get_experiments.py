@@ -63,4 +63,7 @@ class TestGetExperiments:
                     break
 
             if not experiment_found:
-                raise AssertionError(f"Expected experiment not found, looking for experiment ID: {expected_experiment['experiment_id']}")
+                raise AssertionError(
+                    "Expected experiment not found, looking for experiment ID:"
+                    f" {expected_experiment['experiment_id']}",
+                )

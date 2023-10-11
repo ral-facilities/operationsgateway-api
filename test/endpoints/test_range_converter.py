@@ -10,14 +10,14 @@ class TestRangeConverter:
         [
             pytest.param(
                 None,
-                {"min":423648036000,"max":423648288000},
-                {"from":"2023-06-05T09:00:00","to":"2023-06-05T16:00:00"},
+                {"min": 423648036000, "max": 423648288000},
+                {"from": "2023-06-05T09:00:00", "to": "2023-06-05T16:00:00"},
                 id="Shotnum to date range",
             ),
             pytest.param(
                 {"from": "2023-06-05 08:16:19", "to": "2023-06-05 21:00:00"},
                 None,
-                {"min":423648036000, "max":423648288000},
+                {"min": 423648036000, "max": 423648288000},
                 id="Date to shotnum range",
             ),
             pytest.param(

@@ -91,13 +91,13 @@ class TestGetRecords:
                     {
                         "_id": "20230605080000",
                         "channels": {
-                            "TS-202-TSM-P1-CAM-2-FWHMX": {"data": 46.402748185135856}
+                            "TS-202-TSM-P1-CAM-2-FWHMX": {"data": 46.402748185135856},
                         },
                     },
                     {
                         "_id": "20230605090000",
                         "channels": {
-                            "TS-202-TSM-P1-CAM-2-FWHMX": {"data": 54.5600997950534}
+                            "TS-202-TSM-P1-CAM-2-FWHMX": {"data": 54.5600997950534},
                         },
                     },
                 ],
@@ -200,7 +200,8 @@ class TestGetRecords:
                 {
                     "TS-202-TSM-P2-CAM-1": "fa99dae4b3cf7a5d507d42daae856226",
                 },
-                id="Partial record: only TS-202-TSM-P2-CAM-1 and no channel_dtype returned",
+                id="Partial record: only TS-202-TSM-P2-CAM-1 and no channel_dtype"
+                " returned",
             ),
             pytest.param(
                 {"metadata.shotnum": 423648072000},
@@ -223,8 +224,8 @@ class TestGetRecords:
                 {
                     "TS-202-TSM-P2-CAM-1": "0d785d586b0f3ce7b114dbb5f64c16d3",
                 },
-                id="Partial record: only TS-202-TSM-P2-CAM-1 and no channel_dtype returned "
-                "and custom false colour settings applied",
+                id="Partial record: only TS-202-TSM-P2-CAM-1 and no channel_dtype"
+                " returned and custom false colour settings applied",
             ),
         ],
     )

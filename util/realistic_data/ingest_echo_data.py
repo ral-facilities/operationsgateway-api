@@ -42,9 +42,10 @@ def main():
     og_api = APIClient(api_url, starter.process)
     og_api.submit_manifest(channel_manifest)
 
-    experiments_import = echo.download_experiments()
-    #ssh.transfer_experiments_file(experiments_import)
-    #ssh.import_experiments()
+    # TODO - go back and fix this for GitHub Actions
+    # experiments_import = echo.download_experiments()
+    # ssh.transfer_experiments_file(experiments_import)
+    # ssh.import_experiments()
 
     hdf_page_iterator = echo.paginate_hdf_data()
     total_ingestion_start_time = time()
