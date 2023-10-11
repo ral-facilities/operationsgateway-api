@@ -105,15 +105,22 @@ jobs:
         env:
           SSH_KEY_PUBLIC: ${{secrets.SSH_PUBLIC_KEY_FOR_AUTH_OPENSSH}}
 
-      # Clone repo containing test data and use script to ingest the data
-      - name: Checkout OperationsGateway Test Data
-        uses: actions/checkout@v3
-        with:
-          repository: ral-facilities/operationsgateway-test-data
-          path: operationsgateway-test-data
-          ssh-key: ${{ secrets.SSH_PRIV_OG_TEST_DATA_ACTIONS }}
-      - name: Run ingestion script
-        run: poetry run python util/ingest_hdf.py -p operationsgateway-test-data/dev_server -U backend -P back
+      # Setup steps for Echo ingestion script
+      - name: Configure echo access key
+        run: yq -i ".echo.access_key = \"$ECHO_S3_ACCESS_KEY\"" .github/ci_ingest_echo_config.yml
+        env:
+          ECHO_S3_ACCESS_KEY: ${{secrets.ECHO_S3_ACCESS_KEY}}
+      - name: Configure echo secret key
+        run: yq -i ".echo.secret_key = \"$ECHO_S3_SECRET_KEY\"" .github/ci_ingest_echo_config.yml
+        env:
+          ECHO_S3_SECRET_KEY: ${{secrets.ECHO_S3_SECRET_KEY}}
+      - name: Configure bucket name for current run
+        run: yq -i '.echo.images_bucket = "og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}"' .github/ci_ingest_echo_config.yml
+      - name: Copy config for Echo Ingest script to correct place
+        run: cp .github/ci_ingest_echo_config.yml util/realistic_data/config.yml
+
+      - name: Run Echo Ingest script
+        run: poetry run python util/realistic_data/ingest_echo_data.py
 
       - name: Load Poetry cache for Nox tests session
         uses: actions/cache@v3
