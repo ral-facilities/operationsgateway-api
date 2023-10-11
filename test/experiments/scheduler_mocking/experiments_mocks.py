@@ -89,21 +89,21 @@ mock_data = {
         "expected": [
             ExperimentModel(
                 _id=None,
-                experiment_id=20310000,
+                experiment_id=str(20310000),
                 part=1,
                 start_date=datetime(2020, 2, 25, 10, 0),
                 end_date=datetime(2020, 2, 25, 18, 0),
             ),
             ExperimentModel(
                 _id=None,
-                experiment_id=20310000,
+                experiment_id=str(20310000),
                 part=2,
                 start_date=datetime(2020, 2, 26, 10, 0),
                 end_date=datetime(2020, 2, 26, 18, 0),
             ),
             ExperimentModel(
                 _id=None,
-                experiment_id=20310000,
+                experiment_id=str(20310000),
                 part=3,
                 start_date=datetime(2020, 3, 2, 10, 0),
                 end_date=datetime(2020, 3, 2, 18, 0),
@@ -139,21 +139,21 @@ mock_data = {
         "expected": [
             ExperimentModel(
                 _id=None,
-                experiment_id=20310001,
+                experiment_id=str(20310001),
                 part=1,
                 start_date=datetime(2020, 2, 24, 10, 0),
                 end_date=datetime(2020, 2, 24, 18, 0),
             ),
             ExperimentModel(
                 _id=None,
-                experiment_id=20310001,
+                experiment_id=str(20310001),
                 part=2,
                 start_date=datetime(2020, 2, 25, 10, 0),
                 end_date=datetime(2020, 2, 25, 18, 0),
             ),
             ExperimentModel(
                 _id=None,
-                experiment_id=20310001,
+                experiment_id=str(20310001),
                 part=3,
                 start_date=datetime(2020, 2, 26, 10, 0),
                 end_date=datetime(2020, 2, 26, 18, 0),
@@ -175,7 +175,7 @@ mock_data = {
         "expected": [
             ExperimentModel(
                 _id=None,
-                experiment_id=20310002,
+                experiment_id=str(20310002),
                 part=1,
                 start_date=datetime(2020, 4, 30, 10, 0),
                 end_date=datetime(2020, 4, 30, 18, 0),
@@ -232,35 +232,35 @@ mock_data = {
         "expected": [
             ExperimentModel(
                 _id=None,
-                experiment_id=18325019,
+                experiment_id=str(18325019),
                 part=1,
                 start_date=datetime(2018, 11, 23, 10, 0),
                 end_date=datetime(2018, 11, 23, 18, 0),
             ),
             ExperimentModel(
                 _id=None,
-                experiment_id=18325019,
+                experiment_id=str(18325019),
                 part=2,
                 start_date=datetime(2018, 11, 30, 10, 0),
                 end_date=datetime(2018, 12, 1, 18, 0),
             ),
             ExperimentModel(
                 _id=None,
-                experiment_id=18325019,
+                experiment_id=str(18325019),
                 part=3,
                 start_date=datetime(2018, 11, 29, 10, 0),
                 end_date=datetime(2018, 12, 1, 18, 0),
             ),
             ExperimentModel(
                 _id=None,
-                experiment_id=18325019,
+                experiment_id=str(18325019),
                 part=4,
                 start_date=datetime(2020, 1, 3, 10, 0),
                 end_date=datetime(2020, 1, 6, 18, 0),
             ),
             ExperimentModel(
                 _id=None,
-                experiment_id=18325019,
+                experiment_id=str(18325019),
                 part=5,
                 start_date=datetime(2019, 6, 12, 10, 0),
                 end_date=datetime(2019, 6, 12, 18, 0),
@@ -367,21 +367,21 @@ mock_data = {
         "expected": [
             ExperimentModel(
                 _id=None,
-                experiment_id=12345678,
+                experiment_id=str(12345678),
                 part=1,
                 start_date=datetime(2020, 4, 30, 10, 0),
                 end_date=datetime(2020, 4, 30, 18, 0),
             ),
             ExperimentModel(
                 _id=None,
-                experiment_id=12345678,
+                experiment_id=str(12345678),
                 part=2,
                 start_date=datetime(2020, 5, 1, 10, 0),
                 end_date=datetime(2020, 5, 1, 18, 0),
             ),
             ExperimentModel(
                 _id=None,
-                experiment_id=12345678,
+                experiment_id=str(12345678),
                 part=4,
                 start_date=datetime(2020, 5, 3, 10, 0),
                 end_date=datetime(2020, 5, 3, 18, 0),

@@ -7,12 +7,12 @@ class MockDeleteResult(BaseModel):
     acknowledged: bool
     deleted_count: int
     # Not needed for mocking tests
-    raw_result: Optional[Dict[str, Any]]
+    raw_result: Optional[Dict[str, Any]] = None
 
 
 class MockInsertOneResult(BaseModel):
     acknowledged: bool
-    inserted_id: Any
+    inserted_id: Any = None
 
 
 class MockUpdateResult(BaseModel):
@@ -20,5 +20,5 @@ class MockUpdateResult(BaseModel):
     matched_count: int
     modified_count: int
     # Not needed for mocking tests
-    raw_result: Optional[Dict[str, Any]]
-    upserted_id: Optional[Any]
+    raw_result: Optional[Dict[str, Any]] = None
+    upserted_id: Optional[Any] = None

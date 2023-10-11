@@ -21,14 +21,14 @@ router = APIRouter()
 )
 @endpoint_error_handling
 async def get_full_image(
-    record_id: str = Path(
-        "",
-        description="ID of the record (usually timestamp)",
-    ),
-    channel_name: str = Path(
-        "",
-        description="Channel name containing the image",
-    ),
+    record_id: str,# = Path(
+        #"",
+        #description="ID of the record (usually timestamp)",
+    #),
+    channel_name: str,# = Path(
+        #"",
+        #description="Channel name containing the image",
+    #),
     original_image: Optional[bool] = Query(
         False,
         description="Return the original image in PNG format without any false colour"

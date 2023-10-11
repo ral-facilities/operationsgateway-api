@@ -1,31 +1,65 @@
 from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Literal, Optional, Union
 
+from typing_extensions import Annotated
+from typing import Any, Callable
 from bson.objectid import ObjectId
+from pydantic_core import core_schema
 import numpy as np
-from pydantic import BaseModel, Field, root_validator, validator
+from pydantic import model_validator, ConfigDict, BaseModel, Field, field_validator
+from pydantic.json_schema import JsonSchemaValue
 
 from operationsgateway_api.src.exceptions import ChannelManifestError, ModelError
 
 
+#def check_object_id(value: str) -> str:
+#    if not ObjectId.is_valid(value):
+#        raise ValueError('Invalid ObjectId')
+#    return value
+
+#ObjectId = Annotated[str, AfterValidator(check_object_id)]
+
 class PyObjectId(ObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
+    #__class__ = ObjectId
+    
+    #@classmethod
+    #def validate_object_id(cls, v: Any, handler) -> ObjectId:
+    #    if isinstance(v, ObjectId):
+    #        return v
+
+    #    s = handler(v)
+    #    if ObjectId.is_valid(s):
+    #        return ObjectId(s)
+    #    else:
+    #        raise ValueError("Invalid ObjectId")
 
     @classmethod
-    def validate(cls, v):
-        if not isinstance(v, ObjectId):
-            raise TypeError("ObjectId required")
-        return str(v)
+    def __get_pydantic_core_schema__(
+        cls,
+        _source_type: Any,
+        _handler: Callable[[Any], core_schema.CoreSchema],
+    ) -> core_schema.CoreSchema:
+        def validate_from_str(input_value: str) -> ObjectId:
+            return ObjectId(input_value)
+
+        return core_schema.union_schema(
+            [
+                # check if it's an instance first before doing any further work
+                core_schema.is_instance_schema(ObjectId),
+                core_schema.no_info_plain_validator_function(validate_from_str),
+            ],
+            serialization=core_schema.to_string_ser_schema(),
+        )
+
+    #@classmethod
+    #def __get_pydantic_json_schema__(cls, _core_schema, handler) -> JsonSchemaValue:
+    #    return handler(core_schema.str_schema())
 
 
 class ImageModel(BaseModel):
     path: str
     data: np.ndarray
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class WaveformModel(BaseModel):
@@ -33,7 +67,7 @@ class WaveformModel(BaseModel):
     x: str
     y: str
 
-    @validator("x", "y", pre=True, always=True)
+    @field_validator("x", "y")
     def encode_values(cls, value):
         if isinstance(value, np.ndarray):
             return str(list(value))
@@ -45,48 +79,46 @@ class WaveformModel(BaseModel):
 
 class ImageChannelMetadataModel(BaseModel):
     channel_dtype: str
-    exposure_time_s: Optional[float]
-    gain: Optional[float]
-    x_pixel_size: Optional[float]
-    x_pixel_units: Optional[str]
-    y_pixel_size: Optional[float]
-    y_pixel_units: Optional[str]
+    exposure_time_s: Optional[float] = None
+    gain: Optional[float] = None
+    x_pixel_size: Optional[float] = None
+    x_pixel_units: Optional[str] = None
+    y_pixel_size: Optional[float] = None
+    y_pixel_units: Optional[str] = None
 
 
 class ImageChannelModel(BaseModel):
     metadata: ImageChannelMetadataModel
     image_path: str
-    thumbnail: Optional[str]
+    thumbnail: Optional[str] = None
 
 
 class ScalarChannelMetadataModel(BaseModel):
     channel_dtype: str
-    units: Optional[str]
+    units: Optional[str] = None
 
 
 class ScalarChannelModel(BaseModel):
     metadata: ScalarChannelMetadataModel
     data: Union[int, float, str]
-
-    class Config:
-        smart_union = True
+    model_config = ConfigDict(smart_union=True)
 
 
 class WaveformChannelMetadataModel(BaseModel):
     channel_dtype: str
-    x_units: Optional[str]
-    y_units: Optional[str]
+    x_units: Optional[str] = None
+    y_units: Optional[str] = None
 
 
 class WaveformChannelModel(BaseModel):
     metadata: WaveformChannelMetadataModel
-    thumbnail: Optional[str]
+    thumbnail: Optional[str] = None
     waveform_id: str
 
 
 class RecordMetadataModel(BaseModel):
     epac_ops_data_version: str
-    shotnum: Optional[int]
+    shotnum: Optional[int] = None
     timestamp: datetime
 
 
@@ -110,9 +142,9 @@ class AccessTokenModel(BaseModel):
 
 class UserModel(BaseModel):
     username: str = Field(alias="_id")
-    sha256_password: Optional[str]
+    sha256_password: Optional[str] = None
     auth_type: str
-    authorised_routes: Optional[List[str]]
+    authorised_routes: Optional[List[str]] = None
 
 
 class ChannelModel(BaseModel):
@@ -121,29 +153,30 @@ class ChannelModel(BaseModel):
 
     name: str
     path: str
-    type_: Optional[Literal["scalar", "image", "waveform"]] = Field(alias="type")
+    type_: Optional[Literal["scalar", "image", "waveform"]] = Field(None, alias="type")
 
     # Should the value be displayed as it is stored or be shown in x10^n format
-    notation: Optional[Literal["scientific", "normal"]]
+    notation: Optional[Literal["scientific", "normal"]] = None
     # Number of significant figures used to display the value
-    precision: Optional[int]
-    units: Optional[str]
-    historical: Optional[bool]
+    precision: Optional[int] = None
+    units: Optional[str] = None
+    historical: Optional[bool] = None
 
-    x_units: Optional[str]
-    y_units: Optional[str]
+    x_units: Optional[str] = None
+    y_units: Optional[str] = None
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def set_default_type(cls, values):
         values.setdefault("type", "scalar")
         return values
 
-    @validator("x_units", "y_units")
+    @field_validator("x_units", "y_units")
     def check_waveform_channel(cls, v, values):
-        if not values["type_"] == "waveform":
+        if not values.data["type_"] == "waveform":
             raise ChannelManifestError(
                 "Only waveform channels should contain waveform channel metadata."
-                f" Invalid channel is called: {values['name']}",
+                f" Invalid channel is called: {values.data['name']}",
             )
         else:
             return v
@@ -158,20 +191,16 @@ class ChannelSummaryModel(BaseModel):
     first_date: datetime
     most_recent_date: datetime
     recent_sample: List[Dict[datetime, Union[int, float, str]]]
-
-    class Config:
-        smart_union = True
+    model_config = ConfigDict(smart_union=True)
 
 
 class ExperimentModel(BaseModel):
-    id_: Optional[PyObjectId] = Field(alias="_id")
+    id_: Optional[Annotated[ObjectId, PyObjectId]] = Field(None, alias="_id")
     experiment_id: str
     part: int
     start_date: datetime
     end_date: datetime
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class ShotnumConverterRange(BaseModel):
@@ -180,9 +209,9 @@ class ShotnumConverterRange(BaseModel):
     min_: Union[int, datetime] = Field(alias="min")
     max_: Union[int, datetime] = Field(alias="max")
 
-    @validator("max_")
-    def validate_min_max(cls, value, values):  # noqa: B902, N805
-        if value < values["min_"]:
+    @field_validator("max_")
+    def validate_min_max(cls, value, values) -> Union[int, datetime]:  # noqa: B902, N805
+        if value < values.data["min_"]:
             raise ModelError("max cannot be less than min value")
         else:
             return value
@@ -194,32 +223,27 @@ class DateConverterRange(BaseModel):
     from_: Union[int, datetime] = Field(alias="from")
     to: Union[int, datetime]
 
-    @validator("to")
-    def validate_min_max(cls, value, values):  # noqa: B902, N805
-        if value < values["from_"]:
+    @field_validator("to")
+    def validate_min_max(cls, value, values) -> Union[int, datetime]:  # noqa: B902, N805
+        if value < values.data["from_"]:
             raise ModelError("to cannot be less than from value")
         else:
             return value
 
 
 class UserSessionModel(BaseModel):
-    id_: Optional[PyObjectId] = Field(alias="_id")
+    id_: Optional[Annotated[ObjectId, PyObjectId]] = Field(None, alias="_id")
     username: str
     name: str
     summary: str
     timestamp: datetime
     auto_saved: bool
-    session: Dict[str, Any]
-
-    class Config:
-        arbitrary_types_allowed = True
+    session: Dict[str, Any] = Field(None, cls=ObjectId)
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class UserSessionListModel(UserSessionModel):
     # Make fields optional that aren't needed in the session list and exclude them from
     # displaying on output
-    username: Optional[str]
-    session: Optional[Dict[str, Any]]
-
-    class Config:
-        fields = {"username": {"exclude": True}, "session": {"exclude": True}}
+    username: Optional[str] = Field(None, exclude=True)
+    session: Optional[Dict[str, Any]] = Field(None, exclude=True)

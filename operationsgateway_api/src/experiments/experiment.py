@@ -181,7 +181,7 @@ class Experiment:
                     ):
                         self.experiments.append(
                             ExperimentModel(
-                                experiment_id=int(part.referenceNumber),
+                                experiment_id=str(part.referenceNumber),
                                 part=part.partNumber,
                                 start_date=part.experimentStartDate,
                                 end_date=part.experimentEndDate,

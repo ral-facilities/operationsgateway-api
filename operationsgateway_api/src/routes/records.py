@@ -162,10 +162,10 @@ async def convert_search_ranges(
 )
 @endpoint_error_handling
 async def get_record_by_id(
-    id_: str = Path(
-        ...,
-        description="`_id` of the record to fetch from the database",
-    ),
+    id_: str,# = Path(
+        #...,
+        #description="`_id` of the record to fetch from the database",
+    #),
     conditions: Json = Query({}, description="Conditions to apply to the query"),
     truncate: Optional[bool] = Query(
         False,
@@ -224,10 +224,10 @@ async def get_record_by_id(
 )
 @endpoint_error_handling
 async def delete_record_by_id(
-    id_: str = Path(
-        ...,
-        description="`_id` of the record to delete from the database",
-    ),
+    id_: str,# = Path(
+        #...,
+        #description="`_id` of the record to delete from the database",
+    #),
     access_token: str = Depends(authorise_route),
 ):
     # TODO 2 - full implementation will require searching through waveform channels to

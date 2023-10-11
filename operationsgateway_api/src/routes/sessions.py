@@ -56,10 +56,10 @@ async def get_user_sessions_list(
 )
 @endpoint_error_handling
 async def get_user_session(
-    id_: str = Path(
-        ...,
-        description="`_id` of the user session to fetch from the database",
-    ),
+    id_: str,# = Path(
+        #...,
+        #description="`_id` of the user session to fetch from the database",
+    #),
     access_token: str = Depends(authorise_token),
 ):
     """
@@ -79,10 +79,10 @@ async def get_user_session(
 )
 @endpoint_error_handling
 async def delete_user_session(
-    id_: str = Path(
-        ...,
-        description="`_id` of the user session to remove from the database",
-    ),
+    id_: str,# = Path(
+        #...,
+        #description="`_id` of the user session to remove from the database",
+    #),
     access_token: str = Depends(authorise_token),
 ):
     """
@@ -163,10 +163,10 @@ async def save_user_session(
 )
 @endpoint_error_handling
 async def update_user_session(
-    id_: str = Path(
-        ...,
-        description="`_id` of the user session to remove from the database",
-    ),
+    id_: str,# = Path(
+        #...,
+        #description="`_id` of the user session to remove from the database",
+    #),
     data: Dict[str, Any] = Body(...),
     name: str = Query(
         "",

@@ -5,13 +5,11 @@ from typing import Optional, Tuple
 
 from dateutil import tz
 from pydantic import (
-    BaseModel,
+    field_validator, BaseModel,
     StrictBool,
     StrictInt,
     StrictStr,
-    ValidationError,
-    validator,
-)
+    ValidationError)
 import yaml
 
 
@@ -19,9 +17,9 @@ class App(BaseModel):
     """Configuration model class to store configuration regarding the FastAPI app"""
 
     # Some options aren't mandatory when running the API in the production
-    host: Optional[StrictStr]
-    port: Optional[StrictInt]
-    reload: Optional[StrictBool]
+    host: Optional[StrictStr] = None
+    port: Optional[StrictInt] = None
+    reload: Optional[StrictBool] = None
 
 
 class ImagesConfig(BaseModel):
@@ -70,7 +68,8 @@ class ExperimentsConfig(BaseModel):
     instrument_name: StrictStr
     worker_file_path: StrictStr
 
-    @validator("scheduler_background_timezone")
+    @field_validator("scheduler_background_timezone")
+    @classmethod
     def check_timezone(cls, value):  # noqa: B902, N805
         if not tz.gettz(value):
             sys.exit(f"scheduler_background_timezone is not a valid timezone: {value}")
