@@ -21,7 +21,10 @@ router = APIRouter()
 )
 @endpoint_error_handling
 async def get_channel_summary(
-    channel_name: str,
+    channel_name: str = Path(
+        ...,
+        description="Channel name to provide a summary for",
+    ),
     access_token: str = Depends(authorise_token),
 ):
     """
@@ -76,7 +79,10 @@ async def get_channels(
 )
 @endpoint_error_handling
 async def get_channel_by_system_name(
-    channel_system_name: str,
+    channel_system_name: str = Path(
+        ...,
+        description="Channel system name to lookup in manifest file",
+    ),
     access_token: str = Depends(authorise_token),
 ):
     """
