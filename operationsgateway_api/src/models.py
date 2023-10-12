@@ -12,27 +12,7 @@ from pydantic.json_schema import JsonSchemaValue
 from operationsgateway_api.src.exceptions import ChannelManifestError, ModelError
 
 
-#def check_object_id(value: str) -> str:
-#    if not ObjectId.is_valid(value):
-#        raise ValueError('Invalid ObjectId')
-#    return value
-
-#ObjectId = Annotated[str, AfterValidator(check_object_id)]
-
 class PyObjectId(ObjectId):
-    #__class__ = ObjectId
-    
-    #@classmethod
-    #def validate_object_id(cls, v: Any, handler) -> ObjectId:
-    #    if isinstance(v, ObjectId):
-    #        return v
-
-    #    s = handler(v)
-    #    if ObjectId.is_valid(s):
-    #        return ObjectId(s)
-    #    else:
-    #        raise ValueError("Invalid ObjectId")
-
     @classmethod
     def __get_pydantic_core_schema__(
         cls,
@@ -50,10 +30,6 @@ class PyObjectId(ObjectId):
             ],
             serialization=core_schema.to_string_ser_schema(),
         )
-
-    #@classmethod
-    #def __get_pydantic_json_schema__(cls, _core_schema, handler) -> JsonSchemaValue:
-    #    return handler(core_schema.str_schema())
 
 
 class ImageModel(BaseModel):
