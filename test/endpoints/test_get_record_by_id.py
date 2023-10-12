@@ -47,9 +47,9 @@ class TestGetRecordByID:
             pytest.param(
                 "20230605100000",
                 {
-                    "FE-204-NSO-P1-CAM-1": "fc0a9e9718b13c576b438e4cc5fb4792",
-                    "FE-204-NSO-P2-CAM-1": "a0807135ff922913c4086996888c289d",
-                    "TS-202-TSM-CAM-2": "daf14902db6b51ceb472397407e53c42",
+                    "FE-204-NSO-P1-CAM-1": "77bd6ab1bbdc654de72bed13014293a8",
+                    "FE-204-NSO-P2-CAM-1": "fc163ed01e4388f9e8464d6b51c478d3",
+                    "TS-202-TSM-CAM-2": "190c91c2927dc1bf4e0d71fc73ee0957",
                 },
                 id="Ordinary request",
             ),

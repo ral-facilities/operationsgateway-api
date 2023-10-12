@@ -187,7 +187,7 @@ class TestGetRecords:
                 None,
                 None,
                 {
-                    "TS-202-TSM-P2-CAM-1": "fa99dae4b3cf7a5d507d42daae856226",
+                    "TS-202-TSM-P2-CAM-1": "833537834d6d6adfffd0339e55f82bc1",
                 },
                 id="Whole record: all channels have channel_dtype returned",
             ),
@@ -198,7 +198,7 @@ class TestGetRecords:
                 None,
                 None,
                 {
-                    "TS-202-TSM-P2-CAM-1": "fa99dae4b3cf7a5d507d42daae856226",
+                    "TS-202-TSM-P2-CAM-1": "833537834d6d6adfffd0339e55f82bc1",
                 },
                 id="Partial record: only TS-202-TSM-P2-CAM-1 and no channel_dtype"
                 " returned",
@@ -210,7 +210,7 @@ class TestGetRecords:
                 200,
                 "jet_r",
                 {
-                    "TS-202-TSM-P2-CAM-1": "0d785d586b0f3ce7b114dbb5f64c16d3",
+                    "TS-202-TSM-P2-CAM-1": "2883f8ce08ef784ab055798c066bb774",
                 },
                 id="Whole record: all channels have channel_dtype returned "
                 "and custom false colour settings applied",
@@ -222,7 +222,7 @@ class TestGetRecords:
                 200,
                 "jet_r",
                 {
-                    "TS-202-TSM-P2-CAM-1": "0d785d586b0f3ce7b114dbb5f64c16d3",
+                    "TS-202-TSM-P2-CAM-1": "2883f8ce08ef784ab055798c066bb774",
                 },
                 id="Partial record: only TS-202-TSM-P2-CAM-1 and no channel_dtype"
                 " returned and custom false colour settings applied",

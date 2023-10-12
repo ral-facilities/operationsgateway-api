@@ -48,9 +48,9 @@ class TestChannelSummary:
                     "first_date": "2023-06-05T08:00:00",
                     "most_recent_date": "2023-06-05T16:00:00",
                     "recent_sample": [
-                        {"2023-06-05T16:00:00": "239a3d9cfc2877d7e9b148ba637b9daf"},
-                        {"2023-06-05T15:00:00": "59f7b273e95ceb48ec6934f2b6b6ea2e"},
-                        {"2023-06-05T14:00:00": "c2087bfb3c938dd65ff7cc1264c77d55"},
+                        {"2023-06-05T16:00:00": "fd73e280d830a249bb52bfbfe9bc2b29"},
+                        {"2023-06-05T15:00:00": "5e2b10037af476ae852976cbd93b0c22"},
+                        {"2023-06-05T14:00:00": "d92faa48f14e40ba308d967501751a6f"},
                     ],
                 },
                 id="Image channel summary",
