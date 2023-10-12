@@ -67,7 +67,7 @@ class WaveformModel(BaseModel):
     x: str
     y: str
 
-    @field_validator("x", "y")
+    @field_validator("x", "y", mode="before")
     def encode_values(cls, value):
         if isinstance(value, np.ndarray):
             return str(list(value))
@@ -101,7 +101,6 @@ class ScalarChannelMetadataModel(BaseModel):
 class ScalarChannelModel(BaseModel):
     metadata: ScalarChannelMetadataModel
     data: Union[int, float, str]
-    model_config = ConfigDict(smart_union=True)
 
 
 class WaveformChannelMetadataModel(BaseModel):
@@ -191,7 +190,6 @@ class ChannelSummaryModel(BaseModel):
     first_date: datetime
     most_recent_date: datetime
     recent_sample: List[Dict[datetime, Union[int, float, str]]]
-    model_config = ConfigDict(smart_union=True)
 
 
 class ExperimentModel(BaseModel):
@@ -238,7 +236,7 @@ class UserSessionModel(BaseModel):
     summary: str
     timestamp: datetime
     auto_saved: bool
-    session: Dict[str, Any] = Field(None, cls=ObjectId)
+    session: Dict[str, Any] = Field(None)
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 

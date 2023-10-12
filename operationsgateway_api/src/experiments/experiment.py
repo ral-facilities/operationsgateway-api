@@ -74,7 +74,7 @@ class Experiment:
 
         inserted_ids = []
         for experiment in self.experiments:
-            experiment_data = experiment.dict(
+            experiment_data = experiment.model_dump(
                 by_alias=True,
                 exclude_unset=True,
                 exclude={"id_"},

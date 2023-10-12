@@ -34,7 +34,7 @@ class ChannelManifest:
         """
         await MongoDBInterface.insert_one(
             "channels",
-            self.data.dict(by_alias=True, exclude_unset=True),
+            self.data.model_dump(by_alias=True, exclude_unset=True),
         )
 
     async def validate(self, bypass_channel_check: bool) -> None:
