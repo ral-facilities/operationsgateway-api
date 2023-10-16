@@ -2,6 +2,7 @@ import logging
 
 from fastapi import APIRouter, Body, Cookie, Response, status
 from fastapi.responses import JSONResponse
+from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authentication import Authentication
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
@@ -33,10 +34,13 @@ router = APIRouter()
 )
 @endpoint_error_handling
 async def login(
-    login_details: LoginDetailsModel = Body(
-        ...,
-        description="JSON object containing username and password",
-    ),
+    login_details: Annotated[
+        LoginDetailsModel,
+        Body(
+            ...,
+            description="JSON object containing username and password",
+        ),
+    ],
 ):
     """
     This endpoint takes a username and password, authenticates the user and then
@@ -85,10 +89,13 @@ async def login(
 )
 @endpoint_error_handling
 async def verify(
-    token: AccessTokenModel = Body(
-        ...,
-        description="JSON object containing the token",
-    ),
+    token: Annotated[
+        AccessTokenModel,
+        Body(
+            ...,
+            description="JSON object containing the token",
+        ),
+    ],
 ):
     """
     This endpoint takes a JWT token that was issued by this service
@@ -112,10 +119,13 @@ async def verify(
 )
 @endpoint_error_handling
 async def refresh(
-    token: AccessTokenModel = Body(
-        ...,
-        description="JSON object containing the existing access token",
-    ),
+    token: Annotated[
+        AccessTokenModel,
+        Body(
+            ...,
+            description="JSON object containing the existing access token",
+        ),
+    ],
     refresh_token: str = Cookie(
         None,
         description="The JWT refresh token from a cookie",

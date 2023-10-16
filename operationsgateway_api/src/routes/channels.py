@@ -2,6 +2,7 @@ import logging
 
 from fastapi import APIRouter, Depends, Path
 import pymongo
+from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
@@ -11,6 +12,7 @@ from operationsgateway_api.src.records.record import Record
 
 log = logging.getLogger()
 router = APIRouter()
+AuthoriseToken = Annotated[str, Depends(authorise_token)]
 
 
 @router.get(
@@ -21,11 +23,14 @@ router = APIRouter()
 )
 @endpoint_error_handling
 async def get_channel_summary(
-    channel_name: str = Path(
-        ...,
-        description="Channel name to provide a summary for",
-    ),
-    access_token: str = Depends(authorise_token),
+    channel_name: Annotated[
+        str,
+        Path(
+            ...,
+            description="Channel name to provide a summary for",
+        ),
+    ],
+    access_token: AuthoriseToken,
 ):
     """
     Provide the dates of first and most recent pieces of data and the three most recent
@@ -60,7 +65,7 @@ async def get_channel_summary(
 )
 @endpoint_error_handling
 async def get_channels(
-    access_token: str = Depends(authorise_token),
+    access_token: AuthoriseToken,
 ):
     """
     Get all the channel metadata from the database and return to the user
@@ -79,11 +84,14 @@ async def get_channels(
 )
 @endpoint_error_handling
 async def get_channel_by_system_name(
-    channel_system_name: str = Path(
-        ...,
-        description="Channel system name to lookup in manifest file",
-    ),
-    access_token: str = Depends(authorise_token),
+    channel_system_name: Annotated[
+        str,
+        Path(
+            ...,
+            description="Channel system name to lookup in manifest file",
+        ),
+    ],
+    access_token: AuthoriseToken,
 ):
     """
     Given a channel system name, provide the metadata for a single channel in the most

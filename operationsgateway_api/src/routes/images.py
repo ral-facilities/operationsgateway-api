@@ -3,6 +3,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Path, Query
 from fastapi.responses import StreamingResponse
+from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.error_handling import endpoint_error_handling
@@ -11,6 +12,7 @@ from operationsgateway_api.src.records.image import Image
 
 log = logging.getLogger()
 router = APIRouter()
+AuthoriseToken = Annotated[str, Depends(authorise_token)]
 
 
 @router.get(
@@ -21,24 +23,24 @@ router = APIRouter()
 )
 @endpoint_error_handling
 async def get_full_image(
-    record_id: str = Path(
-        ...,
-        description="ID of the record (usually timestamp)",
-    ),
-    channel_name: str = Path(
-        ...,
-        description="Channel name containing the image",
-    ),
-    original_image: Optional[bool] = Query(
-        False,
-        description="Return the original image in PNG format without any false colour"
-        " applied (false)",
-    ),
-    lower_level: Optional[int] = Query(
-        0,
-        description="The lower level threshold for false colour (0-255)",
-        ge=0,
-        le=255,
+    record_id: Annotated[
+        str,
+        Path(
+            ...,
+            description="ID of the record (usually timestamp)",
+        ),
+    ],
+    channel_name: Annotated[
+        str,
+        Path(
+            ...,
+            description="Channel name containing the image",
+        ),
+    ],
+    access_token: AuthoriseToken,
+    colourmap_name: Optional[str] = Query(
+        None,
+        description="The name of the matplotlib colour map to apply",
     ),
     upper_level: Optional[int] = Query(
         255,
@@ -46,11 +48,17 @@ async def get_full_image(
         ge=0,
         le=255,
     ),
-    colourmap_name: Optional[str] = Query(
-        None,
-        description="The name of the matplotlib colour map to apply",
+    lower_level: Optional[int] = Query(
+        0,
+        description="The lower level threshold for false colour (0-255)",
+        ge=0,
+        le=255,
     ),
-    access_token: str = Depends(authorise_token),
+    original_image: Optional[bool] = Query(
+        False,
+        description="Return the original image in PNG format without any"
+        " false colour applied (false)",
+    ),
 ):
     """
     This endpoint can be used to retrieve a full-size image by specifying the shot
@@ -80,11 +88,10 @@ async def get_full_image(
 )
 @endpoint_error_handling
 async def get_colourbar_image(
-    lower_level: Optional[int] = Query(
-        0,
-        description="The lower level threshold for false colour (0-255)",
-        ge=0,
-        le=255,
+    access_token: AuthoriseToken,
+    colourmap_name: Optional[str] = Query(
+        None,
+        description="The name of the matplotlib colour map to apply",
     ),
     upper_level: Optional[int] = Query(
         255,
@@ -92,11 +99,12 @@ async def get_colourbar_image(
         ge=0,
         le=255,
     ),
-    colourmap_name: Optional[str] = Query(
-        None,
-        description="The name of the matplotlib colour map to apply",
+    lower_level: Optional[int] = Query(
+        0,
+        description="The lower level threshold for false colour (0-255)",
+        ge=0,
+        le=255,
     ),
-    access_token: str = Depends(authorise_token),
 ):
     """
     This endpoint can be used to retrieve a colourbar image showing the colour spectrum
@@ -122,7 +130,7 @@ async def get_colourbar_image(
 )
 @endpoint_error_handling
 async def get_colourmap_names(
-    access_token: str = Depends(authorise_token),
+    access_token: AuthoriseToken,
 ):
     """
     This endpoint returns an ordered dictionary of the colourmap names (grouped into a

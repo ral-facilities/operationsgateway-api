@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends, Path
+from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.error_handling import endpoint_error_handling
@@ -19,15 +20,21 @@ router = APIRouter()
 )
 @endpoint_error_handling
 async def get_waveform_by_id(
-    record_id: str = Path(
-        ...,
-        description="ID of the record (usually timestamp)",
-    ),
-    channel_name: str = Path(
-        ...,
-        description="Channel name containing the waveform",
-    ),
-    access_token: str = Depends(authorise_token),
+    record_id: Annotated[
+        str,
+        Path(
+            ...,
+            description="ID of the record (usually timestamp)",
+        ),
+    ],
+    channel_name: Annotated[
+        str,
+        Path(
+            ...,
+            description="Channel name containing the waveform",
+        ),
+    ],
+    access_token: Annotated[str, Depends(authorise_token)],
 ):
     """
     This endpoint gets a single waveform object by channel name and the record ID that
