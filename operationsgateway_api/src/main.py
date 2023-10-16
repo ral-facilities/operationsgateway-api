@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import orjson
 import uvicorn
+from contextlib import asynccontextmanager
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.constants import LOG_CONFIG_LOCATION, ROUTE_MAPPINGS
@@ -70,30 +71,34 @@ log = logging.getLogger()
 log.info("Logging now setup")
 
 
-@app.on_event("startup")
+@asynccontextmanager
 @assign_event_to_single_worker()
 async def get_experiments_on_startup():
     if Config.config.experiments.scheduler_background_task_enabled:
         log.info(
             "Creating task for Scheduler system to be contacted for experiment details",
         )
+        yield
         asyncio.create_task(runners.scheduler_runner.start_task())
     else:
         log.info("Scheduler background task has not been enabled")
 
 
-@app.on_event("shutdown")
+@asynccontextmanager
 async def remove_event_file():
+    yield
     UniqueWorker.remove_file()
 
 
-@app.on_event("startup")
+@asynccontextmanager
 async def startup_mongodb_client():
+    yield
     ConnectionInstance()
 
 
-@app.on_event("shutdown")
+@asynccontextmanager
 async def close_mongodb_client():
+    yield
     ConnectionInstance.db_connection.mongo_client.close()
 
 
