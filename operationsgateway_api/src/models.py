@@ -1,13 +1,11 @@
 from datetime import datetime
-from typing import Any, ClassVar, Dict, List, Literal, Optional, Union
+from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Union
 
-from typing_extensions import Annotated
-from typing import Any, Callable
 from bson.objectid import ObjectId
-from pydantic_core import core_schema
 import numpy as np
-from pydantic import model_validator, ConfigDict, BaseModel, Field, field_validator
-from pydantic.json_schema import JsonSchemaValue
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic_core import core_schema
+from typing_extensions import Annotated
 
 from operationsgateway_api.src.exceptions import ChannelManifestError, ModelError
 
@@ -44,7 +42,7 @@ class WaveformModel(BaseModel):
     y: str
 
     @field_validator("x", "y", mode="before")
-    def encode_values(cls, value):
+    def encode_values(cls, value):  # noqa: N805
         if isinstance(value, np.ndarray):
             return str(list(value))
         else:
@@ -147,7 +145,7 @@ class ChannelModel(BaseModel):
         return values
 
     @field_validator("x_units", "y_units")
-    def check_waveform_channel(cls, v, values):
+    def check_waveform_channel(cls, v, values):  # noqa: N805
         if not values.data["type_"] == "waveform":
             raise ChannelManifestError(
                 "Only waveform channels should contain waveform channel metadata."
@@ -184,7 +182,11 @@ class ShotnumConverterRange(BaseModel):
     max_: Union[int, datetime] = Field(alias="max")
 
     @field_validator("max_")
-    def validate_min_max(cls, value, values) -> Union[int, datetime]:  # noqa: B902, N805
+    def validate_min_max(
+        cls,  # noqa: N805
+        value,
+        values,
+    ) -> Union[int, datetime]:
         if value < values.data["min_"]:
             raise ModelError("max cannot be less than min value")
         else:
@@ -198,7 +200,11 @@ class DateConverterRange(BaseModel):
     to: Union[int, datetime]
 
     @field_validator("to")
-    def validate_min_max(cls, value, values) -> Union[int, datetime]:  # noqa: B902, N805
+    def validate_min_max(
+        cls,  # noqa: N805
+        value,
+        values,
+    ) -> Union[int, datetime]:
         if value < values.data["from_"]:
             raise ModelError("to cannot be less than from value")
         else:

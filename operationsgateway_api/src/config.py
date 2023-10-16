@@ -5,11 +5,13 @@ from typing import Optional, Tuple
 
 from dateutil import tz
 from pydantic import (
-    field_validator, BaseModel,
+    BaseModel,
+    field_validator,
     StrictBool,
     StrictInt,
     StrictStr,
-    ValidationError)
+    ValidationError,
+)
 import yaml
 
 
