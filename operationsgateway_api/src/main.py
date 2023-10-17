@@ -45,20 +45,27 @@ This API is the backend to OperationsGateway that allows users to:
 - Get waveform data and full-size images via specific endpoints
 """
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if Config.config.experiments.scheduler_background_task_enabled:
-        log.info(
-            "Creating task for Scheduler system to be contacted for experiment details",
-        )
-        asyncio.create_task(runners.scheduler_runner.start_task())
-    else:
-        log.info("Scheduler background task has not been enabled")
     ConnectionInstance()
+
+    @assign_event_to_single_worker()
+    async def get_experiments_on_startup():
+        if Config.config.experiments.scheduler_background_task_enabled:
+            log.info(
+                "Creating task for Scheduler system to be contacted"
+                " for experiment details",
+            )
+            asyncio.create_task(runners.scheduler_runner.start_task())
+        else:
+            log.info("Scheduler background task has not been enabled")
+
+    await get_experiments_on_startup()
     yield
     UniqueWorker.remove_file()
     ConnectionInstance.db_connection.mongo_client.close()
-    
+
 
 app = FastAPI(
     title="OperationsGateway API",
