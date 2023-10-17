@@ -1,10 +1,12 @@
 import logging
+from multiprocessing.pool import ThreadPool
 
 from fastapi import APIRouter, Depends, status, UploadFile
 from fastapi.responses import JSONResponse
 
 from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
+from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
 from operationsgateway_api.src.records.image import Image
@@ -60,7 +62,10 @@ async def submit_hdf(
     for image in image_instances:
         image.create_thumbnail()
         record.store_thumbnail(image)
-        image.upload()
+
+    if len(image_instances) > 0:
+        pool = ThreadPool(processes=Config.config.images.upload_image_threads)
+        pool.map(Image.upload_image, image_instances)
 
     if stored_record:
         log.debug(

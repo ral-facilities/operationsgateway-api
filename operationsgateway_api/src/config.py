@@ -37,6 +37,7 @@ class ImagesConfig(BaseModel):
     echo_access_key: StrictStr
     echo_secret_key: StrictStr
     image_bucket_name: StrictStr
+    upload_image_threads: StrictInt
 
 
 class MongoDB(BaseModel):

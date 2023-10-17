@@ -107,14 +107,14 @@ class TestImage:
         "operationsgateway_api.src.records.echo_interface.EchoInterface"
         ".upload_file_object",
     )
-    def test_valid_upload(self, mock_upload_file_object, _):
+    def test_valid_upload_image(self, mock_upload_file_object, _):
         test_image = Image(
             ImageModel(
                 path=self.test_image_path,
                 data=np.ones(shape=(300, 300), dtype=np.int8),
             ),
         )
-        test_image.upload()
+        Image.upload_image(test_image)
 
         assert mock_upload_file_object.call_count == 1
 
@@ -143,7 +143,7 @@ class TestImage:
         "PIL.Image.fromarray",
         side_effect=TypeError("Mocked Exception"),
     )
-    def test_invalid_upload(self, _, __):
+    def test_invalid_upload_image(self, _, __):
         test_image = Image(
             ImageModel(
                 path=self.test_image_path,
@@ -151,7 +151,7 @@ class TestImage:
             ),
         )
         with pytest.raises(ImageError):
-            test_image.upload()
+            Image.upload_image(test_image)
 
     @pytest.mark.asyncio
     @patch(
