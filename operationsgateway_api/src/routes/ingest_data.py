@@ -16,7 +16,7 @@ from operationsgateway_api.src.records.waveform import Waveform
 
 log = logging.getLogger()
 router = APIRouter()
-AuthoriseToken = Annotated[str, Depends(authorise_route)]
+AuthoriseRoute = Annotated[str, Depends(authorise_route)]
 
 
 @router.post(
@@ -28,7 +28,7 @@ AuthoriseToken = Annotated[str, Depends(authorise_route)]
 @endpoint_error_handling
 async def submit_hdf(
     file: UploadFile,
-    access_token: AuthoriseToken,
+    access_token: AuthoriseRoute,
 ):
     """
     This endpoint accepts a HDF file, processes it and stores the data in MongoDB (with
@@ -90,7 +90,7 @@ async def submit_hdf(
 @endpoint_error_handling
 async def submit_manifest(
     file: UploadFile,
-    access_token: AuthoriseToken,
+    access_token: AuthoriseRoute,
     bypass_channel_check: bool = False,
 ):
     log.info("Submitting channel manifest file into database")
