@@ -24,8 +24,8 @@ from operationsgateway_api.src.routes import (
     ingest_data,
     records,
     sessions,
-    waveforms,
     users,
+    waveforms,
 )
 
 
