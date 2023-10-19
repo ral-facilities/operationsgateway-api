@@ -13,7 +13,6 @@ echo:
   access_key: access_key
   secret_key: secret_key
   simulated_data_bucket: og-ci-simulated-data
-  # TODO - this needs changing to the bucket created in the job
   images_bucket: og-matt-images-test
   page_size: 12
 api:

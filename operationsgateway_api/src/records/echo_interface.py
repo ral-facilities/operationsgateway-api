@@ -38,7 +38,7 @@ class EchoInterface:
             log.error(
                 "%s: %s",
                 exc.response["Error"]["Code"],
-                exc.response["Error"]["Message"],
+                exc.response["Error"].get("Message"),
             )
             raise EchoS3Error(
                 "Error '%s' caught when creating a boto3 resource and retrieving a"
@@ -71,7 +71,7 @@ class EchoInterface:
             log.error(
                 "%s: %s",
                 exc.response["Error"]["Code"],
-                exc.response["Error"]["Message"],
+                exc.response["Error"].get("Message"),
             )
             raise EchoS3Error(
                 f"{exc.response['Error']['Code']} when downloading file at"
@@ -97,7 +97,7 @@ class EchoInterface:
             log.error(
                 "%s: %s",
                 exc.response["Error"]["Code"],
-                exc.response["Error"]["Message"],
+                exc.response["Error"].get("Message"),
             )
             raise EchoS3Error(
                 f"{exc.response['Error']['Code']} when uploading file at"
