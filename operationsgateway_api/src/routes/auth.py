@@ -15,6 +15,14 @@ from operationsgateway_api.src.models import AccessTokenModel, LoginDetailsModel
 log = logging.getLogger()
 router = APIRouter()
 
+token = Annotated[
+    AccessTokenModel,
+    Body(
+        ...,
+        description="JSON object containing the existing access token",
+    ),
+]
+
 
 @router.post(
     "/login",
@@ -89,13 +97,7 @@ async def login(
 )
 @endpoint_error_handling
 async def verify(
-    token: Annotated[
-        AccessTokenModel,
-        Body(
-            ...,
-            description="JSON object containing the token",
-        ),
-    ],
+    token: token,
 ):
     """
     This endpoint takes a JWT token that was issued by this service
@@ -119,13 +121,7 @@ async def verify(
 )
 @endpoint_error_handling
 async def refresh(
-    token: Annotated[
-        AccessTokenModel,
-        Body(
-            ...,
-            description="JSON object containing the existing access token",
-        ),
-    ],
+    token: token,
     refresh_token: str = Cookie(
         None,
         description="The JWT refresh token from a cookie",

@@ -140,7 +140,7 @@ async def count_records(
 )
 @endpoint_error_handling
 async def convert_search_ranges(
-    access_token: AuthoriseToken,  # noqa: B008
+    access_token: AuthoriseToken,
     shotnum_range: Json = Query(
         {},
         description='Min and max shot number range (e.g. {"min": 200, "max": 500})',

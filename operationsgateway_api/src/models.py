@@ -218,7 +218,7 @@ class UserSessionModel(BaseModel):
     summary: str
     timestamp: datetime
     auto_saved: bool
-    session: Dict[str, Any] = Field(None)
+    session: Dict[str, Any]
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
