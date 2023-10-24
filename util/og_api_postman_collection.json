@@ -1174,7 +1174,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"my_pref\",\n\t\"value\": \"my_value\"\n}",
+							"raw": "{\n\t\"name\": \"my_pref\",\n\t\"value\": 100\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1210,7 +1210,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"my_pref\",\n\t\"value\": \"my_value\"\n}",
+							"raw": "{\n\t\"name\": \"my_pref\",\n\t\"value\": 3.1415927\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1246,7 +1246,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"bool_pref\",\n\t\"value\": true\n}",
+							"raw": "{\n\t\"name\": \"my_pref\",\n\t\"value\": true\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1281,13 +1281,13 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{og-api}}/user_preferences/string_pref",
+							"raw": "{{og-api}}/user_preferences/my_pref",
 							"host": [
 								"{{og-api}}"
 							],
 							"path": [
 								"user_preferences",
-								"string_pref"
+								"my_pref"
 							]
 						}
 					},
