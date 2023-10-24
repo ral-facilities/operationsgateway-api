@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, Path, Query
 from fastapi.responses import StreamingResponse
 
 from operationsgateway_api.src.auth.authorisation import authorise_token
-from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.image import Image
@@ -61,9 +60,7 @@ async def get_full_image(
     """
 
     if colourmap_name is None:
-        username = JwtHandler.get_payload(access_token)["username"]
-        colourmap_name = await FalseColourHandler.get_preferred_colourmap(username)
-        log.debug("Preferred colour map after user prefs check is %s", colourmap_name)
+        colourmap_name = await Image.get_preferred_colourmap(access_token)
 
     image_bytes = await Image.get_image(
         record_id,
@@ -110,6 +107,10 @@ async def get_colourbar_image(
     is not specified then the default of 0 for the lower level and/or 255 for the upper
     level will be used.
     """
+
+    if colourmap_name is None:
+        colourmap_name = await Image.get_preferred_colourmap(access_token)
+
     colourbar_image_bytes = FalseColourHandler.create_colourbar(
         lower_level,
         upper_level,
