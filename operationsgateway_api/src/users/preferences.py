@@ -22,15 +22,17 @@ class UserPreferences:
             {"_id": username},
             projection=[f"user_prefs.{pref_name}"],
         )
+        log.debug(
+            "User pref_name given to database: %s, Result from database: %s",
+            pref_name,
+            user_record_with_prefs,
+        )
 
-        log.debug("user_prefs_dict: %s", user_record_with_prefs)
         if "user_prefs" not in user_record_with_prefs:
-            log.debug("No user prefs set for user %s", username)
             raise MissingAttributeError from None
         try:
             pref_value = user_record_with_prefs["user_prefs"][pref_name]
         except KeyError:
-            log.debug("No user pref value %s found for user %s", pref_name, username)
             raise MissingAttributeError from None
 
         log.debug("pref_value: %s", pref_value)
@@ -48,11 +50,11 @@ class UserPreferences:
         """
 
         log.debug(
-            "Inserting user preference %s for user %s into database",
+            "Inserting user preference %s of type %s for user %s into database",
             pref_name,
+            type(value).__name__,
             username,
         )
-        log.debug(type(value))
         await MongoDBInterface.update_one(
             "users",
             {"_id": username},
