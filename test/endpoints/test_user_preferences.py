@@ -17,7 +17,7 @@ class TestUserPreferences:
             # check all types of user preference can be set
             save_response = test_app.post(
                 "/user_preferences",
-                data=json.dumps({"name": pref_name, "value": pref_value}),
+                content=json.dumps({"name": pref_name, "value": pref_value}),
                 headers={"Authorization": f"Bearer {login_and_get_token}"},
             )
             assert save_response.status_code == 201
