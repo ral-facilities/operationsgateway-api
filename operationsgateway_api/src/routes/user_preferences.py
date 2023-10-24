@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.error_handling import endpoint_error_handling
+from operationsgateway_api.src.exceptions import MissingAttributeError
 from operationsgateway_api.src.users.preferences import UserPreferences
 
 
@@ -41,7 +42,12 @@ async def get_user_preference(
     username = token_payload["username"]
 
     log.info("Getting user preference %s for user %s", name, username)
-    return JSONResponse(content=await UserPreferences.get(username, name))
+    try:
+        content = await UserPreferences.get(username, name)
+    except MissingAttributeError:
+        log.error("User preference %s not found for user %s", name, username)
+        raise
+    return JSONResponse(content)
 
 
 @router.delete(
@@ -74,7 +80,15 @@ async def delete_user_preference(
     log.info("Request to delete user preference %s for user %s", name, username)
     # first check that the preference is already set
     # if not an error will be raised
-    await UserPreferences.get(username, name)
+    try:
+        await UserPreferences.get(username, name)
+    except MissingAttributeError:
+        log.error(
+            "Failed to delete user preference %s for user %s. Preference is not set.",
+            name,
+            username,
+        )
+        raise
     # then go ahead and delete it
     await UserPreferences.delete(username, name)
     return Response(status_code=HTTPStatus.NO_CONTENT.value)
