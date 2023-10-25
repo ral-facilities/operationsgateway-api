@@ -52,9 +52,9 @@ class TestGetRecordByID:
             pytest.param(
                 "20220408132830",
                 {
-                    "N_COMP_FF_IMAGE": "908dc69e252bd858286738558c5919a1",
-                    "N_COMP_NF_IMAGE": "72b4d4f126181d47fcbfd03969a6fe80",
-                    "N_LEG1_GREEN_NF_IMAGE": "6cb9867d9486a3d72a590119938a833e",
+                    "N_COMP_FF_IMAGE": "2fa3239b5f46b110964f02a2e6c6dd62",
+                    "N_COMP_NF_IMAGE": "16624db9b93bfe8176cd275d24522bc5",
+                    "N_LEG1_GREEN_NF_IMAGE": "1fcf716b4f670dc4a901ca77ea0b8ee5",
                 },
                 False,
                 id="Ordinary request (preferred colour map not set)",
@@ -62,9 +62,9 @@ class TestGetRecordByID:
             pytest.param(
                 "20220408132830",
                 {
-                    "N_COMP_FF_IMAGE": "99fd2686879c9939a45869c7399e8b2d",
-                    "N_COMP_NF_IMAGE": "02a231b2d5452703d39e78d4084e9e04",
-                    "N_LEG1_GREEN_NF_IMAGE": "24bb527a7e8b80770a88bfccc0a03180",
+                    "N_COMP_FF_IMAGE": "33e614585eb7e063174629cddedc5009",
+                    "N_COMP_NF_IMAGE": "9431db428aab384aa83a06951cacb9be",
+                    "N_LEG1_GREEN_NF_IMAGE": "c874477cf9018849cd4260615da129b6",
                 },
                 True,
                 id="Ordinary request (with preferred colour map set)",

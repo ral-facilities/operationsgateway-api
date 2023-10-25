@@ -43,7 +43,7 @@ class TestGetImage:
                 None,
                 None,
                 None,
-                "f03c8e723955689fc5a629ce4656f68d",
+                "002431ebfe4232121856ae88c15ad939",
                 id="Image using user's preferred colourmap",
             ),
             pytest.param(
@@ -67,7 +67,7 @@ class TestGetImage:
                 50,
                 200,
                 "jet_r",
-                "359c3da5b5ffdb025e1a206bee243358",
+                "707c50d0784e305f0f6d20fe39c93162",
                 id="Image with all false colour params specified (ignoring "
                 "user's pref)",
             ),

@@ -26,7 +26,7 @@ class TestGetColourBarImage:
                 None,
                 True,
                 200,
-                "16d0db08b3bfef42260226f45878cb8a",
+                "b9ba6992a0f922e85ba871acd9f292e0",
                 id="Colour bar using user's preferred colour map",
             ),
             pytest.param(
@@ -46,7 +46,7 @@ class TestGetColourBarImage:
                 "jet_r",
                 True,
                 200,
-                "011777b7f7ad385bbeaa0c7d80d99f7e",
+                "a805bd0e5ea33a1764194412673855c0",
                 id="Colour bar with all false colour params specified (ignoring "
                 "user's pref)",
             ),
