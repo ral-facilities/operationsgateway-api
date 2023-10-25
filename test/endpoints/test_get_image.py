@@ -30,7 +30,7 @@ class TestGetImage:
                 None,
                 None,
                 None,
-                "eb0863f8a31f39f792414e99116611c3",
+                "97a854f18ef539f443a39c091c88df29",
                 id="Image with default false colour settings",
             ),
             # repeat the above test but with the user's preferred colour map set to
@@ -54,7 +54,7 @@ class TestGetImage:
                 50,
                 200,
                 "jet_r",
-                "359c3da5b5ffdb025e1a206bee243358",
+                "707c50d0784e305f0f6d20fe39c93162",
                 id="Image with all false colour params specified",
             ),
             # repeat the test above but with the user's preferred colour map set to

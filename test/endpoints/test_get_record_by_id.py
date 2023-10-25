@@ -52,9 +52,9 @@ class TestGetRecordByID:
             pytest.param(
                 "20220408132830",
                 {
-                    "N_COMP_FF_IMAGE": "d040b1f2d55f3fa6f2cbb93fda4f2e97",
-                    "N_COMP_NF_IMAGE": "eb2a2c7044ae520b258f6bc567a38e77",
-                    "N_LEG1_GREEN_NF_IMAGE": "345cffbd027ca3097bf3efa92a087439",
+                    "N_COMP_FF_IMAGE": "908dc69e252bd858286738558c5919a1",
+                    "N_COMP_NF_IMAGE": "72b4d4f126181d47fcbfd03969a6fe80",
+                    "N_LEG1_GREEN_NF_IMAGE": "6cb9867d9486a3d72a590119938a833e",
                 },
                 False,
                 id="Ordinary request (preferred colour map not set)",

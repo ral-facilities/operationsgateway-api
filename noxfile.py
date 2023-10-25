@@ -2,6 +2,7 @@ import os
 import tempfile
 
 import nox
+from nox.command import CommandFailed
 
 # Separating Black away from the rest of the sessions
 nox.options.sessions = "lint", "safety", "tests"
@@ -28,7 +29,19 @@ def install_with_constraints(session, *args, **kwargs):
         # https://github.com/jazzband/pip-tools/issues/1300#issuecomment-818122483
         # for more info relating to the sed solution
         sed_expression = r"s/\[.*\]//g"
-        session.run("sed", "-i", sed_expression, requirements.name, external=True)
+        try:
+            session.run("sed", "-i", sed_expression, requirements.name, external=True)
+        except CommandFailed:
+            # Try running the Mac version of the command
+            session.run(
+                "sed",
+                "-i",
+                "",
+                sed_expression,
+                requirements.name,
+                external=True,
+            )
+
         session.install(f"--constraint={requirements.name}", *args, **kwargs)
 
         try:

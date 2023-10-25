@@ -66,21 +66,45 @@ class Experiment:
         experiments = self.scheduler.get_experiments(ids_for_scheduler_call)
         self._extract_experiment_data(experiments, experiment_parts)
 
-    async def store_experiments(self) -> None:
+    async def store_experiments(self) -> List[str]:
         """
         Store the experiments into MongoDB, using `upsert` to insert any experiments
         that haven't yet been inserted into the database
         """
 
+        inserted_ids = []
         for experiment in self.experiments:
-            await MongoDBInterface.update_one(
-                "experiments",
-                {"_id": experiment.id_},
-                {"$set": experiment.dict(by_alias=True)},
-                upsert=True,
+            experiment_data = experiment.dict(
+                by_alias=True,
+                exclude_unset=True,
+                exclude={"id_"},
             )
 
+            update_result = await MongoDBInterface.update_one(
+                "experiments",
+                experiment_data,
+                {"$set": experiment_data},
+                upsert=True,
+            )
+            # This means the document was updated, not inserted. The _id needs to be
+            # found to be used as a response
+            if update_result.upserted_id is None:
+                updated_experiment = await MongoDBInterface.find_one(
+                    "experiments",
+                    experiment_data,
+                )
+
+                log.debug(
+                    "Experiment was updated, found experiment _id: %s",
+                    str(updated_experiment["_id"]),
+                )
+                inserted_ids.append(f"Updated {str(updated_experiment['_id'])}")
+            else:
+                inserted_ids.append(str(update_result.upserted_id))
+
         await self._update_modification_time()
+
+        return inserted_ids
 
     def _map_experiments_to_part_numbers(
         self,
@@ -157,7 +181,6 @@ class Experiment:
                     ):
                         self.experiments.append(
                             ExperimentModel(
-                                _id=f"{part.referenceNumber}-{part.partNumber}",
                                 experiment_id=int(part.referenceNumber),
                                 part=part.partNumber,
                                 start_date=part.experimentStartDate,
