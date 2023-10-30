@@ -7,8 +7,13 @@ import numpy as np
 from PIL import Image as PILImage
 
 from operationsgateway_api.src.config import Config
-from operationsgateway_api.src.exceptions import ImageError, QueryParameterError
+from operationsgateway_api.src.exceptions import (
+    ImageError,
+    MissingAttributeError,
+    QueryParameterError,
+)
 from operationsgateway_api.src.records.colourmap_mapping import ColourmapMapping
+from operationsgateway_api.src.users.preferences import UserPreferences
 
 
 log = logging.getLogger()
@@ -17,7 +22,24 @@ log = logging.getLogger()
 class FalseColourHandler:
     default_colour_map_name = Config.config.images.default_colour_map
     colourbar_height_pixels = Config.config.images.colourbar_height_pixels
+    preferred_colour_map_pref_name = Config.config.images.preferred_colour_map_pref_name
     colourmap_names = ColourmapMapping.get_colourmap_mappings()
+
+    @staticmethod
+    async def get_preferred_colourmap(
+        username: str,
+    ) -> str:
+        """
+        Check whether the user has stored a preference for which colour map they prefer
+        to use. Return the value if they have, otherwise return None.
+        """
+        try:
+            return await UserPreferences.get(
+                username,
+                FalseColourHandler.preferred_colour_map_pref_name,
+            )
+        except MissingAttributeError:
+            return None
 
     @staticmethod
     def create_colourbar(
@@ -97,8 +119,6 @@ class FalseColourHandler:
         lower_level = lower_level * pixel_multiplier
         upper_level = upper_level * pixel_multiplier
         if colourmap_name is None:
-            # TODO: check for a user preference before defaulting
-            # to the system default if one is not set
             colourmap_name = FalseColourHandler.default_colour_map_name
         if not ColourmapMapping.is_colourmap_available(
             FalseColourHandler.colourmap_names,

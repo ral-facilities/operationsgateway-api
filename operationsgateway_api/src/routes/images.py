@@ -59,6 +59,9 @@ async def get_full_image(
     setting 'original_image' to True
     """
 
+    if colourmap_name is None:
+        colourmap_name = await Image.get_preferred_colourmap(access_token)
+
     image_bytes = await Image.get_image(
         record_id,
         channel_name,
@@ -104,6 +107,10 @@ async def get_colourbar_image(
     is not specified then the default of 0 for the lower level and/or 255 for the upper
     level will be used.
     """
+
+    if colourmap_name is None:
+        colourmap_name = await Image.get_preferred_colourmap(access_token)
+
     colourbar_image_bytes = FalseColourHandler.create_colourbar(
         lower_level,
         upper_level,

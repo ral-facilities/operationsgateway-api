@@ -77,7 +77,7 @@ class TestAuth:
     ):
         login_response = test_app.post(
             "/login",
-            data=json.dumps({"username": username, "password": password}),
+            content=json.dumps({"username": username, "password": password}),
         )
 
         assert login_response.status_code == expected_response_code
@@ -106,7 +106,7 @@ class TestAuth:
             # validate the access token by passing it back to the server
             verify_response = test_app.post(
                 "/verify",
-                data=json.dumps({"token": access_token}),
+                content=json.dumps({"token": access_token}),
             )
             assert verify_response.status_code == 200
 
@@ -116,7 +116,7 @@ class TestAuth:
             time.sleep(2)
             refresh_response = test_app.post(
                 "/refresh",
-                data=json.dumps({"token": access_token}),
+                content=json.dumps({"token": access_token}),
                 headers={"Cookie": f"refresh_token={refresh_token}"},
             )
             assert refresh_response.status_code == 200
