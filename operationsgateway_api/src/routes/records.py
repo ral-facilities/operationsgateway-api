@@ -12,6 +12,7 @@ from operationsgateway_api.src.auth.authorisation import (
 )
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import QueryParameterError
+from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.record import Record as Record
 from operationsgateway_api.src.routes.common_parameters import ParameterHandler
 
@@ -92,6 +93,9 @@ async def get_records(
         query_order,
         projection,
     )
+
+    if colourmap_name is None:
+        colourmap_name = await Image.get_preferred_colourmap(access_token)
 
     for record_data in records_data:
         if record_data.get("channels"):
@@ -210,6 +214,9 @@ async def get_record_by_id(
     record_data = await Record.find_record_by_id(id_, conditions)
 
     if record_data.get("channels"):
+        if colourmap_name is None:
+            colourmap_name = await Image.get_preferred_colourmap(access_token)
+
         await Record.apply_false_colour_to_thumbnails(
             record_data,
             lower_level,
@@ -217,8 +224,8 @@ async def get_record_by_id(
             colourmap_name,
         )
 
-    if truncate:
-        Record.truncate_thumbnails(record_data)
+        if truncate:
+            Record.truncate_thumbnails(record_data)
 
     return record_data
 

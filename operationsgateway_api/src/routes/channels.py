@@ -5,9 +5,11 @@ import pymongo
 from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authorisation import authorise_token
+from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.models import ChannelSummaryModel
+from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.record import Record
 
 log = logging.getLogger()
@@ -48,7 +50,11 @@ async def get_channel_summary(
         [("_id", pymongo.DESCENDING)],
     )
 
-    recent_data = await Record.get_recent_channel_values(channel_name)
+    username = JwtHandler.get_payload(access_token)["username"]
+    colourmap_name = await FalseColourHandler.get_preferred_colourmap(username)
+    log.debug("Preferred colour map after user prefs check is %s", colourmap_name)
+
+    recent_data = await Record.get_recent_channel_values(channel_name, colourmap_name)
 
     return ChannelSummaryModel(
         first_date=first_date,

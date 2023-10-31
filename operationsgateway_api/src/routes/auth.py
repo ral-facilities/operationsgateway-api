@@ -6,10 +6,10 @@ from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authentication import Authentication
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
-from operationsgateway_api.src.auth.user import User
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import ForbiddenError
 from operationsgateway_api.src.models import AccessTokenModel, LoginDetailsModel
+from operationsgateway_api.src.users.user import User
 
 
 log = logging.getLogger()

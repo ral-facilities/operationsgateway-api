@@ -24,6 +24,7 @@ from operationsgateway_api.src.routes import (
     ingest_data,
     records,
     sessions,
+    user_preferences,
     waveforms,
 )
 
@@ -114,6 +115,7 @@ add_router_to_app(auth.router)
 add_router_to_app(channels.router)
 add_router_to_app(experiments.router)
 add_router_to_app(sessions.router)
+add_router_to_app(user_preferences.router)
 
 log.debug("ROUTE_MAPPINGS contents:")
 for item in ROUTE_MAPPINGS.items():
