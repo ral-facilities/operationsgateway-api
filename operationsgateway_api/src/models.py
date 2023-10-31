@@ -118,7 +118,7 @@ class UserModel(BaseModel):
     sha256_password: Optional[str] = None
     auth_type: str
     authorised_routes: Optional[List[str]] = None
-    
+
 
 class UpdateUserModel(BaseModel):
     username: str = Field(alias="_id")
