@@ -118,6 +118,13 @@ class UserModel(BaseModel):
     sha256_password: Optional[str] = None
     auth_type: str
     authorised_routes: Optional[List[str]] = None
+    
+
+class UpdateUserModel(BaseModel):
+    username: str = Field(alias="_id")
+    updated_password: Optional[str] = None
+    add_authorised_routes: Optional[List[str]] = None
+    remove_authorised_routes: Optional[List[str]] = None
 
 
 class ChannelModel(BaseModel):

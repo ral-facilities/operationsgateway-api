@@ -1,6 +1,7 @@
 from hashlib import sha256
 from http import HTTPStatus
 import logging
+from typing import Dict, Any
 
 from fastapi import APIRouter, Body, Depends, Path, Response, status
 from fastapi.responses import JSONResponse
@@ -9,7 +10,7 @@ from typing_extensions import Annotated
 from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import DatabaseError, QueryParameterError
-from operationsgateway_api.src.models import UserModel
+from operationsgateway_api.src.models import UserModel, UpdateUserModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
 log = logging.getLogger()
@@ -122,19 +123,79 @@ async def add_user(
     tags=["Users"],
 )
 @endpoint_error_handling
-async def update_user_authority(
+async def update_user(
     access_token: AuthoriseRoute,
+    change_details: Annotated[
+        UpdateUserModel,
+        Body(
+            ...,
+            description="JSON object containing username, password to change,"
+                        " routes to delete and routes to add"
+        ),
+    ],
 ):
-    # TODO get correct user from database (using id?)
-
+    if change_details.updated_password is not None:
+        if change_details.updated_password == "":
+            raise QueryParameterError("you must input a password")
+        else:
+            sha_256 = sha256()
+            sha_256.update(change_details.updated_password.encode())
+            change_details.updated_password = sha_256.hexdigest()
+    
+    if change_details.add_authorised_routes is not None:
+        invalid_routes = check_authorised_routes(change_details.add_authorised_routes)
+        if invalid_routes:
+            log.error("some of the authorised routes to add entered were invalid")
+            raise QueryParameterError(
+                f"some of the routes entered are invalid:  {invalid_routes} ",
+            )
+    
+    if change_details.remove_authorised_routes is not None:
+        invalid_routes = check_authorised_routes(change_details.remove_authorised_routes)
+        if invalid_routes:
+            log.error("some of the authorised routes to remove entered were invalid")
+            raise QueryParameterError(
+                f"some of the routes entered are invalid:  {invalid_routes} ",
+            )
+    
+    user = await MongoDBInterface.find_one(
+            "users",
+            filter_={"_id": change_details.username},
+        )
+    
+    if (
+        user is None
+        or change_details.username == ""
+    ):
+        log.error("username field did not exist in the database and _id is required")
+        raise DatabaseError(
+        )
+        
+    log.error(user)
+    
+    if user["auth_type"] == "local":
+        await MongoDBInterface.update_one(
+            "users",
+            filter_={"_id": change_details.username},
+            update={"$set": {
+                        "sha256_password": change_details.updated_password
+                        }
+                    },
+        )
+    else:
+        log.error("cannot add password to FedID user type")
+            
+    
     # TODO update the user's authorised_routes
 
-    # TODO on failure make suitable error message
 
     # TODO on success make suitable log message
-
-    pass
-    # return f"Updated {HERE WILL BE THE USERNAME OF THE CHANGED USER}"
+    
+    # TODO user password update
+    
+    log.info(change_details)
+    
+    return (f"Updated {change_details.username}")
 
 
 @router.delete(
@@ -174,6 +235,3 @@ async def delete_user(
     log.info("successfully deleted user '%s' ", id_)
 
     return Response(status_code=HTTPStatus.NO_CONTENT.value)
-
-
-# TODO user password update?
