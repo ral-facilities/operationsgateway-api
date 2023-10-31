@@ -1109,7 +1109,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{og-api}}/user/preferences/my_pref",
+							"raw": "{{og-api}}/users/preferences/my_pref",
 							"host": [
 								"{{og-api}}"
 							],
@@ -1146,7 +1146,7 @@
 							}
 						},
 						"url": {
-							"raw": "{{og-api}}/user/preferences",
+							"raw": "{{og-api}}/users/preferences",
 							"host": [
 								"{{og-api}}"
 							],
@@ -1182,7 +1182,7 @@
 							}
 						},
 						"url": {
-							"raw": "{{og-api}}/user/preferences",
+							"raw": "{{og-api}}/users/preferences",
 							"host": [
 								"{{og-api}}"
 							],
@@ -1218,7 +1218,7 @@
 							}
 						},
 						"url": {
-							"raw": "{{og-api}}/user/preferences",
+							"raw": "{{og-api}}/users/preferences",
 							"host": [
 								"{{og-api}}"
 							],
@@ -1254,7 +1254,7 @@
 							}
 						},
 						"url": {
-							"raw": "{{og-api}}/user/preferences",
+							"raw": "{{og-api}}/users/preferences",
 							"host": [
 								"{{og-api}}"
 							],
@@ -1281,7 +1281,7 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{og-api}}/user/preferences/my_pref",
+							"raw": "{{og-api}}/users/preferences/my_pref",
 							"host": [
 								"{{og-api}}"
 							],
