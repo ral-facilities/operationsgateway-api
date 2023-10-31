@@ -2,6 +2,7 @@ import logging
 from typing import List
 
 from fastapi import APIRouter, Depends
+from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authorisation import (
     authorise_route,
@@ -23,7 +24,7 @@ router = APIRouter()
 )
 @endpoint_error_handling
 async def store_experiments_from_scheduler(
-    access_token: str = Depends(authorise_route),  # noqa: B008
+    access_token: Annotated[str, Depends(authorise_route)],  # noqa: B008
 ):
     experiment = Experiment()
     await experiment.get_experiments_from_scheduler()
@@ -40,6 +41,6 @@ async def store_experiments_from_scheduler(
 )
 @endpoint_error_handling
 async def get_experiments(
-    access_token: str = Depends(authorise_token),  # noqa: B008
+    access_token: Annotated[str, Depends(authorise_token)],  # noqa: B008
 ):
     return await Experiment.get_experiments_from_database()

@@ -74,7 +74,7 @@ class Experiment:
 
         inserted_ids = []
         for experiment in self.experiments:
-            experiment_data = experiment.dict(
+            experiment_data = experiment.model_dump(
                 by_alias=True,
                 exclude_unset=True,
                 exclude={"id_"},
@@ -181,7 +181,7 @@ class Experiment:
                     ):
                         self.experiments.append(
                             ExperimentModel(
-                                experiment_id=int(part.referenceNumber),
+                                experiment_id=str(part.referenceNumber),
                                 part=part.partNumber,
                                 start_date=part.experimentStartDate,
                                 end_date=part.experimentEndDate,

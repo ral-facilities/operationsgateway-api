@@ -63,7 +63,7 @@ class Record:
         """
         await MongoDBInterface.insert_one(
             "records",
-            self.record.dict(by_alias=True, exclude_unset=True),
+            self.record.model_dump(by_alias=True, exclude_unset=True),
         )
 
     async def update(self) -> None:
@@ -76,7 +76,7 @@ class Record:
         times
         """
 
-        for metadata_key, value in self.record.metadata.dict(
+        for metadata_key, value in self.record.metadata.model_dump(
             exclude_unset=True,
         ).items():
             await MongoDBInterface.update_one(
@@ -91,7 +91,7 @@ class Record:
                 {"_id": self.record.id_},
                 {
                     "$set": {
-                        f"channels.{channel_name}": channel_value.dict(
+                        f"channels.{channel_name}": channel_value.model_dump(
                             exclude_unset=True,
                         ),
                     },
