@@ -76,7 +76,7 @@ def set_preferred_colourmap(test_app: TestClient, auth_token: str, do_it: bool):
     """
     if do_it:
         test_app.post(
-            "/user_preferences",
+            "/user/preferences",
             content=json.dumps(
                 {
                     "name": FalseColourHandler.preferred_colour_map_pref_name,
@@ -93,6 +93,6 @@ def unset_preferred_colourmap(test_app: TestClient, auth_token: str, do_it: bool
     """
     if do_it:
         test_app.delete(
-            f"/user_preferences/{FalseColourHandler.preferred_colour_map_pref_name}",
+            f"/user/preferences/{FalseColourHandler.preferred_colour_map_pref_name}",
             headers={"Authorization": f"Bearer {auth_token}"},
         )
