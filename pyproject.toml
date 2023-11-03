@@ -27,6 +27,9 @@ cron-converter = "^1.0.1"
 zeep = "^4.2.1"
 httpx = "^0.23.3"
 pytest-asyncio = "^0.21.0"
+# Workaround for: https://github.com/python-poetry/poetry-plugin-export/issues/183
+# urllib3 isn't a dependency of this project, remove once the issue has been resolved
+urllib3 = ">=1.25.4,<1.27"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
