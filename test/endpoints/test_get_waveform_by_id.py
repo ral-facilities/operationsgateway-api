@@ -33,5 +33,5 @@ class TestGetWaveformByID:
 
         assert test_response.status_code == 200
 
-        assert json.loads(test_response.json()["x"])[0] == expected_first_x
-        assert json.loads(test_response.json()["y"])[0] == expected_first_y
+        assert test_response.json()["x"][0] == expected_first_x
+        assert test_response.json()["y"][0] == expected_first_y
