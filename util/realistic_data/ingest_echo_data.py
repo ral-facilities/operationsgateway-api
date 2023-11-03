@@ -1,10 +1,11 @@
 from multiprocessing.pool import ThreadPool
-from time import time
+from time import sleep, time
 from typing import List
 
 from util.realistic_data.ingest.api_client import APIClient
 from util.realistic_data.ingest.api_starter import APIStarter
 from util.realistic_data.ingest.config import Config
+from util.realistic_data.ingest.local_command_runner import LocalCommandRunner
 from util.realistic_data.ingest.s3_interface import S3Interface
 from util.realistic_data.ingest.ssh_handler import SSHHandler
 
@@ -22,11 +23,18 @@ def download_and_ingest(
 
 
 def main():
-    ssh = SSHHandler()
+    if Config.config.ssh.enabled:
+        ssh = SSHHandler()
+    else:
+        local_commands = LocalCommandRunner()
+
     if Config.config.script_options.wipe_database:
         print("Wiping database")
-        collection_names = ["channels", "experiments", "records", "waveforms"]
-        ssh.drop_database_collections(collection_names)
+        collection_names = ["channels", "experiments"]
+        if Config.config.ssh.enabled:
+            ssh.drop_database_collections(collection_names)
+        else:
+            local_commands.drop_database_collections(collection_names)
 
     echo = S3Interface()
 
@@ -42,10 +50,14 @@ def main():
     og_api = APIClient(api_url, starter.process)
     og_api.submit_manifest(channel_manifest)
 
-    # TODO - go back and fix this for GitHub Actions
-    # experiments_import = echo.download_experiments()
-    # ssh.transfer_experiments_file(experiments_import)
-    # ssh.import_experiments()
+    experiments_import = echo.download_experiments()
+    if Config.config.ssh.enabled:
+        ssh.transfer_experiments_file(experiments_import)
+        ssh.import_experiments()
+    else:
+        local_commands.store_experiments_file(experiments_import)
+        local_commands.import_experiments()
+        sleep(2)
 
     hdf_page_iterator = echo.paginate_hdf_data()
     total_ingestion_start_time = time()

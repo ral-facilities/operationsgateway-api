@@ -36,7 +36,6 @@ class WaveformModel(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-
     @validator("x", "y", pre=True, always=True)
     def encode_values(cls, value):
         if isinstance(value, np.ndarray):

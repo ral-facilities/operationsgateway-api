@@ -9,6 +9,10 @@ class ScriptOptions(BaseModel):
     wipe_database: bool
     delete_images: bool
     launch_api: bool
+
+
+class SSH(BaseModel):
+    enabled: bool
     ssh_connection_url: str
 
 
@@ -40,6 +44,7 @@ class API(BaseModel):
 
 class IngestEchoDataConfig(BaseModel):
     script_options: ScriptOptions
+    ssh: SSH
     database: Database
     echo: Echo
     api: API

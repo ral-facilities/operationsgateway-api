@@ -2,6 +2,8 @@ script_options:
   wipe_database: true
   delete_images: false
   launch_api: true
+ssh:
+  enabled: false
   ssh_connection_url: 127.0.0.1
 database:
   hostname: localhost
