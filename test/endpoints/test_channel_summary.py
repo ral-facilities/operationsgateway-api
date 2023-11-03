@@ -4,6 +4,8 @@ import hashlib
 from fastapi.testclient import TestClient
 import pytest
 
+from test.conftest import set_preferred_colourmap, unset_preferred_colourmap
+
 
 class TestChannelSummary:
     @pytest.mark.parametrize(
@@ -53,7 +55,7 @@ class TestChannelSummary:
         assert test_response.json() == expected_summary
 
     @pytest.mark.parametrize(
-        "channel_name, expected_summary",
+        "channel_name, expected_summary, use_preferred_colourmap",
         [
             pytest.param(
                 "N_COMP_FF_IMAGE",
@@ -61,12 +63,29 @@ class TestChannelSummary:
                     "first_date": "2022-04-07T14:16:16",
                     "most_recent_date": "2022-04-08T16:58:57",
                     "recent_sample": [
-                        {"2022-04-08T16:58:57": "1c3b60291929cd4b7ddbd8e2d718ee2c"},
-                        {"2022-04-08T16:41:36": "015c6decfa5f493005905c223e99fdea"},
-                        {"2022-04-08T16:29:56": "9c34c7cecedd1f6e46fe277a027e8ad7"},
+                        {"2022-04-08T16:58:57": "b6a2da4589c22afc212d2dd9079aabe0"},
+                        {"2022-04-08T16:41:36": "bff557f25cc563f292d7a65f8cbd6ea4"},
+                        {"2022-04-08T16:29:56": "0ed38c29e8eddb50e469b6d6ab4fc5c9"},
                     ],
                 },
-                id="Image channel summary",
+                False,
+                id="Image channel summary (using system default colourmap)",
+            ),
+            # repeat the above test but with the user's preferred colour map set to
+            # check that the preference overrides the system default colour map
+            pytest.param(
+                "N_COMP_FF_IMAGE",
+                {
+                    "first_date": "2022-04-07T14:16:16",
+                    "most_recent_date": "2022-04-08T16:58:57",
+                    "recent_sample": [
+                        {"2022-04-08T16:58:57": "3e78b905df05f4b08a188e0fbd7fcc2a"},
+                        {"2022-04-08T16:41:36": "d3e6761e20d18344ade71bd5329b1a36"},
+                        {"2022-04-08T16:29:56": "183898d6a41f1b3cb1debdcc8ef0942f"},
+                    ],
+                },
+                True,
+                id="Image channel summary (using user's preferred colourmap)",
             ),
             pytest.param(
                 "N_COMP_SPEC_TRACE",
@@ -74,11 +93,12 @@ class TestChannelSummary:
                     "first_date": "2022-04-07T14:16:16",
                     "most_recent_date": "2022-04-08T16:58:57",
                     "recent_sample": [
-                        {"2022-04-08T16:58:57": "d3fe6a390d9a10b87cadba980224d4f8"},
-                        {"2022-04-08T16:41:36": "4f0be833b33ac301a87a6278305cce13"},
-                        {"2022-04-08T16:29:56": "9cf9c60b9c300fc9545b83a52dd72fa6"},
+                        {"2022-04-08T16:58:57": "c0e0f944d8589c6ac866ffb013a05598"},
+                        {"2022-04-08T16:41:36": "6ee54947b79040480bf2a75220d71889"},
+                        {"2022-04-08T16:29:56": "928527492ca3bd051d7771c14c61f0f4"},
                     ],
                 },
+                False,
                 id="Waveform channel summary",
             ),
         ],
@@ -89,6 +109,7 @@ class TestChannelSummary:
         login_and_get_token,
         channel_name,
         expected_summary,
+        use_preferred_colourmap,
     ):
 
         """
@@ -96,6 +117,8 @@ class TestChannelSummary:
         thumbnails to an MD5 checksum beforehand (to prevent bloating this file with
         long base64 strings)
         """
+
+        set_preferred_colourmap(test_app, login_and_get_token, use_preferred_colourmap)
 
         test_response = test_app.get(
             f"/channels/summary/{channel_name}",
@@ -108,6 +131,12 @@ class TestChannelSummary:
             for timestamp, checksum in sample.items():
                 bytes_thumbnail = base64.b64decode(checksum)
                 sample[timestamp] = hashlib.md5(bytes_thumbnail).hexdigest()
+
+        unset_preferred_colourmap(
+            test_app,
+            login_and_get_token,
+            use_preferred_colourmap,
+        )
 
         assert json_output == expected_summary
 

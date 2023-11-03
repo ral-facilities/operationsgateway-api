@@ -2,17 +2,26 @@ import logging
 
 from fastapi import APIRouter, Body, Cookie, Response, status
 from fastapi.responses import JSONResponse
+from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authentication import Authentication
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
-from operationsgateway_api.src.auth.user import User
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import ForbiddenError
 from operationsgateway_api.src.models import AccessTokenModel, LoginDetailsModel
+from operationsgateway_api.src.users.user import User
 
 
 log = logging.getLogger()
 router = APIRouter()
+
+token = Annotated[
+    AccessTokenModel,
+    Body(
+        ...,
+        description="JSON object containing the existing access token",
+    ),
+]
 
 
 @router.post(
@@ -33,10 +42,13 @@ router = APIRouter()
 )
 @endpoint_error_handling
 async def login(
-    login_details: LoginDetailsModel = Body(
-        ...,
-        description="JSON object containing username and password",
-    ),
+    login_details: Annotated[
+        LoginDetailsModel,
+        Body(
+            ...,
+            description="JSON object containing username and password",
+        ),
+    ],
 ):
     """
     This endpoint takes a username and password, authenticates the user and then
@@ -85,10 +97,7 @@ async def login(
 )
 @endpoint_error_handling
 async def verify(
-    token: AccessTokenModel = Body(
-        ...,
-        description="JSON object containing the token",
-    ),
+    token: token,
 ):
     """
     This endpoint takes a JWT token that was issued by this service
@@ -112,10 +121,7 @@ async def verify(
 )
 @endpoint_error_handling
 async def refresh(
-    token: AccessTokenModel = Body(
-        ...,
-        description="JSON object containing the existing access token",
-    ),
+    token: token,
     refresh_token: str = Cookie(
         None,
         description="The JWT refresh token from a cookie",

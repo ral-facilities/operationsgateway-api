@@ -3,6 +3,7 @@ from multiprocessing.pool import ThreadPool
 
 from fastapi import APIRouter, Depends, status, UploadFile
 from fastapi.responses import JSONResponse
+from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
@@ -16,6 +17,7 @@ from operationsgateway_api.src.records.waveform import Waveform
 
 log = logging.getLogger()
 router = APIRouter()
+AuthoriseRoute = Annotated[str, Depends(authorise_route)]
 
 
 @router.post(
@@ -27,7 +29,7 @@ router = APIRouter()
 @endpoint_error_handling
 async def submit_hdf(
     file: UploadFile,
-    access_token: str = Depends(authorise_route),
+    access_token: AuthoriseRoute,
 ):
     """
     This endpoint accepts a HDF file, processes it and stores the data in MongoDB (with
@@ -95,8 +97,8 @@ async def submit_hdf(
 @endpoint_error_handling
 async def submit_manifest(
     file: UploadFile,
+    access_token: AuthoriseRoute,
     bypass_channel_check: bool = False,
-    access_token: str = Depends(authorise_route),
 ):
     log.info("Submitting channel manifest file into database")
     log.debug("Filename: %s, Content: %s", file.filename, file.content_type)
