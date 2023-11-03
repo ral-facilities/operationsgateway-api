@@ -23,5 +23,5 @@ api:
   username: backend
   password: back
   log_config_path: /home/runner/work/operationsgateway-api/operationsgateway-api/operationsgateway_api/logging.ini
-  gunicorn_num_workers: 8
+  gunicorn_num_workers: "8"
   timeout_seconds: 500
