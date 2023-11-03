@@ -30,16 +30,18 @@ class ImageModel(BaseModel):
 
 class WaveformModel(BaseModel):
     id_: str = Field(alias="_id")
-    x: str
-    y: str
+    x: List[float]
+    y: List[float]
+
+    class Config:
+        arbitrary_types_allowed = True
+
 
     @validator("x", "y", pre=True, always=True)
     def encode_values(cls, value):
         if isinstance(value, np.ndarray):
-            return str(list(value))
+            return list(value)
         else:
-            # Typically will be a string when putting waveform data into the model from
-            # results of a MongoDB query
             return value
 
 

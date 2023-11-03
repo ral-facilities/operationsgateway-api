@@ -68,8 +68,8 @@ class Waveform:
         plt.xticks([])
         plt.yticks([])
         plt.plot(
-            json.loads(self.waveform.x),
-            json.loads(self.waveform.y),
+            self.waveform.x,
+            self.waveform.y,
             linewidth=0.5,
         )
         plt.axis("off")
