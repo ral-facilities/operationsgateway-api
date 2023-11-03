@@ -8,6 +8,7 @@ from bson.errors import InvalidId
 from fastapi import APIRouter, Body, Depends, Path, Query, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
+from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
@@ -21,6 +22,7 @@ from operationsgateway_api.src.sessions.user_session_list import UserSessionList
 
 log = logging.getLogger()
 router = APIRouter()
+AuthoriseToken = Annotated[str, Depends(authorise_token)]
 
 
 @router.get(
@@ -32,7 +34,7 @@ router = APIRouter()
 )
 @endpoint_error_handling
 async def get_user_sessions_list(
-    access_token: str = Depends(authorise_token),
+    access_token: AuthoriseToken,
 ):
     """
     Get a list of user sessions that belong to the current user and respond with the
@@ -56,11 +58,14 @@ async def get_user_sessions_list(
 )
 @endpoint_error_handling
 async def get_user_session(
-    id_: str = Path(
-        ...,
-        description="`_id` of the user session to fetch from the database",
-    ),
-    access_token: str = Depends(authorise_token),
+    id_: Annotated[
+        str,
+        Path(
+            ...,
+            description="`_id` of the user session to fetch from the database",
+        ),
+    ],
+    access_token: AuthoriseToken,
 ):
     """
     Get a single user session by its ID and return it as a JSON response
@@ -79,11 +84,14 @@ async def get_user_session(
 )
 @endpoint_error_handling
 async def delete_user_session(
-    id_: str = Path(
-        ...,
-        description="`_id` of the user session to remove from the database",
-    ),
-    access_token: str = Depends(authorise_token),
+    id_: Annotated[
+        str,
+        Path(
+            ...,
+            description="`_id` of the user session to remove from the database",
+        ),
+    ],
+    access_token: AuthoriseToken,
 ):
     """
     Delete a user session given its ID. A check is performed to ensure sessions can only
@@ -104,7 +112,15 @@ async def delete_user_session(
 )
 @endpoint_error_handling
 async def save_user_session(
-    data: Dict[str, Any] = Body(...),
+    data: Annotated[Dict[str, Any], Body(...)],
+    auto_saved: Annotated[
+        bool,
+        Query(
+            description="Flag to show whether the session has been manually or"
+            " automatically saved",
+        ),
+    ],
+    access_token: AuthoriseToken,
     name: str = Query(
         "",
         description="Name of the user session",
@@ -113,11 +129,6 @@ async def save_user_session(
         None,
         description="Summary of the user session",
     ),
-    auto_saved: bool = Query(
-        description="Flag to show whether the session has been manually or"
-        " automatically saved",
-    ),
-    access_token: str = Depends(authorise_token),
 ):
     """
     Save/update a user session (and its metadata) into the database
@@ -163,11 +174,22 @@ async def save_user_session(
 )
 @endpoint_error_handling
 async def update_user_session(
-    id_: str = Path(
-        ...,
-        description="`_id` of the user session to remove from the database",
-    ),
-    data: Dict[str, Any] = Body(...),
+    id_: Annotated[
+        str,
+        Path(
+            ...,
+            description="`_id` of the user session to remove from the database",
+        ),
+    ],
+    data: Annotated[Dict[str, Any], Body(...)],
+    auto_saved: Annotated[
+        bool,
+        Query(
+            description="Flag to show whether the session has been manually or"
+            " automatically saved",
+        ),
+    ],
+    access_token: AuthoriseToken,
     name: str = Query(
         "",
         description="Name of the user session",
@@ -176,11 +198,6 @@ async def update_user_session(
         None,
         description="Summary of the user session",
     ),
-    auto_saved: bool = Query(
-        description="Flag to show whether the session has been manually or"
-        " automatically saved",
-    ),
-    access_token: str = Depends(authorise_token),
 ):
     """
     Update a user session (and its metadata) given its ID as a path parameter

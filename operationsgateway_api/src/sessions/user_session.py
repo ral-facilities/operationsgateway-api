@@ -109,7 +109,7 @@ class UserSession:
                 "Session attempting to be updated does not belong to current user",
             )
 
-        user_session_update = self.session.dict(
+        user_session_update = self.session.model_dump(
             by_alias=True,
             exclude_unset=True,
             exclude={"id_"},
@@ -155,7 +155,7 @@ class UserSession:
         log.info("Inserting session into database. Session name: %s", self.session.name)
         insert_result = await MongoDBInterface.insert_one(
             "sessions",
-            self.session.dict(by_alias=True, exclude_unset=True),
+            self.session.model_dump(by_alias=True, exclude_unset=True),
         )
         log.debug("id_ of inserted session: %s", insert_result.inserted_id)
         return insert_result.inserted_id

@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import asynccontextmanager
 import logging
 
 from fastapi import APIRouter, FastAPI
@@ -23,6 +24,7 @@ from operationsgateway_api.src.routes import (
     ingest_data,
     records,
     sessions,
+    user_preferences,
     waveforms,
 )
 
@@ -44,10 +46,33 @@ This API is the backend to OperationsGateway that allows users to:
 - Get waveform data and full-size images via specific endpoints
 """
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    ConnectionInstance()
+
+    @assign_event_to_single_worker()
+    async def get_experiments_on_startup():
+        if Config.config.experiments.scheduler_background_task_enabled:
+            log.info(
+                "Creating task for Scheduler system to be contacted"
+                " for experiment details",
+            )
+            asyncio.create_task(runners.scheduler_runner.start_task())
+        else:
+            log.info("Scheduler background task has not been enabled")
+
+    await get_experiments_on_startup()
+    yield
+    UniqueWorker.remove_file()
+    ConnectionInstance.db_connection.mongo_client.close()
+
+
 app = FastAPI(
     title="OperationsGateway API",
     description=api_description,
     default_response_class=ORJSONResponse,
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -79,33 +104,6 @@ log = logging.getLogger()
 log.info("Logging now setup")
 
 
-@app.on_event("startup")
-@assign_event_to_single_worker()
-async def get_experiments_on_startup():
-    if Config.config.experiments.scheduler_background_task_enabled:
-        log.info(
-            "Creating task for Scheduler system to be contacted for experiment details",
-        )
-        asyncio.create_task(runners.scheduler_runner.start_task())
-    else:
-        log.info("Scheduler background task has not been enabled")
-
-
-@app.on_event("shutdown")
-async def remove_event_file():
-    UniqueWorker.remove_file()
-
-
-@app.on_event("startup")
-async def startup_mongodb_client():
-    ConnectionInstance()
-
-
-@app.on_event("shutdown")
-async def close_mongodb_client():
-    ConnectionInstance.db_connection.mongo_client.close()
-
-
 def add_router_to_app(api_router: APIRouter):
     # add this router to the FastAPI app
     app.include_router(api_router)
@@ -126,6 +124,7 @@ add_router_to_app(auth.router)
 add_router_to_app(channels.router)
 add_router_to_app(experiments.router)
 add_router_to_app(sessions.router)
+add_router_to_app(user_preferences.router)
 
 log.debug("ROUTE_MAPPINGS contents:")
 for item in ROUTE_MAPPINGS.items():

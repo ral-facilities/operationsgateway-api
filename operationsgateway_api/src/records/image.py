@@ -8,6 +8,7 @@ from botocore.exceptions import ClientError
 import numpy as np
 from PIL import Image as PILImage
 
+from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import (
     EchoS3Error,
@@ -180,3 +181,13 @@ class Image:
         """
 
         return f"{record_id}/{channel_name}.png"
+
+    @staticmethod
+    async def get_preferred_colourmap(access_token: str) -> str:
+        """
+        Check the user's database record to see if they have a preferred colour map set
+        """
+        username = JwtHandler.get_payload(access_token)["username"]
+        colourmap_name = await FalseColourHandler.get_preferred_colourmap(username)
+        log.debug("Preferred colour map for %s is %s", username, colourmap_name)
+        return colourmap_name

@@ -6,11 +6,11 @@ from typing import List, Optional, Tuple
 from dateutil import tz
 from pydantic import (
     BaseModel,
+    field_validator,
     StrictBool,
     StrictInt,
     StrictStr,
     ValidationError,
-    validator,
 )
 import yaml
 
@@ -19,9 +19,9 @@ class App(BaseModel):
     """Configuration model class to store configuration regarding the FastAPI app"""
 
     # Some options aren't mandatory when running the API in the production
-    host: Optional[StrictStr]
-    port: Optional[StrictInt]
-    reload: Optional[StrictBool]
+    host: Optional[StrictStr] = None
+    port: Optional[StrictInt] = None
+    reload: Optional[StrictBool] = None
 
 
 class ImagesConfig(BaseModel):
@@ -38,6 +38,7 @@ class ImagesConfig(BaseModel):
     echo_secret_key: StrictStr
     image_bucket_name: StrictStr
     upload_image_threads: StrictInt
+    preferred_colour_map_pref_name: StrictStr
 
 
 class MongoDB(BaseModel):
@@ -75,7 +76,8 @@ class ExperimentsConfig(BaseModel):
     instrument_names: List[StrictStr]
     worker_file_path: StrictStr
 
-    @validator("scheduler_background_timezone")
+    @field_validator("scheduler_background_timezone")
+    @classmethod
     def check_timezone(cls, value):  # noqa: B902, N805
         if not tz.gettz(value):
             sys.exit(f"scheduler_background_timezone is not a valid timezone: {value}")

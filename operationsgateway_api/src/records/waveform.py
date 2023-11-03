@@ -27,7 +27,7 @@ class Waveform:
         if not self.is_stored:
             await MongoDBInterface.insert_one(
                 "waveforms",
-                self.waveform.dict(by_alias=True),
+                self.waveform.model_dump(by_alias=True),
             )
 
     def create_thumbnail(self) -> None:

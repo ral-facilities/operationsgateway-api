@@ -112,7 +112,7 @@ class TestExperiment:
 
         # The third experiment was inserted, not updated. We want to mock this query and
         # force `_id` tha we can assert against
-        find_one_result = test_experiment.experiments[2].dict()
+        find_one_result = test_experiment.experiments[2].model_dump()
         find_one_result["_id"] = "Pre-existing ObjectId 1"
 
         expected_ids = [
