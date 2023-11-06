@@ -23,9 +23,11 @@ import pytest
     "remove_authorised_routes": ["/submit/hdf POST"]
 } """
 
+
 class TestUpdateUsers:
     @pytest.mark.parametrize(
-        "username, updated_password, add_authorised_routes, remove_authorised_routes, expected_response_code",
+        "username, updated_password, add_authorised_routes, "
+        "remove_authorised_routes, expected_response_code",
         [
             pytest.param(
                 "testuserthatdoesnotexistinthedatabaselocal",
@@ -52,7 +54,7 @@ class TestUpdateUsers:
                 id="Successfully updating nothing",
             ),
             pytest.param(
-                "testuserthatdoesnotexistinthedatabaselocal",#
+                "testuserthatdoesnotexistinthedatabaselocal",  #
                 None,
                 None,
                 [],
@@ -60,7 +62,7 @@ class TestUpdateUsers:
                 id="Successfully updating nothing (empty add routes)",
             ),
             pytest.param(
-                "testuserthatdoesnotexistinthedatabaselocal",#
+                "testuserthatdoesnotexistinthedatabaselocal",  #
                 None,
                 [],
                 None,
@@ -68,7 +70,7 @@ class TestUpdateUsers:
                 id="Successfully updating nothing (empty add routes)",
             ),
             pytest.param(
-                "testuserthatdoesnotexistinthedatabaselocal",#
+                "testuserthatdoesnotexistinthedatabaselocal",  #
                 None,
                 None,
                 None,
@@ -97,7 +99,9 @@ class TestUpdateUsers:
                 ["/records/{id_} DELETE", "/users POST"],
                 ["/records/{id_} DELETE", "/experiments POST"],
                 200,
-                id="Successfully adding '/records/{id_} DELETE' and '/users POST' to authorised routes and removed '/records/{id_} DELETE' and '/experiments POST'",
+                id="Successfully adding '/records/{id_} DELETE' and '/users POST' "
+                "to authorised routes and removed '/records/{id_} DELETE' and"
+                " '/experiments POST'",
             ),
             pytest.param(
                 "testuserthatdoesnotexistinthedatabaselocal",
@@ -105,7 +109,8 @@ class TestUpdateUsers:
                 ["/records/{id_} DELETE", "/users POST"],
                 ["/records/{id_} DELETE", "/experiments POST", "/users POST"],
                 200,
-                id="Successfully removed everything that was added as well as '/experiments POST'",
+                id="Successfully removed everything that was added "
+                "as well as '/experiments POST'",
             ),
             pytest.param(
                 "",
@@ -147,7 +152,6 @@ class TestUpdateUsers:
                 400,
                 id="Failure bad remove route",
             ),
-            
         ],
     )
     def test_update_local_user(
@@ -175,8 +179,7 @@ class TestUpdateUsers:
         )
 
         assert update_local_response.status_code == expected_response_code
-        
-        
+
     def test_update_local_user_forbidden(
         self,
         test_app: TestClient,
@@ -195,8 +198,7 @@ class TestUpdateUsers:
         )
 
         assert update_local_response.status_code == 403
-        
-    
+
     @pytest.mark.parametrize(
         "username, updated_password, expected_response_code",
         [
@@ -242,10 +244,8 @@ class TestUpdateUsers:
                 },
             ),
         )
-        
-        assert update_fed_response.status_code == expected_response_code
-        
 
+        assert update_fed_response.status_code == expected_response_code
 
 
 """
