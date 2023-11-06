@@ -38,7 +38,7 @@ class TestCreateUsers:
                 None,
                 "",
                 400,
-                id="failed local user creation blank password",
+                id="Failed local user creation blank password",
             ),
             pytest.param(
                 "testuserthatdoesnotexistinthedatabaselocal",
@@ -46,7 +46,7 @@ class TestCreateUsers:
                 None,
                 None,
                 400,
-                id="failed local user creation no password",
+                id="Failed local user creation no password",
             ),
             pytest.param(
                 "",
@@ -54,7 +54,7 @@ class TestCreateUsers:
                 None,
                 "password",
                 500,
-                id="failed local user creation blank username",
+                id="Failed local user creation blank username",
             ),
             pytest.param(
                 None,
@@ -62,7 +62,7 @@ class TestCreateUsers:
                 None,
                 "password",
                 422,
-                id="failed local user creation no username",
+                id="Failed local user creation no username",
             ),
             pytest.param(
                 "testuserthatdoesnotexistinthedatabaselocal",
@@ -70,7 +70,7 @@ class TestCreateUsers:
                 None,
                 "password",
                 400,
-                id="failed local user creation blank auth_type",
+                id="Failed local user creation blank auth_type",
             ),
             pytest.param(
                 "testuserthatdoesnotexistinthedatabaselocal",
@@ -174,7 +174,7 @@ class TestCreateUsers:
                 "FedID",
                 None,
                 500,
-                id="failed fed user creation blank username",
+                id="Failed fed user creation blank username",
             ),
             pytest.param(
                 None,
@@ -196,6 +196,13 @@ class TestCreateUsers:
                 ["false path"],
                 400,
                 id="Failed fed user creation logs 'false path' to console",
+            ),
+            pytest.param(
+                "testuserthatdoesnotexistinthedatabasefed",
+                "bad auth_type",
+                None,
+                400,
+                id="Failed user creation because of bad auth_type",
             ),
         ],
     )
@@ -232,7 +239,7 @@ class TestCreateUsers:
                 None,
                 "",
                 400,
-                id="failed fed user creation blank password",
+                id="Failed fed user creation blank password",
             ),
             pytest.param(
                 "testuserthatdoesnotexistinthedatabasefed",
