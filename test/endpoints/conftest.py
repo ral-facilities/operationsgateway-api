@@ -104,5 +104,13 @@ def add_delete_local_fixture(loop: asyncio.AbstractEventLoop):
     remove_local_user(loop)
 
 
-# TODO make sure db stuff doesn't fail (try except finally possibly)
-# TODO check _id isn't in database first
+@pytest.fixture(scope="function")
+def delete_fed_fixture(loop: asyncio.AbstractEventLoop):
+    yield
+    remove_fed_user(loop)
+
+
+@pytest.fixture(scope="function")
+def delete_local_fixture(loop: asyncio.AbstractEventLoop):
+    yield
+    remove_local_user(loop)
