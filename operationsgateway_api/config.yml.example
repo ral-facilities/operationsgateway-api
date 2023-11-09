@@ -12,13 +12,17 @@ images:
   # Colour maps for Matplotlib can be used
   default_colour_map: viridis
   colourbar_height_pixels: 16
+  echo_url: https://s3.echo.stfc.ac.uk
+  echo_username: username
+  echo_access_key: access_key
+  echo_secret_key: secret_key
+  image_bucket_name: test-bucket
   preferred_colour_map_pref_name: PREFERRED_COLOUR_MAP
 mongodb:
   mongodb_url: mongodb://localhost:27017
   database_name: opsgateway
   # Maximum number of documents to return when querying, similar to ICAT's maxEntities
   max_documents: 1000
-  image_store_directory: /home/user/og-images
 auth:
   # Path to a private/public key pair for the auth functionality. This key pair should
   # be created before running the API, see instructions in README.md
