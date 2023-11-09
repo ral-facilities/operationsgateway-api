@@ -232,6 +232,9 @@ class TestCreateUsers:
         )
 
         assert create_fed_response.status_code == expected_response_code
+        
+        if expected_response_code == 201:
+            assert create_fed_response.text[1:-1] == username
 
     @pytest.mark.parametrize(
         "username, auth_type, routes, password, expected_response_code",
@@ -288,6 +291,9 @@ class TestCreateUsers:
         )
 
         assert create_fed_response.status_code == expected_response_code
+        
+        if expected_response_code == 201:
+            assert create_fed_response.text[1:-1] == username
 
     @pytest.mark.asyncio
     async def test_create_local_user_forbidden(
