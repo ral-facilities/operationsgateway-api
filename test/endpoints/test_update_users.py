@@ -3,27 +3,6 @@ import json
 from fastapi.testclient import TestClient
 import pytest
 
-""" {
-    "_id": "testuserthatdoesnotexistinthedatabaselocal",
-    "auth_type": "local",
-    "authorised_routes": ["/submit/hdf POST", "/experiments POST"],
-    "sha256_password": "password",
-}
-
-{
-    "_id": "testuserthatdoesnotexistinthedatabasefed",
-    "auth_type": "FedID",
-    "authorised_routes": ["/submit/hdf POST", "/experiments POST"],
-}
-
-{
-    "_id": "username",
-    "updated_password": "password",
-    "add_authorised_routes": ["/submit/hdf POST", "/experiments POST"],
-    "remove_authorised_routes": ["/submit/hdf POST"]
-} """
-
-
 class TestUpdateUsers:
     @pytest.mark.parametrize(
         "username, updated_password, add_authorised_routes, "
