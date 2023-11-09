@@ -3,6 +3,7 @@ import json
 from fastapi.testclient import TestClient
 import pytest
 
+
 class TestUpdateUsers:
     @pytest.mark.parametrize(
         "username, updated_password, add_authorised_routes, "

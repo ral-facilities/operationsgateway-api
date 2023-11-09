@@ -55,9 +55,9 @@ async def add_user(
         if login_details.sha256_password == "":
             raise QueryParameterError("you must input a password")
         else:
-            sha_256 = sha256()
-            sha_256.update(login_details.sha256_password.encode())
-            login_details.sha256_password = sha_256.hexdigest()
+            login_details.sha256_password = sha256(
+                login_details.sha256_password.encode(),
+            ).hexdigest()
 
     if auth_type != "local" and auth_type != "FedID":
         log.error("auth_type was not 'local' or 'FedID'")
@@ -96,16 +96,15 @@ async def add_user(
         or _id == ""
     ):
         log.error("username must be unique and not empty")
-        raise DatabaseError(
+        raise QueryParameterError(
             "username field must not be the same as a pre existing"
             f" user or empty. You put: '{login_details.username}' ",
         )
 
-    insert_result = await MongoDBInterface.insert_one(
+    await MongoDBInterface.insert_one(
         "users",
         login_details.model_dump(by_alias=True, exclude_unset=True),
     )
-    log.debug("id_ of inserted session: %s", insert_result.inserted_id)
     log.info("successfully created user '%s' ", login_details.username)
 
     return JSONResponse(

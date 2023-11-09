@@ -14,7 +14,7 @@ async def add_user(auth_type):
     if auth_type == "local":
         user["auth_type"] = "local"
         user["password"] = "password"
-    
+
     await MongoDBInterface.insert_one(
         "users",
         user,

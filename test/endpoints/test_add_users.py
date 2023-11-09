@@ -53,7 +53,7 @@ class TestCreateUsers:
                 "local",
                 None,
                 "password",
-                500,
+                400,
                 id="Failed local user creation blank username",
             ),
             pytest.param(
@@ -145,7 +145,7 @@ class TestCreateUsers:
             ),
         )
 
-        assert create_local_response.status_code == 500
+        assert create_local_response.status_code == 400
 
     @pytest.mark.parametrize(
         "username, auth_type, routes, expected_response_code",
@@ -175,7 +175,7 @@ class TestCreateUsers:
                 "",
                 "FedID",
                 None,
-                500,
+                400,
                 id="Failed fed user creation blank username",
             ),
             pytest.param(
@@ -232,7 +232,7 @@ class TestCreateUsers:
         )
 
         assert create_fed_response.status_code == expected_response_code
-        
+
         if expected_response_code == 201:
             assert create_fed_response.text[1:-1] == username
 
@@ -291,7 +291,7 @@ class TestCreateUsers:
         )
 
         assert create_fed_response.status_code == expected_response_code
-        
+
         if expected_response_code == 201:
             assert create_fed_response.text[1:-1] == username
 
