@@ -1,6 +1,8 @@
-import hashlib
+import io
 
 from fastapi.testclient import TestClient
+import imagehash
+from PIL import Image
 import pytest
 
 from test.conftest import set_preferred_colourmap, unset_preferred_colourmap
@@ -17,7 +19,7 @@ class TestGetColourBarImage:
                 None,
                 False,
                 200,
-                "d702de874316fb6787e9d6a2365e5f9e",
+                "a000000000000000",
                 id="Colour bar with default false colour settings",
             ),
             pytest.param(
@@ -26,7 +28,7 @@ class TestGetColourBarImage:
                 None,
                 True,
                 200,
-                "b9ba6992a0f922e85ba871acd9f292e0",
+                "d500000000000000",
                 id="Colour bar using user's preferred colour map",
             ),
             pytest.param(
@@ -35,7 +37,7 @@ class TestGetColourBarImage:
                 "jet_r",
                 False,
                 200,
-                "a805bd0e5ea33a1764194412673855c0",
+                "cf00000000000000",
                 id="Colour bar with all false colour params specified",
             ),
             # repeat the test above but with the user's preferred colour map set to
@@ -46,7 +48,7 @@ class TestGetColourBarImage:
                 "jet_r",
                 True,
                 200,
-                "a805bd0e5ea33a1764194412673855c0",
+                "cf00000000000000",
                 id="Colour bar with all false colour params specified (ignoring "
                 "user's pref)",
             ),
@@ -131,5 +133,6 @@ class TestGetColourBarImage:
 
         if test_response.status_code == 200:
             bytes_image = test_response.content
-            image_checksum = hashlib.md5(bytes_image).hexdigest()
+            img = Image.open(io.BytesIO(bytes_image))
+            image_checksum = str(imagehash.phash(img))
             assert expected_image_md5sum == image_checksum

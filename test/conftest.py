@@ -1,8 +1,10 @@
 import base64
-import hashlib
+import io
 import json
 
 from fastapi.testclient import TestClient
+import imagehash
+from PIL import Image
 import pytest
 
 from operationsgateway_api.src.experiments.unique_worker import UniqueWorker
@@ -63,7 +65,8 @@ def assert_thumbnails(record: dict, expected_thumbnail_md5s: dict):
             num_channels_found += 1
             b64_thumbnail_string = value["thumbnail"]
             thumbnail_bytes = base64.b64decode(b64_thumbnail_string)
-            thumbnail_md5sum = hashlib.md5(thumbnail_bytes).hexdigest()
+            img = Image.open(io.BytesIO(thumbnail_bytes))
+            thumbnail_md5sum = str(imagehash.phash(img))
             assert thumbnail_md5sum == expected_thumbnail_md5s[channel_name]
     assert num_channels_found == len(expected_thumbnail_md5s.keys())
 

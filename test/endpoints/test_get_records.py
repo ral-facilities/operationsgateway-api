@@ -187,7 +187,7 @@ class TestGetRecords:
                 None,
                 False,
                 {
-                    "N_COMP_NF_IMAGE": "e1267ba4ec12acfe571d98b98578ec70",
+                    "N_COMP_NF_IMAGE": "c0c73f8f783c3930",
                 },
                 id="Whole record: all channels have channel_dtype returned",
             ),
@@ -201,7 +201,7 @@ class TestGetRecords:
                 None,
                 True,
                 {
-                    "N_COMP_NF_IMAGE": "cac1de06fbf0dcf42263f210f4895b3f",
+                    "N_COMP_NF_IMAGE": "c2c73f0f783c3330",
                 },
                 id="Whole record: all channels have channel_dtype returned and user's "
                 "preferred colour map is set",
@@ -214,7 +214,7 @@ class TestGetRecords:
                 None,
                 False,
                 {
-                    "N_COMP_NF_IMAGE": "e1267ba4ec12acfe571d98b98578ec70",
+                    "N_COMP_NF_IMAGE": "c0c73f8f783c3930",
                 },
                 id="Partial record: only N_COMP_NF_IMAGE and no channel_dtype returned",
             ),
@@ -226,7 +226,7 @@ class TestGetRecords:
                 "jet_r",
                 False,
                 {
-                    "N_COMP_NF_IMAGE": "6058f2069548d170694933d616b42d3a",
+                    "N_COMP_NF_IMAGE": "c3c13f0fc0383f8d",
                 },
                 id="Whole record: all channels have channel_dtype returned "
                 "and custom false colour settings applied",
@@ -241,7 +241,7 @@ class TestGetRecords:
                 "jet_r",
                 True,
                 {
-                    "N_COMP_NF_IMAGE": "6058f2069548d170694933d616b42d3a",
+                    "N_COMP_NF_IMAGE": "c3c13f0fc0383f8d",
                 },
                 id="Whole record: all channels have channel_dtype returned "
                 "and custom false colour settings applied even with user's "
@@ -255,7 +255,7 @@ class TestGetRecords:
                 "jet_r",
                 False,
                 {
-                    "N_COMP_NF_IMAGE": "6058f2069548d170694933d616b42d3a",
+                    "N_COMP_NF_IMAGE": "c3c13f0fc0383f8d",
                 },
                 id="Partial record: only N_COMP_NF_IMAGE and no channel_dtype returned "
                 "and custom false colour settings applied",

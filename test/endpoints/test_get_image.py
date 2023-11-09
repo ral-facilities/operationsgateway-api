@@ -1,6 +1,8 @@
-import hashlib
+import io
 
 from fastapi.testclient import TestClient
+import imagehash
+from PIL import Image
 import pytest
 
 from test.conftest import set_preferred_colourmap, unset_preferred_colourmap
@@ -19,7 +21,7 @@ class TestGetImage:
                 None,
                 None,
                 None,
-                "9d2fc96084349c5bff10206ef4dfdf3e",
+                "d6163f06fb03664a",
                 id="Original image",
             ),
             pytest.param(
@@ -30,7 +32,7 @@ class TestGetImage:
                 None,
                 None,
                 None,
-                "97a854f18ef539f443a39c091c88df29",
+                "879578586b6a6761",
                 id="Image with default false colour settings",
             ),
             # repeat the above test but with the user's preferred colour map set to
@@ -43,7 +45,7 @@ class TestGetImage:
                 None,
                 None,
                 None,
-                "002431ebfe4232121856ae88c15ad939",
+                "87857858636b6763",
                 id="Image using user's preferred colourmap",
             ),
             pytest.param(
@@ -54,7 +56,7 @@ class TestGetImage:
                 50,
                 200,
                 "jet_r",
-                "707c50d0784e305f0f6d20fe39c93162",
+                "8f9438586a636b67",
                 id="Image with all false colour params specified",
             ),
             # repeat the test above but with the user's preferred colour map set to
@@ -67,7 +69,7 @@ class TestGetImage:
                 50,
                 200,
                 "jet_r",
-                "707c50d0784e305f0f6d20fe39c93162",
+                "8f9438586a636b67",
                 id="Image with all false colour params specified (ignoring "
                 "user's pref)",
             ),
@@ -118,6 +120,6 @@ class TestGetImage:
         assert test_response.status_code == 200
 
         bytes_image = test_response.content
-
-        image_checksum = hashlib.md5(bytes_image).hexdigest()
+        img = Image.open(io.BytesIO(bytes_image))
+        image_checksum = str(imagehash.phash(img))
         assert expected_image_md5sum == image_checksum
