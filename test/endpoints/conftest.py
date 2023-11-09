@@ -8,21 +8,6 @@ from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
 
 @pytest.fixture()
-def test_app():
-    return TestClient(app)
-
-
-@pytest.fixture()
-def login_and_get_token(test_app: TestClient):
-    json = '{"username": "backend", "password": "back"}'
-    response = test_app.post("/login", content=json)
-    # strip the first and last characters off the response
-    # (the double quotes that surround it)
-    token = response.text[1:-1]
-    return token
-
-
-@pytest.fixture()
 def loop():
     # allows the testing of asynchronus functions using an event loop
 
@@ -32,62 +17,50 @@ def loop():
 
 
 def add_fed_user(loop: asyncio.AbstractEventLoop):
-    try:
-        user = {
-            "_id": "testuserthatdoesnotexistinthedatabasefed",
-            "auth_type": "FedID",
-            "authorised_routes": ["/submit/hdf POST", "/experiments POST"],
-        }
-        loop.run_until_complete(
-            MongoDBInterface.insert_one(
-                "users",
-                user,
-            ),
-        )
-    except BaseException:
-        pass
+    user = {
+        "_id": "testuserthatdoesnotexistinthedatabasefed",
+        "auth_type": "FedID",
+        "authorised_routes": ["/submit/hdf POST", "/experiments POST"],
+    }
+    loop.run_until_complete(
+        MongoDBInterface.insert_one(
+            "users",
+            user,
+        ),
+    )
 
 
 def add_local_user(loop: asyncio.AbstractEventLoop):
-    try:
-        user = {
-            "_id": "testuserthatdoesnotexistinthedatabaselocal",
-            "auth_type": "local",
-            "authorised_routes": ["/submit/hdf POST", "/experiments POST"],
-            "sha256_password": "password",
-        }
-        loop.run_until_complete(
-            MongoDBInterface.insert_one(
-                "users",
-                user,
-            ),
-        )
-    except BaseException:
-        pass
+    user = {
+        "_id": "testuserthatdoesnotexistinthedatabaselocal",
+        "auth_type": "local",
+        "authorised_routes": ["/submit/hdf POST", "/experiments POST"],
+        "sha256_password": "password",
+    }
+    loop.run_until_complete(
+        MongoDBInterface.insert_one(
+            "users",
+            user,
+        ),
+    )
 
 
 def remove_fed_user(loop: asyncio.AbstractEventLoop):
-    try:
-        loop.run_until_complete(
-            MongoDBInterface.delete_one(
-                "users",
-                filter_={"_id": "testuserthatdoesnotexistinthedatabasefed"},
-            ),
-        )
-    except BaseException:
-        pass
+    loop.run_until_complete(
+        MongoDBInterface.delete_one(
+            "users",
+            filter_={"_id": "testuserthatdoesnotexistinthedatabasefed"},
+        ),
+    )
 
 
 def remove_local_user(loop: asyncio.AbstractEventLoop):
-    try:
-        loop.run_until_complete(
-            MongoDBInterface.delete_one(
-                "users",
-                filter_={"_id": "testuserthatdoesnotexistinthedatabaselocal"},
-            ),
-        )
-    except BaseException:
-        pass
+    loop.run_until_complete(
+        MongoDBInterface.delete_one(
+            "users",
+            filter_={"_id": "testuserthatdoesnotexistinthedatabaselocal"},
+        ),
+    )
 
 
 @pytest.fixture(scope="function")
