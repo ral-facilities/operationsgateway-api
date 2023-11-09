@@ -1,16 +1,23 @@
+from __future__ import annotations
+
 from io import BytesIO
 import logging
-import os
 from typing import Tuple
 
+from botocore.exceptions import ClientError
 import numpy as np
 from PIL import Image as PILImage
 
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.config import Config
-from operationsgateway_api.src.exceptions import ImageError, ImageNotFoundError
+from operationsgateway_api.src.exceptions import (
+    EchoS3Error,
+    ImageError,
+    ImageNotFoundError,
+)
 from operationsgateway_api.src.models import ImageModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
+from operationsgateway_api.src.records.echo_interface import EchoInterface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
 
@@ -24,39 +31,26 @@ class Image:
     def __init__(self, image: ImageModel) -> None:
         self.image = image
 
-    def store(self) -> None:
-        """
-        Save the image on disk
-        """
-        record_id, _ = self.extract_metadata_from_path()
-
-        try:
-            os.makedirs(
-                f"{Config.config.mongodb.image_store_directory}/{record_id}",
-                exist_ok=True,
-            )
-            image_buffer = PILImage.fromarray(self.image.data)
-            image_buffer.save(
-                f"{Config.config.mongodb.image_store_directory}/{self.image.path}",
-            )
-        except OSError as exc:
-            log.exception(msg=exc)
-            raise ImageError("Image folder structure has failed") from exc
-        except TypeError as exc:
-            log.exception(msg=exc)
-            raise ImageError("Image data is not in correct format to be read") from exc
-
     def create_thumbnail(self) -> None:
         """
         Using the object's image data, create a thumbnail of the image and store it as
         an attribute of this object
         """
-        img = PILImage.open(
-            f"{Config.config.mongodb.image_store_directory}/{self.image.path}",
-        )
+
+        log.info("Creating image thumbnail for %s", self.image.path)
+
+        # Opening image then saving in a bytes object before using that to open and
+        # generate a thumbnail as you can't produce a thumbnail when opening the image
+        # using `fromarray()`
+        image_bytes = BytesIO()
+        img_temp = PILImage.fromarray(self.image.data)
+        img_temp.save(image_bytes, format="PNG")
+
+        img = PILImage.open(image_bytes)
         img.thumbnail(Config.config.images.image_thumbnail_size)
         # convert 16 bit greyscale thumbnails to 8 bit to save space
         if img.mode == "I":
+            log.debug("Converting 16 bit greyscale thumbnail to 8 bit")
             img = img.point(Image.lookup_table_16_to_8_bit, "L")
         self.thumbnail = ThumbnailHandler.convert_to_base64(img)
 
@@ -72,6 +66,25 @@ class Image:
         return record_id, channel_name
 
     @staticmethod
+    def upload_image(input_image: Image) -> None:
+        """
+        Save the image on Echo S3 object storage
+        """
+
+        log.info("Storing image in a Bytes object: %s", input_image.image.path)
+        image_bytes = BytesIO()
+        try:
+            image = PILImage.fromarray(input_image.image.data)
+            image.save(image_bytes, format="PNG")
+        except TypeError as exc:
+            log.exception(msg=exc)
+            raise ImageError("Image data is not in correct format to be read") from exc
+
+        echo = EchoInterface()
+        log.info("Storing image on S3: %s", input_image.image.path)
+        echo.upload_file_object(image_bytes, input_image.image.path)
+
+    @staticmethod
     async def get_image(
         record_id: str,
         channel_name: str,
@@ -81,24 +94,37 @@ class Image:
         colourmap_name: str,
     ) -> BytesIO:
         """
-        Retrieve an image from disk and return the bytes of the image in a BytesIO
+        Retrieve an image from Echo S3 and return the bytes of the image in a BytesIO
         object depending on what the user has requested.
 
         If 'original_image' is set to True then just return the unprocessed bytes of the
-        image read from disk, otherwise apply false colour to the image either using the
-        parameters provided or using defaults where they are not provided.
+        image read from Echo S3, otherwise apply false colour to the image either using
+        the parameters provided or using defaults where they are not provided.
 
         If an image cannot be found, some error checking is done by looking to see if
         the record ID exists in the first place. Depending on what is found in the
         database, an appropriate exception (and error message) is raised
         """
+
+        log.info("Retrieving image and returning BytesIO object")
+        echo = EchoInterface()
+
         try:
             original_image_path = Image.get_image_path(record_id, channel_name)
+            image_bytes = echo.download_file_object(original_image_path)
+
             if original_image:
-                with open(original_image_path, "rb") as fh:
-                    return BytesIO(fh.read())
+                log.debug(
+                    "Original image requested, return unmodified image bytes: %s",
+                    original_image_path,
+                )
+                return image_bytes
             else:
-                img_src = PILImage.open(original_image_path)
+                log.debug(
+                    "False colour requested, applying false colour to image: %s",
+                    original_image_path,
+                )
+                img_src = PILImage.open(image_bytes)
                 orig_img_array = np.array(img_src)
 
                 false_colour_image = FalseColourHandler.apply_false_colour(
@@ -109,7 +135,7 @@ class Image:
                     colourmap_name,
                 )
                 return false_colour_image
-        except (OSError, RuntimeError) as exc:
+        except (ClientError, EchoS3Error) as exc:
             # Record.count_records() could not be used because that would cause a
             # circular import
             record_count = await MongoDBInterface.count_documents(
@@ -122,11 +148,12 @@ class Image:
 
             if record_count == 1:
                 log.error(
-                    "Image could not be found on disk. Record ID: %s, channel name: %s",
+                    "Image could not be found on object storage. Record ID: %s, channel"
+                    " name: %s",
                     record_id,
                     channel_name,
                 )
-                raise ImageError("Image could not be found on disk") from exc
+                raise ImageError("Image could not be found on object storage") from exc
             elif record_count == 0:
                 log.error(
                     "Image not available due to invalid record ID (%s) or channel name"
@@ -140,30 +167,20 @@ class Image:
             else:
                 log.error(
                     "Unexpected number of records (%d) found when verifying whether the"
-                    " image should be available on disk",
+                    " image should be available on object storage",
                     record_count,
                 )
-                raise ImageError("Unexpected error finding image on disk") from exc
+                raise ImageError(
+                    "Unexpected error finding image on object storage",
+                ) from exc
 
     @staticmethod
-    def get_image_path(
-        record_id: str,
-        channel_name: str,
-        full_path: bool = True,
-    ) -> str:
+    def get_image_path(record_id: str, channel_name: str) -> str:
         """
-        Returns an image path given a record ID and channel name. By default, a full
-        path is returned, although this can be changed to not return the base directory
-        by using the `full_path` argument.
+        Returns an image path given a record ID and channel name
         """
 
-        if full_path:
-            return (
-                f"{Config.config.mongodb.image_store_directory}/{record_id}/"
-                f"{channel_name}.png"
-            )
-        else:
-            return f"{record_id}/{channel_name}.png"
+        return f"{record_id}/{channel_name}.png"
 
     @staticmethod
     async def get_preferred_colourmap(access_token: str) -> str:

@@ -175,6 +175,12 @@ class ExperimentModel(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
+class ExperimentPartMappingModel(BaseModel):
+    experiment_id: int
+    parts: List[int]
+    instrument_name: str
+
+
 class ShotnumConverterRange(BaseModel):
     opposite_range_fields: ClassVar[Dict[str, str]] = {"from": "min_", "to": "max_"}
 

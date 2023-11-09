@@ -22,9 +22,14 @@ python-dateutil = "^2.8.2"
 PyJWT = "2.4.0"
 cryptography = "^41.0.0"
 python-ldap = "3.4.2"
+boto3 = "^1.26.97"
 cron-converter = "^1.0.1"
 zeep = "^4.2.1"
 httpx = "^0.23.3"
+pytest-asyncio = "^0.21.0"
+# Workaround for: https://github.com/python-poetry/poetry-plugin-export/issues/183
+# urllib3 isn't a dependency of this project, remove once the issue has been resolved
+urllib3 = ">=1.25.4,<1.27"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
@@ -44,6 +49,7 @@ requests = "2.31.0"
 pytest-cov = "^3.0.0"
 coverage = "^6.4.4"
 pytest-asyncio = "^0.21.0"
+s4cmd = "^2.1.0"
 
 [tool.coverage.paths]
 source = ["operationsgateway_api"]

@@ -85,8 +85,16 @@ app.add_middleware(
 
 
 def setup_logger():
-    # Disable excessive debug logging from suds when contacting the Scheduler via WSDL
-    logging.getLogger("zeep").setLevel(logging.INFO)
+    libraries_info_logging = [
+        "boto3",
+        "botocore",
+        "nose",
+        "s3transfer",
+        "matplotlib.font_manager",
+        "zeep",
+    ]
+    for name in libraries_info_logging:
+        logging.getLogger(name).setLevel(logging.INFO)
     logging.config.fileConfig(LOG_CONFIG_LOCATION)
 
 

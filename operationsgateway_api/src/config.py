@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 import sys
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 from dateutil import tz
 from pydantic import (
@@ -32,6 +32,11 @@ class ImagesConfig(BaseModel):
     # the system default colour map (used if no user preference is set)
     default_colour_map: StrictStr
     colourbar_height_pixels: StrictInt
+    echo_url: StrictStr
+    echo_username: StrictStr
+    echo_access_key: StrictStr
+    echo_secret_key: StrictStr
+    image_bucket_name: StrictStr
     preferred_colour_map_pref_name: StrictStr
 
 
@@ -41,7 +46,6 @@ class MongoDB(BaseModel):
     mongodb_url: StrictStr
     database_name: StrictStr
     max_documents: StrictInt
-    image_store_directory: StrictStr
 
 
 class AuthConfig(BaseModel):
@@ -68,7 +72,7 @@ class ExperimentsConfig(BaseModel):
     username: StrictStr
     password: StrictStr
     scheduler_wsdl_url: StrictStr
-    instrument_name: StrictStr
+    instrument_names: List[StrictStr]
     worker_file_path: StrictStr
 
     @field_validator("scheduler_background_timezone")

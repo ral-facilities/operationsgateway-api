@@ -45,6 +45,7 @@ class SchedulerInterface:
     @soap_error_handling("getExperimentDatesForInstrument")
     def get_experiment_dates_for_instrument(
         self,
+        instrument_name: str,
         start_date: datetime,
         end_date: datetime,
     ) -> list:
@@ -54,7 +55,7 @@ class SchedulerInterface:
         log.info("Calling Scheduler getExperimentDatesForInstrument()")
         return self.scheduler_client.service.getExperimentDatesForInstrument(
             self.session_id,
-            Config.config.experiments.instrument_name,
+            instrument_name,
             {
                 "startDate": start_date,
                 "endDate": end_date,
