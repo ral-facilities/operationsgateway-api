@@ -1,8 +1,9 @@
-import hashlib
+import base64
 from io import BytesIO
 import os
 from unittest.mock import patch
 
+import imagehash
 import numpy as np
 from PIL import Image as PILImage
 import pytest
@@ -46,8 +47,10 @@ class TestImage:
         )
         test_image.create_thumbnail()
 
-        thumbnail_checksum = hashlib.md5(test_image.thumbnail).hexdigest()
-        assert thumbnail_checksum == "d4f018fe6ab61b1706244e95b1d9bb96"
+        bytes_thumbnail = base64.b64decode(test_image.thumbnail)
+        img = PILImage.open(BytesIO(bytes_thumbnail))
+        thumbnail_checksum = str(imagehash.phash(img))
+        assert thumbnail_checksum == "0000000000000000"
 
     @pytest.mark.parametrize(
         "image_path, expected_record_id, expected_channel_name",
