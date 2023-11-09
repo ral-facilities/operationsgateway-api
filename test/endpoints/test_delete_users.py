@@ -3,7 +3,8 @@ import pytest
 
 
 class TestDeleteUsers:
-    def test_delete_local_user_success(
+    @pytest.mark.asyncio
+    async def test_delete_local_user_success(
         self,
         test_app: TestClient,
         login_and_get_token,
@@ -16,7 +17,8 @@ class TestDeleteUsers:
 
         assert delete_local_response.status_code == 204
 
-    def test_delete_fed_user_success(
+    @pytest.mark.asyncio
+    async def test_delete_fed_user_success(
         self,
         test_app: TestClient,
         login_and_get_token,
@@ -34,7 +36,8 @@ class TestDeleteUsers:
         ["testuserthatdoesnotexistinthedatabase"],
         ids=["test_delete_user_fail"],
     )
-    def test_delete_user_fail(
+    @pytest.mark.asyncio
+    async def test_delete_user_fail(
         self,
         username: str,
         test_app: TestClient,
@@ -47,7 +50,8 @@ class TestDeleteUsers:
 
         assert delete_response.status_code == 500
 
-    def test_delete_fed_user_forbidden(
+    @pytest.mark.asyncio
+    async def test_delete_fed_user_forbidden(
         self,
         test_app: TestClient,
         add_delete_fed_fixture,
@@ -58,7 +62,8 @@ class TestDeleteUsers:
 
         assert delete_fed_response.status_code == 403
 
-    def test_delete_local_user_forbidden(
+    @pytest.mark.asyncio
+    async def test_delete_local_user_forbidden(
         self,
         test_app: TestClient,
         add_delete_local_fixture,

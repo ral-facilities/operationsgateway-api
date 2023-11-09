@@ -1,89 +1,54 @@
-import asyncio
+import pytest_asyncio
 
-from fastapi.testclient import TestClient
-import pytest
-
-from operationsgateway_api.src.main import app
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
 
-@pytest.fixture()
-def loop():
-    # allows the testing of asynchronus functions using an event loop
-
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
-
-
-def add_fed_user(loop: asyncio.AbstractEventLoop):
+async def add_user(auth_type):
     user = {
-        "_id": "testuserthatdoesnotexistinthedatabasefed",
-        "auth_type": "FedID",
+        "_id": f"testuserthatdoesnotexistinthedatabase{auth_type}",
+        "auth_type": "",
         "authorised_routes": ["/submit/hdf POST", "/experiments POST"],
     }
-    loop.run_until_complete(
-        MongoDBInterface.insert_one(
-            "users",
-            user,
-        ),
+    if auth_type == "fed":
+        user["auth_type"] = "FedID"
+    if auth_type == "local":
+        user["auth_type"] = "local"
+        user["password"] = "password"
+    
+    await MongoDBInterface.insert_one(
+        "users",
+        user,
     )
 
 
-def add_local_user(loop: asyncio.AbstractEventLoop):
-    user = {
-        "_id": "testuserthatdoesnotexistinthedatabaselocal",
-        "auth_type": "local",
-        "authorised_routes": ["/submit/hdf POST", "/experiments POST"],
-        "sha256_password": "password",
-    }
-    loop.run_until_complete(
-        MongoDBInterface.insert_one(
-            "users",
-            user,
-        ),
+async def remove_user(auth_type):
+    await MongoDBInterface.delete_one(
+        "users",
+        filter_={"_id": f"testuserthatdoesnotexistinthedatabase{auth_type}"},
     )
 
 
-def remove_fed_user(loop: asyncio.AbstractEventLoop):
-    loop.run_until_complete(
-        MongoDBInterface.delete_one(
-            "users",
-            filter_={"_id": "testuserthatdoesnotexistinthedatabasefed"},
-        ),
-    )
-
-
-def remove_local_user(loop: asyncio.AbstractEventLoop):
-    loop.run_until_complete(
-        MongoDBInterface.delete_one(
-            "users",
-            filter_={"_id": "testuserthatdoesnotexistinthedatabaselocal"},
-        ),
-    )
-
-
-@pytest.fixture(scope="function")
-def add_delete_fed_fixture(loop: asyncio.AbstractEventLoop):
-    add_fed_user(loop)
+@pytest_asyncio.fixture(scope="function")
+async def add_delete_fed_fixture():
+    await add_user("fed")
     yield
-    remove_fed_user(loop)
+    await remove_user("fed")
 
 
-@pytest.fixture(scope="function")
-def add_delete_local_fixture(loop: asyncio.AbstractEventLoop):
-    add_local_user(loop)
+@pytest_asyncio.fixture(scope="function")
+async def add_delete_local_fixture():
+    await add_user("local")
     yield
-    remove_local_user(loop)
+    await remove_user("local")
 
 
-@pytest.fixture(scope="function")
-def delete_fed_fixture(loop: asyncio.AbstractEventLoop):
+@pytest_asyncio.fixture(scope="function")
+async def delete_fed_fixture():
     yield
-    remove_fed_user(loop)
+    await remove_user("fed")
 
 
-@pytest.fixture(scope="function")
-def delete_local_fixture(loop: asyncio.AbstractEventLoop):
+@pytest_asyncio.fixture(scope="function")
+async def delete_local_fixture():
     yield
-    remove_local_user(loop)
+    await remove_user("local")

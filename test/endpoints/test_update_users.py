@@ -154,7 +154,8 @@ class TestUpdateUsers:
             ),
         ],
     )
-    def test_update_local_user(
+    @pytest.mark.asyncio
+    async def test_update_local_user(
         self,
         test_app: TestClient,
         login_and_get_token,
@@ -180,7 +181,8 @@ class TestUpdateUsers:
 
         assert update_local_response.status_code == expected_response_code
 
-    def test_update_local_user_forbidden(
+    @pytest.mark.asyncio
+    async def test_update_local_user_forbidden(
         self,
         test_app: TestClient,
         add_delete_local_fixture,
@@ -225,7 +227,8 @@ class TestUpdateUsers:
             ),
         ],
     )
-    def test_update_fed_user_password(
+    @pytest.mark.asyncio
+    async def test_update_fed_user_password(
         self,
         test_app: TestClient,
         login_and_get_token,
@@ -246,27 +249,3 @@ class TestUpdateUsers:
         )
 
         assert update_fed_response.status_code == expected_response_code
-
-
-"""
-# update password
-# no changes made
-# add route
-# remove route
-# remove more routes than add
-# add more routes than remove
-
-# user not exist
-# user empty
-
-# password empty (local)
-
-# empty route (add and remove)
-# no route (add and remove)
-
-# no authrisation
-
-# bad route (add and remove)
-"""
-
-# try to add password (fed)

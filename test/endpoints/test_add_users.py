@@ -98,7 +98,8 @@ class TestCreateUsers:
             ),
         ],
     )
-    def test_create_local_user(
+    @pytest.mark.asyncio
+    async def test_create_local_user(
         self,
         test_app: TestClient,
         login_and_get_token,
@@ -124,7 +125,8 @@ class TestCreateUsers:
 
         assert create_local_response.status_code == expected_response_code
 
-    def test_create_preexisting_local_user(
+    @pytest.mark.asyncio
+    async def test_create_preexisting_local_user(
         self,
         test_app: TestClient,
         login_and_get_token,
@@ -206,7 +208,8 @@ class TestCreateUsers:
             ),
         ],
     )
-    def test_create_fed_user(
+    @pytest.mark.asyncio
+    async def test_create_fed_user(
         self,
         test_app: TestClient,
         login_and_get_token,
@@ -259,7 +262,8 @@ class TestCreateUsers:
             ),
         ],
     )
-    def test_password_fed_user(
+    @pytest.mark.asyncio
+    async def test_password_fed_user(
         self,
         test_app: TestClient,
         login_and_get_token,
@@ -285,7 +289,8 @@ class TestCreateUsers:
 
         assert create_fed_response.status_code == expected_response_code
 
-    def test_create_local_user_forbidden(
+    @pytest.mark.asyncio
+    async def test_create_local_user_forbidden(
         self,
         test_app: TestClient,
         add_delete_local_fixture,
@@ -304,7 +309,8 @@ class TestCreateUsers:
 
         assert create_local_response.status_code == 403
 
-    def test_create_fed_user_forbidden(
+    @pytest.mark.asyncio
+    async def test_create_fed_user_forbidden(
         self,
         test_app: TestClient,
         add_delete_fed_fixture,

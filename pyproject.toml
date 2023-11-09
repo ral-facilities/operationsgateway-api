@@ -25,6 +25,7 @@ python-ldap = "3.4.2"
 cron-converter = "^1.0.1"
 zeep = "^4.2.1"
 httpx = "^0.23.3"
+pytest-asyncio = "^0.21.1"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
