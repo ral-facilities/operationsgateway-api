@@ -63,7 +63,7 @@ def main():
         extract_experiment_metadata(experiment) for experiment in input_experiments
     ]
 
-    with open("/root/dev/operationsgateway-api/EFM.json", "w") as f:
+    with open(f"{resource_path}/experiments_for_mongoimport.json", "w") as f:
         for experiment in experiments:
             f.write(str(experiment).replace("'", '"') + "\n")
 
