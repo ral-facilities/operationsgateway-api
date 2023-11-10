@@ -19,7 +19,6 @@ def extract_experiment_metadata(experiment):
     end_date = datetime.combine(experiment["stop"], time(23, 59, 59, 0, tzinfo=None))
 
     return {
-        "_id": f"{experiment['experiment_id']}-{part_number}",
         "end_date": {"$date": f"{end_date.isoformat(timespec='milliseconds')}Z"},
         "experiment_id": experiment["experiment_id"],
         "part": part_number,
@@ -64,7 +63,7 @@ def main():
         extract_experiment_metadata(experiment) for experiment in input_experiments
     ]
 
-    with open(f"{resource_path}/experiments_for_mongoimport.json", "w") as f:
+    with open("/root/dev/operationsgateway-api/EFM.json", "w") as f:
         for experiment in experiments:
             f.write(str(experiment).replace("'", '"') + "\n")
 
