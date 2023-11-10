@@ -36,15 +36,14 @@ class EchoInterface:
             self.bucket = self.resource.Bucket(Config.config.images.image_bucket_name)
         except ClientError as exc:
             log.error(
-                "%s: %s",
+                "%s: %s. This error happened with bucket '%s'",
                 exc.response["Error"]["Code"],
                 exc.response["Error"].get("Message"),
+                Config.config.images.image_bucket_name,
             )
             raise EchoS3Error(
-                "Error '%s' caught when creating a boto3 resource and retrieving a"
-                " bucket called '%s'",
-                exc.response["Error"]["Code"],
-                Config.config.images.image_bucket_name,
+                "Error retrieving object storage bucket:"
+                f" {exc.response['Error']['Code']}",
             ) from exc
 
         # If a bucket doesn't exist, Bucket() won't raise an exception, so we have to
