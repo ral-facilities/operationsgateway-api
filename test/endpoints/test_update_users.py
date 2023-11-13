@@ -1,16 +1,18 @@
+from hashlib import sha256
 import json
 
 from fastapi.testclient import TestClient
 import pytest
 
+from test.endpoints.conftest import find_user
+
 
 class TestUpdateUsers:
     @pytest.mark.parametrize(
-        "username, updated_password, add_authorised_routes, "
+        "updated_password, add_authorised_routes, "
         "remove_authorised_routes, expected_response_code",
         [
             pytest.param(
-                "testuserthatdoesnotexistinthedatabaselocal",
                 "passwords",
                 [],
                 [],
@@ -18,7 +20,6 @@ class TestUpdateUsers:
                 id="Successful local user password update",
             ),
             pytest.param(
-                "testuserthatdoesnotexistinthedatabaselocal",
                 "password",
                 [],
                 [],
@@ -26,7 +27,6 @@ class TestUpdateUsers:
                 id="Updating the password to itself",
             ),
             pytest.param(
-                "testuserthatdoesnotexistinthedatabaselocal",
                 None,
                 [],
                 [],
@@ -34,7 +34,6 @@ class TestUpdateUsers:
                 id="Successfully updating nothing",
             ),
             pytest.param(
-                "testuserthatdoesnotexistinthedatabaselocal",
                 None,
                 None,
                 [],
@@ -42,7 +41,6 @@ class TestUpdateUsers:
                 id="Successfully updating nothing (empty add routes)",
             ),
             pytest.param(
-                "testuserthatdoesnotexistinthedatabaselocal",
                 None,
                 [],
                 None,
@@ -50,7 +48,6 @@ class TestUpdateUsers:
                 id="Successfully updating nothing (empty add routes)",
             ),
             pytest.param(
-                "testuserthatdoesnotexistinthedatabaselocal",
                 None,
                 None,
                 None,
@@ -58,7 +55,6 @@ class TestUpdateUsers:
                 id="Successfully updating nothing (empty routes)",
             ),
             pytest.param(
-                "testuserthatdoesnotexistinthedatabaselocal",
                 None,
                 ["/records/{id_} DELETE"],
                 [],
@@ -66,7 +62,6 @@ class TestUpdateUsers:
                 id="Successfully adding '/records/{id_} DELETE' to authorised routes",
             ),
             pytest.param(
-                "testuserthatdoesnotexistinthedatabaselocal",
                 None,
                 [],
                 ["/submit/hdf POST"],
@@ -74,7 +69,6 @@ class TestUpdateUsers:
                 id="Successfully removed '/submit/hdf POST' from authorised routes",
             ),
             pytest.param(
-                "testuserthatdoesnotexistinthedatabaselocal",
                 None,
                 ["/records/{id_} DELETE", "/users POST"],
                 ["/records/{id_} DELETE", "/experiments POST"],
@@ -84,7 +78,6 @@ class TestUpdateUsers:
                 " '/experiments POST'",
             ),
             pytest.param(
-                "testuserthatdoesnotexistinthedatabaselocal",
                 None,
                 ["/records/{id_} DELETE", "/users POST"],
                 ["/records/{id_} DELETE", "/experiments POST", "/users POST"],
@@ -92,7 +85,45 @@ class TestUpdateUsers:
                 id="Successfully removed everything that was added "
                 "as well as '/experiments POST'",
             ),
-            pytest.param(
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_update_user_success(
+        self,
+        test_app: TestClient,
+        login_and_get_token,
+        add_delete_local_fixture,
+        updated_password,
+        add_authorised_routes,
+        remove_authorised_routes,
+        expected_response_code,
+    ):
+        username = "testuserthatdoesnotexistinthedatabaselocal"
+        before_user = await find_user(username)
+        update_local_response = test_app.patch(
+            "/users",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+            content=json.dumps(
+                {
+                    "_id": username,
+                    "updated_password": updated_password,
+                    "add_authorised_routes": add_authorised_routes,
+                    "remove_authorised_routes": remove_authorised_routes,
+                },
+            ),
+        )
+        after_user = await find_user(username)
+        
+        if after_user["sha256_password"] != None:
+            assert sha256(updated_password.encode()).hexdigest() == after_user["sha256_password"]    
+
+        assert update_local_response.status_code == expected_response_code
+    
+    @pytest.mark.parametrize(
+        "username, updated_password, add_authorised_routes, "
+        "remove_authorised_routes, expected_response_code",
+        [
+    pytest.param(
                 "",
                 "passwords",
                 [],
@@ -132,10 +163,10 @@ class TestUpdateUsers:
                 400,
                 id="Failure bad remove route",
             ),
-        ],
+        ]
     )
     @pytest.mark.asyncio
-    async def test_update_local_user(
+    async def test_update_user_fail(
         self,
         test_app: TestClient,
         login_and_get_token,
