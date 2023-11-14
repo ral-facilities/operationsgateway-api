@@ -10,7 +10,7 @@ from operationsgateway_api.src.users.user import User
 from operationsgateway_api.src.central_authentication_list import authorised_route_list
 from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.error_handling import endpoint_error_handling
-from operationsgateway_api.src.exceptions import DatabaseError, QueryParameterError, UnauthorisedError
+from operationsgateway_api.src.exceptions import QueryParameterError, UnauthorisedError
 from operationsgateway_api.src.models import UpdateUserModel, UserModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
@@ -21,7 +21,6 @@ AuthoriseRoute = Annotated[str, Depends(authorise_route)]
 class validationHelp():
     
     def check_authorised_routes(authorised_route):
-        log.error(authorised_route_list)
         difference = list(set(authorised_route) - set(authorised_route_list))
         return difference
 
@@ -163,7 +162,7 @@ async def update_user(
         user = await User.get_user(change_details.username)
     except (UnauthorisedError, ValueError):
         log.error("username field did not exist in the database, _id is required")
-        raise DatabaseError()
+        raise QueryParameterError()
 
     if user.auth_type == "local":
         await MongoDBInterface.update_one(
@@ -172,12 +171,13 @@ async def update_user(
             update={"$set": {"sha256_password": change_details.updated_password}},
         )
     else:
-        log.error("cannot add password to FedID user type")
-
+        log.info("cannot add password to FedID user type")
+        
     if change_details.add_authorised_routes is not None:
-        change_details.add_authorised_routes = user.authorised_routes + list(
-            set(change_details.add_authorised_routes) - set(user.authorised_routes),
-        )
+        if user.authorised_routes is not None:
+            change_details.add_authorised_routes = user.authorised_routes + list(
+                set(change_details.add_authorised_routes) - set(user.authorised_routes),
+            )
         await MongoDBInterface.update_one(
             "users",
             filter_={"_id": change_details.username},
@@ -185,12 +185,14 @@ async def update_user(
                 "$set": {"authorised_routes": change_details.add_authorised_routes},
             },
         )
-
+        
+    user = await User.get_user(change_details.username)
     if change_details.remove_authorised_routes is not None:
-        change_details.remove_authorised_routes = list(
-            set(user.authorised_routes)
-            - set(change_details.remove_authorised_routes),
-        )
+        if user.authorised_routes is not None:
+            change_details.remove_authorised_routes = list(
+                set(user.authorised_routes)
+                - set(change_details.remove_authorised_routes),
+            )
         await MongoDBInterface.update_one(
             "users",
             filter_={"_id": change_details.username},
@@ -224,7 +226,7 @@ async def delete_user(
         await User.get_user(id_)
     except UnauthorisedError:
         log.error("username field did not exist in the database")
-        raise DatabaseError(
+        raise QueryParameterError(
             f"username field must exist in the database. You put: '{id_}'",
         )
 

@@ -53,7 +53,7 @@ class TestDeleteUsers:
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
 
-        assert delete_response.status_code == 500
+        assert delete_response.status_code == 400
 
     @pytest.mark.parametrize(
         "username",

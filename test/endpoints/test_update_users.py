@@ -128,7 +128,7 @@ class TestUpdateUsers:
                 "passwords",
                 [],
                 [],
-                500,
+                400,
                 id="Failure username empty",
             ),
             pytest.param(
