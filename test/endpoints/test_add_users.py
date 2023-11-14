@@ -94,7 +94,7 @@ class TestCreateUsers:
                 ["false path"],
                 "password",
                 400,
-                id="Failed local user creation logs 'false path' to console",
+                id="Failed local user creation logs 'false path' to console (pure)",
             ),
         ],
     )
@@ -197,7 +197,7 @@ class TestCreateUsers:
                 "FedID",
                 ["false path"],
                 400,
-                id="Failed fed user creation logs 'false path' to console",
+                id="Failed fed user creation logs 'false path' to console (pure)",
             ),
             pytest.param(
                 "testuserthatdoesnotexistinthedatabasefed",

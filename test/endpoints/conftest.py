@@ -52,11 +52,3 @@ async def delete_fed_fixture():
 async def delete_local_fixture():
     yield
     await remove_user("local")
-
-
-async def find_user(_id):
-    user_info = await MongoDBInterface.find_one(
-        "users",
-        filter_={"_id": _id},
-    )
-    return user_info

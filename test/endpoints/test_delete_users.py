@@ -8,11 +8,11 @@ class TestDeleteUsers:
         [
             pytest.param(
                 "/users/testuserthatdoesnotexistinthedatabasefed",
-                id="delete fed user success",
+                id="Delete fed user success",
             ),
             pytest.param(
                 "/users/testuserthatdoesnotexistinthedatabaselocal",
-                id="delete local user success",
+                id="Delete local user success",
             ),
         ],
     )
@@ -37,7 +37,7 @@ class TestDeleteUsers:
         [
             pytest.param(
                 "/users/testuserthatdoesnotexistinthedatabase",
-                id="test_delete_user_fail",
+                id="Delete user not exists fail",
             ),
         ],
     )
@@ -60,11 +60,11 @@ class TestDeleteUsers:
         [
             pytest.param(
                 "/users/testuserthatdoesnotexistinthedatabasefed",
-                id="delete fed user forbidden",
+                id="Delete fed user forbidden",
             ),
             pytest.param(
                 "/users/testuserthatdoesnotexistinthedatabaselocal",
-                id="delete local user forbidden",
+                id="Delete local user forbidden",
             ),
         ],
     )

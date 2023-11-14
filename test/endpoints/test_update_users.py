@@ -1,10 +1,10 @@
-from hashlib import sha256
 import json
 
 from fastapi.testclient import TestClient
 import pytest
 
-from test.endpoints.conftest import find_user
+from operationsgateway_api.src.routes.users import validationHelp
+from operationsgateway_api.src.users.user import User
 
 
 class TestUpdateUsers:
@@ -45,7 +45,7 @@ class TestUpdateUsers:
                 [],
                 None,
                 200,
-                id="Successfully updating nothing (empty add routes)",
+                id="Successfully updating nothing (empty remove routes)",
             ),
             pytest.param(
                 None,
@@ -99,7 +99,7 @@ class TestUpdateUsers:
         expected_response_code,
     ):
         username = "testuserthatdoesnotexistinthedatabaselocal"
-        before_user = await find_user(username)
+        before_user = await User.get_user(username)
         update_local_response = test_app.patch(
             "/users",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
@@ -112,10 +112,10 @@ class TestUpdateUsers:
                 },
             ),
         )
-        after_user = await find_user(username)
+        after_user = await User.get_user(username)
         
-        if after_user["sha256_password"] != None:
-            assert sha256(updated_password.encode()).hexdigest() == after_user["sha256_password"]    
+        if after_user.sha256_password != None:
+            assert validationHelp.hash_password(updated_password) == after_user.sha256_password
 
         assert update_local_response.status_code == expected_response_code
     
@@ -220,21 +220,21 @@ class TestUpdateUsers:
                 "testuserthatdoesnotexistinthedatabasefed",
                 "password",
                 200,
-                id="Failure bad add route",
+                id="Success ignore password on fed user",
             ),
             # gives an error if the password field is empty though
             pytest.param(
                 "testuserthatdoesnotexistinthedatabasefed",
                 "",
                 400,
-                id="Failure bad remove route",
+                id="Failure password exists but is empty",
             ),
             # control to make sure it works without a password field
             pytest.param(
                 "testuserthatdoesnotexistinthedatabasefed",
                 None,
                 200,
-                id="Failure bad remove route",
+                id="Success no password",
             ),
         ],
     )

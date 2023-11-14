@@ -6,9 +6,11 @@ from fastapi import APIRouter, Body, Depends, Path, Response, status
 from fastapi.responses import JSONResponse
 from typing_extensions import Annotated
 
+from operationsgateway_api.src.users.user import User
+from operationsgateway_api.src.central_authentication_list import authorised_route_list
 from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.error_handling import endpoint_error_handling
-from operationsgateway_api.src.exceptions import DatabaseError, QueryParameterError
+from operationsgateway_api.src.exceptions import DatabaseError, QueryParameterError, UnauthorisedError
 from operationsgateway_api.src.models import UpdateUserModel, UserModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
@@ -16,19 +18,16 @@ log = logging.getLogger()
 router = APIRouter()
 AuthoriseRoute = Annotated[str, Depends(authorise_route)]
 
+class validationHelp():
+    
+    def check_authorised_routes(authorised_route):
+        log.error(authorised_route_list)
+        difference = list(set(authorised_route) - set(authorised_route_list))
+        return difference
 
-def check_authorised_routes(authorised_route):
-    authorised_route_list = [
-        "/submit/hdf POST",
-        "/submit/manifest POST",
-        "/records/{id_} DELETE",
-        "/experiments POST",
-        "/users POST",
-        "/users PATCH",
-        "/users/{id_} DELETE",
-    ]
-    difference = list(set(authorised_route) - set(authorised_route_list))
-    return difference
+    def hash_password(password):
+        hash = password = sha256(password.encode()).hexdigest()
+        return hash
 
 
 @router.post(
@@ -55,9 +54,7 @@ async def add_user(
         if login_details.sha256_password == "":
             raise QueryParameterError("you must input a password")
         else:
-            login_details.sha256_password = sha256(
-                login_details.sha256_password.encode(),
-            ).hexdigest()
+            login_details.sha256_password = validationHelp.hash_password(login_details.sha256_password)
 
     if auth_type != "local" and auth_type != "FedID":
         log.error("auth_type was not 'local' or 'FedID'")
@@ -80,26 +77,28 @@ async def add_user(
         )
 
     if login_details.authorised_routes is not None:
-        invalid_routes = check_authorised_routes(login_details.authorised_routes)
+        invalid_routes = validationHelp.check_authorised_routes(login_details.authorised_routes)
         if invalid_routes:
             log.error("some of the authorised routes entered were invalid")
             raise QueryParameterError(
                 f"some of the routes entered are invalid:  {invalid_routes} ",
             )
 
-    if (
-        await MongoDBInterface.find_one(
-            "users",
-            filter_={"_id": login_details.username},
-        )
-        is not None
-        or _id == ""
-    ):
-        log.error("username must be unique and not empty")
+    try:
+        if login_details.username == "":
+            log.error("username must not be empty")
+            raise QueryParameterError(
+                "username field must not be filled"
+                f". You put: '{login_details.username}' ",
+            )
+        await User.get_user(login_details.username)
+        log.error("username must be unique")
         raise QueryParameterError(
             "username field must not be the same as a pre existing"
-            f" user or empty. You put: '{login_details.username}' ",
+            f" user. You put: '{login_details.username}' ",
         )
+    except UnauthorisedError:
+        pass
 
     await MongoDBInterface.insert_one(
         "users",
@@ -138,12 +137,10 @@ async def update_user(
                 "you must have a password with the password field",
             )
         else:
-            sha_256 = sha256()
-            sha_256.update(change_details.updated_password.encode())
-            change_details.updated_password = sha_256.hexdigest()
+            change_details.updated_password = validationHelp.hash_password(change_details.updated_password)
 
     if change_details.add_authorised_routes is not None:
-        invalid_routes = check_authorised_routes(change_details.add_authorised_routes)
+        invalid_routes = validationHelp.check_authorised_routes(change_details.add_authorised_routes)
         if invalid_routes:
             log.error("some of the authorised routes to add entered were invalid")
             raise QueryParameterError(
@@ -151,7 +148,7 @@ async def update_user(
             )
 
     if change_details.remove_authorised_routes is not None:
-        invalid_routes = check_authorised_routes(
+        invalid_routes = validationHelp.check_authorised_routes(
             change_details.remove_authorised_routes,
         )
         if invalid_routes:
@@ -160,16 +157,15 @@ async def update_user(
                 f"some of the routes entered are invalid:  {invalid_routes} ",
             )
 
-    user = await MongoDBInterface.find_one(
-        "users",
-        filter_={"_id": change_details.username},
-    )
-
-    if user is None or change_details.username == "":
+    try:
+        if change_details.username == "":
+            raise ValueError
+        user = await User.get_user(change_details.username)
+    except (UnauthorisedError, ValueError):
         log.error("username field did not exist in the database, _id is required")
         raise DatabaseError()
 
-    if user["auth_type"] == "local":
+    if user.auth_type == "local":
         await MongoDBInterface.update_one(
             "users",
             filter_={"_id": change_details.username},
@@ -179,8 +175,8 @@ async def update_user(
         log.error("cannot add password to FedID user type")
 
     if change_details.add_authorised_routes is not None:
-        change_details.add_authorised_routes = user["authorised_routes"] + list(
-            set(change_details.add_authorised_routes) - set(user["authorised_routes"]),
+        change_details.add_authorised_routes = user.authorised_routes + list(
+            set(change_details.add_authorised_routes) - set(user.authorised_routes),
         )
         await MongoDBInterface.update_one(
             "users",
@@ -192,7 +188,7 @@ async def update_user(
 
     if change_details.remove_authorised_routes is not None:
         change_details.remove_authorised_routes = list(
-            set(user["authorised_routes"])
+            set(user.authorised_routes)
             - set(change_details.remove_authorised_routes),
         )
         await MongoDBInterface.update_one(
@@ -224,13 +220,9 @@ async def delete_user(
     ],
     access_token: AuthoriseRoute,
 ):
-    if (
-        await MongoDBInterface.find_one(
-            "users",
-            filter_={"_id": id_},
-        )
-        is None
-    ):
+    try:
+        await User.get_user(id_)
+    except UnauthorisedError:
         log.error("username field did not exist in the database")
         raise DatabaseError(
             f"username field must exist in the database. You put: '{id_}'",
