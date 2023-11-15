@@ -36,14 +36,14 @@ class TestGetImage:
             # repeat the above test but with the user's preferred colour map set to
             # check that the preference is used when no specific map is chosen
             pytest.param(
-                "20220408002114",
-                "N_LEG1_GREEN_NF_IMAGE",
+                "20230605100000",
+                "FE-204-NSO-P2-CAM-1",
                 False,
                 True,
                 None,
                 None,
                 None,
-                "002431ebfe4232121856ae88c15ad939",
+                "a40b7feb31d741cf0e3899f6c17a56bc",
                 id="Image using user's preferred colourmap",
             ),
             pytest.param(
@@ -60,14 +60,14 @@ class TestGetImage:
             # repeat the test above but with the user's preferred colour map set to
             # ensure that it is ignored and the specified colour map used
             pytest.param(
-                "20220408002114",
-                "N_LEG1_GREEN_NF_IMAGE",
+                "20230605100000",
+                "FE-204-NSO-P2-CAM-1",
                 None,
                 True,
                 50,
                 200,
                 "jet_r",
-                "707c50d0784e305f0f6d20fe39c93162",
+                "01aeb3147ae2817ae99eea47fb468322",
                 id="Image with all false colour params specified (ignoring "
                 "user's pref)",
             ),

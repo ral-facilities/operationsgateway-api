@@ -193,21 +193,21 @@ class TestGetRecords:
                 None,
                 False,
                 {
-                    "TS-202-TSM-P2-CAM-1": "833537834d6d6adfffd0339e55f82bc1",
+                    "TS-202-TSM-P2-CAM-1": "3c366b414a30de01fc4916020e767e15",
                 },
                 id="Whole record: all channels have channel_dtype returned",
             ),
             # ensure setting the user's preferred colour map overrides the system
             # default
             pytest.param(
-                {"metadata.shotnum": 366372},
+                {"metadata.shotnum": 423648072000},
                 None,
                 None,
                 None,
                 None,
                 True,
                 {
-                    "N_COMP_NF_IMAGE": "cac1de06fbf0dcf42263f210f4895b3f",
+                    "TS-202-TSM-P2-CAM-1": "e85ec73ada4dc726bff1035285d38c76",
                 },
                 id="Whole record: all channels have channel_dtype returned and user's "
                 "preferred colour map is set",
@@ -220,7 +220,7 @@ class TestGetRecords:
                 None,
                 False,
                 {
-                    "TS-202-TSM-P2-CAM-1": "833537834d6d6adfffd0339e55f82bc1",
+                    "TS-202-TSM-P2-CAM-1": "3c366b414a30de01fc4916020e767e15",
                 },
                 id="Partial record: only TS-202-TSM-P2-CAM-1 and no channel_dtype"
                 " returned",
@@ -233,7 +233,7 @@ class TestGetRecords:
                 "jet_r",
                 False,
                 {
-                    "TS-202-TSM-P2-CAM-1": "2883f8ce08ef784ab055798c066bb774",
+                    "TS-202-TSM-P2-CAM-1": "60ef63d28988c07599658dbbfeefca49",
                 },
                 id="Whole record: all channels have channel_dtype returned "
                 "and custom false colour settings applied",
@@ -241,14 +241,14 @@ class TestGetRecords:
             # repeat the test above but with the user's preferred colour map set
             # ensure this does not affect the outcome
             pytest.param(
-                {"metadata.shotnum": 366372},
+                {"metadata.shotnum": 423648072000},
                 None,
                 50,
                 200,
                 "jet_r",
                 True,
                 {
-                    "N_COMP_NF_IMAGE": "6058f2069548d170694933d616b42d3a",
+                    "TS-202-TSM-P2-CAM-1": "60ef63d28988c07599658dbbfeefca49",
                 },
                 id="Whole record: all channels have channel_dtype returned "
                 "and custom false colour settings applied even with user's "
@@ -262,7 +262,7 @@ class TestGetRecords:
                 "jet_r",
                 False,
                 {
-                    "TS-202-TSM-P2-CAM-1": "2883f8ce08ef784ab055798c066bb774",
+                    "TS-202-TSM-P2-CAM-1": "60ef63d28988c07599658dbbfeefca49",
                 },
                 id="Partial record: only TS-202-TSM-P2-CAM-1 and no channel_dtype"
                 " returned and custom false colour settings applied",

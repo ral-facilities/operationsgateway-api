@@ -52,19 +52,19 @@ class TestGetRecordByID:
             pytest.param(
                 "20230605100000",
                 {
-                    "FE-204-NSO-P1-CAM-1": "77bd6ab1bbdc654de72bed13014293a8",
-                    "FE-204-NSO-P2-CAM-1": "fc163ed01e4388f9e8464d6b51c478d3",
-                    "TS-202-TSM-CAM-2": "190c91c2927dc1bf4e0d71fc73ee0957",
+                    "FE-204-NSO-P1-CAM-1": "e155e7241af619e65e9d87b8b109c060",
+                    "FE-204-NSO-P2-CAM-1": "576299fd37628f21d755c87a983e5b28",
+                    "TS-202-TSM-CAM-2": "00a54a41f57d22353f6e21150059742f",
                 },
                 False,
                 id="Ordinary request (preferred colour map not set)",
             ),
             pytest.param(
-                "20220408132830",
+                "20230605100000",
                 {
-                    "N_COMP_FF_IMAGE": "33e614585eb7e063174629cddedc5009",
-                    "N_COMP_NF_IMAGE": "9431db428aab384aa83a06951cacb9be",
-                    "N_LEG1_GREEN_NF_IMAGE": "c874477cf9018849cd4260615da129b6",
+                    "FE-204-NSO-P1-CAM-1": "e99a52ef19d21df34dc07619d684a61a",
+                    "FE-204-NSO-P2-CAM-1": "6b5dc42ec1110f1d229f3901deb07df1",
+                    "TS-202-TSM-CAM-2": "af70df64de97b30fb7a7a54462825ade",
                 },
                 True,
                 id="Ordinary request (with preferred colour map set)",

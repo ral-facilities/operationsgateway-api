@@ -61,14 +61,14 @@ class TestChannelSummary:
             # repeat the above test but with the user's preferred colour map set to
             # check that the preference overrides the system default colour map
             pytest.param(
-                "N_COMP_FF_IMAGE",
+                "FE-204-PSO-P2-CAM-2",
                 {
-                    "first_date": "2022-04-07T14:16:16",
-                    "most_recent_date": "2022-04-08T16:58:57",
+                    "first_date": "2023-06-05T08:00:00",
+                    "most_recent_date": "2023-06-05T16:00:00",
                     "recent_sample": [
-                        {"2022-04-08T16:58:57": "3e78b905df05f4b08a188e0fbd7fcc2a"},
-                        {"2022-04-08T16:41:36": "d3e6761e20d18344ade71bd5329b1a36"},
-                        {"2022-04-08T16:29:56": "183898d6a41f1b3cb1debdcc8ef0942f"},
+                        {"2023-06-05T16:00:00": "87cde1eb0dc71fa6786ee11cda542828"},
+                        {"2023-06-05T15:00:00": "47602f4ec239dc4ff88679dea99aba5e"},
+                        {"2023-06-05T14:00:00": "c9bc8dc34bcb9d3f269521f739689d86"},
                     ],
                 },
                 True,
