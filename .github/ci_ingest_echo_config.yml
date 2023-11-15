@@ -15,13 +15,13 @@ echo:
   access_key: access_key
   secret_key: secret_key
   simulated_data_bucket: og-ci-simulated-data
-  images_bucket: og-matt-images-test
-  page_size: 12
+  images_bucket: og-bucket
+  page_size: 1
 api:
   host: 127.0.0.1
   port: 8000
   username: backend
   password: back
   log_config_path: /home/runner/work/operationsgateway-api/operationsgateway-api/operationsgateway_api/logging.ini
-  gunicorn_num_workers: "8"
-  timeout_seconds: 500
+  gunicorn_num_workers: "1"
+  timeout_seconds: 1000

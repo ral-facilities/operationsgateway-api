@@ -7,7 +7,7 @@ from util.realistic_data.ingest.config import Config
 
 class SSHHandler:
     def __init__(self) -> None:
-        self.connection = Connection(Config.config.script_options.ssh_connection_url)
+        self.connection = Connection(Config.config.ssh.ssh_connection_url)
 
     def transfer_experiments_file(self, experiments_file: BytesIO) -> None:
         self.connection.put(

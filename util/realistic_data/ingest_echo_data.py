@@ -30,7 +30,7 @@ def main():
 
     if Config.config.script_options.wipe_database:
         print("Wiping database")
-        collection_names = ["channels", "experiments"]
+        collection_names = ["channels", "experiments", "records", "waveforms"]
         if Config.config.ssh.enabled:
             ssh.drop_database_collections(collection_names)
         else:
