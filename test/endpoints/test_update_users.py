@@ -3,7 +3,6 @@ import json
 from fastapi.testclient import TestClient
 import pytest
 
-from operationsgateway_api.src.routes.users import validationHelp
 from operationsgateway_api.src.users.user import User
 
 
@@ -113,17 +112,17 @@ class TestUpdateUsers:
             ),
         )
         after_user = await User.get_user(username)
-        
-        if after_user.sha256_password != None:
-            assert validationHelp.hash_password(updated_password) == after_user.sha256_password
+
+        if after_user.sha256_password is not None:
+            assert User.hash_password(updated_password) == after_user.sha256_password
 
         assert update_local_response.status_code == expected_response_code
-    
+
     @pytest.mark.parametrize(
         "username, updated_password, add_authorised_routes, "
         "remove_authorised_routes, expected_response_code",
         [
-    pytest.param(
+            pytest.param(
                 "",
                 "passwords",
                 [],
@@ -163,7 +162,7 @@ class TestUpdateUsers:
                 400,
                 id="Failure bad remove route",
             ),
-        ]
+        ],
     )
     @pytest.mark.asyncio
     async def test_update_user_fail(

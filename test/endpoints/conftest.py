@@ -13,7 +13,10 @@ async def add_user(auth_type):
         user["auth_type"] = "FedID"
     if auth_type == "local":
         user["auth_type"] = "local"
-        user["sha256_password"] = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"    # hashed "password"
+        user[
+            "sha256_password"
+        ] = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"
+        # hashed "password"
 
     await MongoDBInterface.insert_one(
         "users",
