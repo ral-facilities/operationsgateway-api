@@ -1,6 +1,6 @@
 from datetime import datetime
 import logging
-from typing import Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from pydantic import ValidationError
 
@@ -11,7 +11,7 @@ from operationsgateway_api.src.experiments.duplicate_part_selector import (
 )
 import operationsgateway_api.src.experiments.runners as runners
 from operationsgateway_api.src.experiments.scheduler_interface import SchedulerInterface
-from operationsgateway_api.src.models import ExperimentModel
+from operationsgateway_api.src.models import ExperimentModel, ExperimentPartMappingModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.routes.common_parameters import ParameterHandler
 
@@ -53,18 +53,22 @@ class Experiment:
             experiment_search_end_date,
         )
 
-        exp_data = self.scheduler.get_experiment_dates_for_instrument(
-            experiment_search_start_date,
-            experiment_search_end_date,
-        )
+        experiment_part_mappings = []
+        for instrument_name in Config.config.experiments.instrument_names:
+            exp_data = self.scheduler.get_experiment_dates_for_instrument(
+                instrument_name,
+                experiment_search_start_date,
+                experiment_search_end_date,
+            )
+            experiment_part_mappings.extend(
+                self._map_experiments_to_part_numbers(exp_data, instrument_name),
+            )
 
-        experiment_parts = self._map_experiments_to_part_numbers(exp_data)
         ids_for_scheduler_call = self._generate_id_instrument_name_pairs(
-            experiment_parts,
+            experiment_part_mappings,
         )
-
         experiments = self.scheduler.get_experiments(ids_for_scheduler_call)
-        self._extract_experiment_data(experiments, experiment_parts)
+        self._extract_experiment_data(experiments, experiment_part_mappings)
 
     async def store_experiments(self) -> List[str]:
         """
@@ -108,13 +112,15 @@ class Experiment:
 
     def _map_experiments_to_part_numbers(
         self,
-        experiments: list,
-    ) -> Dict[int, List[int]]:
+        # List of zeep experimentDateDTO's
+        experiments: List[Any],
+        instrument_name: str,
+    ) -> List[ExperimentPartMappingModel]:
         """
-        Extracts the rb number (experiment ID) and the experiment's part and puts them
-        into a dictionary to get start and end dates for each one.
-
-        Example output: {19510004: [1], 20310000: [1, 2, 3]}
+        Given a list of experiments retrieved from the Scheduler, extract RB numbers
+        (experiment IDs) and the experiment's parts and return a list of experiment part
+        mappings that contain this data and which instrument the experiment/its parts
+        belong to
         """
 
         exp_parts = {}
@@ -126,29 +132,50 @@ class Experiment:
                 raise ExperimentDetailsError(str(exc)) from exc
 
         log.debug("Experiment parts: %s", exp_parts)
-        return exp_parts
+
+        part_mappings = [
+            ExperimentPartMappingModel(
+                experiment_id=exp_id,
+                parts=parts,
+                instrument_name=instrument_name,
+            )
+            for exp_id, parts in exp_parts.items()
+        ]
+
+        return part_mappings
 
     def _generate_id_instrument_name_pairs(
         self,
-        experiment_parts: Dict[int, List[int]],
+        experiment_part_mappings: List[ExperimentPartMappingModel],
     ) -> List[Dict[str, Union[str, int]]]:
         """
         Generate a list of dictionaries in the format accepted by the Scheduler to get
-        details of multiple experiments
+        details of multiple experiments. If duplicate part mappings are passed, only one
+        pair should be returned.
         """
 
         id_name_pairs = [
-            {"key": experiment_id, "value": Config.config.experiments.instrument_name}
-            for experiment_id in experiment_parts.keys()
+            {"key": mapping.experiment_id, "value": mapping.instrument_name}
+            for mapping in experiment_part_mappings
         ]
-        log.debug("Experiments to query for: %s", id_name_pairs)
 
-        return id_name_pairs
+        # Create a list of tuples (which are hashable) containing dictionary items,
+        # store them in a set to remove duplicates and convert the remaining tuples back
+        # into dictionaries, stored in a list
+        duplicates_removed = [
+            dict(t) for t in {tuple(d.items()) for d in id_name_pairs}
+        ]
+        # Testing revealed the above list comprehension doesn't guarantee the order of
+        # the dictionaries so explict sorting is needed
+        ordered_list = sorted(duplicates_removed, key=lambda d: d["key"])
+        log.debug("Experiments to query for: %s", ordered_list)
+
+        return ordered_list
 
     def _extract_experiment_data(
         self,
         experiments: list,
-        experiment_part_mapping: Dict[int, List[int]],
+        experiment_part_mappings: List[ExperimentPartMappingModel],
     ) -> None:
         """
         Extract relevant attributes from experiment data that the Scheduler responded
@@ -169,16 +196,17 @@ class Experiment:
                 # Combine selected duplicate parts with non duplicates and sort based on
                 # experiment ID and part number
                 experiment_parts = selected_parts + non_duplicate_parts
-                list.sort(
-                    experiment_parts,
+                experiment_parts.sort(
                     key=lambda part: (part.referenceNumber, part.partNumber),
                 )
 
                 for part in experiment_parts:
-                    if (
-                        part.partNumber
-                        in experiment_part_mapping[int(part.referenceNumber)]
-                    ):
+                    part_mapping = self._get_mapping_model_by_experiment_id(
+                        int(part.referenceNumber),
+                        experiment_part_mappings,
+                    )
+
+                    if part.partNumber in part_mapping.parts:
                         self.experiments.append(
                             ExperimentModel(
                                 experiment_id=str(part.referenceNumber),
@@ -191,6 +219,27 @@ class Experiment:
                 raise ExperimentDetailsError(str(exc)) from exc
             except ValidationError as exc:
                 raise ModelError(str(exc)) from exc
+
+    def _get_mapping_model_by_experiment_id(
+        self,
+        experiment_id: int,
+        mapping_models: List[ExperimentPartMappingModel],
+    ):
+        """
+        Search through a list of experiment part mapping models and return the one with
+        a matching experiment ID
+        """
+
+        for mapping in mapping_models:
+            if mapping.experiment_id == experiment_id:
+                return mapping
+
+        log.error(
+            "Part mapping for %s failed. Mapping to search through: %s",
+            experiment_id,
+            mapping_models,
+        )
+        raise ExperimentDetailsError(f"Lookup of part mapping {experiment_id} failed")
 
     def _detect_duplicate_parts(
         self,

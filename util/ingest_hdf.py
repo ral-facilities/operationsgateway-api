@@ -3,15 +3,17 @@ import json
 import os
 from pathlib import Path
 from pprint import pprint
-import shutil
 import socket
 from subprocess import Popen, PIPE
 import sys
 import threading
 from time import sleep, time
 
+import boto3
 from motor.motor_asyncio import AsyncIOMotorClient
 import requests
+
+from operationsgateway_api.src.config import Config
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -67,13 +69,6 @@ parser.add_argument(
     default=False,
 )
 parser.add_argument(
-    "-i",
-    "--images-path",
-    type=str,
-    help="Image storage path, used when deleting images before ingestion",
-    default=None,
-)
-parser.add_argument(
     "-e",
     "--experiments",
     help="Flag to determine whether stored experiments should be deleted & re-ingested",
@@ -91,7 +86,7 @@ WIPE_DATABASE = args.wipe_database
 DATABASE_CONNECTION_URL = "mongodb://localhost:27017"
 DATABASE_NAME = args.database_name
 DELETE_IMAGES = args.delete_images
-IMAGES_PATH = args.images_path
+BUCKET_NAME = Config.config.images.image_bucket_name
 REINGEST_EXPERIMENTS = args.experiments
 
 
@@ -108,16 +103,21 @@ if WIPE_DATABASE:
         experiments_drop = db.experiments.drop()
         print("Experiments collection dropped")
 
-# Delete images from disk
+# Delete images from S3 object storage
 if DELETE_IMAGES:
-    for root, dirs, files in os.walk(IMAGES_PATH):
-        for f in files:
-            os.unlink(os.path.join(root, f))
-        print(f"Removed {len(files)} file(s) from base level of image path")
+    s3_resource = boto3.resource(
+        "s3",
+        endpoint_url=Config.config.images.echo_url,
+        aws_access_key_id=Config.config.images.echo_access_key,
+        aws_secret_access_key=Config.config.images.echo_secret_key,
+    )
 
-        for d in dirs:
-            shutil.rmtree(os.path.join(root, d))
-        print(f"Removed {len(dirs)} directorie(s) and their contents from image path")
+
+    bucket = s3_resource.Bucket(BUCKET_NAME)
+    print(f"Retrieved '{BUCKET_NAME}' bucket, going to delete all files in the bucket")
+    bucket.objects.all().delete()
+    print(f"Remove all files from the '{BUCKET_NAME}' bucket")
+
 
 def is_api_alive(host, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -199,6 +199,7 @@ with open(f"{BASE_DIR}/channel_manifest.json", "r") as channel_manifest:
 for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
     if entry.is_dir():
         print(f"Iterating through {entry.path}")
+        directory_start_time = time()
         for file in sorted(os.scandir(entry.path), key=lambda e: e.name):
             if file.name.endswith(".h5"):
                 start_time = time()
@@ -229,6 +230,13 @@ for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
                     else:
                         print(f"{response.status_code} returned")
                         pprint(response.text)
+        directory_end_time = time()
+        directory_duration = directory_end_time - directory_start_time
+        
+        print(
+            f"Ingestion of {entry.path} complete, time taken:"
+            f" {directory_duration:0.2f} seconds",
+        )
 
 # Getting experiments from Scheduler and storing them in the database
 if REINGEST_EXPERIMENTS:
