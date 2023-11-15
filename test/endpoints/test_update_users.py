@@ -191,25 +191,7 @@ class TestUpdateUsers:
 
         assert update_local_response.status_code == expected_response_code
 
-    @pytest.mark.asyncio
-    async def test_update_local_user_forbidden(
-        self,
-        test_app: TestClient,
-        add_delete_local_fixture,
-    ):
-        update_local_response = test_app.patch(
-            "/users",
-            content=json.dumps(
-                {
-                    "_id": "testuserthatdoesnotexistinthedatabaselocal",
-                    "updated_password": "passwords",
-                    "add_authorised_routes": [],
-                    "remove_authorised_routes": [],
-                },
-            ),
-        )
-
-        assert update_local_response.status_code == 403
+    
 
     @pytest.mark.parametrize(
         "username, updated_password, expected_response_code",
@@ -259,3 +241,24 @@ class TestUpdateUsers:
         )
 
         assert update_fed_response.status_code == expected_response_code
+
+
+    @pytest.mark.asyncio
+    async def test_update_local_user_forbidden(
+        self,
+        test_app: TestClient,
+        add_delete_local_fixture,
+    ):
+        update_local_response = test_app.patch(
+            "/users",
+            content=json.dumps(
+                {
+                    "_id": "testuserthatdoesnotexistinthedatabaselocal",
+                    "updated_password": "passwords",
+                    "add_authorised_routes": [],
+                    "remove_authorised_routes": [],
+                },
+            ),
+        )
+
+        assert update_local_response.status_code == 403
