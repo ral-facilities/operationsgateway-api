@@ -48,3 +48,19 @@ class User:
     def hash_password(password):
         password_hash = password = sha256(password.encode()).hexdigest()
         return password_hash
+
+    @staticmethod
+    def add_routes_list(db_routes, add_routes):
+        amended_list = db_routes + list(set(add_routes) - set(db_routes))
+        # This code gets all the routs inside the database and adds it to
+        # the routes to be added without causing duplicates
+
+        return amended_list
+
+    @staticmethod
+    def remove_routes_list(db_routes, remove_routes):
+        amended_list = list(set(db_routes) - set(remove_routes))
+        # This code gets all the routs inside the database and removes the routes
+        # that are in the remove routes list
+
+        return amended_list

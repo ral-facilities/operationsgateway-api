@@ -3,6 +3,8 @@ import json
 from fastapi.testclient import TestClient
 import pytest
 
+from operationsgateway_api.src.users.user import User
+
 
 class TestCreateUsers:
     @pytest.mark.parametrize(
@@ -85,14 +87,20 @@ class TestCreateUsers:
         )
 
         assert create_response.status_code == expected_response_code
-        
+
         assert create_response.text[1:-1] == username
-        
-        
+
+        user = await User.get_user(username)
+        assert username == user.username
+        assert auth_type == user.auth_type
+        assert routes == user.authorised_routes
+        if password is not None:
+            assert User.hash_password(password) == user.sha256_password
+
     @pytest.mark.parametrize(
         "username, auth_type, routes, password, expected_response_code",
         [
-        pytest.param(
+            pytest.param(
                 "testuserthatdoesnotexistinthedatabaselocal",
                 "local",
                 None,
@@ -241,7 +249,6 @@ class TestCreateUsers:
         )
 
         assert create_response.status_code == expected_response_code
-            
 
     @pytest.mark.parametrize(
         "username, auth_type, routes, password, expected_response_code",
@@ -288,7 +295,6 @@ class TestCreateUsers:
         )
 
         assert create_response.status_code == expected_response_code
-
 
     @pytest.mark.asyncio
     async def test_create_preexisting_local_user(

@@ -1,17 +1,20 @@
 from fastapi.testclient import TestClient
 import pytest
 
+from operationsgateway_api.src.exceptions import UnauthorisedError
+from operationsgateway_api.src.users.user import User
+
 
 class TestDeleteUsers:
     @pytest.mark.parametrize(
         "username",
         [
             pytest.param(
-                "/users/testuserthatdoesnotexistinthedatabasefed",
+                "testuserthatdoesnotexistinthedatabasefed",
                 id="Delete fed user success",
             ),
             pytest.param(
-                "/users/testuserthatdoesnotexistinthedatabaselocal",
+                "testuserthatdoesnotexistinthedatabaselocal",
                 id="Delete local user success",
             ),
         ],
@@ -26,17 +29,23 @@ class TestDeleteUsers:
         username,
     ):
         delete_local_response = test_app.delete(
-            username,
+            "/users/" + username,
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
 
         assert delete_local_response.status_code == 204
 
+        try:
+            await User.get_user(username)
+            pytest.fail("Failed to delete user")
+        except UnauthorisedError:
+            pass
+
     @pytest.mark.parametrize(
         "username",
         [
             pytest.param(
-                "/users/testuserthatdoesnotexistinthedatabase",
+                "testuserthatdoesnotexistinthedatabase",
                 id="Delete user not exists fail",
             ),
         ],
@@ -49,21 +58,30 @@ class TestDeleteUsers:
         username,
     ):
         delete_response = test_app.delete(
-            username,
+            "/users/" + username,
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
 
         assert delete_response.status_code == 400
 
+        try:
+            await User.get_user(username)
+            pytest.fail(
+                "testuserthatdoesnotexistinthedatabase exists in the database"
+                ", need to make sure that isn't a real user",
+            )
+        except UnauthorisedError:
+            pass
+
     @pytest.mark.parametrize(
         "username",
         [
             pytest.param(
-                "/users/testuserthatdoesnotexistinthedatabasefed",
+                "testuserthatdoesnotexistinthedatabasefed",
                 id="Delete fed user forbidden",
             ),
             pytest.param(
-                "/users/testuserthatdoesnotexistinthedatabaselocal",
+                "testuserthatdoesnotexistinthedatabaselocal",
                 id="Delete local user forbidden",
             ),
         ],
@@ -77,7 +95,12 @@ class TestDeleteUsers:
         username,
     ):
         delete_fed_response = test_app.delete(
-            username,
+            "/users/" + username,
         )
 
         assert delete_fed_response.status_code == 403
+
+        try:
+            await User.get_user(username)
+        except UnauthorisedError:
+            pytest.fail("Test should have been forbidden to delete user")

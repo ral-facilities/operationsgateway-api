@@ -168,8 +168,9 @@ async def update_user(
 
     if change_details.add_authorised_routes is not None:
         if user.authorised_routes is not None:
-            change_details.add_authorised_routes = user.authorised_routes + list(
-                set(change_details.add_authorised_routes) - set(user.authorised_routes),
+            change_details.add_authorised_routes = User.add_routes_list(
+                user.authorised_routes,
+                change_details.add_authorised_routes,
             )
         await MongoDBInterface.update_one(
             "users",
@@ -182,9 +183,9 @@ async def update_user(
     user = await User.get_user(change_details.username)
     if change_details.remove_authorised_routes is not None:
         if user.authorised_routes is not None:
-            change_details.remove_authorised_routes = list(
-                set(user.authorised_routes)
-                - set(change_details.remove_authorised_routes),
+            change_details.remove_authorised_routes = User.remove_routes_list(
+                user.authorised_routes,
+                change_details.remove_authorised_routes,
             )
         await MongoDBInterface.update_one(
             "users",

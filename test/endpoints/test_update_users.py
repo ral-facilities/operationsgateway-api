@@ -9,13 +9,14 @@ from operationsgateway_api.src.users.user import User
 class TestUpdateUsers:
     @pytest.mark.parametrize(
         "updated_password, add_authorised_routes, "
-        "remove_authorised_routes, expected_response_code",
+        "remove_authorised_routes, expected_response_code, expected_routes",
         [
             pytest.param(
                 "passwords",
                 [],
                 [],
                 200,
+                ["/submit/hdf POST", "/experiments POST"],
                 id="Successful local user password update",
             ),
             pytest.param(
@@ -23,6 +24,7 @@ class TestUpdateUsers:
                 [],
                 [],
                 200,
+                ["/submit/hdf POST", "/experiments POST"],
                 id="Updating the password to itself",
             ),
             pytest.param(
@@ -30,6 +32,7 @@ class TestUpdateUsers:
                 [],
                 [],
                 200,
+                ["/submit/hdf POST", "/experiments POST"],
                 id="Successfully updating nothing",
             ),
             pytest.param(
@@ -37,6 +40,7 @@ class TestUpdateUsers:
                 None,
                 [],
                 200,
+                ["/submit/hdf POST", "/experiments POST"],
                 id="Successfully updating nothing (empty add routes)",
             ),
             pytest.param(
@@ -44,6 +48,7 @@ class TestUpdateUsers:
                 [],
                 None,
                 200,
+                ["/submit/hdf POST", "/experiments POST"],
                 id="Successfully updating nothing (empty remove routes)",
             ),
             pytest.param(
@@ -51,6 +56,7 @@ class TestUpdateUsers:
                 None,
                 None,
                 200,
+                ["/submit/hdf POST", "/experiments POST"],
                 id="Successfully updating nothing (empty routes)",
             ),
             pytest.param(
@@ -58,6 +64,7 @@ class TestUpdateUsers:
                 ["/records/{id_} DELETE"],
                 [],
                 200,
+                ["/submit/hdf POST", "/experiments POST", "/records/{id_} DELETE"],
                 id="Successfully adding '/records/{id_} DELETE' to authorised routes",
             ),
             pytest.param(
@@ -65,6 +72,7 @@ class TestUpdateUsers:
                 [],
                 ["/submit/hdf POST"],
                 200,
+                ["/experiments POST"],
                 id="Successfully removed '/submit/hdf POST' from authorised routes",
             ),
             pytest.param(
@@ -72,6 +80,7 @@ class TestUpdateUsers:
                 ["/records/{id_} DELETE", "/users POST"],
                 ["/records/{id_} DELETE", "/experiments POST"],
                 200,
+                ["/submit/hdf POST", "/users POST"],
                 id="Successfully adding '/records/{id_} DELETE' and '/users POST' "
                 "to authorised routes and removed '/records/{id_} DELETE' and"
                 " '/experiments POST'",
@@ -81,8 +90,22 @@ class TestUpdateUsers:
                 ["/records/{id_} DELETE", "/users POST"],
                 ["/records/{id_} DELETE", "/experiments POST", "/users POST"],
                 200,
+                ["/submit/hdf POST"],
                 id="Successfully removed everything that was added "
                 "as well as '/experiments POST'",
+            ),
+            pytest.param(
+                None,
+                ["/records/{id_} DELETE"],
+                [
+                    "/records/{id_} DELETE",
+                    "/experiments POST",
+                    "/users POST",
+                    "/submit/hdf POST",
+                ],
+                200,
+                [],
+                id="Successfully removed everything and attempted to remove more",
             ),
         ],
     )
@@ -96,9 +119,9 @@ class TestUpdateUsers:
         add_authorised_routes,
         remove_authorised_routes,
         expected_response_code,
+        expected_routes,
     ):
         username = "testuserthatdoesnotexistinthedatabaselocal"
-        before_user = await User.get_user(username)
         update_local_response = test_app.patch(
             "/users",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
@@ -111,10 +134,12 @@ class TestUpdateUsers:
                 },
             ),
         )
-        after_user = await User.get_user(username)
+        user = await User.get_user(username)
 
-        if after_user.sha256_password is not None:
-            assert User.hash_password(updated_password) == after_user.sha256_password
+        if user.sha256_password is not None:
+            assert User.hash_password(updated_password) == user.sha256_password
+
+        assert set(user.authorised_routes) == set(expected_routes)
 
         assert update_local_response.status_code == expected_response_code
 
@@ -191,8 +216,6 @@ class TestUpdateUsers:
 
         assert update_local_response.status_code == expected_response_code
 
-    
-
     @pytest.mark.parametrize(
         "username, updated_password, expected_response_code",
         [
@@ -242,6 +265,9 @@ class TestUpdateUsers:
 
         assert update_fed_response.status_code == expected_response_code
 
+        if expected_response_code == 200:
+            user = await User.get_user(username)
+            assert user.sha256_password is None
 
     @pytest.mark.asyncio
     async def test_update_local_user_forbidden(
