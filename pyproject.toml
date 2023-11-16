@@ -13,6 +13,8 @@ uvicorn = "^0.20.0"
 python-multipart = "^0.0.5"
 PyYAML = "^6.0"
 ImageHash = "4.3.1"
+# scipy is a dependency of ImageHash but is listed to mitigate
+# a vulnerability in scipy version 1.9.3
 scipy = "1.10.0"
 numpy = "^1.23.1"
 h5py = "^3.7.0"

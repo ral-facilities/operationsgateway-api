@@ -11,7 +11,7 @@ from test.conftest import set_preferred_colourmap, unset_preferred_colourmap
 class TestGetColourBarImage:
     @pytest.mark.parametrize(
         "lower_level, upper_level, colourmap_name, use_preferred_colourmap,"
-        "expected_response_code, expected_image_md5sum",
+        "expected_response_code, expected_image_phash",
         [
             pytest.param(
                 None,
@@ -99,7 +99,7 @@ class TestGetColourBarImage:
         colourmap_name,
         use_preferred_colourmap,
         expected_response_code,
-        expected_image_md5sum,
+        expected_image_phash,
     ):
         set_preferred_colourmap(test_app, login_and_get_token, use_preferred_colourmap)
 
@@ -135,4 +135,4 @@ class TestGetColourBarImage:
             bytes_image = test_response.content
             img = Image.open(io.BytesIO(bytes_image))
             image_checksum = str(imagehash.phash(img))
-            assert expected_image_md5sum == image_checksum
+            assert expected_image_phash == image_checksum

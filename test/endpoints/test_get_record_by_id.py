@@ -47,7 +47,7 @@ class TestGetRecordByID:
         )
 
     @pytest.mark.parametrize(
-        "record_id, expected_thumbnail_md5s, use_preferred_colourmap",
+        "record_id, expected_thumbnails_hashes, use_preferred_colourmap",
         [
             pytest.param(
                 "20220408132830",
@@ -76,7 +76,7 @@ class TestGetRecordByID:
         test_app: TestClient,
         login_and_get_token,
         record_id,
-        expected_thumbnail_md5s,
+        expected_thumbnails_hashes,
         use_preferred_colourmap,
     ):
         set_preferred_colourmap(test_app, login_and_get_token, use_preferred_colourmap)
@@ -96,5 +96,5 @@ class TestGetRecordByID:
 
         assert_thumbnails(
             test_response.json(),
-            expected_thumbnail_md5s,
+            expected_thumbnails_hashes,
         )

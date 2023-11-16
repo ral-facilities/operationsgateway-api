@@ -116,7 +116,7 @@ class TestChannelSummary:
 
         """
         Compare the response with the expected result, but convert the returned base64
-        thumbnails to an MD5 checksum beforehand (to prevent bloating this file with
+        thumbnails to a perceptual hash beforehand (to prevent bloating this file with
         long base64 strings)
         """
 

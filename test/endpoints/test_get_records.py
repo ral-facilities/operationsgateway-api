@@ -177,7 +177,7 @@ class TestGetRecords:
 
     @pytest.mark.parametrize(
         "conditions, projection, lower_level, upper_level, colourmap_name, "
-        "use_preferred_colourmap, expected_thumbnail_md5s",
+        "use_preferred_colourmap, expected_thumbnails_hashes",
         [
             pytest.param(
                 {"metadata.shotnum": 366372},
@@ -272,7 +272,7 @@ class TestGetRecords:
         upper_level,
         colourmap_name,
         use_preferred_colourmap,
-        expected_thumbnail_md5s,
+        expected_thumbnails_hashes,
     ):
         set_preferred_colourmap(test_app, login_and_get_token, use_preferred_colourmap)
 
@@ -308,5 +308,5 @@ class TestGetRecords:
 
         assert_thumbnails(
             test_response.json()[0],  # only one record expected
-            expected_thumbnail_md5s,
+            expected_thumbnails_hashes,
         )

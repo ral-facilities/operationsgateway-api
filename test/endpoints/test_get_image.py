@@ -11,7 +11,7 @@ from test.conftest import set_preferred_colourmap, unset_preferred_colourmap
 class TestGetImage:
     @pytest.mark.parametrize(
         "record_id, channel_name, original_image, use_preferred_colourmap,"
-        "lower_level, upper_level, colourmap_name, expected_image_md5sum",
+        "lower_level, upper_level, colourmap_name, expected_image_phash",
         [
             pytest.param(
                 "20220408164136",
@@ -86,7 +86,7 @@ class TestGetImage:
         lower_level,
         upper_level,
         colourmap_name,
-        expected_image_md5sum,
+        expected_image_phash,
     ):
         set_preferred_colourmap(test_app, login_and_get_token, use_preferred_colourmap)
 
@@ -122,4 +122,4 @@ class TestGetImage:
         bytes_image = test_response.content
         img = Image.open(io.BytesIO(bytes_image))
         image_checksum = str(imagehash.phash(img))
-        assert expected_image_md5sum == image_checksum
+        assert expected_image_phash == image_checksum

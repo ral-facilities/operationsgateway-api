@@ -51,6 +51,8 @@ class TestImage:
         img = PILImage.open(BytesIO(bytes_thumbnail))
         thumbnail_checksum = str(imagehash.phash(img))
         assert thumbnail_checksum == "0000000000000000"
+        # the reason only 0s are being asserted is because this is checking the hash of
+        # a purely black 300x300 square created in the test_image above
 
     @pytest.mark.parametrize(
         "image_path, expected_record_id, expected_channel_name",
