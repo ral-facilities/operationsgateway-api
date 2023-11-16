@@ -55,9 +55,9 @@ def assert_record(record, expected_channel_count, expected_channel_data):
 def assert_thumbnails(record: dict, expected_thumbnails_hashes: dict):
     """
     Iterate through the record looking for the channel names that match the keys in the
-    perceptual hash (phash) dictionary. As each channel is found, check that the phash of the thumbnail
-    matches the expected value in the phash dictionary. Ensure all channels in the phash
-    dictionary are present in the record.
+    perceptual hash (phash) dictionary. As each channel is found, check that the phash
+    of the thumbnail matches the expected value in the phash dictionary. Ensure all
+    channels in the phash dictionary are present in the record.
     """
     num_channels_found = 0
     for channel_name, value in record["channels"].items():
