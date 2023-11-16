@@ -1,7 +1,7 @@
 from hashlib import sha256
 import logging
 
-from operationsgateway_api.src.exceptions import UnauthorisedError
+from operationsgateway_api.src.exceptions import QueryParameterError, UnauthorisedError
 from operationsgateway_api.src.models import UserModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
@@ -40,6 +40,27 @@ class User:
             raise UnauthorisedError
 
     @staticmethod
+    async def update_password(username: str, password: str):
+        """
+        updates the password of the user given by the username
+        """
+        await MongoDBInterface.update_one(
+            "users",
+            filter_={"_id": username},
+            update={"$set": {"sha256_password": password}},
+        )
+
+    @staticmethod
+    async def update_routes(username: str, routes: list):
+        await MongoDBInterface.update_one(
+            "users",
+            filter_={"_id": username},
+            update={
+                "$set": {"authorised_routes": routes},
+            },
+        )
+
+    @staticmethod
     def check_authorised_routes(authorised_route):
         difference = list(set(authorised_route) - set(User.authorised_route_list))
         return difference
@@ -64,3 +85,14 @@ class User:
         # that are in the remove routes list
 
         return amended_list
+
+    @staticmethod
+    async def check_username_exists(username):
+        try:
+            if username == "":
+                raise ValueError
+            user = await User.get_user(username)
+        except (UnauthorisedError, ValueError) as err:
+            log.error("username field did not exist in the database, _id is required")
+            raise QueryParameterError() from err
+        return user
