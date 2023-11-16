@@ -149,19 +149,12 @@ async def update_user(
                 f"some of the routes entered are invalid:  {invalid_routes} ",
             )
 
-    try:
-        if change_details.username == "":
-            raise ValueError
-        user = await User.get_user(change_details.username)
-    except (UnauthorisedError, ValueError) as err:
-        log.error("username field did not exist in the database, _id is required")
-        raise QueryParameterError() from err
+    user = await User.check_username_exists(change_details.username)
 
     if user.auth_type == "local":
-        await MongoDBInterface.update_one(
-            "users",
-            filter_={"_id": change_details.username},
-            update={"$set": {"sha256_password": change_details.updated_password}},
+        await User.update_password(
+            change_details.username,
+            change_details.updated_password,
         )
     else:
         log.info("cannot add password to FedID user type")
@@ -172,12 +165,9 @@ async def update_user(
                 user.authorised_routes,
                 change_details.add_authorised_routes,
             )
-        await MongoDBInterface.update_one(
-            "users",
-            filter_={"_id": change_details.username},
-            update={
-                "$set": {"authorised_routes": change_details.add_authorised_routes},
-            },
+        await User.update_routes(
+            change_details.username,
+            change_details.add_authorised_routes,
         )
 
     user = await User.get_user(change_details.username)
@@ -187,12 +177,9 @@ async def update_user(
                 user.authorised_routes,
                 change_details.remove_authorised_routes,
             )
-        await MongoDBInterface.update_one(
-            "users",
-            filter_={"_id": change_details.username},
-            update={
-                "$set": {"authorised_routes": change_details.remove_authorised_routes},
-            },
+        await User.update_routes(
+            change_details.username,
+            change_details.remove_authorised_routes,
         )
 
     return f"Updated {change_details.username}"
