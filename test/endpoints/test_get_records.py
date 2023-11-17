@@ -183,7 +183,7 @@ class TestGetRecords:
 
     @pytest.mark.parametrize(
         "conditions, projection, lower_level, upper_level, colourmap_name, "
-        "use_preferred_colourmap, expected_thumbnail_md5s",
+        "use_preferred_colourmap, expected_thumbnails_hashes",
         [
             pytest.param(
                 {"metadata.shotnum": 423648072000},
@@ -193,7 +193,7 @@ class TestGetRecords:
                 None,
                 False,
                 {
-                    "TS-202-TSM-P2-CAM-1": "3c366b414a30de01fc4916020e767e15",
+                    "TS-202-TSM-P2-CAM-1": "cdc134273f0e36e1",
                 },
                 id="Whole record: all channels have channel_dtype returned",
             ),
@@ -207,7 +207,7 @@ class TestGetRecords:
                 None,
                 True,
                 {
-                    "TS-202-TSM-P2-CAM-1": "e85ec73ada4dc726bff1035285d38c76",
+                    "TS-202-TSM-P2-CAM-1": "ccc139332d6c3733",
                 },
                 id="Whole record: all channels have channel_dtype returned and user's "
                 "preferred colour map is set",
@@ -220,7 +220,7 @@ class TestGetRecords:
                 None,
                 False,
                 {
-                    "TS-202-TSM-P2-CAM-1": "3c366b414a30de01fc4916020e767e15",
+                    "TS-202-TSM-P2-CAM-1": "cdc134273f0e36e1",
                 },
                 id="Partial record: only TS-202-TSM-P2-CAM-1 and no channel_dtype"
                 " returned",
@@ -233,7 +233,7 @@ class TestGetRecords:
                 "jet_r",
                 False,
                 {
-                    "TS-202-TSM-P2-CAM-1": "60ef63d28988c07599658dbbfeefca49",
+                    "TS-202-TSM-P2-CAM-1": "8000000000000000",
                 },
                 id="Whole record: all channels have channel_dtype returned "
                 "and custom false colour settings applied",
@@ -248,7 +248,7 @@ class TestGetRecords:
                 "jet_r",
                 True,
                 {
-                    "TS-202-TSM-P2-CAM-1": "60ef63d28988c07599658dbbfeefca49",
+                    "TS-202-TSM-P2-CAM-1": "8000000000000000",
                 },
                 id="Whole record: all channels have channel_dtype returned "
                 "and custom false colour settings applied even with user's "
@@ -262,7 +262,7 @@ class TestGetRecords:
                 "jet_r",
                 False,
                 {
-                    "TS-202-TSM-P2-CAM-1": "60ef63d28988c07599658dbbfeefca49",
+                    "TS-202-TSM-P2-CAM-1": "8000000000000000",
                 },
                 id="Partial record: only TS-202-TSM-P2-CAM-1 and no channel_dtype"
                 " returned and custom false colour settings applied",
@@ -279,7 +279,7 @@ class TestGetRecords:
         upper_level,
         colourmap_name,
         use_preferred_colourmap,
-        expected_thumbnail_md5s,
+        expected_thumbnails_hashes,
     ):
         set_preferred_colourmap(test_app, login_and_get_token, use_preferred_colourmap)
 
@@ -315,5 +315,5 @@ class TestGetRecords:
 
         assert_thumbnails(
             test_response.json()[0],  # only one record expected
-            expected_thumbnail_md5s,
+            expected_thumbnails_hashes,
         )

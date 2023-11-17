@@ -47,14 +47,14 @@ class TestGetRecordByID:
         )
 
     @pytest.mark.parametrize(
-        "record_id, expected_thumbnail_md5s, use_preferred_colourmap",
+        "record_id, expected_thumbnails_hashes, use_preferred_colourmap",
         [
             pytest.param(
                 "20230605100000",
                 {
-                    "FE-204-NSO-P1-CAM-1": "e155e7241af619e65e9d87b8b109c060",
-                    "FE-204-NSO-P2-CAM-1": "576299fd37628f21d755c87a983e5b28",
-                    "TS-202-TSM-CAM-2": "00a54a41f57d22353f6e21150059742f",
+                    "FE-204-NSO-P1-CAM-1": "c4bc3f33381c98c7",
+                    "FE-204-NSO-P2-CAM-1": "cd3336f0329b311d",
+                    "TS-202-TSM-CAM-2": "9999666699996666",
                 },
                 False,
                 id="Ordinary request (preferred colour map not set)",
@@ -62,9 +62,9 @@ class TestGetRecordByID:
             pytest.param(
                 "20230605100000",
                 {
-                    "FE-204-NSO-P1-CAM-1": "e99a52ef19d21df34dc07619d684a61a",
-                    "FE-204-NSO-P2-CAM-1": "6b5dc42ec1110f1d229f3901deb07df1",
-                    "TS-202-TSM-CAM-2": "af70df64de97b30fb7a7a54462825ade",
+                    "FE-204-NSO-P1-CAM-1": "c4b83f233b1839c7",
+                    "FE-204-NSO-P2-CAM-1": "cd3336b234333639",
+                    "TS-202-TSM-CAM-2": "9999666699996666",
                 },
                 True,
                 id="Ordinary request (with preferred colour map set)",
@@ -76,7 +76,7 @@ class TestGetRecordByID:
         test_app: TestClient,
         login_and_get_token,
         record_id,
-        expected_thumbnail_md5s,
+        expected_thumbnails_hashes,
         use_preferred_colourmap,
     ):
         set_preferred_colourmap(test_app, login_and_get_token, use_preferred_colourmap)
@@ -96,5 +96,5 @@ class TestGetRecordByID:
 
         assert_thumbnails(
             test_response.json(),
-            expected_thumbnail_md5s,
+            expected_thumbnails_hashes,
         )

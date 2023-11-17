@@ -1,6 +1,8 @@
-import hashlib
+import io
 
 from fastapi.testclient import TestClient
+import imagehash
+from PIL import Image
 import pytest
 
 from test.conftest import set_preferred_colourmap, unset_preferred_colourmap
@@ -9,7 +11,7 @@ from test.conftest import set_preferred_colourmap, unset_preferred_colourmap
 class TestGetImage:
     @pytest.mark.parametrize(
         "record_id, channel_name, original_image, use_preferred_colourmap,"
-        "lower_level, upper_level, colourmap_name, expected_image_md5sum",
+        "lower_level, upper_level, colourmap_name, expected_image_phash",
         [
             pytest.param(
                 "20230605100000",
@@ -19,7 +21,7 @@ class TestGetImage:
                 None,
                 None,
                 None,
-                "b9f3cbeda088a75d50df4c8476c59231",
+                "c8b624a4275e37b5",
                 id="Original image",
             ),
             pytest.param(
@@ -30,7 +32,7 @@ class TestGetImage:
                 None,
                 None,
                 None,
-                "dfd0de4570f352a9e0730500d98d42d5",
+                "cd3331cc33cc6f0c",
                 id="Image with default false colour settings",
             ),
             # repeat the above test but with the user's preferred colour map set to
@@ -43,7 +45,7 @@ class TestGetImage:
                 None,
                 None,
                 None,
-                "a40b7feb31d741cf0e3899f6c17a56bc",
+                "cc3333c037cc338f",
                 id="Image using user's preferred colourmap",
             ),
             pytest.param(
@@ -54,7 +56,7 @@ class TestGetImage:
                 50,
                 200,
                 "jet_r",
-                "01aeb3147ae2817ae99eea47fb468322",
+                "8000000000000000",
                 id="Image with all false colour params specified",
             ),
             # repeat the test above but with the user's preferred colour map set to
@@ -67,7 +69,7 @@ class TestGetImage:
                 50,
                 200,
                 "jet_r",
-                "01aeb3147ae2817ae99eea47fb468322",
+                "8000000000000000",
                 id="Image with all false colour params specified (ignoring "
                 "user's pref)",
             ),
@@ -84,7 +86,7 @@ class TestGetImage:
         lower_level,
         upper_level,
         colourmap_name,
-        expected_image_md5sum,
+        expected_image_phash,
     ):
         set_preferred_colourmap(test_app, login_and_get_token, use_preferred_colourmap)
 
@@ -118,6 +120,6 @@ class TestGetImage:
         assert test_response.status_code == 200
 
         bytes_image = test_response.content
-
-        image_checksum = hashlib.md5(bytes_image).hexdigest()
-        assert expected_image_md5sum == image_checksum
+        img = Image.open(io.BytesIO(bytes_image))
+        image_checksum = str(imagehash.phash(img))
+        assert expected_image_phash == image_checksum
