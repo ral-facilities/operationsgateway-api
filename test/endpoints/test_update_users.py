@@ -187,6 +187,15 @@ class TestUpdateUsers:
                 400,
                 id="Failure bad remove route",
             ),
+            # gives an error if the password field is empty not None for FedID
+            pytest.param(
+                "testuserthatdoesnotexistinthedatabasefed",
+                "",
+                None,
+                None,
+                400,
+                id="Failure password exists but is empty",
+            ),
         ],
     )
     @pytest.mark.asyncio
@@ -195,6 +204,7 @@ class TestUpdateUsers:
         test_app: TestClient,
         login_and_get_token,
         add_delete_local_fixture,
+        add_delete_fed_fixture,
         username,
         updated_password,
         add_authorised_routes,
@@ -225,13 +235,6 @@ class TestUpdateUsers:
                 "password",
                 200,
                 id="Success ignore password on fed user",
-            ),
-            # gives an error if the password field is empty though
-            pytest.param(
-                "testuserthatdoesnotexistinthedatabasefed",
-                "",
-                400,
-                id="Failure password exists but is empty",
             ),
             # control to make sure it works without a password field
             pytest.param(

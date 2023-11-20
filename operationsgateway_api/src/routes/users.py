@@ -44,7 +44,7 @@ async def add_user(
                 login_details.sha256_password,
             )
 
-    if auth_type != "local" and auth_type != "FedID":
+    if auth_type not in User.auth_type_list:
         log.error("auth_type was not 'local' or 'FedID'")
         raise QueryParameterError(
             f"auth_type must be either 'local' or 'FedID'. You put: '{auth_type}' ",
@@ -72,13 +72,14 @@ async def add_user(
                 f"some of the routes entered are invalid:  {invalid_routes} ",
             )
 
+    if login_details.username == "":
+        log.error("username must not be empty")
+        raise QueryParameterError(
+            "username field must not be filled"
+            f". You put: '{login_details.username}' ",
+        )
+
     try:
-        if login_details.username == "":
-            log.error("username must not be empty")
-            raise QueryParameterError(
-                "username field must not be filled"
-                f". You put: '{login_details.username}' ",
-            )
         await User.get_user(login_details.username)
         log.error("username must be unique")
         raise QueryParameterError(
@@ -86,6 +87,9 @@ async def add_user(
             f" user. You put: '{login_details.username}' ",
         )
     except UnauthorisedError:
+        log.info("username is not duplicated.")
+        # if an UnauthorisedError is raised, then the
+        # username is not duplicated so can continue
         pass
 
     await MongoDBInterface.insert_one(

@@ -29,7 +29,7 @@ class TestDeleteUsers:
         username,
     ):
         delete_local_response = test_app.delete(
-            "/users/" + username,
+            f"/users/{username}",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
 
@@ -58,7 +58,7 @@ class TestDeleteUsers:
         username,
     ):
         delete_response = test_app.delete(
-            "/users/" + username,
+            f"/users/{username}",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
 
@@ -95,7 +95,7 @@ class TestDeleteUsers:
         username,
     ):
         delete_fed_response = test_app.delete(
-            "/users/" + username,
+            f"/users/{username}",
         )
 
         assert delete_fed_response.status_code == 403

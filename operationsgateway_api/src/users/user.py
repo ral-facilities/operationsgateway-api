@@ -21,6 +21,11 @@ class User:
         "/users/{id_} DELETE",
     ]
 
+    auth_type_list = [
+        "local",
+        "FedID",
+    ]
+
     @staticmethod
     async def get_user(username: str) -> UserModel:
         """
@@ -67,7 +72,7 @@ class User:
 
     @staticmethod
     def hash_password(password):
-        password_hash = password = sha256(password.encode()).hexdigest()
+        password_hash = sha256(password.encode()).hexdigest()
         return password_hash
 
     @staticmethod
