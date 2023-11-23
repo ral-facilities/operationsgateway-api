@@ -10,13 +10,6 @@ log = logging.getLogger()
 
 
 class User:
-    """def __init__(username, password, add_routes, remove_routes, auth_type, routes):
-    self.username = username
-    self.password = password
-    self.add_routes = add_routes
-    self.remove_routes = remove_routes
-    self.auth_type = auth_type
-    self.routes = routes"""
 
     authorised_route_list = [
         "/submit/hdf POST",
