@@ -1,7 +1,9 @@
 import base64
-import hashlib
+import io
 
 from fastapi.testclient import TestClient
+import imagehash
+from PIL import Image
 import pytest
 
 from test.conftest import set_preferred_colourmap, unset_preferred_colourmap
@@ -63,9 +65,9 @@ class TestChannelSummary:
                     "first_date": "2022-04-07T14:16:16",
                     "most_recent_date": "2022-04-08T16:58:57",
                     "recent_sample": [
-                        {"2022-04-08T16:58:57": "b6a2da4589c22afc212d2dd9079aabe0"},
-                        {"2022-04-08T16:41:36": "bff557f25cc563f292d7a65f8cbd6ea4"},
-                        {"2022-04-08T16:29:56": "0ed38c29e8eddb50e469b6d6ab4fc5c9"},
+                        {"2022-04-08T16:58:57": "ce3831cece3131ce"},
+                        {"2022-04-08T16:41:36": "ce3831cece3131ce"},
+                        {"2022-04-08T16:29:56": "ce3131cece3131ce"},
                     ],
                 },
                 False,
@@ -79,9 +81,9 @@ class TestChannelSummary:
                     "first_date": "2022-04-07T14:16:16",
                     "most_recent_date": "2022-04-08T16:58:57",
                     "recent_sample": [
-                        {"2022-04-08T16:58:57": "3e78b905df05f4b08a188e0fbd7fcc2a"},
-                        {"2022-04-08T16:41:36": "d3e6761e20d18344ade71bd5329b1a36"},
-                        {"2022-04-08T16:29:56": "183898d6a41f1b3cb1debdcc8ef0942f"},
+                        {"2022-04-08T16:58:57": "ce3831cece3131ce"},
+                        {"2022-04-08T16:41:36": "ce3831c7ce3131ce"},
+                        {"2022-04-08T16:29:56": "ce3131cece3131ce"},
                     ],
                 },
                 True,
@@ -93,9 +95,9 @@ class TestChannelSummary:
                     "first_date": "2022-04-07T14:16:16",
                     "most_recent_date": "2022-04-08T16:58:57",
                     "recent_sample": [
-                        {"2022-04-08T16:58:57": "c0e0f944d8589c6ac866ffb013a05598"},
-                        {"2022-04-08T16:41:36": "6ee54947b79040480bf2a75220d71889"},
-                        {"2022-04-08T16:29:56": "928527492ca3bd051d7771c14c61f0f4"},
+                        {"2022-04-08T16:58:57": "aba4c16fb4d34436"},
+                        {"2022-04-08T16:41:36": "ff91c46e3b844c2a"},
+                        {"2022-04-08T16:29:56": "ab2684d87b29d8da"},
                     ],
                 },
                 False,
@@ -114,7 +116,7 @@ class TestChannelSummary:
 
         """
         Compare the response with the expected result, but convert the returned base64
-        thumbnails to an MD5 checksum beforehand (to prevent bloating this file with
+        thumbnails to a perceptual hash beforehand (to prevent bloating this file with
         long base64 strings)
         """
 
@@ -130,7 +132,8 @@ class TestChannelSummary:
         for sample in json_output["recent_sample"]:
             for timestamp, checksum in sample.items():
                 bytes_thumbnail = base64.b64decode(checksum)
-                sample[timestamp] = hashlib.md5(bytes_thumbnail).hexdigest()
+                img = Image.open(io.BytesIO(bytes_thumbnail))
+                sample[timestamp] = str(imagehash.phash(img))
 
         unset_preferred_colourmap(
             test_app,
