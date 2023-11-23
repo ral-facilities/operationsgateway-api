@@ -155,3 +155,19 @@ class User:
                 username,
                 routes,
             )
+            
+    @staticmethod
+    def check_password_types(auth_type, password):
+        if auth_type == "FedID" and password:
+            log.error("no password is required for the auth_type input (FedID)")
+            raise QueryParameterError(
+                "for the auth_type you put (FedID), no password is required."
+                " Please remove this field",
+            )
+
+        if auth_type == "local" and password is None:
+            log.error("a password is required for the auth_type input (local)")
+            raise QueryParameterError(
+                "for the auth_type you put (local), a password is required."
+                " Please add this field",
+            )

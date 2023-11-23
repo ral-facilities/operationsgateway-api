@@ -44,19 +44,7 @@ async def add_user(
             f"auth_type must be either 'local' or 'FedID'. You put: '{auth_type}' ",
         )
 
-    if auth_type == "FedID" and login_details.sha256_password:
-        log.error("no password is required for the auth_type input (FedID)")
-        raise QueryParameterError(
-            "for the auth_type you put (FedID), no password is required."
-            " Please remove this field",
-        )
-
-    if auth_type == "local" and login_details.sha256_password is None:
-        log.error("a password is required for the auth_type input (local)")
-        raise QueryParameterError(
-            "for the auth_type you put (local), a password is required."
-            " Please add this field",
-        )
+    User.check_password_types(auth_type, login_details.sha256_password)
 
     User.check_routes(login_details.authorised_routes)
 
