@@ -9,7 +9,6 @@ from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import QueryParameterError, UnauthorisedError
 from operationsgateway_api.src.models import UpdateUserModel, UserModel
-from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.users.user import User
 
 log = logging.getLogger()
@@ -98,7 +97,7 @@ async def update_user(
     ],
 ):
     change_details.updated_password = User.check_and_hash(
-        change_details.updated_password
+        change_details.updated_password,
     )
 
     User.check_routes(change_details.add_authorised_routes)

@@ -67,7 +67,7 @@ class User:
                 "$set": {"authorised_routes": routes},
             },
         )
-        
+
     @staticmethod
     async def add(login_details):
         """
@@ -100,7 +100,7 @@ class User:
 
     @staticmethod
     def amend_routes_list(db_routes, routes, add=True):
-        if add == True:
+        if add:
             amended_list = db_routes + list(set(routes) - set(db_routes))
             # This code gets all the routs inside the database and adds it to
             # the routes to be added without causing duplicates
@@ -155,7 +155,7 @@ class User:
                 username,
                 routes,
             )
-            
+
     @staticmethod
     def check_password_types(auth_type, password):
         if auth_type == "FedID" and password:
