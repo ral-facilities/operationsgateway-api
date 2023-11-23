@@ -36,13 +36,7 @@ async def add_user(
 ):
     auth_type = login_details.auth_type
 
-    if login_details.sha256_password is not None:
-        if login_details.sha256_password == "":
-            raise QueryParameterError("you must input a password")
-        else:
-            login_details.sha256_password = User.hash_password(
-                login_details.sha256_password,
-            )
+    login_details.sha256_password = User.check_and_hash(login_details.sha256_password)
 
     if auth_type not in User.auth_type_list:
         log.error("auth_type was not 'local' or 'FedID'")
@@ -50,7 +44,7 @@ async def add_user(
             f"auth_type must be either 'local' or 'FedID'. You put: '{auth_type}' ",
         )
 
-    if auth_type == "FedID" and login_details.sha256_password is not None:
+    if auth_type == "FedID" and login_details.sha256_password:
         log.error("no password is required for the auth_type input (FedID)")
         raise QueryParameterError(
             "for the auth_type you put (FedID), no password is required."
@@ -64,13 +58,7 @@ async def add_user(
             " Please add this field",
         )
 
-    if login_details.authorised_routes is not None:
-        invalid_routes = User.check_authorised_routes(login_details.authorised_routes)
-        if invalid_routes:
-            log.error("some of the authorised routes entered were invalid")
-            raise QueryParameterError(
-                f"some of the routes entered are invalid:  {invalid_routes} ",
-            )
+    User.check_routes(login_details.authorised_routes)
 
     if login_details.username == "":
         log.error("username must not be empty")
@@ -92,10 +80,8 @@ async def add_user(
         # username is not duplicated so can continue
         pass
 
-    await MongoDBInterface.insert_one(
-        "users",
-        login_details.model_dump(by_alias=True, exclude_unset=True),
-    )
+    await User.add(login_details)
+
     log.info("successfully created user '%s' ", login_details.username)
 
     return JSONResponse(
@@ -123,35 +109,13 @@ async def update_user(
         ),
     ],
 ):
-    if change_details.updated_password is not None:
-        if change_details.updated_password == "":
-            raise QueryParameterError(
-                "you must have a password with the password field",
-            )
-        else:
-            change_details.updated_password = User.hash_password(
-                change_details.updated_password,
-            )
+    change_details.updated_password = User.check_and_hash(
+        change_details.updated_password
+    )
 
-    if change_details.add_authorised_routes is not None:
-        invalid_routes = User.check_authorised_routes(
-            change_details.add_authorised_routes,
-        )
-        if invalid_routes:
-            log.error("some of the authorised routes to add entered were invalid")
-            raise QueryParameterError(
-                f"some of the routes entered are invalid:  {invalid_routes} ",
-            )
+    User.check_routes(change_details.add_authorised_routes)
 
-    if change_details.remove_authorised_routes is not None:
-        invalid_routes = User.check_authorised_routes(
-            change_details.remove_authorised_routes,
-        )
-        if invalid_routes:
-            log.error("some of the authorised routes to remove entered were invalid")
-            raise QueryParameterError(
-                f"some of the routes entered are invalid:  {invalid_routes} ",
-            )
+    User.check_routes(change_details.remove_authorised_routes)
 
     user = await User.check_username_exists(change_details.username)
 
@@ -163,28 +127,20 @@ async def update_user(
     else:
         log.info("cannot add password to FedID user type")
 
-    if change_details.add_authorised_routes is not None:
-        if user.authorised_routes is not None:
-            change_details.add_authorised_routes = User.add_routes_list(
-                user.authorised_routes,
-                change_details.add_authorised_routes,
-            )
-        await User.update_routes(
-            change_details.username,
-            change_details.add_authorised_routes,
-        )
+    await User.edit_routes(
+        change_details.username,
+        user.authorised_routes,
+        change_details.add_authorised_routes,
+    )
 
     user = await User.get_user(change_details.username)
-    if change_details.remove_authorised_routes is not None:
-        if user.authorised_routes is not None:
-            change_details.remove_authorised_routes = User.remove_routes_list(
-                user.authorised_routes,
-                change_details.remove_authorised_routes,
-            )
-        await User.update_routes(
-            change_details.username,
-            change_details.remove_authorised_routes,
-        )
+
+    await User.edit_routes(
+        change_details.username,
+        user.authorised_routes,
+        change_details.remove_authorised_routes,
+        add=False,
+    )
 
     return f"Updated {change_details.username}"
 
@@ -215,10 +171,8 @@ async def delete_user(
             f"username field must exist in the database. You put: '{id_}'",
         ) from err
 
-    await MongoDBInterface.delete_one(
-        "users",
-        filter_={"_id": id_},
-    )
+    await User.delete(id_)
+
     log.info("successfully deleted user '%s' ", id_)
 
     return Response(status_code=HTTPStatus.NO_CONTENT.value)

@@ -10,6 +10,13 @@ log = logging.getLogger()
 
 
 class User:
+    """def __init__(username, password, add_routes, remove_routes, auth_type, routes):
+    self.username = username
+    self.password = password
+    self.add_routes = add_routes
+    self.remove_routes = remove_routes
+    self.auth_type = auth_type
+    self.routes = routes"""
 
     authorised_route_list = [
         "/submit/hdf POST",
@@ -57,12 +64,35 @@ class User:
 
     @staticmethod
     async def update_routes(username: str, routes: list):
+        """
+        updates the routes of the user given by the username
+        """
         await MongoDBInterface.update_one(
             "users",
             filter_={"_id": username},
             update={
                 "$set": {"authorised_routes": routes},
             },
+        )
+        
+    @staticmethod
+    async def add(login_details):
+        """
+        adds the user given by the details
+        """
+        await MongoDBInterface.insert_one(
+            "users",
+            login_details.model_dump(by_alias=True, exclude_unset=True),
+        )
+
+    @staticmethod
+    async def delete(username: str):
+        """
+        deletes the user given by the username
+        """
+        await MongoDBInterface.delete_one(
+            "users",
+            filter_={"_id": username},
         )
 
     @staticmethod
@@ -76,18 +106,15 @@ class User:
         return password_hash
 
     @staticmethod
-    def add_routes_list(db_routes, add_routes):
-        amended_list = db_routes + list(set(add_routes) - set(db_routes))
-        # This code gets all the routs inside the database and adds it to
-        # the routes to be added without causing duplicates
-
-        return amended_list
-
-    @staticmethod
-    def remove_routes_list(db_routes, remove_routes):
-        amended_list = list(set(db_routes) - set(remove_routes))
-        # This code gets all the routs inside the database and removes the routes
-        # that are in the remove routes list
+    def amend_routes_list(db_routes, routes, add=True):
+        if add == True:
+            amended_list = db_routes + list(set(routes) - set(db_routes))
+            # This code gets all the routs inside the database and adds it to
+            # the routes to be added without causing duplicates
+        else:
+            amended_list = list(set(db_routes) - set(routes))
+            # This code gets all the routs inside the database and removes the routes
+            # that are in the remove routes list
 
         return amended_list
 
@@ -101,3 +128,37 @@ class User:
             log.error("username field did not exist in the database, _id is required")
             raise QueryParameterError() from err
         return user
+
+    @staticmethod
+    def check_and_hash(password):
+        if password is not None:
+            if password == "":
+                raise QueryParameterError(
+                    "you must have a password with the password field",
+                )
+            else:
+                return User.hash_password(password)
+
+    @staticmethod
+    def check_routes(routes):
+        if routes is not None:
+            invalid_routes = User.check_authorised_routes(routes)
+            if invalid_routes:
+                log.error("some of the authorised routes entered were invalid")
+                raise QueryParameterError(
+                    f"some of the routes entered are invalid:  {invalid_routes} ",
+                )
+
+    @staticmethod
+    async def edit_routes(username, authorised_routes, routes, add=True):
+        if routes is not None:
+            if authorised_routes is not None:
+                routes = User.amend_routes_list(
+                    authorised_routes,
+                    routes,
+                    add,
+                )
+            await User.update_routes(
+                username,
+                routes,
+            )
