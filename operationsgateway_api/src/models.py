@@ -90,9 +90,9 @@ class WaveformChannelModel(BaseModel):
 
 
 class RecordMetadataModel(BaseModel):
-    epac_ops_data_version: str
+    epac_ops_data_version: Optional[Any] = None
     shotnum: Optional[int] = None
-    timestamp: datetime
+    timestamp: Optional[Any] = None
 
 
 class RecordModel(BaseModel):

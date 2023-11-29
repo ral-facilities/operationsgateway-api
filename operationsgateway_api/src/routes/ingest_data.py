@@ -10,7 +10,7 @@ from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
 from operationsgateway_api.src.records.image import Image
-from operationsgateway_api.src.records.ingestion_validator import IngestionValidator
+from operationsgateway_api.src.records import ingestion_validator
 from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.waveform import Waveform
 
@@ -49,7 +49,11 @@ async def submit_hdf(
     stored_record = await record.find_existing_record()
     # TODO - when I implement the validation, it should only run if `stored_record`
     # actually contains something (i.e. isn't None)
-    ingest_checker = IngestionValidator(record_data, stored_record)  # noqa: F841
+    # ingest_checker = IngestionValidator(record_data, stored_record)
+    # file_checker = ingest_checker.FileChecks(ingest_checker)
+    # import_checker = ingest_checker.PartialImportChecks(ingest_checker)
+    # import_checker.channel_checks()
+    # await file_checker.example()
 
     log.debug("Processing waveforms")
     for w in waveforms:

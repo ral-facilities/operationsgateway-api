@@ -19,7 +19,7 @@ class FileChecks:
 
     def epac_data_version_checks(self):
         ingested_metadata = (self.ingested_record).metadata
-        if hasattr(ingested_metadata, "epac_ops_data_version"):
+        if hasattr(ingested_metadata, "epac_ops_data_version") and ingested_metadata.epac_ops_data_version is not None:
             epac_number = ingested_metadata.epac_ops_data_version
             if type(ingested_metadata.epac_ops_data_version) != str:
                 raise RejectFile("epac_ops_data_version has wrong datatype. Should be string")
@@ -31,6 +31,8 @@ class FileChecks:
                     return("File minor version number too high (expected 0)")
         else:
             raise RejectFile("epac_ops_data_version does not exist")
+        # a RecordMetadataModel is already returned when 
+        # epac_ops_data_version does not exist
 
 class RecordChecks:
     def __init__(self, ingested_record: RecordModel):
