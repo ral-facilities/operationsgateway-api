@@ -93,6 +93,8 @@ class RecordMetadataModel(BaseModel):
     epac_ops_data_version: Optional[Any] = None
     shotnum: Optional[int] = None
     timestamp: Optional[Any] = None
+    active_area: Optional[Any] = None
+    active_experiment: Optional[Any] = None
 
 
 class RecordModel(BaseModel):

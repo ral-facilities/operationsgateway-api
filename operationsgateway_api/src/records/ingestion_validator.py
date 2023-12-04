@@ -1,9 +1,10 @@
 import logging
-import datetime
+from datetime import datetime
 
 from operationsgateway_api.src.exceptions import RejectFile, RejectRecord
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.models import RecordModel
+from operationsgateway_api.src.constants import DATA_DATETIME_FORMAT
 
 
 log = logging.getLogger()
@@ -19,7 +20,7 @@ class FileChecks:
 
     def epac_data_version_checks(self):
         ingested_metadata = (self.ingested_record).metadata
-        if hasattr(ingested_metadata, "epac_ops_data_version") and ingested_metadata.epac_ops_data_version is not None:
+        if hasattr(ingested_metadata, "epac_ops_data_version") and ingested_metadata.epac_ops_data_version is not None:     #is the has attribute needed?
             epac_number = ingested_metadata.epac_ops_data_version
             if type(ingested_metadata.epac_ops_data_version) != str:
                 raise RejectFile("epac_ops_data_version has wrong datatype. Should be string")
@@ -38,41 +39,29 @@ class RecordChecks:
     def __init__(self, ingested_record: RecordModel):
         self.ingested_record = ingested_record
 
-    def _is_valid_iso_timestamp(self, timestamp):
-        try:
-            parsed_timestamp = datetime.fromisoformat(timestamp)
-            return True
-        except (ValueError, TypeError):
-            return False
-
-    def timestamp_checks(self):
-        ingested_metadata = (self.ingested_record).metadata
-        if hasattr(ingested_metadata, "timestamp"):
-            if not self._is_valid_iso_timestamp(ingested_metadata.timestamp):
-                raise RejectRecord("timestamp is not in IOS format or has wrong datatype")
-        else:
-            raise RejectRecord("timestamp is missing")
-
     def active_area_checks(self):
         ingested_metadata = (self.ingested_record).metadata
-        if hasattr(ingested_metadata, "active_area"):
+        if hasattr(ingested_metadata, "active_area") and ingested_metadata.active_area is not None:     #is the has attribute needed?
             if type(ingested_metadata.active_area) != str:
                 raise RejectRecord("active_area has wrong datatype. Expected string")
         else:
             raise RejectRecord("active_area is missing")
 
     def optional_metadata_checks(self):
-        if hasattr(ingested_metadata, "active_experiment"):
+        ingested_metadata = (self.ingested_record).metadata
+        if hasattr(ingested_metadata, "active_experiment") and ingested_metadata.active_experiment is not None:     #is the has attribute needed?
             if type(ingested_metadata.active_experiment) != str:
                 raise RejectRecord("active_experiment has wrong datatype. Expected string")
-        if hasattr(ingested_metadata, "shotnum"):
+        if hasattr(ingested_metadata, "shotnum") and ingested_metadata.shotnum is not None:     #is the has attribute needed?
             if type(ingested_metadata.shotnum) != int:
                 raise RejectRecord("shotnum has wrong datatype. Expected integer")
         
 
 class ChannelChecks:
-    def __init__(self, ingested_record: RecordModel):
+    def __init__(self, ingested_record: RecordModel, ingested_waveform, ingested_image):
         self.ingested_record = ingested_record
+        self.ingested_waveform = ingested_waveform
+        self.ingested_image = ingested_image
 
     async def channel_dtype_checks(self):
         ingested_channels = (self.ingested_record).channels
@@ -85,19 +74,49 @@ class ChannelChecks:
             "waveform",
         ]
 
+        rejected_channels = []
+
         for key, value in ingested_channels.items():
             if hasattr(value.metadata, "channel_dtype"):
                 if manifest_channels.type != value.metadata.channel_dtype or value.metadata.channel_dtype not in supported_values:
-                    # reject channel
-                    pass
+                    reason = [key, "channel_dtype has wrong data type or its value is unsupported"]
+                    rejected_channels.append[reason]
             else:
-                # reject channel
-                pass
-
+                reason = [key, "channel_dtype attribute is missing"]
+                rejected_channels.append[reason]
+        return rejected_channels
+    
+    
     def required_attribute_missing(self):
+        ingested_channels = (self.ingested_record).channels
+        
+        rejected_channels = []
+        
+        for key, value in ingested_channels:
+            if hasattr(value, "metadata"):
+                pass
+            else:
+                rejected_channels.append[key, "metadata attribute is missing"]
+            
+            if value.metadata.channel_dtype == "scalar":
+                if hasattr(value, "data"):
+                    pass
+                else:
+                    rejected_channels.append[key, "data attribute is missing"]
+            
+            if value.metadata.channel_dtype == "image":
+                if hasattr(value, "image_path"):
+                    pass
+                    # path, data
+                else:
+                    rejected_channels.append[key, "image_path attribute is missing"]
+            if value.metadata.channel_dtype == "waveform":
+                pass
+                # waveform_id, id_, x, y
+                
         # reject channel
         # channel specs are higher on the page
-        pass
+
 
     def optional_attribute_wrong_dtype(self):
         # reject channel OR ignore attribute and warn
@@ -116,10 +135,19 @@ class ChannelChecks:
         ingested_channels = (self.ingested_record).channels
         manifest = (await get_manifest()).channels
 
+        rejected_channels = []
+        
         for key in list(ingested_channels.keys()):
             if key not in manifest:
-                pass
-                # reject channel on import
+                reason = [key, "Channel name is not recognised (does not appear in manifest)"]
+                rejected_channels.append[reason]
+                # reject on import?
+        return rejected_channels
+                
+    async def channel_checks(self):
+        # this will run all channel checks and return the big dictionary of the
+        # channels that passed and which failed and why
+        return
 
 class PartialImportChecks:
     # checked in certain circumstances
@@ -157,27 +185,24 @@ class PartialImportChecks:
         ingested_channels = (self.ingested_record).channels
         stored_channels = (self.stored_record).channels
 
+        rejected_channels = []
+
         for key in list(ingested_channels.keys()):
             if key in stored_channels:
-                pass
-                # del ingested_channels[key]
-                # reject channel regardless of data
-
-# have a concept of rejecting the file and rejecting the record (they are sort of different)
-# on channel reject, delete it do the rest and say why it was deleted in a 400 message but still working
-# reject file/ record? = 400 error
-# error = 2xx error
+                reason = [key, "Channel is already present in existing record"]
+                rejected_channels.append[reason]
+                
+        return rejected_channels
+        # make look all fancy like the other channel rejects in the dict
 
 
 """
 {
     "accepted_channels": ["channel1", "channel2"],
     "rejected_channels": {
-        "channel3": "reason"
+        "channel3": ["reason1", "reason2"],
+        "channel4": ["reason1", "reason2"]
     },
-    "warnings": [
-        "File minor version number too high (expected 0)"
-    ]
 }
 
 ^ good template for the warning system and stuff could use ^

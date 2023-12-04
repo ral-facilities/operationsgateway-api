@@ -4,7 +4,7 @@ import pytest
 import h5py
 import numpy as np
 
-from operationsgateway_api.src.exceptions import RejectFile, RejectRecord
+from operationsgateway_api.src.exceptions import RejectFile, RejectRecord, ModelError
 from operationsgateway_api.src.records import ingestion_validator
 from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
 
@@ -14,7 +14,7 @@ def create_test_hdf_file(
         data_version=["1.0", "exists"], 
         timestamp=["2022-04-07 14:28:16", "exists"], 
         active_area=["ea1", "exists"], 
-        shotnum=["u8", "exists"], 
+        shotnum=["valid", "exists"], 
         active_experiment=["90097341", "exists"]
     ):
     
@@ -29,7 +29,10 @@ def create_test_hdf_file(
             record.attrs.create("timestamp", timestamp[0])
         
         if shotnum[1] == "exists":
-            record.attrs.create("shotnum", 366272, dtype=shotnum[0])
+            if shotnum[0] == "invalid":
+                record.attrs.create("shotnum", "string")
+            else:
+                record.attrs.create("shotnum", 366272, dtype="u8")
         
         if active_area[1] == "exists":
             record.attrs.create("active_area", active_area[0])
@@ -154,103 +157,93 @@ class TestFile:
 
 
 class TestRecord:
-    
-    #check optional things work also make sure each function works
-    def test_file_checks_pass(self, remove_HDF_file):
-        record_data, waveforms, images = create_test_hdf_file()
-        file_checker = ingestion_validator.FileChecks(record_data)
-        
-        file_checker.epac_data_version_checks()
-    
     @pytest.mark.parametrize(
-        "timestamp, active_area, shotnum, active_experiment, test, match",
+        "shotnum, active_experiment",
         [
             pytest.param(
-                ["2022-04-07 14:28:16", "missing"],
-                ["ea1", "exists"],
-                ["u8", "exists"],
+                ["valid", "exists"],
                 ["90097341", "exists"],
-                "timestamp",
-                "timestamp is missing",
-                id="timestamp is missing",
+                id="all optional values present",
             ),
             pytest.param(
-                [2022, "exists"],#difficult
-                ["ea1", "exists"],
-                ["u8", "exists"],
-                ["90097341", "exists"],
-                "timestamp",
-                "timestamp is not in IOS format or has wrong datatype",
-                id="timestamp wrong datatype",
+                ["valid", "exists"],
+                ["90097341", "missing"],
+                id="only shotnum present",
             ),
             pytest.param(
-                ["3020-94-997 54:28:16", "exists"],#difficult
-                ["ea1", "exists"],
-                ["u8", "exists"],
+                ["valid", "missing"],
                 ["90097341", "exists"],
-                "timestamp",
-                "timestamp is not in IOS format or has wrong datatype",
-                id="timestamp not ISO format",
+                id="only active_experiment present",
             ),
+        ],
+    )
+    def test_record_checks_pass(self, shotnum, active_experiment, remove_HDF_file):
+        record_data, waveforms, images = create_test_hdf_file(shotnum=shotnum, active_experiment=active_experiment)
+        record_checker = ingestion_validator.RecordChecks(record_data)
+        
+        record_checker.active_area_checks()
+        record_checker.optional_metadata_checks()
+    
+    @pytest.mark.parametrize(
+        "active_area, shotnum, active_experiment, test, match",
+        [
             pytest.param(
-                ["2022-04-07 14:28:16", "exists"],
                 ["ea1", "missing"],
-                ["u8", "exists"],
+                ["valid", "exists"],
                 ["90097341", "exists"],
                 "active_area",
                 "active_area is missing",
                 id="active_area is missing",
             ),
             pytest.param(
-                ["2022-04-07 14:28:16", "exists"],
                 [467, "exists"],
-                ["u8", "exists"],
+                ["valid", "exists"],
                 ["90097341", "exists"],
                 "active_area",
                 "active_area has wrong datatype. Expected string",
                 id="active_area wrong datatype",
             ),
             pytest.param(
-                ["2022-04-07 14:28:16", "exists"],
                 ["ea1", "exists"],
-                [8, "exists"],
+                ["invalid", "exists"],
                 [90097341, "exists"],
-                "optional",
-                "active_experiment has wrong datatype. Expected string",
+                "other",
+                "empty",
                 id="shotnum and active_experiment have wrong datatype",
             ),
             pytest.param(
-                ["2022-04-07 14:28:16", "exists"],
                 ["ea1", "exists"],
-                [8, "exists"],
+                ["invalid", "exists"],
                 ["90097341", "missing"],
-                "optional",
-                "shotnum has wrong datatype. Expected integer",
-                id="shotnum has wrong datatype",
+                "other",
+                "empty",
+                id="shotnum has wrong datatype active_experiment missing",
             ),
             pytest.param(
-                ["2022-04-07 14:28:16", "exists"],
                 ["ea1", "exists"],
-                ["u8", "missing"],
+                ["valid", "missing"],
                 [90097341, "exists"],
                 "optional",
                 "active_experiment has wrong datatype. Expected string",
-                id="active_experiment has wrong datatype",
+                id="active_experiment has wrong datatype shotnum missing",
             ),
         ],
     )
-    def test_timestamp_missing(self, timestamp, active_area, shotnum, active_experiment, test, match, remove_HDF_file):
-        record_data, waveforms, images = create_test_hdf_file(timestamp=timestamp, active_area=active_area, shotnum=shotnum, active_experiment=active_experiment)
-        
-        record_checker = ingestion_validator.RecordChecks(record_data)
-        
-        with pytest.raises(RejectRecord, match=match):
-            if test == "timestamp":
-                record_checker.timestamp_checks()
-            if test == "active_area":
-                record_checker.active_area_checks()
-            if test == "optional":
-                record_checker.optional_metadata_checks()
+    def test_record_checks_fail(self, active_area, shotnum, active_experiment, test, match, remove_HDF_file):
+        if test == "other":
+            with pytest.raises(ModelError):
+                record_data, waveforms, images = create_test_hdf_file(active_area=active_area, shotnum=shotnum, active_experiment=active_experiment)
+        else:
+            record_data, waveforms, images = create_test_hdf_file(active_area=active_area, shotnum=shotnum, active_experiment=active_experiment)
+            record_checker = ingestion_validator.RecordChecks(record_data)
+            
+            with pytest.raises(RejectRecord, match=match):
+                if test == "timestamp":
+                    record_checker.timestamp_checks()
+                if test == "active_area":
+                    record_checker.active_area_checks()
+                if test == "optional":
+                    record_checker.optional_metadata_checks()
             
         
 
