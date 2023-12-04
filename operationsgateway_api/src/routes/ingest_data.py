@@ -7,6 +7,7 @@ from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
+from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
 from operationsgateway_api.src.records.image import Image
@@ -68,10 +69,8 @@ async def submit_hdf(
         image.create_thumbnail()
         record.store_thumbnail(image)
 
-    # Upload images to Echo S3 using a thread pool to be more efficent when uploading
-    # multiple images from the same HDF file
     if len(image_instances) > 0:
-        pool = ThreadPool(processes=len(image_instances))
+        pool = ThreadPool(processes=Config.config.images.upload_image_threads)
         pool.map(Image.upload_image, image_instances)
 
     if stored_record:
