@@ -3,13 +3,13 @@ class ApiError(Exception):
     status_code = 500
 
 
-class RejectFile(ApiError):
+class RejectFileError(ApiError):
     def __init__(self, msg="HDF file rejected", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)
         self.status_code = 400
-        
 
-class RejectRecord(ApiError):
+
+class RejectRecordError(ApiError):
     def __init__(self, msg="HDF file record rejected", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)
         self.status_code = 400
