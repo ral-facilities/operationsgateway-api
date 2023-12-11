@@ -1,25 +1,36 @@
-import asyncio
-import pytest
-
 import h5py
 import numpy as np
+import pytest
 
 from operationsgateway_api.src.exceptions import (
+    ModelError,
     RejectFileError,
     RejectRecordError,
-    ModelError,
 )
 from operationsgateway_api.src.records import ingestion_validator
 from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
 
 
+# poetry run pytest -s "test/records/test_HDF_file.py" -v -vv
+
+
 def create_test_hdf_file(
-    data_version=["1.0", "exists"],
-    timestamp=["2022-04-07 14:28:16", "exists"],
-    active_area=["ea1", "exists"],
-    shotnum=["valid", "exists"],
-    active_experiment=["90097341", "exists"],
+    data_version=None,
+    timestamp=None,
+    active_area=None,
+    shotnum=None,
+    active_experiment=None,
 ):
+
+    data_version = data_version if data_version is not None else ["1.0", "exists"]
+    timestamp = (
+        timestamp if timestamp is not None else ["2022-04-07 14:28:16", "exists"]
+    )
+    active_area = active_area if active_area is not None else ["ea1", "exists"]
+    shotnum = shotnum if shotnum is not None else ["valid", "exists"]
+    active_experiment = (
+        active_experiment if active_experiment is not None else ["90097341", "exists"]
+    )
 
     hdf_file_path = "test.h5"
     with h5py.File("test.h5", "w") as f:
@@ -43,81 +54,81 @@ def create_test_hdf_file(
         if active_experiment[1] == "exists":
             record.attrs.create("active_experiment", active_experiment[0])
 
-        GEM_SHOT_NUM_VALUE = record.create_group("GEM_SHOT_NUM_VALUE")
-        GEM_SHOT_NUM_VALUE.attrs.create("channel_dtype", "scalar")
-        GEM_SHOT_NUM_VALUE.create_dataset("data", data=366272)
+        gem_shot_num_value = record.create_group("GEM_SHOT_NUM_VALUE")
+        gem_shot_num_value.attrs.create("channel_dtype", "scalar")
+        gem_shot_num_value.create_dataset("data", data=366272)
 
-        GEM_SHOT_SOURCE_STRING = record.create_group("GEM_SHOT_SOURCE_STRING")
-        GEM_SHOT_SOURCE_STRING.attrs.create("channel_dtype", "scalar")
-        GEM_SHOT_SOURCE_STRING.create_dataset("data", data="EX")
+        gem_shot_source_string = record.create_group("GEM_SHOT_SOURCE_STRING")
+        gem_shot_source_string.attrs.create("channel_dtype", "scalar")
+        gem_shot_source_string.create_dataset("data", data="EX")
 
-        GEM_SHOT_TYPE_STRING = record.create_group("GEM_SHOT_TYPE_STRING")
-        GEM_SHOT_TYPE_STRING.attrs.create("channel_dtype", "scalar")
-        GEM_SHOT_TYPE_STRING.create_dataset("data", data="FP")
+        gem_shot_type_string = record.create_group("GEM_SHOT_TYPE_STRING")
+        gem_shot_type_string.attrs.create("channel_dtype", "scalar")
+        gem_shot_type_string.create_dataset("data", data="FP")
 
-        GEM_WP_POS_VALUE = record.create_group("GEM_WP_POS_VALUE")
-        GEM_WP_POS_VALUE.attrs.create("channel_dtype", "scalar")
-        GEM_WP_POS_VALUE.attrs.create("units", "ms")
-        GEM_WP_POS_VALUE.create_dataset("data", data=45)
+        gem_wp_pos_value = record.create_group("GEM_WP_POS_VALUE")
+        gem_wp_pos_value.attrs.create("channel_dtype", "scalar")
+        gem_wp_pos_value.attrs.create("units", "ms")
+        gem_wp_pos_value.create_dataset("data", data=45)
 
-        N_COMP_CALCULATEDE_VALUE = record.create_group("N_COMP_CALCULATEDE_VALUE")
-        N_COMP_CALCULATEDE_VALUE.attrs.create("channel_dtype", "scalar")
-        N_COMP_CALCULATEDE_VALUE.attrs.create("units", "mm")
-        N_COMP_CALCULATEDE_VALUE.create_dataset("data", data=10.84)
+        n_comp_calculatede_value = record.create_group("N_COMP_CALCULATEDE_VALUE")
+        n_comp_calculatede_value.attrs.create("channel_dtype", "scalar")
+        n_comp_calculatede_value.attrs.create("units", "mm")
+        n_comp_calculatede_value.create_dataset("data", data=10.84)
 
-        N_COMP_FF_E = record.create_group("N_COMP_FF_E")
-        N_COMP_FF_E.attrs.create("channel_dtype", "scalar")
-        N_COMP_FF_E.attrs.create("units", "mg")
-        N_COMP_FF_E.create_dataset("data", data=-8895000.0)
+        n_comp_ff_e = record.create_group("N_COMP_FF_E")
+        n_comp_ff_e.attrs.create("channel_dtype", "scalar")
+        n_comp_ff_e.attrs.create("units", "mg")
+        n_comp_ff_e.create_dataset("data", data=-8895000.0)
 
-        N_COMP_FF_IMAGE = record.create_group("N_COMP_FF_IMAGE")
-        N_COMP_FF_IMAGE.attrs.create("channel_dtype", "image")
-        N_COMP_FF_IMAGE.attrs.create("exposure_time_s", 0.001)
-        N_COMP_FF_IMAGE.attrs.create("gain", 5.5)
-        N_COMP_FF_IMAGE.attrs.create("x_pixel_size", 441.0)
-        N_COMP_FF_IMAGE.attrs.create("x_pixel_units", "µm")
-        N_COMP_FF_IMAGE.attrs.create("y_pixel_size", 441.0)
-        N_COMP_FF_IMAGE.attrs.create("y_pixel_units", "µm")
+        n_comp_ff_image = record.create_group("N_COMP_FF_IMAGE")
+        n_comp_ff_image.attrs.create("channel_dtype", "image")
+        n_comp_ff_image.attrs.create("exposure_time_s", 0.001)
+        n_comp_ff_image.attrs.create("gain", 5.5)
+        n_comp_ff_image.attrs.create("x_pixel_size", 441.0)
+        n_comp_ff_image.attrs.create("x_pixel_units", "µm")
+        n_comp_ff_image.attrs.create("y_pixel_size", 441.0)
+        n_comp_ff_image.attrs.create("y_pixel_units", "µm")
         # example 2D dataset
         data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.uint16)
-        N_COMP_FF_IMAGE.create_dataset("data", data=data)
+        n_comp_ff_image.create_dataset("data", data=data)
 
-        N_COMP_FF_INTEGRATION = record.create_group("N_COMP_FF_INTEGRATION")
-        N_COMP_FF_INTEGRATION.attrs.create("channel_dtype", "scalar")
-        N_COMP_FF_INTEGRATION.attrs.create("units", "µm")
-        N_COMP_FF_INTEGRATION.create_dataset("data", data=8895000.0)
+        n_comp_ff_intergration = record.create_group("N_COMP_FF_INTEGRATION")
+        n_comp_ff_intergration.attrs.create("channel_dtype", "scalar")
+        n_comp_ff_intergration.attrs.create("units", "µm")
+        n_comp_ff_intergration.create_dataset("data", data=8895000.0)
 
-        N_COMP_FF_XPOS = record.create_group("N_COMP_FF_XPOS")
-        N_COMP_FF_XPOS.attrs.create("channel_dtype", "scalar")
-        N_COMP_FF_XPOS.attrs.create("units", "mm")
-        N_COMP_FF_XPOS.create_dataset("data", data=330.523)
+        n_comp_ff_xpos = record.create_group("N_COMP_FF_XPOS")
+        n_comp_ff_xpos.attrs.create("channel_dtype", "scalar")
+        n_comp_ff_xpos.attrs.create("units", "mm")
+        n_comp_ff_xpos.create_dataset("data", data=330.523)
 
-        N_COMP_FF_YPOS = record.create_group("N_COMP_FF_YPOS")
-        N_COMP_FF_YPOS.attrs.create("channel_dtype", "scalar")
-        N_COMP_FF_YPOS.attrs.create("units", "mm")
-        N_COMP_FF_YPOS.create_dataset("data", data=243.771)
+        n_comp_ff_ypos = record.create_group("N_COMP_FF_YPOS")
+        n_comp_ff_ypos.attrs.create("channel_dtype", "scalar")
+        n_comp_ff_ypos.attrs.create("units", "mm")
+        n_comp_ff_ypos.create_dataset("data", data=243.771)
 
-        N_COMP_THROUGHPUTE_VALUE = record.create_group("N_COMP_THROUGHPUTE_VALUE")
-        N_COMP_THROUGHPUTE_VALUE.attrs.create("channel_dtype", "scalar")
-        N_COMP_THROUGHPUTE_VALUE.attrs.create("units", "cm")
-        N_COMP_THROUGHPUTE_VALUE.create_dataset("data", data=74)
+        n_comp_throughpute_value = record.create_group("N_COMP_THROUGHPUTE_VALUE")
+        n_comp_throughpute_value.attrs.create("channel_dtype", "scalar")
+        n_comp_throughpute_value.attrs.create("units", "cm")
+        n_comp_throughpute_value.create_dataset("data", data=74)
 
-        TA3_SHOT_NUM_VALUE = record.create_group("TA3_SHOT_NUM_VALUE")
-        TA3_SHOT_NUM_VALUE.attrs.create("channel_dtype", "scalar")
-        TA3_SHOT_NUM_VALUE.create_dataset("data", data=217343.0)
+        ta3_shot_num_value = record.create_group("TA3_SHOT_NUM_VALUE")
+        ta3_shot_num_value.attrs.create("channel_dtype", "scalar")
+        ta3_shot_num_value.create_dataset("data", data=217343.0)
 
-        N_COMP_SPEC_TRACE = record.create_group("N_COMP_SPEC_TRACE")
-        N_COMP_SPEC_TRACE.attrs.create("channel_dtype", "waveform")
-        N_COMP_SPEC_TRACE.attrs.create("x_units", "s")
-        N_COMP_SPEC_TRACE.attrs.create("y_units", "kJ")
+        n_comp_spec_trace = record.create_group("N_COMP_SPEC_TRACE")
+        n_comp_spec_trace.attrs.create("channel_dtype", "waveform")
+        n_comp_spec_trace.attrs.create("x_units", "s")
+        n_comp_spec_trace.attrs.create("y_units", "kJ")
         x = [1, 2, 3, 4, 5, 6]
         y = [8, 3, 6, 2, 3, 8, 425]
-        N_COMP_SPEC_TRACE.create_dataset("x", data=x)
-        N_COMP_SPEC_TRACE.create_dataset("y", data=y)
+        n_comp_spec_trace.create_dataset("x", data=x)
+        n_comp_spec_trace.create_dataset("y", data=y)
 
-        Type = record.create_group("Type")
-        Type.attrs.create("channel_dtype", "scalar")
-        Type.create_dataset("data", data="GS")
+        types = record.create_group("Type")
+        types.attrs.create("channel_dtype", "scalar")
+        types.create_dataset("data", data="GS")
 
     hdf_handler = HDFDataHandler(hdf_file_path)
     return hdf_handler.extract_data()
@@ -125,15 +136,15 @@ def create_test_hdf_file(
 
 # poetry run pytest -s "test/records/test_HDF_file.py::TestFile" -v -vv
 class TestFile:
-    def test_file_checks_pass(self, remove_HDF_file):
+    def test_file_checks_pass(self, remove_hdf_file):
         record_data, waveforms, images = create_test_hdf_file()
         file_checker = ingestion_validator.FileChecks(record_data)
 
         file_checker.epac_data_version_checks()
 
-    def test_minor_version_too_high(self, remove_HDF_file):
+    def test_minor_version_too_high(self, remove_hdf_file):
         record_data, waveforms, images = create_test_hdf_file(
-            data_version=["1.4", "exists"]
+            data_version=["1.4", "exists"],
         )
         file_checker = ingestion_validator.FileChecks(record_data)
 
@@ -162,7 +173,7 @@ class TestFile:
             ),
         ],
     )
-    def test_epac_ops_data_version_missing(self, data_version, match, remove_HDF_file):
+    def test_epac_ops_data_version_missing(self, data_version, match, remove_hdf_file):
         record_data, waveforms, images = create_test_hdf_file(data_version=data_version)
         file_checker = ingestion_validator.FileChecks(record_data)
 
@@ -192,9 +203,10 @@ class TestRecord:
             ),
         ],
     )
-    def test_record_checks_pass(self, shotnum, active_experiment, remove_HDF_file):
+    def test_record_checks_pass(self, shotnum, active_experiment, remove_hdf_file):
         record_data, waveforms, images = create_test_hdf_file(
-            shotnum=shotnum, active_experiment=active_experiment
+            shotnum=shotnum,
+            active_experiment=active_experiment,
         )
         record_checker = ingestion_validator.RecordChecks(record_data)
 
@@ -247,7 +259,13 @@ class TestRecord:
         ],
     )
     def test_record_checks_fail(
-        self, active_area, shotnum, active_experiment, test, match, remove_HDF_file
+        self,
+        active_area,
+        shotnum,
+        active_experiment,
+        test,
+        match,
+        remove_hdf_file,
     ):
         if test == "other":
             with pytest.raises(ModelError):
@@ -276,10 +294,12 @@ class TestRecord:
 # poetry run pytest -s "test/records/test_HDF_file.py::TestChannel" -v -vv
 class TestChannel:
     @pytest.mark.asyncio
-    async def test_channel_dtype(self, remove_HDF_file):
+    async def test_channel_dtype(self, remove_hdf_file):
         record_data, waveforms, images = create_test_hdf_file()
         channel_checker = ingestion_validator.ChannelChecks(
-            record_data, waveforms, images
+            record_data,
+            waveforms,
+            images,
         )
 
         response = await channel_checker.channel_dtype_checks()

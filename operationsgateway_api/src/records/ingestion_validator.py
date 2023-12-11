@@ -1,15 +1,15 @@
 import logging
+
 import numpy as np
 
-from operationsgateway_api.src.exceptions import RejectFileError, RejectRecordError
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
+from operationsgateway_api.src.exceptions import RejectFileError, RejectRecordError
 from operationsgateway_api.src.models import (
-    RecordModel,
     ImageChannelMetadataModel,
+    RecordModel,
     ScalarChannelMetadataModel,
     WaveformChannelMetadataModel,
 )
-from operationsgateway_api.src.constants import DATA_DATETIME_FORMAT
 
 
 log = logging.getLogger()
@@ -32,13 +32,13 @@ class FileChecks:
             epac_number = ingested_metadata.epac_ops_data_version
             if type(ingested_metadata.epac_ops_data_version) != str:
                 raise RejectFileError(
-                    "epac_ops_data_version has wrong datatype. Should be string"
+                    "epac_ops_data_version has wrong datatype. Should be string",
                 )
             else:
                 epac_numbers = epac_number.split(".")
                 if epac_numbers[0] != "1":
                     raise RejectFileError(
-                        "epac_ops_data_version major version was not 1"
+                        "epac_ops_data_version major version was not 1",
                     )
                 if int(epac_numbers[1]) > 0:
                     return "File minor version number too high (expected 0)"
@@ -60,7 +60,7 @@ class RecordChecks:
         ):  # is the has attribute needed?
             if type(ingested_metadata.active_area) != str:
                 raise RejectRecordError(
-                    "active_area has wrong datatype. Expected string"
+                    "active_area has wrong datatype. Expected string",
                 )
         else:
             raise RejectRecordError("active_area is missing")
@@ -73,7 +73,7 @@ class RecordChecks:
         ):  # is the has attribute needed?
             if type(ingested_metadata.active_experiment) != str:
                 raise RejectRecordError(
-                    "active_experiment has wrong datatype. Expected string"
+                    "active_experiment has wrong datatype. Expected string",
                 )
         if (
             hasattr(ingested_metadata, "shotnum")
@@ -110,8 +110,9 @@ class ChannelChecks:
                 ):
                     rejected_channels.append(
                         {
-                            key: "channel_dtype has wrong data type or its value is unsupported"
-                        }
+                            key: "channel_dtype has wrong data type "
+                            "or its value is unsupported",
+                        },
                     )
             else:
                 rejected_channels.append({key: "channel_dtype attribute is missing"})
@@ -164,25 +165,28 @@ class ChannelChecks:
                         else:
                             if matching_image:
                                 rejected_channels.append(
-                                    {key: "data has wrong datatype, should be ndarray"}
+                                    {key: "data has wrong datatype, should be ndarray"},
                                 )
                             elif images > 1:
                                 rejected_channels.append(
                                     {
-                                        key: "more than one matching path attribute detected, must be mutually exclusive"
-                                    }
+                                        key: "more than one matching path attribute "
+                                        "detected, must be mutually exclusive",
+                                    },
                                 )
                             else:
                                 rejected_channels.append(
                                     {
-                                        key: "path attribute is missing or is wrong data type for this image_path"
-                                    }
+                                        key: "path attribute is missing or is "
+                                        "wrong data type for this image_path",
+                                    },
                                 )
                     else:
                         rejected_channels.append(
                             {
-                                key: "image_path attribute wrong datatype, should be string"
-                            }
+                                key: "image_path attribute wrong datatype, "
+                                "should be string",
+                            },
                         )
                 else:
                     rejected_channels.append({key: "image_path attribute is missing"})
@@ -225,26 +229,30 @@ class ChannelChecks:
                             if matching_waveform:
                                 rejected_channels.append(
                                     {
-                                        key: "x or y has wrong datatype, should be a list of floats"
-                                    }
+                                        key: "x or y has wrong datatype, "
+                                        "should be a list of floats",
+                                    },
                                 )
                             elif waveforms > 1:
                                 rejected_channels.append(
                                     {
-                                        key: "more than one matching id attribute detected, must be mutually exclusive"
-                                    }
+                                        key: "more than one matching id attribute "
+                                        "detected, must be mutually exclusive",
+                                    },
                                 )
                             else:
                                 rejected_channels.append(
                                     {
-                                        key: "id_ attribute is missing or is wrong data type for this waveform_id"
-                                    }
+                                        key: "id_ attribute is missing or is wrong "
+                                        "data type for this waveform_id",
+                                    },
                                 )
                     else:
                         rejected_channels.append(
                             {
-                                key: "waveform_id attribute wrong datatype, should be string"
-                            }
+                                key: "waveform_id attribute wrong datatype, "
+                                "should be string",
+                            },
                         )
                 else:
                     rejected_channels.append({key: "waveform_id attribute is missing"})
@@ -261,7 +269,7 @@ class ChannelChecks:
                     and value.metadata.units is not None
                 ):
                     rejected_channels.append(
-                        {key: "units attribute has wrong datatype"}
+                        {key: "units attribute has wrong datatype"},
                     )
 
             if value.metadata.channel_dtype == "image":
@@ -270,7 +278,7 @@ class ChannelChecks:
                     and value.metadata.exposure_time_s is not None
                 ):
                     rejected_channels.append(
-                        {key: "exposure_time_s attribute has wrong datatype"}
+                        {key: "exposure_time_s attribute has wrong datatype"},
                     )
                 if hasattr(value.metadata, "gain") and (
                     type(value.metadata.gain) != float
@@ -282,35 +290,35 @@ class ChannelChecks:
                     and value.metadata.x_pixel_size is not None
                 ):
                     rejected_channels.append(
-                        {key: "x_pixel_size attribute has wrong datatype"}
+                        {key: "x_pixel_size attribute has wrong datatype"},
                     )
                 if hasattr(value.metadata, "x_pixel_units") and (
                     type(value.metadata.x_pixel_units) != str
                     and value.metadata.x_pixel_units is not None
                 ):
                     rejected_channels.append(
-                        {key: "x_pixel_units attribute has wrong datatype"}
+                        {key: "x_pixel_units attribute has wrong datatype"},
                     )
                 if hasattr(value.metadata, "y_pixel_size") and (
                     type(value.metadata.y_pixel_size) != float
                     and value.metadata.y_pixel_size is not None
                 ):
                     rejected_channels.append(
-                        {key: "y_pixel_size attribute has wrong datatype"}
+                        {key: "y_pixel_size attribute has wrong datatype"},
                     )
                 if hasattr(value.metadata, "y_pixel_units") and (
                     type(value.metadata.y_pixel_units) != str
                     and value.metadata.y_pixel_units is not None
                 ):
                     rejected_channels.append(
-                        {key: "y_pixel_units attribute has wrong datatype"}
+                        {key: "y_pixel_units attribute has wrong datatype"},
                     )
 
                 if hasattr(value, "thumbnail") and (
                     type(value.thumbnail) != str and value.thumbnail is not None
                 ):
                     rejected_channels.append(
-                        {key: "thumbnail attribute has wrong datatype"}
+                        {key: "thumbnail attribute has wrong datatype"},
                     )
 
             if value.metadata.channel_dtype == "waveform":
@@ -319,21 +327,21 @@ class ChannelChecks:
                     and value.metadata.x_units is not None
                 ):
                     rejected_channels.append(
-                        {key: "x_units attribute has wrong datatype"}
+                        {key: "x_units attribute has wrong datatype"},
                     )
                 if hasattr(value.metadata, "y_units") and (
                     type(value.metadata.y_units) != str
                     and value.metadata.y_units is not None
                 ):
                     rejected_channels.append(
-                        {key: "y_units attribute has wrong datatype"}
+                        {key: "y_units attribute has wrong datatype"},
                     )
 
                 if hasattr(value, "thumbnail") and (
                     type(value.thumbnail) != str and value.thumbnail is not None
                 ):
                     rejected_channels.append(
-                        {key: "thumbnail attribute has wrong datatype"}
+                        {key: "thumbnail attribute has wrong datatype"},
                     )
 
         return rejected_channels
@@ -376,17 +384,18 @@ class ChannelChecks:
                             pass
                         else:
                             rejected_channels.append(
-                                {key: "data attribute has wrong shape"}
+                                {key: "data attribute has wrong shape"},
                             )
                     else:
                         rejected_channels.append(
-                            {key: "data attribute has wrong shape"}
+                            {key: "data attribute has wrong shape"},
                         )
                 else:
                     rejected_channels.append(
                         {
-                            key: "data attribute has wrong datatype, should be uint16 or uint8"
-                        }
+                            key: "data attribute has wrong datatype, "
+                            "should be uint16 or uint8",
+                        },
                     )
 
             if value.metadata.channel_dtype == "waveform":
@@ -410,8 +419,9 @@ class ChannelChecks:
                 else:
                     rejected_channels.append(
                         {
-                            key: "x attribute has wrong datatype, should be a list of floats"
-                        }
+                            key: "x attribute has wrong datatype, should "
+                            "be a list of floats",
+                        },
                     )
 
                 if all(isinstance(element, float) for element in y):
@@ -419,8 +429,9 @@ class ChannelChecks:
                 else:
                     rejected_channels.append(
                         {
-                            key: "y attribute has wrong datatype, should be a list of floats"
-                        }
+                            key: "y attribute has wrong datatype, should be a "
+                            "list of floats",
+                        },
                     )
 
         return rejected_channels
@@ -484,7 +495,7 @@ class ChannelChecks:
 
                 if unexpected_value_keys:
                     rejected_channels.append(
-                        {key: "unknown attribute in scalar channel"}
+                        {key: "unknown attribute in scalar channel"},
                     )
 
                 metadata_keys = value.metadata.dict().keys()
@@ -492,7 +503,7 @@ class ChannelChecks:
 
                 if unexpected_metadata_keys:
                     rejected_channels.append(
-                        {key: "unknown attribute in scalar metadata"}
+                        {key: "unknown attribute in scalar metadata"},
                     )
 
             if value.metadata.channel_dtype == "image":
@@ -514,12 +525,12 @@ class ChannelChecks:
 
                 if unexpected_value_keys:
                     rejected_channels.append(
-                        {key: "unknown attribute in image channel"}
+                        {key: "unknown attribute in image channel"},
                     )
 
                 if unexpected_metadata_keys:
                     rejected_channels.append(
-                        {key: "unknown attribute in image metadata"}
+                        {key: "unknown attribute in image metadata"},
                     )
 
                 if unexpected_image_keys:
@@ -544,17 +555,17 @@ class ChannelChecks:
 
                 if unexpected_value_keys:
                     rejected_channels.append(
-                        {key: "unknown attribute in waveform channel"}
+                        {key: "unknown attribute in waveform channel"},
                     )
 
                 if unexpected_metadata_keys:
                     rejected_channels.append(
-                        {key: "unknown attribute in waveform metadata"}
+                        {key: "unknown attribute in waveform metadata"},
                     )
 
                 if unexpected_waveform_keys:
                     rejected_channels.append(
-                        {key: "unknown attribute in waveform data"}
+                        {key: "unknown attribute in waveform data"},
                     )
 
         return rejected_channels
@@ -570,8 +581,9 @@ class ChannelChecks:
             if key not in manifest:
                 rejected_channels.append(
                     {
-                        key: "Channel name is not recognised (does not appear in manifest)"
-                    }
+                        key: "Channel name is not recognised (does not appear "
+                        "in manifest)",
+                    },
                 )
                 # reject on import?
         return rejected_channels
@@ -595,7 +607,7 @@ class ChannelChecks:
         optional_response = self._organise_dict(self.optional_dtype_checks())
         dataset_response = self._organise_dict(self.dataset_checks())
         unrecognised_response = self._organise_dict(
-            self.unrecognised_attribute_checks()
+            self.unrecognised_attribute_checks(),
         )
         channel_name_response = self._organise_dict(await self.channel_name_check())
 
