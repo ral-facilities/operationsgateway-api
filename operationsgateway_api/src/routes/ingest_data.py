@@ -44,16 +44,19 @@ async def submit_hdf(
     log.debug("Filename: %s, Content: %s", file.filename, file.content_type)
 
     hdf_handler = HDFDataHandler(file.file)
-    record_data, waveforms, images = hdf_handler.extract_data()
+    record_data, waveforms, images, _ = hdf_handler.extract_data()
     record = Record(record_data)
 
     stored_record = await record.find_existing_record()
     # TODO - when I implement the validation, it should only run if `stored_record`
     # actually contains something (i.e. isn't None)
-    # ingest_checker = IngestionValidator(record_data, stored_record)
+    # ingest_checker = IngestionValidator(record_data, stored_record, failed_values)
     # file_checker = ingest_checker.FileChecks(ingest_checker)
     # import_checker = ingest_checker.PartialImportChecks(ingest_checker)
     # import_checker.channel_checks()
+    
+    # ingest_checker.form_response()
+    
     # await file_checker.example()
 
     log.debug("Processing waveforms")

@@ -10,7 +10,6 @@ from operationsgateway_api.src.exceptions import (
 from operationsgateway_api.src.records import ingestion_validator
 from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
 
-
 # poetry run pytest -s "test/records/test_HDF_file.py" -v -vv
 
 
@@ -137,13 +136,13 @@ def create_test_hdf_file(
 # poetry run pytest -s "test/records/test_HDF_file.py::TestFile" -v -vv
 class TestFile:
     def test_file_checks_pass(self, remove_hdf_file):
-        record_data, waveforms, images = create_test_hdf_file()
+        record_data, waveforms, images, _ = create_test_hdf_file()
         file_checker = ingestion_validator.FileChecks(record_data)
 
         file_checker.epac_data_version_checks()
 
     def test_minor_version_too_high(self, remove_hdf_file):
-        record_data, waveforms, images = create_test_hdf_file(
+        record_data, waveforms, images, _ = create_test_hdf_file(
             data_version=["1.4", "exists"],
         )
         file_checker = ingestion_validator.FileChecks(record_data)
@@ -174,7 +173,7 @@ class TestFile:
         ],
     )
     def test_epac_ops_data_version_missing(self, data_version, match, remove_hdf_file):
-        record_data, waveforms, images = create_test_hdf_file(data_version=data_version)
+        record_data, waveforms, images, _ = create_test_hdf_file(data_version=data_version)
         file_checker = ingestion_validator.FileChecks(record_data)
 
         with pytest.raises(RejectFileError, match=match):
@@ -204,7 +203,7 @@ class TestRecord:
         ],
     )
     def test_record_checks_pass(self, shotnum, active_experiment, remove_hdf_file):
-        record_data, waveforms, images = create_test_hdf_file(
+        record_data, waveforms, images, _ = create_test_hdf_file(
             shotnum=shotnum,
             active_experiment=active_experiment,
         )
@@ -269,13 +268,13 @@ class TestRecord:
     ):
         if test == "other":
             with pytest.raises(ModelError):
-                record_data, waveforms, images = create_test_hdf_file(
+                record_data, waveforms, images, _ = create_test_hdf_file(
                     active_area=active_area,
                     shotnum=shotnum,
                     active_experiment=active_experiment,
                 )
         else:
-            record_data, waveforms, images = create_test_hdf_file(
+            record_data, waveforms, images, _ = create_test_hdf_file(
                 active_area=active_area,
                 shotnum=shotnum,
                 active_experiment=active_experiment,
@@ -294,16 +293,79 @@ class TestRecord:
 # poetry run pytest -s "test/records/test_HDF_file.py::TestChannel" -v -vv
 class TestChannel:
     @pytest.mark.asyncio
-    async def test_channel_dtype(self, remove_hdf_file):
-        record_data, waveforms, images = create_test_hdf_file()
+    async def test_channel_checks_success(self, remove_hdf_file):
+        record_data, waveforms, images, channel_dtype_missing = create_test_hdf_file()
+        
         channel_checker = ingestion_validator.ChannelChecks(
             record_data,
             waveforms,
             images,
+            channel_dtype_missing,
+        )
+        async_functions = [
+            channel_checker.channel_dtype_checks,
+            channel_checker.channel_name_check,
+        ]
+        functions = [
+            channel_checker.required_attribute_checks,
+            channel_checker.optional_dtype_checks,
+            channel_checker.dataset_checks,
+            channel_checker.unrecognised_attribute_checks,
+        ]
+
+        for function in functions:
+            assert function() == []
+
+        for async_function in async_functions:
+            assert await async_function() == []
+
+        assert await channel_checker.channel_checks() == {
+            "accepted channels": [
+                "GEM_SHOT_NUM_VALUE",
+                "GEM_SHOT_SOURCE_STRING",
+                "GEM_SHOT_TYPE_STRING",
+                "GEM_WP_POS_VALUE",
+                "N_COMP_CALCULATEDE_VALUE",
+                "N_COMP_FF_E",
+                "N_COMP_FF_IMAGE",
+                "N_COMP_FF_INTEGRATION",
+                "N_COMP_FF_XPOS",
+                "N_COMP_FF_YPOS",
+                "N_COMP_SPEC_TRACE",
+                "N_COMP_THROUGHPUTE_VALUE",
+                "TA3_SHOT_NUM_VALUE",
+                "Type",
+            ],
+            "rejected channels": {},
+        }
+
+    @pytest.mark.asyncio
+    async def test_channel_dtype(self, remove_hdf_file):
+        record_data, waveforms, images, channel_dtype_missing = create_test_hdf_file()
+        channel_checker = ingestion_validator.ChannelChecks(
+            record_data,
+            waveforms,
+            images,
+            channel_dtype_missing,
         )
 
-        response = await channel_checker.channel_dtype_checks()
-        print(response)
+        dtype_response = await channel_checker.channel_dtype_checks()
+        print(dtype_response)
+
+    # attribute_response = channel_checker.required_attribute_checks()
+    # optional_response = channel_checker.optional_dtype_checks()
+    # dataset_response = channel_checker.dataset_checks()
+    # unrecognised_response = channel_checker.unrecognised_attribute_checks()
+    # channel_name_response = await channel_checker.channel_name_check()
+
+    # response = await channel_checker.channel_checks()
+
+    # print(attribute_response)
+    # print(optional_response)
+    # print(dataset_response)
+    # print(unrecognised_response)
+    # print(channel_name_response)
+    # print(response)
 
 
 class TestPartialImport:

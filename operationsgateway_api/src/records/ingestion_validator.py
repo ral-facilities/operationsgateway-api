@@ -84,10 +84,11 @@ class RecordChecks:
 
 
 class ChannelChecks:
-    def __init__(self, ingested_record: RecordModel, ingested_waveform, ingested_image):
+    def __init__(self, ingested_record: RecordModel, ingested_waveform, ingested_image, channel_dtype_missing=[]):
         self.ingested_record = ingested_record
         self.ingested_waveform = ingested_waveform
         self.ingested_image = ingested_image
+        self.channel_dtype_missing = channel_dtype_missing
 
     async def channel_dtype_checks(self):
         ingested_channels = (self.ingested_record).channels
@@ -116,6 +117,11 @@ class ChannelChecks:
                     )
             else:
                 rejected_channels.append({key: "channel_dtype attribute is missing"})
+                
+        if self.channel_dtype_missing != []:
+            for channel in self.channel_dtype_missing:
+                rejected_channels.append({channel: "channel_dtype attribute is missing (cannot perform other checks without)"})
+
         return rejected_channels
 
     def required_attribute_checks(self):
@@ -257,6 +263,69 @@ class ChannelChecks:
                 else:
                     rejected_channels.append({key: "waveform_id attribute is missing"})
         return rejected_channels
+    
+    @classmethod
+    def scalar_metadata_checks(cls, key, value_dict, rejected_channels=[]):
+        
+        if type(value_dict) != dict:
+            value_dict = value_dict.model_dump()
+            
+        if ("units" in value_dict) and (
+            type(value_dict["units"]) != str
+            and value_dict["units"] is not None
+        ):
+            rejected_channels.append(
+                {key: "units attribute has wrong datatype"},
+            )
+        return rejected_channels
+
+    @classmethod
+    def image_metadata_checks(cls, key, value_dict, rejected_channels=[]):
+
+        if type(value_dict) != dict:
+            value_dict = value_dict.model_dump()
+
+        if ("exposure_time_s" in value_dict) and (
+            not isinstance(value_dict["exposure_time_s"], (float, np.floating))
+            and value_dict["exposure_time_s"] is not None
+        ):
+            rejected_channels.append(
+                {key: "exposure_time_s attribute has wrong datatype"},
+            )
+        if ("gain" in value_dict) and (
+            not isinstance(value_dict["gain"], (float, np.floating))
+            and value_dict["gain"] is not None
+        ):
+            rejected_channels.append({key: "gain attribute has wrong datatype"})
+        if ("x_pixel_size" in value_dict) and (
+            not isinstance(value_dict["x_pixel_size"], (float, np.floating))
+            and value_dict["x_pixel_size"] is not None
+        ):
+            rejected_channels.append(
+                {key: "x_pixel_size attribute has wrong datatype"},
+            )
+        if ("x_pixel_units" in value_dict) and (
+            type(value_dict["x_pixel_units"]) != str
+            and value_dict["x_pixel_units"] is not None
+        ):
+            rejected_channels.append(
+                {key: "x_pixel_units attribute has wrong datatype"},
+            )
+        if ("y_pixel_size" in value_dict) and (
+            not isinstance(value_dict["y_pixel_size"], (float, np.floating))
+            and value_dict["y_pixel_size"] is not None
+        ):
+            rejected_channels.append(
+                {key: "y_pixel_size attribute has wrong datatype"},
+            )
+        if ("y_pixel_units" in value_dict) and (
+            type(value_dict["y_pixel_units"]) != str
+            and value_dict["y_pixel_units"] is not None
+        ):
+            rejected_channels.append(
+                {key: "y_pixel_units attribute has wrong datatype"},
+            )
+        return rejected_channels
 
     def optional_dtype_checks(self):
         ingested_channels = (self.ingested_record).channels
@@ -264,55 +333,15 @@ class ChannelChecks:
 
         for key, value in ingested_channels.items():
             if value.metadata.channel_dtype == "scalar":
-                if hasattr(value.metadata, "units") and (
-                    type(value.metadata.units) != str
-                    and value.metadata.units is not None
-                ):
-                    rejected_channels.append(
-                        {key: "units attribute has wrong datatype"},
-                    )
+                
+                rejected_channels = self.scalar_metadata_checks(
+                    key, value.metadata, rejected_channels
+                )
 
             if value.metadata.channel_dtype == "image":
-                if hasattr(value.metadata, "exposure_time_s") and (
-                    type(value.metadata.exposure_time_s) != float
-                    and value.metadata.exposure_time_s is not None
-                ):
-                    rejected_channels.append(
-                        {key: "exposure_time_s attribute has wrong datatype"},
-                    )
-                if hasattr(value.metadata, "gain") and (
-                    type(value.metadata.gain) != float
-                    and value.metadata.gain is not None
-                ):
-                    rejected_channels.append({key: "gain attribute has wrong datatype"})
-                if hasattr(value.metadata, "x_pixel_size") and (
-                    type(value.metadata.x_pixel_size) != float
-                    and value.metadata.x_pixel_size is not None
-                ):
-                    rejected_channels.append(
-                        {key: "x_pixel_size attribute has wrong datatype"},
-                    )
-                if hasattr(value.metadata, "x_pixel_units") and (
-                    type(value.metadata.x_pixel_units) != str
-                    and value.metadata.x_pixel_units is not None
-                ):
-                    rejected_channels.append(
-                        {key: "x_pixel_units attribute has wrong datatype"},
-                    )
-                if hasattr(value.metadata, "y_pixel_size") and (
-                    type(value.metadata.y_pixel_size) != float
-                    and value.metadata.y_pixel_size is not None
-                ):
-                    rejected_channels.append(
-                        {key: "y_pixel_size attribute has wrong datatype"},
-                    )
-                if hasattr(value.metadata, "y_pixel_units") and (
-                    type(value.metadata.y_pixel_units) != str
-                    and value.metadata.y_pixel_units is not None
-                ):
-                    rejected_channels.append(
-                        {key: "y_pixel_units attribute has wrong datatype"},
-                    )
+                rejected_channels = self.image_metadata_checks(
+                    key, value.metadata, rejected_channels
+                )
 
                 if hasattr(value, "thumbnail") and (
                     type(value.thumbnail) != str and value.thumbnail is not None
@@ -490,20 +519,24 @@ class ChannelChecks:
         for key, value in ingested_channels.items():
             if value.metadata.channel_dtype == "scalar":
 
-                value_keys = value.dict().keys()
+                value_keys = value.model_dump().keys()
                 unexpected_value_keys = set(value_keys) - set(scalar_values)
 
                 if unexpected_value_keys:
                     rejected_channels.append(
-                        {key: "unknown attribute in scalar channel"},
+                        {
+                            key: f"unknown attribute in scalar channel: {unexpected_value_keys}"
+                        },
                     )
 
-                metadata_keys = value.metadata.dict().keys()
+                metadata_keys = value.metadata.model_dump().keys()
                 unexpected_metadata_keys = set(metadata_keys) - set(scalar_metadata)
 
                 if unexpected_metadata_keys:
                     rejected_channels.append(
-                        {key: "unknown attribute in scalar metadata"},
+                        {
+                            key: f"unknown attribute in scalar metadata: {unexpected_metadata_keys}"
+                        },
                     )
 
             if value.metadata.channel_dtype == "image":
@@ -514,27 +547,35 @@ class ChannelChecks:
                     if image.path == path_to_check:
                         matching_image = image
 
-                value_keys = value.dict().keys()
+                value_keys = value.model_dump().keys()
                 unexpected_value_keys = set(value_keys) - set(image_values)
 
-                metadata_keys = value.metadata.dict().keys()
+                metadata_keys = value.metadata.model_dump().keys()
                 unexpected_metadata_keys = set(metadata_keys) - set(image_metadata)
 
-                image_keys = matching_image.dict().keys()
+                image_keys = matching_image.model_dump().keys()
                 unexpected_image_keys = set(image_keys) - set(image_data)
 
                 if unexpected_value_keys:
                     rejected_channels.append(
-                        {key: "unknown attribute in image channel"},
+                        {
+                            key: f"unknown attribute in image channel: {unexpected_value_keys}"
+                        },
                     )
 
                 if unexpected_metadata_keys:
                     rejected_channels.append(
-                        {key: "unknown attribute in image metadata"},
+                        {
+                            key: f"unknown attribute in image metadata: {unexpected_metadata_keys}"
+                        },
                     )
 
                 if unexpected_image_keys:
-                    rejected_channels.append({key: "unknown attribute in image data"})
+                    rejected_channels.append(
+                        {
+                            key: f"unknown attribute in image data: {unexpected_image_keys}"
+                        }
+                    )
 
             if value.metadata.channel_dtype == "waveform":
                 id_to_check = value.waveform_id
@@ -544,28 +585,34 @@ class ChannelChecks:
                     if waveform.id_ == id_to_check:
                         matching_waveform = waveform
 
-                value_keys = value.dict().keys()
+                value_keys = value.model_dump().keys()
                 unexpected_value_keys = set(value_keys) - set(waveform_values)
 
-                metadata_keys = value.metadata.dict().keys()
+                metadata_keys = value.metadata.model_dump().keys()
                 unexpected_metadata_keys = set(metadata_keys) - set(waveform_metadata)
 
-                waveform_keys = matching_waveform.dict().keys()
+                waveform_keys = matching_waveform.model_dump().keys()
                 unexpected_waveform_keys = set(waveform_keys) - set(waveform_data)
 
                 if unexpected_value_keys:
                     rejected_channels.append(
-                        {key: "unknown attribute in waveform channel"},
+                        {
+                            key: f"unknown attribute in waveform channel: {unexpected_value_keys}"
+                        },
                     )
 
                 if unexpected_metadata_keys:
                     rejected_channels.append(
-                        {key: "unknown attribute in waveform metadata"},
+                        {
+                            key: f"unknown attribute in waveform metadata: {unexpected_metadata_keys}"
+                        },
                     )
 
                 if unexpected_waveform_keys:
                     rejected_channels.append(
-                        {key: "unknown attribute in waveform data"},
+                        {
+                            key: f"unknown attribute in waveform data: {unexpected_waveform_keys}"
+                        },
                     )
 
         return rejected_channels

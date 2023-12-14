@@ -31,15 +31,15 @@ class PyObjectId(ObjectId):
 
 
 class ImageModel(BaseModel):
-    path: str
-    data: np.ndarray
+    path: Optional[Union[str, Any]]
+    data: Optional[Union[np.ndarray, Any]]
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class WaveformModel(BaseModel):
-    id_: str = Field(alias="_id")
-    x: List[float]
-    y: List[float]
+    id_: Optional[Union[str, Any]] = Field(alias="_id")
+    x: Optional[Union[List[float], Any]]
+    y: Optional[Union[List[float], Any]]
 
     class Config:
         arbitrary_types_allowed = True
@@ -53,41 +53,41 @@ class WaveformModel(BaseModel):
 
 
 class ImageChannelMetadataModel(BaseModel):
-    channel_dtype: str
-    exposure_time_s: Optional[float] = None
-    gain: Optional[float] = None
-    x_pixel_size: Optional[float] = None
-    x_pixel_units: Optional[str] = None
-    y_pixel_size: Optional[float] = None
-    y_pixel_units: Optional[str] = None
+    channel_dtype: Optional[Union[str, Any]]
+    exposure_time_s: Optional[Union[float, Any]] = None
+    gain: Optional[Union[float, Any]] = None
+    x_pixel_size: Optional[Union[float, Any]] = None
+    x_pixel_units: Optional[Union[str, Any]] = None
+    y_pixel_size: Optional[Union[float, Any]] = None
+    y_pixel_units: Optional[Union[str, Any]] = None
 
 
 class ImageChannelModel(BaseModel):
     metadata: ImageChannelMetadataModel
-    image_path: str
-    thumbnail: Optional[str] = None
+    image_path: Optional[Union[str, Any]]
+    thumbnail: Optional[Union[str, Any]] = None
 
 
 class ScalarChannelMetadataModel(BaseModel):
-    channel_dtype: str
-    units: Optional[str] = None
+    channel_dtype: Optional[Union[str, Any]]
+    units: Optional[Union[str, Any]] = None
 
 
 class ScalarChannelModel(BaseModel):
     metadata: ScalarChannelMetadataModel
-    data: Union[int, float, str]
+    data: Optional[Union[int, float, str]]
 
 
 class WaveformChannelMetadataModel(BaseModel):
-    channel_dtype: str
-    x_units: Optional[str] = None
-    y_units: Optional[str] = None
+    channel_dtype: Optional[Union[str, Any]]
+    x_units: Optional[Union[str, Any]] = None
+    y_units: Optional[Union[str, Any]] = None
 
 
 class WaveformChannelModel(BaseModel):
     metadata: WaveformChannelMetadataModel
-    thumbnail: Optional[str] = None
-    waveform_id: str
+    thumbnail: Optional[Union[str, Any]] = None
+    waveform_id: Optional[Union[str, Any]]
 
 
 class RecordMetadataModel(BaseModel):

@@ -81,15 +81,24 @@ class HDFDataHandler:
         except ValidationError as exc:
             raise ModelError(str(exc)) from exc
 
-        return record, self.waveforms, self.images
+        return record, self.waveforms, self.images, self.channel_dtype_missing
 
     def extract_channels(self) -> None:
         """
         Extract data from each data channel in the HDF file and place the data into
         relevant Pydantic models
         """
+        
+        channel_dtype_missing = []
+        
         for channel_name, value in self.hdf_file.items():
             channel_metadata = dict(value.attrs)
+            
+            try:
+                value.attrs["channel_dtype"]
+            except KeyError:
+                channel_dtype_missing.append(channel_name)
+                continue
 
             if value.attrs["channel_dtype"] == "image":
                 image_path = Image.get_image_path(self.record_id, channel_name)
@@ -143,3 +152,4 @@ class HDFDataHandler:
             # Put channels into a dictionary to give a good structure to query them in
             # the database
             self.channels[channel_name] = channel
+            self.channel_dtype_missing = channel_dtype_missing
