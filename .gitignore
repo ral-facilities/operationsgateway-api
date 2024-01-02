@@ -15,3 +15,5 @@ id_rsa
 id_rsa.pub
 logging.ini*
 !logging.ini.example
+util/realistic_data/data
+util/realistic_data/resources

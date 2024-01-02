@@ -16,10 +16,10 @@ class TestGetRecordByID:
         "record_id, truncate, expected_channel_count, expected_channel_data",
         [
             pytest.param(
-                "20220408094341",
+                "20230605100000",
                 True,
-                59,
-                {"SAD_NF_E": -14.122},
+                353,
+                {"FE-204-LT-CAM-2-CENX": 5.83075538293604},
                 id="Ordinary request",
             ),
         ],
@@ -50,21 +50,21 @@ class TestGetRecordByID:
         "record_id, expected_thumbnails_hashes, use_preferred_colourmap",
         [
             pytest.param(
-                "20220408132830",
+                "20230605100000",
                 {
-                    "N_COMP_FF_IMAGE": "8c997363cc8c3373",
-                    "N_COMP_NF_IMAGE": "c2c63f8f783c3138",
-                    "N_LEG1_GREEN_NF_IMAGE": "8785789c6a7a6761",
+                    "FE-204-NSO-P1-CAM-1": "c4bc3f33381c98c7",
+                    "FE-204-NSO-P2-CAM-1": "cd3336f0329b311d",
+                    "TS-202-TSM-CAM-2": "9999666699996666",
                 },
                 False,
                 id="Ordinary request (preferred colour map not set)",
             ),
             pytest.param(
-                "20220408132830",
+                "20230605100000",
                 {
-                    "N_COMP_FF_IMAGE": "8c997363cccc3333",
-                    "N_COMP_NF_IMAGE": "c2c63f8f783c3930",
-                    "N_LEG1_GREEN_NF_IMAGE": "878578d86a6a6763",
+                    "FE-204-NSO-P1-CAM-1": "c4b83f233b1839c7",
+                    "FE-204-NSO-P2-CAM-1": "cd3336b234333639",
+                    "TS-202-TSM-CAM-2": "9999666699996666",
                 },
                 True,
                 id="Ordinary request (with preferred colour map set)",

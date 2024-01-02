@@ -1,401 +1,2541 @@
 {
-    "channels": {
-        "GEM_SHOT_NUM_VALUE": {
-            "name": "Gemini shot number",
-            "path": "/CONTROL_SYS/GEM_TA/SHOT_NUM",
-            "type": "scalar"
-        },
-        "GEM_SHOT_SOURCE_STRING": {
-            "name": "Gemini shot source string value",
-            "path": "/CONTROL_SYS/GEM_TA/SHOT_SOURCE",
-            "type": "scalar",
-            "historical": true
-        },
-        "GEM_SHOT_TYPE_STRING": {
-            "name": "Gemini shot type",
-            "path": "/CONTROL_SYS/GEM_TA/SHOT_TYPE",
-            "type": "scalar"
-        },
-        "GEM_WP_POS_VALUE": {
-            "name": "LA3 waveplate setting",
-            "path": "/CONTROL_SYS/GEM_TA/POS",
-            "type": "scalar",
-            "units": "ms",
-            "notation": "normal"
-        },
-        "N_COMP_CALCULATEDE_VALUE": {
-            "name": "North compressed calculated value",
-            "path": "/LA3/N_COMP/ENERGY",
-            "type": "scalar",
-            "units": "mm"
-        },
-        "N_COMP_FF_E": {
-            "name": "North compressed far field energy",
-            "path": "/LA3/N_COMP/IMAGE",
-            "type": "scalar",
-            "units": "mg",
-            "notation": "scientific",
-            "precision": 4
-        },
-        "N_COMP_FF_IMAGE": {
-            "name": "North compressed far field image",
-            "path": "/LA3/N_COMP/IMAGE",
-            "type": "image"
-        },
-        "N_COMP_FF_INTEGRATION": {
-            "name": "North compressed far field integration value",
-            "path": "/LA3/N_COMP/IMAGE",
-            "type": "scalar",
-            "units": "µm",
-            "notation": "normal",
-            "precision": 3
-        },
-        "N_COMP_FF_XPOS": {
-            "name": "North compressed far field - x",
-            "path": "/LA3/N_COMP/IMAGE",
-            "type": "scalar",
-            "units": "mm",
-            "notation": "normal",
-            "precision": 5
-        },
-        "N_COMP_FF_YPOS": {
-            "name": "North compressed far field - y",
-            "path": "/LA3/N_COMP/IMAGE",
-            "type": "scalar",
-            "units": "mm",
-            "notation": "normal",
-            "precision": 6
-        },
-        "N_COMP_THROUGHPUTE_VALUE": {
-            "name": "North beam compressed throughput value",
-            "path": "/LA3/N_COMP/ENERGY",
-            "type": "scalar",
-            "units": "cm"
-        },
-        "TA3_SHOT_NUM_VALUE": {
-            "name": "Target area 3 shot number",
-            "path": "/CONTROL_SYS/GEM_TA/SHOT_NUM",
-            "type": "scalar",
-            "historical": true
-        },
-        "Type": {
-            "name": "Data type",
-            "path": "/Dataset",
-            "type": "scalar"
-        },
-        "N_COMP_NF_E": {
-            "name": "North beam compressed near field energy",
-            "path": "/LA3/N_COMP/IMAGE",
-            "type": "scalar"
-        },
-        "N_COMP_NF_IMAGE": {
-            "name": "North compressed near field image",
-            "path": "/LA3/N_COMP/IMAGE",
-            "type": "image"
-        },
-        "N_COMP_NF_INTEGRATION": {
-            "name": "North compressed near field integration value",
-            "path": "/LA3/N_COMP/IMAGE",
-            "type": "scalar",
-            "notation": "scientific",
-            "precision": 4
-        },
-        "N_COMP_NF_XPOS": {
-            "name": "North compressed near field - x",
-            "path": "/LA3/N_COMP/IMAGE",
-            "type": "scalar",
-            "units": "mm"
-        },
-        "N_COMP_NF_YPOS": {
-            "name": "North compressed near field - y",
-            "path": "/LA3/N_COMP/IMAGE",
-            "type": "scalar",
-            "units": "mm"
-        },
-        "N_COMP_SPEC_TRACE": {
-            "name": "North compressed spec waveform",
-            "path": "/LA3/N_COMP/SPEC",
-            "type": "waveform",
-            "x_units": "s",
-            "y_units": "kJ"
-        },
-        "N_LEG1_GREEN_NF_E": {
-            "name": "North pump near field energy",
-            "path": "/LA3/N_PUMP/IMAGE",
-            "type": "scalar"
-        },
-        "N_LEG1_GREEN_NF_IMAGE": {
-            "name": "North pump R-beam image",
-            "path": "/LA3/N_PUMP/IMAGE",
-            "type": "image"
-        },
-        "N_LEG1_GREEN_NF_INTEGRATION": {
-            "name": "North pump near field integration value",
-            "path": "/LA3/N_PUMP/IMAGE",
-            "type": "scalar",
-            "historical": true
-        },
-        "N_LEG1_GREEN_NF_XPOS": {
-            "name": "North pump near field - x",
-            "path": "/LA3/N_PUMP/IMAGE",
-            "type": "scalar",
-            "units": "µm",
-            "notation": "scientific"
-        },
-        "N_LEG1_GREEN_NF_YPOS": {
-            "name": "North pump near field - y",
-            "path": "/LA3/N_PUMP/IMAGE",
-            "type": "scalar",
-            "units": "µm"
-        },
-        "N_FLUOR_E": {
-            "name": "North beam fluorescence energy",
-            "path": "/LA3/N_UNCOMP/IMAGE",
-            "type": "scalar",
-            "notation": "normal"
-        },
-        "N_FLUOR_IMAGE": {
-            "name": "North beam fluorescence image",
-            "path": "/LA3/N_UNCOMP/IMAGE",
-            "type": "image"
-        },
-        "N_FLUOR_INTEGRATION": {
-            "name": "North beam fluorescence integration value",
-            "path": "/LA3/N_UNCOMP/IMAGE",
-            "type": "scalar",
-            "notation": "scientific"
-        },
-        "N_FLUOR_XPOS": {
-            "name": "North beam fluorescence pointing - x",
-            "path": "/LA3/N_UNCOMP/IMAGE",
-            "type": "scalar"
-        },
-        "N_FLUOR_YPOS": {
-            "name": "North beam fluorescence pointing - y",
-            "path": "/LA3/N_UNCOMP/IMAGE",
-            "type": "scalar"
-        },
-        "N_INP_NF_E": {
-            "name": "North amplifier input near field energy",
-            "path": "/LA3/N_UNCOMP/IMAGE",
-            "type": "scalar"
-        },
-        "N_INP_NF_IMAGE": {
-            "name": "North amplifier input near field image",
-            "path": "/LA3/N_UNCOMP/IMAGE",
-            "type": "image"
-        },
-        "N_INP_NF_INTEGRATION": {
-            "name": "North amplifier input near field integration value",
-            "path": "/LA3/N_UNCOMP/IMAGE",
-            "type": "scalar",
-            "notation": "scientific"
-        },
-        "N_INP_NF_XPOS": {
-            "name": "North amplifier input near field - x",
-            "path": "/LA3/N_UNCOMP/IMAGE",
-            "type": "scalar"
-        },
-        "N_INP_NF_YPOS": {
-            "name": "North amplifier input near field - y",
-            "path": "/LA3/N_UNCOMP/IMAGE",
-            "type": "scalar"
-        },
-        "N_LEG2_GREEN_NF_E": {
-            "name": "North pump R near field energy",
-            "path": "/LA3/N_PUMP/IMAGE",
-            "type": "scalar"
-        },
-        "N_LEG2_GREEN_NF_INTEGRATION": {
-            "name": "North pump R near field integration value",
-            "path": "/LA3/N_PUMP/IMAGE",
-            "type": "scalar",
-            "notation": "scientific",
-            "precision": 4
-        },
-        "N_LEG2_GREEN_NF_XPOS": {
-            "name": "North pump R near field - x",
-            "path": "/LA3/N_PUMP/IMAGE",
-            "type": "scalar",
-            "units": "km"
-        },
-        "N_LEG2_GREEN_NF_YPOS": {
-            "name": "North pump R near field - y",
-            "path": "/LA3/N_PUMP/IMAGE",
-            "type": "scalar",
-            "units": "km"
-        },
-        "N_UNCOMP_FF_E": {
-            "name": "North uncompressed far field energy",
-            "path": "/LA3/N_UNCOMP/IMAGE",
-            "type": "scalar"
-        },
-        "N_UNCOMP_FF_INTEGRATION": {
-            "name": "North uncompressed far field integration value",
-            "path": "/LA3/N_UNCOMP/IMAGE",
-            "type": "scalar",
-            "notation": "scientific"
-        },
-        "N_UNCOMP_FF_XPOS": {
-            "name": "North uncompressed far field - x",
-            "path": "/LA3/N_UNCOMP/IMAGE",
-            "type": "scalar"
-        },
-        "N_UNCOMP_FF_YPOS": {
-            "name": "North uncompressed far field - y",
-            "path": "/LA3/N_UNCOMP/IMAGE",
-            "type": "scalar"
-        },
-        "N_UNCOMP_NF_E": {
-            "name": "North beam amplified energy",
-            "path": "/LA3/N_UNCOMP/IMAGE",
-            "type": "scalar",
-            "notation": "scientific",
-            "precision": 3
-        },
-        "N_UNCOMP_NF_INTEGRATION": {
-            "name": "North uncompressed near field integration value",
-            "path": "/LA3/N_UNCOMP/IMAGE",
-            "type": "scalar",
-            "notation": "scientific",
-            "precision": 2
-        },
-        "N_UNCOMP_NF_XPOS": {
-            "name": "North uncompressed near field - x",
-            "path": "/LA3/N_UNCOMP/IMAGE",
-            "type": "scalar"
-        },
-        "N_UNCOMP_NF_YPOS": {
-            "name": "North uncompressed near field - y",
-            "path": "/LA3/N_UNCOMP/IMAGE",
-            "type": "scalar"
-        },
-        "SAD_DELAY_VALUE": {
-            "name": "SAD stage position",
-            "path": "/LA3/SAD_TABLE/DELAY",
-            "type": "scalar",
-            "historical": true
-        },
-        "SAD_NF_E": {
-            "name": "SAD table near field energy",
-            "path": "/LA3/SAD_TABLE/IMAGE",
-            "type": "scalar"
-        },
-        "SAD_NF_INTEGRATION": {
-            "name": "SAD table near field integration value",
-            "path": "/LA3/SAD_TABLE/IMAGE",
-            "type": "scalar"
-        },
-        "SAD_NF_XPOS": {
-            "name": "SAD table near field - x",
-            "path": "/LA3/SAD_TABLE/IMAGE",
-            "type": "scalar"
-        },
-        "SAD_NF_YPOS": {
-            "name": "SAD table near field - y",
-            "path": "/LA3/SAD_TABLE/IMAGE",
-            "type": "scalar"
-        },
-        "S_UNCOMP_EX_NF_E": {
-            "name": "South uncompressed expanded beam near field energy",
-            "path": "/LA3/S_UNCOMP/IMAGE",
-            "type": "scalar"
-        },
-        "S_UNCOMP_EX_NF_INTEGRATION": {
-            "name": "South uncompressed expanded beam near field integration value",
-            "path": "/LA3/S_UNCOMP/IMAGE",
-            "type": "scalar",
-            "notation": "normal",
-            "precision": 5
-        },
-        "S_UNCOMP_EX_NF_XPOS": {
-            "name": "South uncompressed expanded beam near field - x",
-            "path": "/LA3/S_UNCOMP/IMAGE",
-            "type": "scalar"
-        },
-        "S_UNCOMP_EX_NF_YPOS": {
-            "name": "South uncompressed expanded beam near field - y",
-            "path": "/LA3/S_UNCOMP/IMAGE",
-            "type": "scalar"
-        },
-        "S_UNCOMP_FF_E": {
-            "name": "South uncompressed far field energy",
-            "path": "/LA3/S_UNCOMP/IMAGE",
-            "type": "scalar"
-        },
-        "S_UNCOMP_FF_INTEGRATION": {
-            "name": "South uncompressed far field integration value",
-            "path": "/LA3/S_UNCOMP/IMAGE",
-            "type": "scalar"
-        },
-        "S_UNCOMP_FF_XPOS": {
-            "name": "South uncompressed far field - x",
-            "path": "/LA3/S_UNCOMP/IMAGE",
-            "type": "scalar"
-        },
-        "S_UNCOMP_FF_YPOS": {
-            "name": "South uncompressed far field - y",
-            "path": "/LA3/S_UNCOMP/IMAGE",
-            "type": "scalar"
-        },
-        "AMP2_PUMP_E_PELT_VALUE": {
-            "name": "Amplifier 2 pump energy",
-            "path": "/LA1_AMP_2/PUMP/ENERGY",
-            "type": "scalar",
-            "units": "mV"
-        },
-        "GAS_REM_BOTTLE_A_VALUE": {
-            "name": "Gas bottle A remaining",
-            "path": "/CONTROL_SYS/GAS_SYSTEM/METROLOGY",
-            "type": "scalar",
-            "units": "bar",
-            "historical": true
-        },
-        "GAS_REM_BOTTLE_C_VALUE": {
-            "name": "Gas bottle C remaining",
-            "path": "/CONTROL_SYS/GAS_SYSTEM/METROLOGY",
-            "type": "scalar",
-            "units": "bar"
-        },
-        "LA3_N_COMP_B_PRES_VALUE": {
-            "name": "LA3 north compressed B present",
-            "path": "/CONTROL_SYS/GAS_SYSTEM/METROLOGY",
-            "type": "scalar",
-            "units": "mbara"
-        },
-        "MEZZ_ROOM_T_VALUE": {
-            "name": "Mezzanine room temperature",
-            "path": "/CONTROL_SYS/ROOM/METROLOGY",
-            "type": "scalar",
-            "units": "C"
-        },
-        "REG_3_AT_CHAMBER_VALUE": {
-            "name": "Regulator 3 pressure at chamber",
-            "path": "/CONTROL_SYS/ROOM/METROLOGY",
-            "type": "scalar",
-            "units": "bar"
-        },
-        "SADSTAGE_DELAY_VALUE": {
-            "name": "SAD stage delay",
-            "path": "/LA3/SLIDE/POS",
-            "type": "scalar",
-            "units": "count"
-        },
-        "TA3_ROOM_SUPPLY_BOTTLE_A_VALUE": {
-            "name": "TA3 supply bottle A value",
-            "path": "/CONTROL_SYS/ROOM/METROLOGY",
-            "type": "scalar",
-            "units": "bar",
-            "notation": "scientific",
-            "precision": 2
-        },
-        "VAC_SYS_CHAMBER_B_PRES_VALUE": {
-            "name": "Chamber B vacuum system present value",
-            "path": "/CONTROL_SYS/GEM_TA/PRES",
-            "type": "scalar",
-            "units": "mbar",
-            "notation": "scientific",
-            "precision": 2
-        }
+  "channels": {
+    "PM-201-FE-CAM-1": {
+      "name": "D100 front-end NF",
+      "path": "/PM-201/FE",
+      "type": "image"
+    },
+    "PM-201-FE-CAM-2": {
+      "name": "D100 front-end FF",
+      "path": "/PM-201/FE",
+      "type": "image"
+    },
+    "PM-201-FE-EM": {
+      "name": "D100 front-end energy",
+      "path": "/PM-201/FE",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "PM-201-FE-PD": {
+      "name": "D100 front-end photodiode trace",
+      "path": "/PM-201/FE",
+      "type": "waveform"
+    },
+    "PM-201-FE-CAM-2-CENX": {
+      "name": "D100 front-end FF centroid x",
+      "path": "/PM-201/FE",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "PM-201-FE-CAM-2-FWHMX": {
+      "name": "D100 front-end FF FWHM x",
+      "path": "/PM-201/FE",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "PM-201-FE-CAM-2-CENY": {
+      "name": "D100 front-end FF centroid y",
+      "path": "/PM-201/FE",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "PM-201-FE-CAM-2-FWHMY": {
+      "name": "D100 front-end FF FWHM y",
+      "path": "/PM-201/FE",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "PM-201-PA1-CAM-2": {
+      "name": "D100 pre-amp 1 FF [micro]",
+      "path": "/PM-201/PA1",
+      "type": "image"
+    },
+    "PM-201-PA1-EM": {
+      "name": "D100 pre-amp 1 energy",
+      "path": "/PM-201/PA1",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "PM-201-PA1-PD": {
+      "name": "D100 pre-amp 1 photodiode trace",
+      "path": "/PM-201/PA1",
+      "type": "waveform"
+    },
+    "PM-201-PA2-CAM-2": {
+      "name": "D100 pre-amp 2 FF [micro]",
+      "path": "/PM-201/PA2",
+      "type": "image"
+    },
+    "PM-201-PA2-EM": {
+      "name": "D100 pre-amp 2 energy",
+      "path": "/PM-201/PA2",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "PM-201-PA2-PD": {
+      "name": "D100 pre-amp 2 photodiode trace",
+      "path": "/PM-201/PA2",
+      "type": "waveform"
+    },
+    "PM-201-TJ-CAM-1": {
+      "name": "D100 10J NF",
+      "path": "/PM-201/TJ",
+      "type": "image"
+    },
+    "PM-201-TJ-CAM-2": {
+      "name": "D100 10J FF",
+      "path": "/PM-201/TJ",
+      "type": "image"
+    },
+    "PM-201-TJ-EM": {
+      "name": "D100 10J energy",
+      "path": "/PM-201/TJ",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "PM-201-TJ-PD": {
+      "name": "D100 10J photodiode trace",
+      "path": "/PM-201/TJ",
+      "type": "waveform"
+    },
+    "PM-201-TJ-CAM-2-CENX": {
+      "name": "D100 10J FF centroid x",
+      "path": "/PM-201/TJ",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "PM-201-TJ-CAM-2-FWHMX": {
+      "name": "D100 10J FF FWHM x",
+      "path": "/PM-201/TJ",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "PM-201-TJ-CAM-2-CENY": {
+      "name": "D100 10J FF centroid y",
+      "path": "/PM-201/TJ",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "PM-201-TJ-CAM-2-FWHMY": {
+      "name": "D100 10J FF FWHM y",
+      "path": "/PM-201/TJ",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "PM-201-TJ-CRY-T": {
+      "name": "D100 10J cryo temperature",
+      "path": "/PM-201/TJ/CRY",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "PM-201-TJ-CRY-FAN": {
+      "name": "D100 10J cryo fan speed",
+      "path": "/PM-201/TJ/CRY",
+      "notation": "normal",
+      "units": "rpm",
+      "type": "scalar"
+    },
+    "PM-201-TJ-CRY-FLOW": {
+      "name": "D100 10J cryo flow rate",
+      "path": "/PM-201/TJ/CRY",
+      "notation": "normal",
+      "units": "l/min",
+      "type": "scalar"
+    },
+    "PM-201-HJ-CAM-1": {
+      "name": "D100 HJ NF",
+      "path": "/PM-201/HJ",
+      "type": "image"
+    },
+    "PM-201-HJ-CAM-2": {
+      "name": "D100 HJ FF",
+      "path": "/PM-201/HJ",
+      "type": "image"
+    },
+    "PM-201-HJ-EM": {
+      "name": "D100 HJ energy",
+      "path": "/PM-201/HJ",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "PM-201-HJ-PD": {
+      "name": "D100 HJ photodiode trace",
+      "path": "/PM-201/HJ",
+      "type": "waveform"
+    },
+    "PM-201-HJ-CAM-2-CENX": {
+      "name": "D100 HJ FF centroid x",
+      "path": "/PM-201/HJ",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "PM-201-HJ-CAM-2-FWHMX": {
+      "name": "D100 HJ FF FWHM x",
+      "path": "/PM-201/HJ",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "PM-201-HJ-CAM-2-CENY": {
+      "name": "D100 HJ FF centroid y",
+      "path": "/PM-201/HJ",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "PM-201-HJ-CAM-2-FWHMY": {
+      "name": "D100 HJ FF FWHM y",
+      "path": "/PM-201/HJ",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "PM-201-HJ-CRY-T": {
+      "name": "D100 HJ cryo temperature",
+      "path": "/PM-201/HJ/CRY",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "PM-201-HJ-CRY-FAN": {
+      "name": "D100 HJ cryo fan speed",
+      "path": "/PM-201/HJ/CRY",
+      "notation": "normal",
+      "units": "rpm",
+      "type": "scalar"
+    },
+    "PM-201-HJ-CRY-FLOW": {
+      "name": "D100 HJ cryo flow rate",
+      "path": "/PM-201/HJ/CRY",
+      "notation": "normal",
+      "units": "l/min",
+      "type": "scalar"
+    },
+    "TS-202-TSP-IR-CAM-1": {
+      "name": "Amplifier IR pump input NF",
+      "path": "/TS-202/TSP/IR",
+      "type": "image"
+    },
+    "TS-202-TSP-IR-EM": {
+      "name": "Amplifier IR pump input energy",
+      "path": "/TS-202/TSP/IR",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "TS-202-TSP-IR-PD": {
+      "name": "Amplifier IR pump input photodiode trace",
+      "path": "/TS-202/TSP/IR",
+      "type": "waveform"
+    },
+    "TS-202-TSP-IR-CAM-2-CENX": {
+      "name": "Amplifier IR pump input FF centroid x",
+      "path": "/TS-202/TSP/IR",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSP-IR-CAM-2-FWHMX": {
+      "name": "Amplifier IR pump input FF FWHM x",
+      "path": "/TS-202/TSP/IR",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSP-IR-CAM-2-CENY": {
+      "name": "Amplifier IR pump input FF centroid y",
+      "path": "/TS-202/TSP/IR",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSP-IR-CAM-2-FWHMY": {
+      "name": "Amplifier IR pump input FF FWHM y",
+      "path": "/TS-202/TSP/IR",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSP-GR-CAM-1": {
+      "name": "Amplifier green pump input NF",
+      "path": "/TS-202/TSP/GR",
+      "type": "image"
+    },
+    "TS-202-TSP-GR-CAM-2": {
+      "name": "Amplifier green pump input FF",
+      "path": "/TS-202/TSP/GR",
+      "type": "image"
+    },
+    "TS-202-TSP-GR-EM": {
+      "name": "Amplifier green pump input energy",
+      "path": "/TS-202/TSP/GR",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "TS-202-TSP-GR-PD": {
+      "name": "Amplifier green pump input photodiode trace",
+      "path": "/TS-202/TSP/GR",
+      "type": "waveform"
+    },
+    "TS-202-TSP-GR-CAM-2-CENX": {
+      "name": "Amplifier green pump input FF centroid x",
+      "path": "/TS-202/TSP/GR",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSP-GR-CAM-2-FWHMX": {
+      "name": "Amplifier green pump input FF FWHM x",
+      "path": "/TS-202/TSP/GR",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSP-GR-CAM-2-CENY": {
+      "name": "Amplifier green pump input FF centroid y",
+      "path": "/TS-202/TSP/GR",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSP-GR-CAM-2-FWHMY": {
+      "name": "Amplifier green pump input FF FWHM y",
+      "path": "/TS-202/TSP/GR",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSM-CHL-T": {
+      "name": "Amplifier crystal chiller temperature",
+      "path": "/TS-202/TSM/CHL",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "TS-202-TSM-CHL-FAN": {
+      "name": "Amplifier crystal chiller fan speed",
+      "path": "/TS-202/TSM/CHL",
+      "notation": "normal",
+      "units": "rpm",
+      "type": "scalar"
+    },
+    "TS-202-TSM-CHL-FLOW": {
+      "name": "Amplifier crystal chiller flow rate",
+      "path": "/TS-202/TSM/CHL",
+      "notation": "normal",
+      "units": "l/min",
+      "type": "scalar"
+    },
+    "TS-202-TSM-P1-CAM-1": {
+      "name": "Amplifier pass 1 NF",
+      "path": "/TS-202/TSM/P1",
+      "type": "image"
+    },
+    "TS-202-TSM-P1-CAM-2": {
+      "name": "Amplifier pass 1 FF",
+      "path": "/TS-202/TSM/P1",
+      "type": "image"
+    },
+    "TS-202-TSM-P1-CAM-2-CENX": {
+      "name": "Amplifier pass 1 FF centroid x",
+      "path": "/TS-202/TSM/P1",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSM-P1-CAM-2-FWHMX": {
+      "name": "Amplifier pass 1 FF FWHM x",
+      "path": "/TS-202/TSM/P1",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSM-P1-CAM-2-CENY": {
+      "name": "Amplifier pass 1 FF centroid y",
+      "path": "/TS-202/TSM/P1",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSM-P1-CAM-2-FWHMY": {
+      "name": "Amplifier pass 1 FF FWHM y",
+      "path": "/TS-202/TSM/P1",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSM-VSF-1": {
+      "name": "Amplifier VSF 1 pressure",
+      "path": "/TS-202/TSM/VSF/1",
+      "notation": "scientific",
+      "precision": 2,
+      "units": "mbar",
+      "type": "scalar"
+    },
+    "TS-202-TSM-VSF-1-RP": {
+      "name": "Amplifier VSF 1 roughing pressure",
+      "path": "/TS-202/TSM/VSF/1",
+      "notation": "scientific",
+      "precision": 2,
+      "units": "mbar",
+      "type": "scalar"
+    },
+    "TS-202-TSM-VSF-1-T": {
+      "name": "Amplifier VSF 1 temperature",
+      "path": "/TS-202/TSM/VSF/1",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "TS-202-TSM-P2-CAM-1": {
+      "name": "Amplifier pass 2 NF",
+      "path": "/TS-202/TSM/P2",
+      "type": "image"
+    },
+    "TS-202-TSM-P2-CAM-2": {
+      "name": "Amplifier pass 2 FF",
+      "path": "/TS-202/TSM/P2",
+      "type": "image"
+    },
+    "TS-202-TSM-P2-CAM-2-CENX": {
+      "name": "Amplifier pass 2 FF centroid x",
+      "path": "/TS-202/TSM/P2",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSM-P2-CAM-2-FWHMX": {
+      "name": "Amplifier pass 2 FF FWHM x",
+      "path": "/TS-202/TSM/P2",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSM-P2-CAM-2-CENY": {
+      "name": "Amplifier pass 2 FF centroid y",
+      "path": "/TS-202/TSM/P2",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSM-P2-CAM-2-FWHMY": {
+      "name": "Amplifier pass 2 FF FWHM y",
+      "path": "/TS-202/TSM/P2",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSM-VSF-2": {
+      "name": "Amplifier VSF 2 pressure",
+      "path": "/TS-202/TSM/VSF/2",
+      "notation": "scientific",
+      "precision": 2,
+      "units": "mbar",
+      "type": "scalar"
+    },
+    "TS-202-TSM-VSF-2-RP": {
+      "name": "Amplifier VSF 2 roughing pressure",
+      "path": "/TS-202/TSM/VSF/2",
+      "notation": "scientific",
+      "precision": 2,
+      "units": "mbar",
+      "type": "scalar"
+    },
+    "TS-202-TSM-VSF-2-T": {
+      "name": "Amplifier VSF 2 temperature",
+      "path": "/TS-202/TSM/VSF/2",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "TS-202-TSM-P3-CAM-1": {
+      "name": "Amplifier pass 3 NF",
+      "path": "/TS-202/TSM/P3",
+      "type": "image"
+    },
+    "TS-202-TSM-P3-CAM-2": {
+      "name": "Amplifier pass 3 FF",
+      "path": "/TS-202/TSM/P3",
+      "type": "image"
+    },
+    "TS-202-TSM-P3-CAM-2-CENX": {
+      "name": "Amplifier pass 3 FF centroid x",
+      "path": "/TS-202/TSM/P3",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSM-P3-CAM-2-FWHMX": {
+      "name": "Amplifier pass 3 FF FWHM x",
+      "path": "/TS-202/TSM/P3",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSM-P3-CAM-2-CENY": {
+      "name": "Amplifier pass 3 FF centroid y",
+      "path": "/TS-202/TSM/P3",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSM-P3-CAM-2-FWHMY": {
+      "name": "Amplifier pass 3 FF FWHM y",
+      "path": "/TS-202/TSM/P3",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSM-VSF-3": {
+      "name": "Amplifier VSF 3 pressure",
+      "path": "/TS-202/TSM/VSF/3",
+      "notation": "scientific",
+      "precision": 2,
+      "units": "mbar",
+      "type": "scalar"
+    },
+    "TS-202-TSM-VSF-3-RP": {
+      "name": "Amplifier VSF 3 roughing pressure",
+      "path": "/TS-202/TSM/VSF/3",
+      "notation": "scientific",
+      "precision": 2,
+      "units": "mbar",
+      "type": "scalar"
+    },
+    "TS-202-TSM-VSF-3-T": {
+      "name": "Amplifier VSF 3 temperature",
+      "path": "/TS-202/TSM/VSF/3",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "TS-202-TSM-CAM-1": {
+      "name": "Amplifier output NF",
+      "path": "/TS-202/TSM",
+      "type": "image"
+    },
+    "TS-202-TSM-CAM-2": {
+      "name": "Amplifier output FF",
+      "path": "/TS-202/TSM",
+      "type": "image"
+    },
+    "TS-202-TSM-EM": {
+      "name": "Amplifier output energy",
+      "path": "/TS-202/TSM",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "TS-202-TSM-SP": {
+      "name": "Amplifier output spectrum",
+      "path": "/TS-202/TSM",
+      "type": "waveform"
+    },
+    "TS-202-TSM-PD": {
+      "name": "Amplifier output photodiode trace",
+      "path": "/TS-202/TSM",
+      "type": "waveform"
+    },
+    "TS-202-TSM-CAM-2-CENX": {
+      "name": "Amplifier output FF centroid x",
+      "path": "/TS-202/TSM",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSM-CAM-2-FWHMX": {
+      "name": "Amplifier output FF FWHM x",
+      "path": "/TS-202/TSM",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSM-CAM-2-CENY": {
+      "name": "Amplifier output FF centroid y",
+      "path": "/TS-202/TSM",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-TSM-CAM-2-FWHMY": {
+      "name": "Amplifier output FF FWHM y",
+      "path": "/TS-202/TSM",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "TS-202-DUMMY1-CAM-1": {
+      "name": "TS-202 dummy 1 NF",
+      "path": "/TS-202/DUMMY1",
+      "type": "image"
+    },
+    "TS-202-DUMMY2-CAM-1": {
+      "name": "TS-202 dummy 2 NF",
+      "path": "/TS-202/DUMMY2",
+      "type": "image"
+    },
+    "TS-202-DUMMY3-CAM-1": {
+      "name": "TS-202 dummy 3 NF",
+      "path": "/TS-202/DUMMY3",
+      "type": "image"
+    },
+    "FE-204-PSO-P1-CAM-1": {
+      "name": "ps OPCPA pass 1 NF [8-bit]",
+      "path": "/FE-204/PSO/P1",
+      "type": "image"
+    },
+    "FE-204-PSO-P1-CAM-2": {
+      "name": "ps OPCPA pass 1 FF",
+      "path": "/FE-204/PSO/P1",
+      "type": "image"
+    },
+    "FE-204-PSO-P1-SP": {
+      "name": "ps OPCPA pass 1 spectrum",
+      "path": "/FE-204/PSO/P1",
+      "type": "waveform"
+    },
+    "FE-204-PSO-P1-PD": {
+      "name": "ps OPCPA pass 1 photodiode trace",
+      "path": "/FE-204/PSO/P1",
+      "type": "waveform"
+    },
+    "FE-204-PSO-P1-CAM-2-CENX": {
+      "name": "ps OPCPA pass 1 FF centroid x",
+      "path": "/FE-204/PSO/P1",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-PSO-P1-CAM-2-FWHMX": {
+      "name": "ps OPCPA pass 1 FF FWHM x",
+      "path": "/FE-204/PSO/P1",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-PSO-P1-CAM-2-CENY": {
+      "name": "ps OPCPA pass 1 FF centroid y",
+      "path": "/FE-204/PSO/P1",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-PSO-P1-CAM-2-FWHMY": {
+      "name": "ps OPCPA pass 1 FF FWHM y",
+      "path": "/FE-204/PSO/P1",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-PSO-P2-CAM-1": {
+      "name": "ps OPCPA pass 2 NF [8-bit]",
+      "path": "/FE-204/PSO/P2",
+      "type": "image"
+    },
+    "FE-204-PSO-P2-CAM-2": {
+      "name": "ps OPCPA pass 2 FF",
+      "path": "/FE-204/PSO/P2",
+      "type": "image"
+    },
+    "FE-204-PSO-P2-SP": {
+      "name": "ps OPCPA pass 2 spectrum",
+      "path": "/FE-204/PSO/P2",
+      "type": "waveform"
+    },
+    "FE-204-PSO-P2-PD": {
+      "name": "ps OPCPA pass 2 photodiode trace",
+      "path": "/FE-204/PSO/P2",
+      "type": "waveform"
+    },
+    "FE-204-PSO-P2-CAM-2-CENX": {
+      "name": "ps OPCPA pass 2 FF centroid x",
+      "path": "/FE-204/PSO/P2",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-PSO-P2-CAM-2-FWHMX": {
+      "name": "ps OPCPA pass 2 FF FWHM x",
+      "path": "/FE-204/PSO/P2",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-PSO-P2-CAM-2-CENY": {
+      "name": "ps OPCPA pass 2 FF centroid y",
+      "path": "/FE-204/PSO/P2",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-PSO-P2-CAM-2-FWHMY": {
+      "name": "ps OPCPA pass 2 FF FWHM y",
+      "path": "/FE-204/PSO/P2",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-PSO-P3-CAM-1": {
+      "name": "ps OPCPA pass 3 NF [8-bit]",
+      "path": "/FE-204/PSO/P3",
+      "type": "image"
+    },
+    "FE-204-PSO-P3-CAM-2": {
+      "name": "ps OPCPA pass 3 FF",
+      "path": "/FE-204/PSO/P3",
+      "type": "image"
+    },
+    "FE-204-PSO-P3-SP": {
+      "name": "ps OPCPA pass 3 spectrum",
+      "path": "/FE-204/PSO/P3",
+      "type": "waveform"
+    },
+    "FE-204-PSO-P3-PD": {
+      "name": "ps OPCPA pass 3 photodiode trace",
+      "path": "/FE-204/PSO/P3",
+      "type": "waveform"
+    },
+    "FE-204-PSO-P3-CAM-2-CENX": {
+      "name": "ps OPCPA pass 3 FF centroid x",
+      "path": "/FE-204/PSO/P3",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-PSO-P3-CAM-2-FWHMX": {
+      "name": "ps OPCPA pass 3 FF FWHM x",
+      "path": "/FE-204/PSO/P3",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-PSO-P3-CAM-2-CENY": {
+      "name": "ps OPCPA pass 3 FF centroid y",
+      "path": "/FE-204/PSO/P3",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-PSO-P3-CAM-2-FWHMY": {
+      "name": "ps OPCPA pass 3 FF FWHM y",
+      "path": "/FE-204/PSO/P3",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-PSO-P4-CAM-1": {
+      "name": "ps OPCPA pass 4 NF [8-bit]",
+      "path": "/FE-204/PSO/P4",
+      "type": "image"
+    },
+    "FE-204-PSO-P4-CAM-2": {
+      "name": "ps OPCPA pass 4 FF",
+      "path": "/FE-204/PSO/P4",
+      "type": "image"
+    },
+    "FE-204-PSO-P4-SP": {
+      "name": "ps OPCPA pass 4 spectrum",
+      "path": "/FE-204/PSO/P4",
+      "type": "waveform"
+    },
+    "FE-204-PSO-P4-PD": {
+      "name": "ps OPCPA pass 4 photodiode trace",
+      "path": "/FE-204/PSO/P4",
+      "type": "waveform"
+    },
+    "FE-204-PSO-P4-CAM-2-CENX": {
+      "name": "ps OPCPA pass 4 FF centroid x",
+      "path": "/FE-204/PSO/P4",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-PSO-P4-CAM-2-FWHMX": {
+      "name": "ps OPCPA pass 4 FF FWHM x",
+      "path": "/FE-204/PSO/P4",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-PSO-P4-CAM-2-CENY": {
+      "name": "ps OPCPA pass 4 FF centroid y",
+      "path": "/FE-204/PSO/P4",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-PSO-P4-CAM-2-FWHMY": {
+      "name": "ps OPCPA pass 4 FF FWHM y",
+      "path": "/FE-204/PSO/P4",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-PSO-CAM-2": {
+      "name": "ps OPCPA output FF",
+      "path": "/FE-204/PSO",
+      "type": "image"
+    },
+    "FE-204-PSO-CAM-1": {
+      "name": "ps OPCPA output NF",
+      "path": "/FE-204/PSO",
+      "type": "image"
+    },
+    "FE-204-PSO-EM": {
+      "name": "ps OPCPA output energy",
+      "path": "/FE-204/PSO",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "FE-204-PSO-CAM-2-CENX": {
+      "name": "ps OPCPA output FF centroid x",
+      "path": "/FE-204/PSO",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-PSO-CAM-2-FWHMX": {
+      "name": "ps OPCPA output FF FWHM x",
+      "path": "/FE-204/PSO",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-PSO-CAM-2-CENY": {
+      "name": "ps OPCPA output FF centroid y",
+      "path": "/FE-204/PSO",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-PSO-CAM-2-FWHMY": {
+      "name": "ps OPCPA output FF FWHM y",
+      "path": "/FE-204/PSO",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSS-P1-CAM-2": {
+      "name": "Stretcher pass 1 FF",
+      "path": "/FE-204/NSS/P1",
+      "type": "image"
+    },
+    "FE-204-NSS-P1-CAM-1": {
+      "name": "Stretcher pass 1 NF",
+      "path": "/FE-204/NSS/P1",
+      "type": "image"
+    },
+    "FE-204-NSS-P2-CAM-2": {
+      "name": "Stretcher pass 2 FF",
+      "path": "/FE-204/NSS/P2",
+      "type": "image"
+    },
+    "FE-204-NSS-P2-CAM-1": {
+      "name": "Stretcher pass 2 NF",
+      "path": "/FE-204/NSS/P2",
+      "type": "image"
+    },
+    "FE-204-NSS-CAM-2": {
+      "name": "Stretcher output FF",
+      "path": "/FE-204/NSS",
+      "type": "image"
+    },
+    "FE-204-NSS-CAM-1": {
+      "name": "Stretcher output NF",
+      "path": "/FE-204/NSS",
+      "type": "image"
+    },
+    "FE-204-NSS-SP": {
+      "name": "Stretcher output spectrum",
+      "path": "/FE-204/NSS",
+      "type": "waveform"
+    },
+    "FE-204-NSS-EM": {
+      "name": "Stretcher output energy",
+      "path": "/FE-204/NSS",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "FE-204-NSS-CAM-2-CENX": {
+      "name": "Stretcher output FF centroid x",
+      "path": "/FE-204/NSS",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSS-CAM-2-FWHMX": {
+      "name": "Stretcher output FF FWHM x",
+      "path": "/FE-204/NSS",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSS-CAM-2-CENY": {
+      "name": "Stretcher output FF centroid y",
+      "path": "/FE-204/NSS",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSS-CAM-2-FWHMY": {
+      "name": "Stretcher output FF FWHM y",
+      "path": "/FE-204/NSS",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P1-CAM-1": {
+      "name": "ns OPCPA pass 1 NF",
+      "path": "/FE-204/NSO/P1",
+      "type": "image"
+    },
+    "FE-204-NSO-P1-CAM-2": {
+      "name": "ns OPCPA pass 1 FF [mini]",
+      "path": "/FE-204/NSO/P1",
+      "type": "image"
+    },
+    "FE-204-NSO-P1-EM": {
+      "name": "ns OPCPA pass 1 energy",
+      "path": "/FE-204/NSO/P1",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P1-SP": {
+      "name": "ns OPCPA pass 1 spectrum",
+      "path": "/FE-204/NSO/P1",
+      "type": "waveform"
+    },
+    "FE-204-NSO-P1-PD": {
+      "name": "ns OPCPA pass 1 photodiode trace",
+      "path": "/FE-204/NSO/P1",
+      "type": "waveform"
+    },
+    "FE-204-NSO-P1-CAM-2-CENX": {
+      "name": "ns OPCPA pass 1 FF centroid x",
+      "path": "/FE-204/NSO/P1",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P1-CAM-2-FWHMX": {
+      "name": "ns OPCPA pass 1 FF FWHM x",
+      "path": "/FE-204/NSO/P1",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P1-CAM-2-CENY": {
+      "name": "ns OPCPA pass 1 FF centroid y",
+      "path": "/FE-204/NSO/P1",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P1-CAM-2-FWHMY": {
+      "name": "ns OPCPA pass 1 FF FWHM y",
+      "path": "/FE-204/NSO/P1",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P2-CAM-1": {
+      "name": "ns OPCPA pass 2 NF",
+      "path": "/FE-204/NSO/P2",
+      "type": "image"
+    },
+    "FE-204-NSO-P2-CAM-2": {
+      "name": "ns OPCPA pass 2 FF [mini]",
+      "path": "/FE-204/NSO/P2",
+      "type": "image"
+    },
+    "FE-204-NSO-P2-EM": {
+      "name": "ns OPCPA pass 2 energy",
+      "path": "/FE-204/NSO/P2",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P2-SP": {
+      "name": "ns OPCPA pass 2 spectrum",
+      "path": "/FE-204/NSO/P2",
+      "type": "waveform"
+    },
+    "FE-204-NSO-P2-PD": {
+      "name": "ns OPCPA pass 2 photodiode trace",
+      "path": "/FE-204/NSO/P2",
+      "type": "waveform"
+    },
+    "FE-204-NSO-P2-CAM-2-CENX": {
+      "name": "ns OPCPA pass 2 FF centroid x",
+      "path": "/FE-204/NSO/P2",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P2-CAM-2-FWHMX": {
+      "name": "ns OPCPA pass 2 FF FWHM x",
+      "path": "/FE-204/NSO/P2",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P2-CAM-2-CENY": {
+      "name": "ns OPCPA pass 2 FF centroid y",
+      "path": "/FE-204/NSO/P2",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P2-CAM-2-FWHMY": {
+      "name": "ns OPCPA pass 2 FF FWHM y",
+      "path": "/FE-204/NSO/P2",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P3-CAM-1": {
+      "name": "ns OPCPA pass 3 NF",
+      "path": "/FE-204/NSO/P3",
+      "type": "image"
+    },
+    "FE-204-NSO-P3-CAM-2": {
+      "name": "ns OPCPA pass 3 FF [mini]",
+      "path": "/FE-204/NSO/P3",
+      "type": "image"
+    },
+    "FE-204-NSO-P3-EM": {
+      "name": "ns OPCPA pass 3 energy",
+      "path": "/FE-204/NSO/P3",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P3-SP": {
+      "name": "ns OPCPA pass 3 spectrum",
+      "path": "/FE-204/NSO/P3",
+      "type": "waveform"
+    },
+    "FE-204-NSO-P3-PD": {
+      "name": "ns OPCPA pass 3 photodiode trace",
+      "path": "/FE-204/NSO/P3",
+      "type": "waveform"
+    },
+    "FE-204-NSO-P3-CAM-2-CENX": {
+      "name": "ns OPCPA pass 3 FF centroid x",
+      "path": "/FE-204/NSO/P3",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P3-CAM-2-FWHMX": {
+      "name": "ns OPCPA pass 3 FF FWHM x",
+      "path": "/FE-204/NSO/P3",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P3-CAM-2-CENY": {
+      "name": "ns OPCPA pass 3 FF centroid y",
+      "path": "/FE-204/NSO/P3",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P3-CAM-2-FWHMY": {
+      "name": "ns OPCPA pass 3 FF FWHM y",
+      "path": "/FE-204/NSO/P3",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P4-CAM-1": {
+      "name": "ns OPCPA pass 4 NF",
+      "path": "/FE-204/NSO/P4",
+      "type": "image"
+    },
+    "FE-204-NSO-P4-CAM-2": {
+      "name": "ns OPCPA pass 4 FF [mini]",
+      "path": "/FE-204/NSO/P4",
+      "type": "image"
+    },
+    "FE-204-NSO-P4-EM": {
+      "name": "ns OPCPA pass 4 energy",
+      "path": "/FE-204/NSO/P4",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P4-SP": {
+      "name": "ns OPCPA pass 4 spectrum",
+      "path": "/FE-204/NSO/P4",
+      "type": "waveform"
+    },
+    "FE-204-NSO-P4-PD": {
+      "name": "ns OPCPA pass 4 photodiode trace",
+      "path": "/FE-204/NSO/P4",
+      "type": "waveform"
+    },
+    "FE-204-NSO-P4-CAM-2-CENX": {
+      "name": "ns OPCPA pass 4 FF centroid x",
+      "path": "/FE-204/NSO/P4",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P4-CAM-2-FWHMX": {
+      "name": "ns OPCPA pass 4 FF FWHM x",
+      "path": "/FE-204/NSO/P4",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P4-CAM-2-CENY": {
+      "name": "ns OPCPA pass 4 FF centroid y",
+      "path": "/FE-204/NSO/P4",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-NSO-P4-CAM-2-FWHMY": {
+      "name": "ns OPCPA pass 4 FF FWHM y",
+      "path": "/FE-204/NSO/P4",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-LT-CAM-1": {
+      "name": "Front-end output NF",
+      "path": "/FE-204/LT",
+      "type": "image"
+    },
+    "FE-204-LT-CAM-2": {
+      "name": "Front-end output FF",
+      "path": "/FE-204/LT",
+      "type": "image"
+    },
+    "FE-204-LT-SP": {
+      "name": "Front-end output spectrum",
+      "path": "/FE-204/LT",
+      "type": "waveform"
+    },
+    "FE-204-LT-PD": {
+      "name": "Front-end output photodiode trace",
+      "path": "/FE-204/LT",
+      "type": "waveform"
+    },
+    "FE-204-LT-EM": {
+      "name": "Front-end output energy",
+      "path": "/FE-204/LT",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "FE-204-LT-CAM-2-CENX": {
+      "name": "Front-end output FF centroid x",
+      "path": "/FE-204/LT",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-LT-CAM-2-FWHMX": {
+      "name": "Front-end output FF FWHM x",
+      "path": "/FE-204/LT",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-LT-CAM-2-CENY": {
+      "name": "Front-end output FF centroid y",
+      "path": "/FE-204/LT",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "FE-204-LT-CAM-2-FWHMY": {
+      "name": "Front-end output FF FWHM y",
+      "path": "/FE-204/LT",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "CM-202-CVC-P0-CAM-1": {
+      "name": "Compressor input NF",
+      "path": "/CM-202/CVC/P0",
+      "type": "image"
+    },
+    "CM-202-CVC-P0-CAM-2": {
+      "name": "Compressor input FF",
+      "path": "/CM-202/CVC/P0",
+      "type": "image"
+    },
+    "CM-202-CVC-P0-CAM-2-CENX": {
+      "name": "Compressor input FF centroid x",
+      "path": "/CM-202/CVC/P0",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "CM-202-CVC-P0-CAM-2-FWHMX": {
+      "name": "Compressor input FF FWHM x",
+      "path": "/CM-202/CVC/P0",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "CM-202-CVC-P0-CAM-2-CENY": {
+      "name": "Compressor input FF centroid y",
+      "path": "/CM-202/CVC/P0",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "CM-202-CVC-P0-CAM-2-FWHMY": {
+      "name": "Compressor input FF FWHM y",
+      "path": "/CM-202/CVC/P0",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "CM-202-CVC-CAM-1": {
+      "name": "Compressor output NF",
+      "path": "/CM-202/CVC",
+      "type": "image"
+    },
+    "CM-202-CVC-CAM-2": {
+      "name": "Compressor output FF",
+      "path": "/CM-202/CVC",
+      "type": "image"
+    },
+    "CM-202-CVC-SP": {
+      "name": "Compressor output spectrum",
+      "path": "/CM-202/CVC",
+      "type": "waveform"
+    },
+    "CM-202-CVC-EM": {
+      "name": "Compressor output energy",
+      "path": "/CM-202/CVC",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "CM-202-CVC-CAM-2-CENX": {
+      "name": "Compressor output FF centroid x",
+      "path": "/CM-202/CVC",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "CM-202-CVC-CAM-2-FWHMX": {
+      "name": "Compressor output FF FWHM x",
+      "path": "/CM-202/CVC",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "CM-202-CVC-CAM-2-CENY": {
+      "name": "Compressor output FF centroid y",
+      "path": "/CM-202/CVC",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "CM-202-CVC-CAM-2-FWHMY": {
+      "name": "Compressor output FF FWHM y",
+      "path": "/CM-202/CVC",
+      "notation": "normal",
+      "units": "µm",
+      "type": "scalar"
+    },
+    "EA1-001-LM-CAM-1": {
+      "name": "EA1 input leakage NF",
+      "path": "/EA1-001/LM",
+      "type": "image"
+    },
+    "EA1-001-LM-CAM-2": {
+      "name": "EA1 input leakage FF",
+      "path": "/EA1-001/LM",
+      "type": "image"
+    },
+    "EA1-001-LM-SP": {
+      "name": "EA1 input leakage spectrum",
+      "path": "/EA1-001/LM",
+      "type": "waveform"
+    },
+    "EA1-001-LM-EM": {
+      "name": "EA1 input leakage energy",
+      "path": "/EA1-001/LM",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "EA1-001-EX-CAM-1": {
+      "name": "EA1 exit mode NF",
+      "path": "/EA1-001/EX",
+      "type": "image"
+    },
+    "EA1-001-EX-CAM-2": {
+      "name": "EA1 exit mode FF",
+      "path": "/EA1-001/EX",
+      "type": "image"
+    },
+    "EA1-001-EX-SP": {
+      "name": "EA1 exit mode spectrum",
+      "path": "/EA1-001/EX",
+      "type": "waveform"
+    },
+    "EA1-001-EX-EM": {
+      "name": "EA1 exit mode energy",
+      "path": "/EA1-001/EX",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "EA1-001-PL-GOI": {
+      "name": "EA1 plasma gated imager",
+      "path": "/EA1-001/PL",
+      "type": "image"
+    },
+    "EA1-001-PL-PR1-CAM": {
+      "name": "EA1 plasma probe 1",
+      "path": "/EA1-001/PL",
+      "type": "image"
+    },
+    "EA1-001-PL-PR2-CAM": {
+      "name": "EA1 plasma probe 2",
+      "path": "/EA1-001/PL",
+      "type": "image"
+    },
+    "EA1-001-PL-PR3-CAM": {
+      "name": "EA1 plasma probe 3",
+      "path": "/EA1-001/PL",
+      "type": "image"
+    },
+    "EA1-001-PL-PR4-CAM": {
+      "name": "EA1 plasma probe 4",
+      "path": "/EA1-001/PL",
+      "type": "image"
+    },
+    "EA1-001-PL-SP": {
+      "name": "EA1 plasma spectrum",
+      "path": "/EA1-001/PL",
+      "type": "image"
+    },
+    "EA1-002-EL-BPM-X": {
+      "name": "EA1 electron beam position (x)",
+      "path": "/EA1-002/EL",
+      "notation": "normal",
+      "type": "scalar"
+    },
+    "EA1-002-EL-BPM-Y": {
+      "name": "EA1 electron beam position (y)",
+      "path": "/EA1-002/EL",
+      "notation": "normal",
+      "type": "scalar"
+    },
+    "EA1-002-EL-ICT": {
+      "name": "EA1 electron beam charge",
+      "path": "/EA1-002/EL",
+      "notation": "normal",
+      "units": "nC",
+      "type": "scalar"
+    },
+    "EA1-002-EL-SP-1": {
+      "name": "EA1 electron energy spectrum 1",
+      "path": "/EA1-002/EL",
+      "type": "image"
+    },
+    "EA1-002-EL-SP-2": {
+      "name": "EA1 electron energy spectrum 2",
+      "path": "/EA1-002/EL",
+      "type": "image"
+    },
+    "EA1-002-EL-SP-3": {
+      "name": "EA1 electron energy spectrum 3",
+      "path": "/EA1-002/EL",
+      "type": "image"
+    },
+    "EA1-002-EL-SP-4": {
+      "name": "EA1 electron energy spectrum 4",
+      "path": "/EA1-002/EL",
+      "type": "image"
+    },
+    "EA1-002-EL-SP-5": {
+      "name": "EA1 electron energy spectrum 5",
+      "path": "/EA1-002/EL",
+      "type": "image"
+    },
+    "EA1-002-EL-SP-6": {
+      "name": "EA1 electron energy spectrum 6",
+      "path": "/EA1-002/EL",
+      "type": "image"
+    },
+    "EA1-002-EL-SP-7": {
+      "name": "EA1 electron energy spectrum 7",
+      "path": "/EA1-002/EL",
+      "type": "image"
+    },
+    "EA2-003-LM-CAM-1": {
+      "name": "EA2 input leakage NF",
+      "path": "/EA2-003/LM",
+      "type": "image"
+    },
+    "EA2-003-LM-CAM-2": {
+      "name": "EA2 input leakage FF",
+      "path": "/EA2-003/LM",
+      "type": "image"
+    },
+    "EA2-003-LM-SP": {
+      "name": "EA2 input leakage spectrum",
+      "path": "/EA2-003/LM",
+      "type": "waveform"
+    },
+    "EA2-003-LM-EM": {
+      "name": "EA2 input leakage energy",
+      "path": "/EA2-003/LM",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "EA2-003-EX-CAM-1": {
+      "name": "EA2 exit mode NF",
+      "path": "/EA2-003/EX",
+      "type": "image"
+    },
+    "EA2-003-EX-CAM-2": {
+      "name": "EA2 exit mode FF",
+      "path": "/EA2-003/EX",
+      "type": "image"
+    },
+    "EA2-003-EX-SP": {
+      "name": "EA2 exit mode spectrum",
+      "path": "/EA2-003/EX",
+      "type": "waveform"
+    },
+    "EA2-003-EX-EM": {
+      "name": "EA2 exit mode energy",
+      "path": "/EA2-003/EX",
+      "notation": "scientific",
+      "precision": 3,
+      "units": "J",
+      "type": "scalar"
+    },
+    "EA2-003-PL-GOI": {
+      "name": "EA2 plasma gated imager",
+      "path": "/EA2-003/PL",
+      "type": "image"
+    },
+    "EA2-003-PL-PR1-CAM": {
+      "name": "EA2 plasma probe 1",
+      "path": "/EA2-003/PL",
+      "type": "image"
+    },
+    "EA2-003-PL-PR2-CAM": {
+      "name": "EA2 plasma probe 2",
+      "path": "/EA2-003/PL",
+      "type": "image"
+    },
+    "EA2-003-PL-PR3-CAM": {
+      "name": "EA2 plasma probe 3",
+      "path": "/EA2-003/PL",
+      "type": "image"
+    },
+    "EA2-003-PL-PR4-CAM": {
+      "name": "EA2 plasma probe 4",
+      "path": "/EA2-003/PL",
+      "type": "image"
+    },
+    "EA2-003-PL-SP": {
+      "name": "EA2 plasma spectrum",
+      "path": "/EA2-003/PL",
+      "type": "image"
+    },
+    "SER-001-BI-T-1": {
+      "name": "Temperature 001:1",
+      "path": "/Building/Room 001",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-001-BI-RH-1": {
+      "name": "Relative humidity 001:1",
+      "path": "/Building/Room 001",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-001-BI-T-2": {
+      "name": "Temperature 001:2",
+      "path": "/Building/Room 001",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-001-BI-RH-2": {
+      "name": "Relative humidity 001:2",
+      "path": "/Building/Room 001",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-001-BI-T-3": {
+      "name": "Temperature 001:3",
+      "path": "/Building/Room 001",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-001-BI-RH-3": {
+      "name": "Relative humidity 001:3",
+      "path": "/Building/Room 001",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-001-BI-T-4": {
+      "name": "Temperature 001:4",
+      "path": "/Building/Room 001",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-001-BI-RH-4": {
+      "name": "Relative humidity 001:4",
+      "path": "/Building/Room 001",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-002-BI-T-1": {
+      "name": "Temperature 002:1",
+      "path": "/Building/Room 002",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-002-BI-RH-1": {
+      "name": "Relative humidity 002:1",
+      "path": "/Building/Room 002",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-002-BI-T-2": {
+      "name": "Temperature 002:2",
+      "path": "/Building/Room 002",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-002-BI-RH-2": {
+      "name": "Relative humidity 002:2",
+      "path": "/Building/Room 002",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-002-BI-T-3": {
+      "name": "Temperature 002:3",
+      "path": "/Building/Room 002",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-002-BI-RH-3": {
+      "name": "Relative humidity 002:3",
+      "path": "/Building/Room 002",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-002-BI-T-4": {
+      "name": "Temperature 002:4",
+      "path": "/Building/Room 002",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-002-BI-RH-4": {
+      "name": "Relative humidity 002:4",
+      "path": "/Building/Room 002",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-003-BI-T-1": {
+      "name": "Temperature 003:1",
+      "path": "/Building/Room 003",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-003-BI-RH-1": {
+      "name": "Relative humidity 003:1",
+      "path": "/Building/Room 003",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-003-BI-T-2": {
+      "name": "Temperature 003:2",
+      "path": "/Building/Room 003",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-003-BI-RH-2": {
+      "name": "Relative humidity 003:2",
+      "path": "/Building/Room 003",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-003-BI-T-3": {
+      "name": "Temperature 003:3",
+      "path": "/Building/Room 003",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-003-BI-RH-3": {
+      "name": "Relative humidity 003:3",
+      "path": "/Building/Room 003",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-003-BI-T-4": {
+      "name": "Temperature 003:4",
+      "path": "/Building/Room 003",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-003-BI-RH-4": {
+      "name": "Relative humidity 003:4",
+      "path": "/Building/Room 003",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-201-BI-T-1": {
+      "name": "Temperature 201:1",
+      "path": "/Building/Room 201",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-201-BI-RH-1": {
+      "name": "Relative humidity 201:1",
+      "path": "/Building/Room 201",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-201-BI-T-2": {
+      "name": "Temperature 201:2",
+      "path": "/Building/Room 201",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-201-BI-RH-2": {
+      "name": "Relative humidity 201:2",
+      "path": "/Building/Room 201",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-201-BI-T-3": {
+      "name": "Temperature 201:3",
+      "path": "/Building/Room 201",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-201-BI-RH-3": {
+      "name": "Relative humidity 201:3",
+      "path": "/Building/Room 201",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-202-BI-T-1": {
+      "name": "Temperature 202:1",
+      "path": "/Building/Room 202",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-202-BI-RH-1": {
+      "name": "Relative humidity 202:1",
+      "path": "/Building/Room 202",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-202-BI-T-2": {
+      "name": "Temperature 202:2",
+      "path": "/Building/Room 202",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-202-BI-RH-2": {
+      "name": "Relative humidity 202:2",
+      "path": "/Building/Room 202",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-202-BI-T-3": {
+      "name": "Temperature 202:3",
+      "path": "/Building/Room 202",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-202-BI-RH-3": {
+      "name": "Relative humidity 202:3",
+      "path": "/Building/Room 202",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-202-BI-T-4": {
+      "name": "Temperature 202:4",
+      "path": "/Building/Room 202",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-202-BI-RH-4": {
+      "name": "Relative humidity 202:4",
+      "path": "/Building/Room 202",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-202-BI-T-5": {
+      "name": "Temperature 202:5",
+      "path": "/Building/Room 202",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-202-BI-RH-5": {
+      "name": "Relative humidity 202:5",
+      "path": "/Building/Room 202",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-204-BI-T-1": {
+      "name": "Temperature 204:1",
+      "path": "/Building/Room 204",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-204-BI-RH-1": {
+      "name": "Relative humidity 204:1",
+      "path": "/Building/Room 204",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-204-BI-T-2": {
+      "name": "Temperature 204:2",
+      "path": "/Building/Room 204",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-204-BI-RH-2": {
+      "name": "Relative humidity 204:2",
+      "path": "/Building/Room 204",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-204-BI-T-3": {
+      "name": "Temperature 204:3",
+      "path": "/Building/Room 204",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-204-BI-RH-3": {
+      "name": "Relative humidity 204:3",
+      "path": "/Building/Room 204",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-204-BI-T-4": {
+      "name": "Temperature 204:4",
+      "path": "/Building/Room 204",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-204-BI-RH-4": {
+      "name": "Relative humidity 204:4",
+      "path": "/Building/Room 204",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-209-BI-T-1": {
+      "name": "Temperature 209:1",
+      "path": "/Building/Room 209",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-209-BI-RH-1": {
+      "name": "Relative humidity 209:1",
+      "path": "/Building/Room 209",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-1": {
+      "name": "Temperature 220:1",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-1": {
+      "name": "Relative humidity 220:1",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-2": {
+      "name": "Temperature 220:2",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-2": {
+      "name": "Relative humidity 220:2",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-3": {
+      "name": "Temperature 220:3",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-3": {
+      "name": "Relative humidity 220:3",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-4": {
+      "name": "Temperature 220:4",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-4": {
+      "name": "Relative humidity 220:4",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-5": {
+      "name": "Temperature 220:5",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-5": {
+      "name": "Relative humidity 220:5",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-6": {
+      "name": "Temperature 220:6",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-6": {
+      "name": "Relative humidity 220:6",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-7": {
+      "name": "Temperature 220:7",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-7": {
+      "name": "Relative humidity 220:7",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-8": {
+      "name": "Temperature 220:8",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-8": {
+      "name": "Relative humidity 220:8",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-9": {
+      "name": "Temperature 220:9",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-9": {
+      "name": "Relative humidity 220:9",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-10": {
+      "name": "Temperature 220:10",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-10": {
+      "name": "Relative humidity 220:10",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-11": {
+      "name": "Temperature 220:11",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-11": {
+      "name": "Relative humidity 220:11",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-12": {
+      "name": "Temperature 220:12",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-12": {
+      "name": "Relative humidity 220:12",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-13": {
+      "name": "Temperature 220:13",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-13": {
+      "name": "Relative humidity 220:13",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-14": {
+      "name": "Temperature 220:14",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-14": {
+      "name": "Relative humidity 220:14",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-15": {
+      "name": "Temperature 220:15",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-15": {
+      "name": "Relative humidity 220:15",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-16": {
+      "name": "Temperature 220:16",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-16": {
+      "name": "Relative humidity 220:16",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-17": {
+      "name": "Temperature 220:17",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-17": {
+      "name": "Relative humidity 220:17",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-18": {
+      "name": "Temperature 220:18",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-18": {
+      "name": "Relative humidity 220:18",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-19": {
+      "name": "Temperature 220:19",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-19": {
+      "name": "Relative humidity 220:19",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-20": {
+      "name": "Temperature 220:20",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-20": {
+      "name": "Relative humidity 220:20",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-21": {
+      "name": "Temperature 220:21",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-21": {
+      "name": "Relative humidity 220:21",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-22": {
+      "name": "Temperature 220:22",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-22": {
+      "name": "Relative humidity 220:22",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-23": {
+      "name": "Temperature 220:23",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-23": {
+      "name": "Relative humidity 220:23",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-24": {
+      "name": "Temperature 220:24",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-24": {
+      "name": "Relative humidity 220:24",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-25": {
+      "name": "Temperature 220:25",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-25": {
+      "name": "Relative humidity 220:25",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-26": {
+      "name": "Temperature 220:26",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-26": {
+      "name": "Relative humidity 220:26",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-27": {
+      "name": "Temperature 220:27",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-27": {
+      "name": "Relative humidity 220:27",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-28": {
+      "name": "Temperature 220:28",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-28": {
+      "name": "Relative humidity 220:28",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-29": {
+      "name": "Temperature 220:29",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-29": {
+      "name": "Relative humidity 220:29",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-30": {
+      "name": "Temperature 220:30",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-30": {
+      "name": "Relative humidity 220:30",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-31": {
+      "name": "Temperature 220:31",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-31": {
+      "name": "Relative humidity 220:31",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-32": {
+      "name": "Temperature 220:32",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-32": {
+      "name": "Relative humidity 220:32",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-33": {
+      "name": "Temperature 220:33",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-33": {
+      "name": "Relative humidity 220:33",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-34": {
+      "name": "Temperature 220:34",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-34": {
+      "name": "Relative humidity 220:34",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-35": {
+      "name": "Temperature 220:35",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-35": {
+      "name": "Relative humidity 220:35",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-36": {
+      "name": "Temperature 220:36",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-36": {
+      "name": "Relative humidity 220:36",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-37": {
+      "name": "Temperature 220:37",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-37": {
+      "name": "Relative humidity 220:37",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-38": {
+      "name": "Temperature 220:38",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-38": {
+      "name": "Relative humidity 220:38",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-39": {
+      "name": "Temperature 220:39",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-39": {
+      "name": "Relative humidity 220:39",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-40": {
+      "name": "Temperature 220:40",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-40": {
+      "name": "Relative humidity 220:40",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-41": {
+      "name": "Temperature 220:41",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-41": {
+      "name": "Relative humidity 220:41",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-42": {
+      "name": "Temperature 220:42",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-42": {
+      "name": "Relative humidity 220:42",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-43": {
+      "name": "Temperature 220:43",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-43": {
+      "name": "Relative humidity 220:43",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-44": {
+      "name": "Temperature 220:44",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-44": {
+      "name": "Relative humidity 220:44",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-45": {
+      "name": "Temperature 220:45",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-45": {
+      "name": "Relative humidity 220:45",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-46": {
+      "name": "Temperature 220:46",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-46": {
+      "name": "Relative humidity 220:46",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-47": {
+      "name": "Temperature 220:47",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-47": {
+      "name": "Relative humidity 220:47",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-48": {
+      "name": "Temperature 220:48",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-48": {
+      "name": "Relative humidity 220:48",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-49": {
+      "name": "Temperature 220:49",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-49": {
+      "name": "Relative humidity 220:49",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
+    },
+    "SER-220-BI-T-50": {
+      "name": "Temperature 220:50",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "°C",
+      "type": "scalar"
+    },
+    "SER-220-BI-RH-50": {
+      "name": "Relative humidity 220:50",
+      "path": "/Building/Room 220",
+      "notation": "normal",
+      "units": "%RH",
+      "type": "scalar"
     }
+  }
 }

@@ -14,30 +14,17 @@ class TestChannelSummary:
         "channel_name, expected_summary",
         [
             pytest.param(
-                "N_COMP_FF_E",
+                "SER-202-BI-RH-1",
                 {
-                    "first_date": "2022-04-07T14:16:16",
-                    "most_recent_date": "2022-04-08T16:58:57",
+                    "first_date": "2023-06-04T00:00:00",
+                    "most_recent_date": "2023-06-05T23:54:00",
                     "recent_sample": [
-                        {"2022-04-08T16:58:57": -8535000.0},
-                        {"2022-04-08T16:41:36": -8461000.0},
-                        {"2022-04-08T16:29:56": -8582000.0},
+                        {"2023-06-05T23:54:00": 45.105075954471815},
+                        {"2023-06-05T23:48:00": 42.7879518924901},
+                        {"2023-06-05T23:42:00": 40.592569128241514},
                     ],
                 },
                 id="Scalar channel (number) summary",
-            ),
-            pytest.param(
-                "GEM_SHOT_TYPE_STRING",
-                {
-                    "first_date": "2022-04-07T14:16:16",
-                    "most_recent_date": "2022-04-08T16:58:57",
-                    "recent_sample": [
-                        {"2022-04-08T16:58:57": "FP"},
-                        {"2022-04-08T16:41:36": "FP"},
-                        {"2022-04-08T16:29:56": "FP"},
-                    ],
-                },
-                id="Scalar channel (string) summary",
             ),
         ],
     )
@@ -60,14 +47,14 @@ class TestChannelSummary:
         "channel_name, expected_summary, use_preferred_colourmap",
         [
             pytest.param(
-                "N_COMP_FF_IMAGE",
+                "FE-204-PSO-P2-CAM-2",
                 {
-                    "first_date": "2022-04-07T14:16:16",
-                    "most_recent_date": "2022-04-08T16:58:57",
+                    "first_date": "2023-06-05T08:00:00",
+                    "most_recent_date": "2023-06-05T16:00:00",
                     "recent_sample": [
-                        {"2022-04-08T16:58:57": "ce3831cece3131ce"},
-                        {"2022-04-08T16:41:36": "ce3831cece3131ce"},
-                        {"2022-04-08T16:29:56": "ce3131cece3131ce"},
+                        {"2023-06-05T16:00:00": "c63939c63939c639"},
+                        {"2023-06-05T15:00:00": "ce3131cece3131ce"},
+                        {"2023-06-05T14:00:00": "ce3131ce3131cecb"},
                     ],
                 },
                 False,
@@ -76,28 +63,28 @@ class TestChannelSummary:
             # repeat the above test but with the user's preferred colour map set to
             # check that the preference overrides the system default colour map
             pytest.param(
-                "N_COMP_FF_IMAGE",
+                "FE-204-PSO-P2-CAM-2",
                 {
-                    "first_date": "2022-04-07T14:16:16",
-                    "most_recent_date": "2022-04-08T16:58:57",
+                    "first_date": "2023-06-05T08:00:00",
+                    "most_recent_date": "2023-06-05T16:00:00",
                     "recent_sample": [
-                        {"2022-04-08T16:58:57": "ce3831cece3131ce"},
-                        {"2022-04-08T16:41:36": "ce3831c7ce3131ce"},
-                        {"2022-04-08T16:29:56": "ce3131cece3131ce"},
+                        {"2023-06-05T16:00:00": "c63939c63939c639"},
+                        {"2023-06-05T15:00:00": "ce3131cece3131ce"},
+                        {"2023-06-05T14:00:00": "ce3131ce3131ce73"},
                     ],
                 },
                 True,
                 id="Image channel summary (using user's preferred colourmap)",
             ),
             pytest.param(
-                "N_COMP_SPEC_TRACE",
+                "FE-204-PSO-P1-PD",
                 {
-                    "first_date": "2022-04-07T14:16:16",
-                    "most_recent_date": "2022-04-08T16:58:57",
+                    "first_date": "2023-06-05T08:00:00",
+                    "most_recent_date": "2023-06-05T16:00:00",
                     "recent_sample": [
-                        {"2022-04-08T16:58:57": "aba4c16fb4d34436"},
-                        {"2022-04-08T16:41:36": "ff91c46e3b844c2a"},
-                        {"2022-04-08T16:29:56": "ab2684d87b29d8da"},
+                        {"2023-06-05T16:00:00": "e6e41be41be19a19"},
+                        {"2023-06-05T15:00:00": "e6e61be51ae11a19"},
+                        {"2023-06-05T14:00:00": "e6e41be51ae1981b"},
                     ],
                 },
                 False,
