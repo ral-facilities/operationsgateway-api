@@ -21,6 +21,7 @@ from operationsgateway_api.src.models import (
     WaveformModel,
 )
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.ingestion_validator import ChannelChecks
 
 
 log = logging.getLogger()
@@ -37,7 +38,9 @@ class HDFDataHandler:
         self.waveforms = []
         self.images = []
 
-    def extract_data(self) -> Tuple[RecordModel, List[WaveformModel], List[ImageModel]]:
+    async def extract_data(
+        self,
+    ) -> Tuple[RecordModel, List[WaveformModel], List[ImageModel]]:
         """
         Extract data from a HDF file that is formatted in the OperationsGateway data
         structure format. Metadata of the shot, channel data and its metadata is
@@ -70,7 +73,7 @@ class HDFDataHandler:
                 ) from exc
 
         self.record_id = metadata_hdf["timestamp"].strftime(ID_DATETIME_FORMAT)
-        self.extract_channels()
+        await self.extract_channels()
 
         try:
             record = RecordModel(
@@ -83,21 +86,23 @@ class HDFDataHandler:
 
         return record, self.waveforms, self.images, self.channel_dtype_missing
 
-    def extract_channels(self) -> None:
+    async def extract_channels(self) -> None:
         """
         Extract data from each data channel in the HDF file and place the data into
         relevant Pydantic models
         """
-        
+
         channel_dtype_missing = []
-        
+
         for channel_name, value in self.hdf_file.items():
             channel_metadata = dict(value.attrs)
-            
-            try:
-                value.attrs["channel_dtype"]
-            except KeyError:
-                channel_dtype_missing.append(channel_name)
+
+            channel_checks = ChannelChecks(
+                ingested_record={channel_name: channel_metadata},
+            )
+            response = await channel_checks.channel_dtype_checks()
+            if response != []:
+                channel_dtype_missing.append((response[0]))
                 continue
 
             if value.attrs["channel_dtype"] == "image":

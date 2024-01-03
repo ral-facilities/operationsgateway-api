@@ -13,12 +13,13 @@ from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
 # poetry run pytest -s "test/records/test_HDF_file.py" -v -vv
 
 
-def create_test_hdf_file(
+async def create_test_hdf_file(
     data_version=None,
     timestamp=None,
     active_area=None,
     shotnum=None,
     active_experiment=None,
+    channel_dtype=None,
 ):
 
     data_version = data_version if data_version is not None else ["1.0", "exists"]
@@ -30,6 +31,30 @@ def create_test_hdf_file(
     active_experiment = (
         active_experiment if active_experiment is not None else ["90097341", "exists"]
     )
+    channel_dtype = channel_dtype if channel_dtype is not None else []
+
+    scalar_1_channel_dtype = None
+    scalar_2_channel_dtype = None
+    image_channel_dtype = None
+    waveform_channel_dtype = None
+
+    if len(channel_dtype) == 4:
+        scalar_1_channel_dtype = channel_dtype[0]
+        scalar_2_channel_dtype = channel_dtype[1]
+        image_channel_dtype = channel_dtype[2]
+        waveform_channel_dtype = channel_dtype[3]
+
+    elif len(channel_dtype) == 0:
+        pass
+
+    else:
+        channel = channel_dtype[2]
+        if channel == "scalar":
+            scalar_1_channel_dtype = channel_dtype[:2]
+        if channel == "image":
+            image_channel_dtype = channel_dtype[:2]
+        if channel == "waveform":
+            waveform_channel_dtype = channel_dtype[:2]
 
     hdf_file_path = "test.h5"
     with h5py.File("test.h5", "w") as f:
@@ -58,11 +83,25 @@ def create_test_hdf_file(
         gem_shot_num_value.create_dataset("data", data=366272)
 
         gem_shot_source_string = record.create_group("GEM_SHOT_SOURCE_STRING")
-        gem_shot_source_string.attrs.create("channel_dtype", "scalar")
+        if scalar_1_channel_dtype is not None:
+            if scalar_1_channel_dtype[1] == "exists":
+                gem_shot_source_string.attrs.create(
+                    "channel_dtype",
+                    scalar_1_channel_dtype[0],
+                )
+        else:
+            gem_shot_source_string.attrs.create("channel_dtype", "scalar")
         gem_shot_source_string.create_dataset("data", data="EX")
 
         gem_shot_type_string = record.create_group("GEM_SHOT_TYPE_STRING")
-        gem_shot_type_string.attrs.create("channel_dtype", "scalar")
+        if scalar_2_channel_dtype is not None:
+            if scalar_2_channel_dtype[1] == "exists":
+                gem_shot_type_string.attrs.create(
+                    "channel_dtype",
+                    scalar_2_channel_dtype[0],
+                )
+        else:
+            gem_shot_type_string.attrs.create("channel_dtype", "scalar")
         gem_shot_type_string.create_dataset("data", data="FP")
 
         gem_wp_pos_value = record.create_group("GEM_WP_POS_VALUE")
@@ -81,7 +120,11 @@ def create_test_hdf_file(
         n_comp_ff_e.create_dataset("data", data=-8895000.0)
 
         n_comp_ff_image = record.create_group("N_COMP_FF_IMAGE")
-        n_comp_ff_image.attrs.create("channel_dtype", "image")
+        if image_channel_dtype is not None:
+            if image_channel_dtype[1] == "exists":
+                n_comp_ff_image.attrs.create("channel_dtype", image_channel_dtype[0])
+        else:
+            n_comp_ff_image.attrs.create("channel_dtype", "image")
         n_comp_ff_image.attrs.create("exposure_time_s", 0.001)
         n_comp_ff_image.attrs.create("gain", 5.5)
         n_comp_ff_image.attrs.create("x_pixel_size", 441.0)
@@ -117,7 +160,14 @@ def create_test_hdf_file(
         ta3_shot_num_value.create_dataset("data", data=217343.0)
 
         n_comp_spec_trace = record.create_group("N_COMP_SPEC_TRACE")
-        n_comp_spec_trace.attrs.create("channel_dtype", "waveform")
+        if waveform_channel_dtype is not None:
+            if waveform_channel_dtype[1] == "exists":
+                n_comp_spec_trace.attrs.create(
+                    "channel_dtype",
+                    waveform_channel_dtype[0],
+                )
+        else:
+            n_comp_spec_trace.attrs.create("channel_dtype", "waveform")
         n_comp_spec_trace.attrs.create("x_units", "s")
         n_comp_spec_trace.attrs.create("y_units", "kJ")
         x = [1, 2, 3, 4, 5, 6]
@@ -130,19 +180,21 @@ def create_test_hdf_file(
         types.create_dataset("data", data="GS")
 
     hdf_handler = HDFDataHandler(hdf_file_path)
-    return hdf_handler.extract_data()
+    return await hdf_handler.extract_data()
 
 
 # poetry run pytest -s "test/records/test_HDF_file.py::TestFile" -v -vv
 class TestFile:
-    def test_file_checks_pass(self, remove_hdf_file):
-        record_data, waveforms, images, _ = create_test_hdf_file()
+    @pytest.mark.asyncio
+    async def test_file_checks_pass(self, remove_hdf_file):
+        record_data, waveforms, images, _ = await create_test_hdf_file()
         file_checker = ingestion_validator.FileChecks(record_data)
 
         file_checker.epac_data_version_checks()
 
-    def test_minor_version_too_high(self, remove_hdf_file):
-        record_data, waveforms, images, _ = create_test_hdf_file(
+    @pytest.mark.asyncio
+    async def test_minor_version_too_high(self, remove_hdf_file):
+        record_data, waveforms, images, _ = await create_test_hdf_file(
             data_version=["1.4", "exists"],
         )
         file_checker = ingestion_validator.FileChecks(record_data)
@@ -172,8 +224,16 @@ class TestFile:
             ),
         ],
     )
-    def test_epac_ops_data_version_missing(self, data_version, match, remove_hdf_file):
-        record_data, waveforms, images, _ = create_test_hdf_file(data_version=data_version)
+    @pytest.mark.asyncio
+    async def test_epac_ops_data_version_missing(
+        self,
+        data_version,
+        match,
+        remove_hdf_file,
+    ):
+        record_data, waveforms, images, _ = await create_test_hdf_file(
+            data_version=data_version,
+        )
         file_checker = ingestion_validator.FileChecks(record_data)
 
         with pytest.raises(RejectFileError, match=match):
@@ -202,8 +262,14 @@ class TestRecord:
             ),
         ],
     )
-    def test_record_checks_pass(self, shotnum, active_experiment, remove_hdf_file):
-        record_data, waveforms, images, _ = create_test_hdf_file(
+    @pytest.mark.asyncio
+    async def test_record_checks_pass(
+        self,
+        shotnum,
+        active_experiment,
+        remove_hdf_file,
+    ):
+        record_data, waveforms, images, _ = await create_test_hdf_file(
             shotnum=shotnum,
             active_experiment=active_experiment,
         )
@@ -257,7 +323,8 @@ class TestRecord:
             ),
         ],
     )
-    def test_record_checks_fail(
+    @pytest.mark.asyncio
+    async def test_record_checks_fail(
         self,
         active_area,
         shotnum,
@@ -268,13 +335,13 @@ class TestRecord:
     ):
         if test == "other":
             with pytest.raises(ModelError):
-                record_data, waveforms, images, _ = create_test_hdf_file(
+                record_data, waveforms, images, _ = await create_test_hdf_file(
                     active_area=active_area,
                     shotnum=shotnum,
                     active_experiment=active_experiment,
                 )
         else:
-            record_data, waveforms, images, _ = create_test_hdf_file(
+            record_data, waveforms, images, _ = await create_test_hdf_file(
                 active_area=active_area,
                 shotnum=shotnum,
                 active_experiment=active_experiment,
@@ -294,8 +361,13 @@ class TestRecord:
 class TestChannel:
     @pytest.mark.asyncio
     async def test_channel_checks_success(self, remove_hdf_file):
-        record_data, waveforms, images, channel_dtype_missing = create_test_hdf_file()
-        
+        (
+            record_data,
+            waveforms,
+            images,
+            channel_dtype_missing,
+        ) = await create_test_hdf_file()
+
         channel_checker = ingestion_validator.ChannelChecks(
             record_data,
             waveforms,
@@ -339,9 +411,107 @@ class TestChannel:
             "rejected channels": {},
         }
 
+    @pytest.mark.parametrize(
+        "altered_channel, response",
+        [
+            pytest.param(
+                ["scalar", "missing", "scalar"],
+                [
+                    {
+                        "GEM_SHOT_SOURCE_STRING": "channel_dtype attribute is "
+                        "missing (cannot perform other checks without)",
+                    },
+                ],
+                id="Scalar channel_dtype missing",
+            ),
+            pytest.param(
+                ["image", "missing", "image"],
+                [
+                    {
+                        "N_COMP_FF_IMAGE": "channel_dtype attribute is missing "
+                        "(cannot perform other checks without)",
+                    },
+                ],
+                id="Image channel_dtype missing",
+            ),
+            pytest.param(
+                ["waveform", "missing", "waveform"],
+                [
+                    {
+                        "N_COMP_SPEC_TRACE": "channel_dtype attribute is missing "
+                        "(cannot perform other checks without)",
+                    },
+                ],
+                id="Waveform channel_dtype missing",
+            ),
+            pytest.param(
+                [487, "exists", "scalar"],
+                [
+                    {
+                        "GEM_SHOT_SOURCE_STRING": "channel_dtype has wrong data "
+                        "type or its value is unsupported",
+                    },
+                ],
+                id="Scalar channel_dtype incorrect",
+            ),
+            pytest.param(
+                ["487", "exists", "image"],
+                [
+                    {
+                        "N_COMP_FF_IMAGE": "channel_dtype has wrong data type "
+                        "or its value is unsupported",
+                    },
+                ],
+                id="Image channel_dtype incorrect",
+            ),
+            pytest.param(
+                ["None", "exists", "waveform"],
+                [
+                    {
+                        "N_COMP_SPEC_TRACE": "channel_dtype has wrong data "
+                        "type or its value is unsupported",
+                    },
+                ],
+                id="Waveform channel_dtype incorrect",
+            ),
+            pytest.param(
+                [
+                    ["wrong", "exists"],
+                    ["image", "exists"],
+                    ["image", "missing"],
+                    [487, "exists"],
+                ],
+                [
+                    {
+                        "GEM_SHOT_SOURCE_STRING": "channel_dtype has wrong data "
+                        "type or its value is unsupported",
+                    },
+                    {
+                        "GEM_SHOT_TYPE_STRING": "channel_dtype has wrong data "
+                        "type or its value is unsupported",
+                    },
+                    {
+                        "N_COMP_FF_IMAGE": "channel_dtype attribute is missing "
+                        "(cannot perform other checks without)",
+                    },
+                    {
+                        "N_COMP_SPEC_TRACE": "channel_dtype has wrong data type "
+                        "or its value is unsupported",
+                    },
+                ],
+                id="multiple channel_dtype fails",
+            ),
+        ],
+    )
     @pytest.mark.asyncio
-    async def test_channel_dtype(self, remove_hdf_file):
-        record_data, waveforms, images, channel_dtype_missing = create_test_hdf_file()
+    async def test_channel_dtype_fail(self, remove_hdf_file, altered_channel, response):
+        (
+            record_data,
+            waveforms,
+            images,
+            channel_dtype_missing,
+        ) = await create_test_hdf_file(channel_dtype=altered_channel)
+
         channel_checker = ingestion_validator.ChannelChecks(
             record_data,
             waveforms,
@@ -349,8 +519,7 @@ class TestChannel:
             channel_dtype_missing,
         )
 
-        dtype_response = await channel_checker.channel_dtype_checks()
-        print(dtype_response)
+        assert await channel_checker.channel_dtype_checks() == response
 
     # attribute_response = channel_checker.required_attribute_checks()
     # optional_response = channel_checker.optional_dtype_checks()

@@ -84,14 +84,25 @@ class RecordChecks:
 
 
 class ChannelChecks:
-    def __init__(self, ingested_record: RecordModel, ingested_waveform, ingested_image, channel_dtype_missing=[]):
-        self.ingested_record = ingested_record
-        self.ingested_waveform = ingested_waveform
-        self.ingested_image = ingested_image
-        self.channel_dtype_missing = channel_dtype_missing
+    def __init__(
+        self,
+        ingested_record=None,
+        ingested_waveform=None,
+        ingested_image=None,
+        channel_dtype_missing=None,
+    ):
+        self.ingested_record = ingested_record or []
+        self.ingested_waveform = ingested_waveform or []
+        self.ingested_image = ingested_image or []
+        self.channel_dtype_missing = channel_dtype_missing or []
 
     async def channel_dtype_checks(self):
-        ingested_channels = (self.ingested_record).channels
+        ingested_channels = self.ingested_record
+        dump = False
+        if type(ingested_channels) != dict:
+            ingested_channels = ingested_channels.channels
+            dump = True
+
         manifest_channels = (await get_manifest())["channels"]
 
         supported_values = [
@@ -104,10 +115,13 @@ class ChannelChecks:
         rejected_channels = []
 
         for key, value in ingested_channels.items():
-            if hasattr(value.metadata, "channel_dtype"):
+            if dump:
+                value = value.metadata.model_dump()
+
+            if "channel_dtype" in value:
                 if (
-                    manifest_channels[key]["type"] != value.metadata.channel_dtype
-                    or value.metadata.channel_dtype not in supported_values
+                    manifest_channels[key]["type"] != value["channel_dtype"]
+                    or value["channel_dtype"] not in supported_values
                 ):
                     rejected_channels.append(
                         {
@@ -116,11 +130,17 @@ class ChannelChecks:
                         },
                     )
             else:
-                rejected_channels.append({key: "channel_dtype attribute is missing"})
-                
+                rejected_channels.append(
+                    {
+                        key: "channel_dtype attribute is missing"
+                        " (cannot perform other checks without)",
+                    },
+                )
+
         if self.channel_dtype_missing != []:
-            for channel in self.channel_dtype_missing:
-                rejected_channels.append({channel: "channel_dtype attribute is missing (cannot perform other checks without)"})
+            for response in self.channel_dtype_missing:
+                channel = list(response.keys())[0]
+                rejected_channels.append({channel: response[channel]})
 
         return rejected_channels
 
@@ -263,16 +283,17 @@ class ChannelChecks:
                 else:
                     rejected_channels.append({key: "waveform_id attribute is missing"})
         return rejected_channels
-    
+
     @classmethod
-    def scalar_metadata_checks(cls, key, value_dict, rejected_channels=[]):
-        
+    def scalar_metadata_checks(cls, key, value_dict, rejected_channels=None):
+
+        rejected_channels = rejected_channels or []
+
         if type(value_dict) != dict:
             value_dict = value_dict.model_dump()
-            
+
         if ("units" in value_dict) and (
-            type(value_dict["units"]) != str
-            and value_dict["units"] is not None
+            type(value_dict["units"]) != str and value_dict["units"] is not None
         ):
             rejected_channels.append(
                 {key: "units attribute has wrong datatype"},
@@ -280,7 +301,9 @@ class ChannelChecks:
         return rejected_channels
 
     @classmethod
-    def image_metadata_checks(cls, key, value_dict, rejected_channels=[]):
+    def image_metadata_checks(cls, key, value_dict, rejected_channels=None):
+
+        rejected_channels = rejected_channels or None
 
         if type(value_dict) != dict:
             value_dict = value_dict.model_dump()
@@ -333,14 +356,18 @@ class ChannelChecks:
 
         for key, value in ingested_channels.items():
             if value.metadata.channel_dtype == "scalar":
-                
+
                 rejected_channels = self.scalar_metadata_checks(
-                    key, value.metadata, rejected_channels
+                    key,
+                    value.metadata,
+                    rejected_channels,
                 )
 
             if value.metadata.channel_dtype == "image":
                 rejected_channels = self.image_metadata_checks(
-                    key, value.metadata, rejected_channels
+                    key,
+                    value.metadata,
+                    rejected_channels,
                 )
 
                 if hasattr(value, "thumbnail") and (
@@ -525,7 +552,8 @@ class ChannelChecks:
                 if unexpected_value_keys:
                     rejected_channels.append(
                         {
-                            key: f"unknown attribute in scalar channel: {unexpected_value_keys}"
+                            key: "unknown attribute in scalar channel: "
+                            f"{unexpected_value_keys}",
                         },
                     )
 
@@ -535,7 +563,8 @@ class ChannelChecks:
                 if unexpected_metadata_keys:
                     rejected_channels.append(
                         {
-                            key: f"unknown attribute in scalar metadata: {unexpected_metadata_keys}"
+                            key: "unknown attribute in scalar metadata: "
+                            f"{unexpected_metadata_keys}",
                         },
                     )
 
@@ -559,22 +588,25 @@ class ChannelChecks:
                 if unexpected_value_keys:
                     rejected_channels.append(
                         {
-                            key: f"unknown attribute in image channel: {unexpected_value_keys}"
+                            key: "unknown attribute in image channel: "
+                            f"{unexpected_value_keys}",
                         },
                     )
 
                 if unexpected_metadata_keys:
                     rejected_channels.append(
                         {
-                            key: f"unknown attribute in image metadata: {unexpected_metadata_keys}"
+                            key: "unknown attribute in image metadata: "
+                            f"{unexpected_metadata_keys}",
                         },
                     )
 
                 if unexpected_image_keys:
                     rejected_channels.append(
                         {
-                            key: f"unknown attribute in image data: {unexpected_image_keys}"
-                        }
+                            key: "unknown attribute in image data: "
+                            f"{unexpected_image_keys}",
+                        },
                     )
 
             if value.metadata.channel_dtype == "waveform":
@@ -597,21 +629,24 @@ class ChannelChecks:
                 if unexpected_value_keys:
                     rejected_channels.append(
                         {
-                            key: f"unknown attribute in waveform channel: {unexpected_value_keys}"
+                            key: "unknown attribute in waveform channel: "
+                            f"{unexpected_value_keys}",
                         },
                     )
 
                 if unexpected_metadata_keys:
                     rejected_channels.append(
                         {
-                            key: f"unknown attribute in waveform metadata: {unexpected_metadata_keys}"
+                            key: "unknown attribute in waveform metadata: "
+                            f"{unexpected_metadata_keys}",
                         },
                     )
 
                 if unexpected_waveform_keys:
                     rejected_channels.append(
                         {
-                            key: f"unknown attribute in waveform data: {unexpected_waveform_keys}"
+                            key: "unknown attribute in waveform data: "
+                            f"{unexpected_waveform_keys}",
                         },
                     )
 

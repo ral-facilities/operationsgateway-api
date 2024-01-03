@@ -44,7 +44,7 @@ async def submit_hdf(
     log.debug("Filename: %s, Content: %s", file.filename, file.content_type)
 
     hdf_handler = HDFDataHandler(file.file)
-    record_data, waveforms, images, _ = hdf_handler.extract_data()
+    record_data, waveforms, images, _ = await hdf_handler.extract_data()
     record = Record(record_data)
 
     stored_record = await record.find_existing_record()
@@ -54,9 +54,9 @@ async def submit_hdf(
     # file_checker = ingest_checker.FileChecks(ingest_checker)
     # import_checker = ingest_checker.PartialImportChecks(ingest_checker)
     # import_checker.channel_checks()
-    
+
     # ingest_checker.form_response()
-    
+
     # await file_checker.example()
 
     log.debug("Processing waveforms")
