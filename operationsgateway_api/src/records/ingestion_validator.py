@@ -4,12 +4,7 @@ import numpy as np
 
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.exceptions import RejectFileError, RejectRecordError
-from operationsgateway_api.src.models import (
-    ImageChannelMetadataModel,
-    RecordModel,
-    ScalarChannelMetadataModel,
-    WaveformChannelMetadataModel,
-)
+from operationsgateway_api.src.models import RecordModel
 
 
 log = logging.getLogger()
@@ -89,12 +84,26 @@ class ChannelChecks:
         ingested_record=None,
         ingested_waveform=None,
         ingested_image=None,
-        channel_dtype_missing=None,
+        internal_failed_channel=None,
     ):
         self.ingested_record = ingested_record or []
         self.ingested_waveform = ingested_waveform or []
         self.ingested_image = ingested_image or []
-        self.channel_dtype_missing = channel_dtype_missing or []
+        self.internal_failed_channel = internal_failed_channel or []
+
+    def _merge_internal_failed(
+        self,
+        rejected_channels,
+        internal_failed_channel,
+        accept_list,
+    ):
+        if internal_failed_channel != []:
+            for response in internal_failed_channel:
+                for _key, reason in response.items():
+                    for accepted_reason in accept_list:
+                        if reason == accepted_reason:
+                            rejected_channels.append(response)
+        return rejected_channels
 
     async def channel_dtype_checks(self):
         ingested_channels = self.ingested_record
@@ -137,10 +146,16 @@ class ChannelChecks:
                     },
                 )
 
-        if self.channel_dtype_missing != []:
-            for response in self.channel_dtype_missing:
-                channel = list(response.keys())[0]
-                rejected_channels.append({channel: response[channel]})
+        rejected_channels = self._merge_internal_failed(
+            rejected_channels,
+            self.internal_failed_channel,
+            [
+                "channel_dtype attribute is missing (cannot perform "
+                "other checks without)",
+                "channel_dtype has wrong data type or its value is unsupported",
+                "channel failed (channel_dtype)",
+            ],
+        )
 
         return rejected_channels
 
@@ -151,25 +166,7 @@ class ChannelChecks:
 
         rejected_channels = []
         for key, value in ingested_channels.items():
-            if value.metadata.channel_dtype == "scalar":
-                if hasattr(value, "metadata"):
-                    if not isinstance(value.metadata, ScalarChannelMetadataModel):
-                        rejected_channels.append({key: "metadata has wrong datatype"})
-                else:
-                    rejected_channels.append({key: "metadata attribute is missing"})
-
-                if hasattr(value, "data"):
-                    pass
-                else:
-                    rejected_channels.append({key: "data attribute is missing"})
-
             if value.metadata.channel_dtype == "image":
-                if hasattr(value, "metadata"):
-                    if not isinstance(value.metadata, ImageChannelMetadataModel):
-                        rejected_channels.append({key: "metadata has wrong datatype"})
-                else:
-                    rejected_channels.append({key: "metadata attribute is missing"})
-
                 if hasattr(value, "image_path"):
                     path_to_check = value.image_path
                     if type(path_to_check) == str:
@@ -218,12 +215,6 @@ class ChannelChecks:
                     rejected_channels.append({key: "image_path attribute is missing"})
 
             if value.metadata.channel_dtype == "waveform":
-                if hasattr(value, "metadata"):
-                    if not isinstance(value.metadata, WaveformChannelMetadataModel):
-                        rejected_channels.append({key: "metadata has wrong datatype"})
-                else:
-                    rejected_channels.append({key: "metadata attribute is missing"})
-
                 if hasattr(value, "waveform_id"):
                     id_to_check = value.waveform_id
                     if type(id_to_check) == str:
@@ -282,6 +273,19 @@ class ChannelChecks:
                         )
                 else:
                     rejected_channels.append({key: "waveform_id attribute is missing"})
+
+        rejected_channels = self._merge_internal_failed(
+            rejected_channels,
+            self.internal_failed_channel,
+            [
+                "data attribute is missing",
+                "data has wrong datatype",
+                "x attribute is missing",
+                "y attribute is missing",
+                "channel failed (channel_dtype)",
+            ],
+        )
+
         return rejected_channels
 
     @classmethod

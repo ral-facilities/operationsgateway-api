@@ -84,7 +84,7 @@ class HDFDataHandler:
         except ValidationError as exc:
             raise ModelError(str(exc)) from exc
 
-        return record, self.waveforms, self.images, self.channel_dtype_missing
+        return record, self.waveforms, self.images, self.internal_failed_channel
 
     async def extract_channels(self) -> None:
         """
@@ -92,7 +92,7 @@ class HDFDataHandler:
         relevant Pydantic models
         """
 
-        channel_dtype_missing = []
+        internal_failed_channel = []
 
         for channel_name, value in self.hdf_file.items():
             channel_metadata = dict(value.attrs)
@@ -102,7 +102,7 @@ class HDFDataHandler:
             )
             response = await channel_checks.channel_dtype_checks()
             if response != []:
-                channel_dtype_missing.append((response[0]))
+                internal_failed_channel.append((response[0]))
                 continue
 
             if value.attrs["channel_dtype"] == "image":
@@ -117,6 +117,11 @@ class HDFDataHandler:
                         metadata=ImageChannelMetadataModel(**channel_metadata),
                         image_path=image_path,
                     )
+                except KeyError:
+                    internal_failed_channel.append(
+                        {channel_name: "data attribute is missing"},
+                    )
+                    continue
                 except ValidationError as exc:
                     raise ModelError(str(exc)) from exc
             elif value.attrs["channel_dtype"] == "rgb-image":
@@ -132,8 +137,25 @@ class HDFDataHandler:
                         metadata=ScalarChannelMetadataModel(**channel_metadata),
                         data=value["data"][()],
                     )
+                except KeyError:
+                    internal_failed_channel.append(
+                        {channel_name: "data attribute is missing"},
+                    )
+                    continue
                 except ValidationError as exc:
-                    raise ModelError(str(exc)) from exc
+                    for error in exc.errors():
+                        if (
+                            error["type"] == "int_type"
+                            or error["type"] == "float_type"
+                            or error["type"] == "string_type"
+                        ):
+                            internal_failed_channel.append(
+                                {channel_name: "data has wrong datatype"},
+                            )
+                            break
+                        else:
+                            raise ModelError(str(exc)) from exc
+                    continue
             elif value.attrs["channel_dtype"] == "waveform":
                 waveform_id = f"{self.record_id}_{channel_name}"
                 log.debug("Waveform ID: %s", waveform_id)
@@ -151,10 +173,29 @@ class HDFDataHandler:
                             y=value["y"][()],
                         ),
                     )
+                except KeyError:
+                    try:
+                        value["x"]
+                    except KeyError:
+                        internal_failed_channel.append(
+                            {channel_name: "x attribute is missing"},
+                        )
+                    try:
+                        value["y"]
+                    except KeyError:
+                        internal_failed_channel.append(
+                            {channel_name: "y attribute is missing"},
+                        )
+                    continue
                 except ValidationError as exc:
                     raise ModelError(str(exc)) from exc
+
+            else:
+                internal_failed_channel.append(
+                    {channel_name: "channel failed (channel_dtype)"},
+                )
 
             # Put channels into a dictionary to give a good structure to query them in
             # the database
             self.channels[channel_name] = channel
-            self.channel_dtype_missing = channel_dtype_missing
+            self.internal_failed_channel = internal_failed_channel

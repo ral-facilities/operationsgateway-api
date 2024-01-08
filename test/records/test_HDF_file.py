@@ -20,6 +20,8 @@ async def create_test_hdf_file(
     shotnum=None,
     active_experiment=None,
     channel_dtype=None,
+    required_attributes=None,
+    optional_attributes=None,
 ):
 
     data_version = data_version if data_version is not None else ["1.0", "exists"]
@@ -80,7 +82,12 @@ async def create_test_hdf_file(
 
         gem_shot_num_value = record.create_group("GEM_SHOT_NUM_VALUE")
         gem_shot_num_value.attrs.create("channel_dtype", "scalar")
-        gem_shot_num_value.create_dataset("data", data=366272)
+        if required_attributes and "scalar" in required_attributes:
+            scalar = required_attributes["scalar"]
+            if scalar["data"] != "missing":
+                gem_shot_num_value.create_dataset("data", data=(scalar["data"]))
+        else:
+            gem_shot_num_value.create_dataset("data", data=366272)
 
         gem_shot_source_string = record.create_group("GEM_SHOT_SOURCE_STRING")
         if scalar_1_channel_dtype is not None:
@@ -133,7 +140,12 @@ async def create_test_hdf_file(
         n_comp_ff_image.attrs.create("y_pixel_units", "µm")
         # example 2D dataset
         data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.uint16)
-        n_comp_ff_image.create_dataset("data", data=data)
+        if required_attributes and "image" in required_attributes:
+            image = required_attributes["image"]
+            if image["data"] != "missing":
+                n_comp_ff_image.create_dataset("data", data=(image["data"]))
+        else:
+            n_comp_ff_image.create_dataset("data", data=data)
 
         n_comp_ff_intergration = record.create_group("N_COMP_FF_INTEGRATION")
         n_comp_ff_intergration.attrs.create("channel_dtype", "scalar")
@@ -172,8 +184,21 @@ async def create_test_hdf_file(
         n_comp_spec_trace.attrs.create("y_units", "kJ")
         x = [1, 2, 3, 4, 5, 6]
         y = [8, 3, 6, 2, 3, 8, 425]
-        n_comp_spec_trace.create_dataset("x", data=x)
-        n_comp_spec_trace.create_dataset("y", data=y)
+        if required_attributes and "waveform" in required_attributes:
+            waveform = required_attributes["waveform"]
+            if "x" in waveform:
+                if waveform["x"] != "missing":
+                    n_comp_spec_trace.create_dataset("x", data=(waveform["x"]))
+            else:
+                n_comp_spec_trace.create_dataset("x", data=x)
+            if "y" in waveform:
+                if waveform["y"] != "missing":
+                    n_comp_spec_trace.create_dataset("y", data=(waveform["y"]))
+            else:
+                n_comp_spec_trace.create_dataset("y", data=y)
+        else:
+            n_comp_spec_trace.create_dataset("x", data=x)
+            n_comp_spec_trace.create_dataset("y", data=y)
 
         types = record.create_group("Type")
         types.attrs.create("channel_dtype", "scalar")
@@ -365,14 +390,14 @@ class TestChannel:
             record_data,
             waveforms,
             images,
-            channel_dtype_missing,
+            internal_failed_channel,
         ) = await create_test_hdf_file()
 
         channel_checker = ingestion_validator.ChannelChecks(
             record_data,
             waveforms,
             images,
-            channel_dtype_missing,
+            internal_failed_channel,
         )
         async_functions = [
             channel_checker.channel_dtype_checks,
@@ -509,20 +534,204 @@ class TestChannel:
             record_data,
             waveforms,
             images,
-            channel_dtype_missing,
+            internal_failed_channel,
         ) = await create_test_hdf_file(channel_dtype=altered_channel)
 
         channel_checker = ingestion_validator.ChannelChecks(
             record_data,
             waveforms,
             images,
-            channel_dtype_missing,
+            internal_failed_channel,
         )
 
         assert await channel_checker.channel_dtype_checks() == response
 
-    # attribute_response = channel_checker.required_attribute_checks()
-    # optional_response = channel_checker.optional_dtype_checks()
+    @pytest.mark.parametrize(
+        "required_attributes, response",
+        [
+            pytest.param(
+                {"scalar": {"data": "missing"}},
+                [
+                    {
+                        "GEM_SHOT_NUM_VALUE": "data attribute is missing",
+                    },
+                ],
+                id="Scalar data missing",
+            ),
+            pytest.param(
+                {"scalar": {"data": ["list type"]}},
+                [
+                    {
+                        "GEM_SHOT_NUM_VALUE": "data has wrong datatype",
+                    },
+                ],
+                id="Scalar data invalid",
+            ),
+            pytest.param(
+                {"image": {"data": "missing"}},
+                [
+                    {
+                        "N_COMP_FF_IMAGE": "data attribute is missing",
+                    },
+                ],
+                id="Image data missing",
+            ),
+            pytest.param(
+                {"image": {"data": 42}},
+                [
+                    {
+                        "N_COMP_FF_IMAGE": "data has wrong datatype, should be ndarray",
+                    },
+                ],
+                id="Image data invalid",
+            ),
+            pytest.param(
+                {"waveform": {"x": "missing"}},
+                [
+                    {
+                        "N_COMP_SPEC_TRACE": "x attribute is missing",
+                    },
+                ],
+                id="Waveform x missing",
+            ),
+            pytest.param(
+                {"waveform": {"x": 53}},
+                [
+                    {
+                        "N_COMP_SPEC_TRACE": "x or y has wrong datatype, "
+                        "should be a list of floats",
+                    },
+                ],
+                id="Waveform x invalid",
+            ),
+            pytest.param(
+                {"waveform": {"y": "missing"}},
+                [
+                    {
+                        "N_COMP_SPEC_TRACE": "y attribute is missing",
+                    },
+                ],
+                id="Waveform y missing",
+            ),
+            pytest.param(
+                {"waveform": {"y": 53}},
+                [
+                    {
+                        "N_COMP_SPEC_TRACE": "x or y has wrong datatype, "
+                        "should be a list of floats",
+                    },
+                ],
+                id="Waveform y invalid",
+            ),
+            pytest.param(
+                {
+                    "scalar": {"data": "missing"},
+                    "image": {"data": 876},
+                    "waveform": {"x": "missing", "y": "missing"},
+                },
+                [
+                    {"N_COMP_FF_IMAGE": "data has wrong datatype, should be ndarray"},
+                    {"GEM_SHOT_NUM_VALUE": "data attribute is missing"},
+                    {"N_COMP_SPEC_TRACE": "x attribute is missing"},
+                    {"N_COMP_SPEC_TRACE": "y attribute is missing"},
+                ],
+                id="Waveform y invalid",
+            ),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_required_attribute_fail(
+        self,
+        remove_hdf_file,
+        required_attributes,
+        response,
+    ):
+        (
+            record_data,
+            waveforms,
+            images,
+            internal_failed_channel,
+        ) = await create_test_hdf_file(required_attributes=required_attributes)
+
+        channel_checker = ingestion_validator.ChannelChecks(
+            record_data,
+            waveforms,
+            images,
+            internal_failed_channel,
+        )
+        """
+        required_attributes = {
+            "scalar": {"data": "missing"},
+            "image": {"image_path": "missing", "path": "missing", "data": "missing"},
+            "waveform": {
+                "waveform_id": "missing",
+                "id_": "missing",
+                "x": "missing",
+                "y": "missing"
+            },
+        }
+        """
+
+        # TODO image: image_path, path. waveform: waveform_id, id_     mocking
+
+        assert channel_checker.required_attribute_checks() == response
+
+    @pytest.mark.parametrize(
+        "optional_attributes, response",
+        [
+            pytest.param(
+                {"scalar": {"units": "invalid"}},
+                [
+                    {
+                        "GEM_SHOT_NUM_VALUE": "units attribute has wrong datatype",
+                    },
+                ],
+                id="Scalar units invalid",
+            ),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_optional_attribute_fail(
+        self,
+        remove_hdf_file,
+        optional_attributes,
+        response,
+    ):
+        (
+            record_data,
+            waveforms,
+            images,
+            internal_failed_channel,
+        ) = await create_test_hdf_file(optional_attributes=optional_attributes)
+
+        channel_checker = ingestion_validator.ChannelChecks(
+            record_data,
+            waveforms,
+            images,
+            internal_failed_channel,
+        )
+        """
+        optional_attributes = {
+            "scalar": {"units": "invalid"},
+            "image": {
+                "exposure_time_s": "invalid",
+                "gain": "invalid",
+                "x_pixel_size": "invalid",
+                "x_pixel_units": "invalid",
+                "y_pixel_size": "invalid",
+                "y_pixel_units": "invalid",
+                "thumbnail": "invalid",
+            },
+            "waveform": {
+                "x_units": "invalid",
+                "y_units": "invalid",
+                "thumbnail": "invalid"
+            },
+        }
+        """
+
+        assert channel_checker.optional_dtype_checks() == response
+
     # dataset_response = channel_checker.dataset_checks()
     # unrecognised_response = channel_checker.unrecognised_attribute_checks()
     # channel_name_response = await channel_checker.channel_name_check()
