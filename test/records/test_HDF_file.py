@@ -132,12 +132,45 @@ async def create_test_hdf_file(
                 n_comp_ff_image.attrs.create("channel_dtype", image_channel_dtype[0])
         else:
             n_comp_ff_image.attrs.create("channel_dtype", "image")
-        n_comp_ff_image.attrs.create("exposure_time_s", 0.001)
-        n_comp_ff_image.attrs.create("gain", 5.5)
-        n_comp_ff_image.attrs.create("x_pixel_size", 441.0)
-        n_comp_ff_image.attrs.create("x_pixel_units", "µm")
-        n_comp_ff_image.attrs.create("y_pixel_size", 441.0)
-        n_comp_ff_image.attrs.create("y_pixel_units", "µm")
+        if optional_attributes and "image" in optional_attributes:
+            image = optional_attributes["image"]
+            if "exposure_time_s" in image:
+                if image["exposure_time_s"] == "invalid":
+                    n_comp_ff_image.attrs.create("exposure_time_s", "0.001")
+            else:
+                n_comp_ff_image.attrs.create("exposure_time_s", 0.001)
+            if "gain" in image:
+                if image["gain"] == "invalid":
+                    n_comp_ff_image.attrs.create("gain", "5.5")
+            else:
+                n_comp_ff_image.attrs.create("gain", 5.5)
+            if "x_pixel_size" in image:
+                if image["x_pixel_size"] == "invalid":
+                    n_comp_ff_image.attrs.create("x_pixel_size", "441.0")
+            else:
+                n_comp_ff_image.attrs.create("x_pixel_size", 441.0)
+            if "x_pixel_units" in image:
+                if image["x_pixel_units"] == "invalid":
+                    n_comp_ff_image.attrs.create("x_pixel_units", 436)
+            else:
+                n_comp_ff_image.attrs.create("x_pixel_units", "µm")
+            if "y_pixel_size" in image:
+                if image["y_pixel_size"] == "invalid":
+                    n_comp_ff_image.attrs.create("y_pixel_size", "441.0")
+            else:
+                n_comp_ff_image.attrs.create("y_pixel_size", 441.0)
+            if "y_pixel_units" in image:
+                if image["y_pixel_units"] == "invalid":
+                    n_comp_ff_image.attrs.create("y_pixel_units", 346)
+            else:
+                n_comp_ff_image.attrs.create("y_pixel_units", "µm")
+        else:
+            n_comp_ff_image.attrs.create("exposure_time_s", 0.001)
+            n_comp_ff_image.attrs.create("gain", 5.5)
+            n_comp_ff_image.attrs.create("x_pixel_size", 441.0)
+            n_comp_ff_image.attrs.create("x_pixel_units", "µm")
+            n_comp_ff_image.attrs.create("y_pixel_size", 441.0)
+            n_comp_ff_image.attrs.create("y_pixel_units", "µm")
         # example 2D dataset
         data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.uint16)
         if required_attributes and "image" in required_attributes:
@@ -149,7 +182,14 @@ async def create_test_hdf_file(
 
         n_comp_ff_intergration = record.create_group("N_COMP_FF_INTEGRATION")
         n_comp_ff_intergration.attrs.create("channel_dtype", "scalar")
-        n_comp_ff_intergration.attrs.create("units", "µm")
+        if optional_attributes and "scalar" in optional_attributes:
+            scalar = optional_attributes["scalar"]
+            if scalar["units"] == "invalid":
+                n_comp_ff_intergration.attrs.create("units", 764)
+            else:
+                n_comp_ff_intergration.attrs.create("units", "µm")
+        else:
+            n_comp_ff_intergration.attrs.create("units", "µm")
         n_comp_ff_intergration.create_dataset("data", data=8895000.0)
 
         n_comp_ff_xpos = record.create_group("N_COMP_FF_XPOS")
@@ -180,8 +220,22 @@ async def create_test_hdf_file(
                 )
         else:
             n_comp_spec_trace.attrs.create("channel_dtype", "waveform")
-        n_comp_spec_trace.attrs.create("x_units", "s")
-        n_comp_spec_trace.attrs.create("y_units", "kJ")
+        
+        if optional_attributes and "waveform" in optional_attributes:
+            waveform = optional_attributes["waveform"]
+            if "x_units" in waveform:
+                if waveform["x_units"] == "invalid":
+                    n_comp_spec_trace.attrs.create("x_units", 35)
+            else:
+                n_comp_spec_trace.attrs.create("x_units", "s")
+            if "y_units" in waveform:
+                if waveform["y_units"] == "invalid":
+                    n_comp_spec_trace.attrs.create("y_units", 42)
+            else:
+                n_comp_spec_trace.attrs.create("y_units", "kJ")
+        else:
+            n_comp_spec_trace.attrs.create("x_units", "s")
+            n_comp_spec_trace.attrs.create("y_units", "kJ")
         x = [1, 2, 3, 4, 5, 6]
         y = [8, 3, 6, 2, 3, 8, 425]
         if required_attributes and "waveform" in required_attributes:
@@ -524,7 +578,7 @@ class TestChannel:
                         "or its value is unsupported",
                     },
                 ],
-                id="multiple channel_dtype fails",
+                id="Multiple channel_dtype fails",
             ),
         ],
     )
@@ -635,7 +689,7 @@ class TestChannel:
                     {"N_COMP_SPEC_TRACE": "x attribute is missing"},
                     {"N_COMP_SPEC_TRACE": "y attribute is missing"},
                 ],
-                id="Waveform y invalid",
+                id="Mixed failed required attributes",
             ),
         ],
     )
@@ -683,10 +737,120 @@ class TestChannel:
                 {"scalar": {"units": "invalid"}},
                 [
                     {
-                        "GEM_SHOT_NUM_VALUE": "units attribute has wrong datatype",
+                        "N_COMP_FF_INTEGRATION": "units attribute has wrong datatype",
                     },
                 ],
                 id="Scalar units invalid",
+            ),
+            pytest.param(
+                {"image": {"exposure_time_s": "invalid"}},
+                [
+                    {
+                        "N_COMP_FF_IMAGE": "exposure_time_s attribute has wrong datatype",
+                    },
+                ],
+                id="Image exposure_time_s invalid",
+            ),
+            pytest.param(
+                {"image": {"gain": "invalid"}},
+                [
+                    {
+                        "N_COMP_FF_IMAGE": "gain attribute has wrong datatype",
+                    },
+                ],
+                id="Image gain invalid",
+            ),
+            pytest.param(
+                {"image": {"x_pixel_size": "invalid"}},
+                [
+                    {
+                        "N_COMP_FF_IMAGE": "x_pixel_size attribute has wrong datatype",
+                    },
+                ],
+                id="Image x_pixel_size invalid",
+            ),
+            pytest.param(
+                {"image": {"x_pixel_units": "invalid"}},
+                [
+                    {
+                        "N_COMP_FF_IMAGE": "x_pixel_units attribute has wrong datatype",
+                    },
+                ],
+                id="Image x_pixel_units invalid",
+            ),
+            pytest.param(
+                {"image": {"y_pixel_size": "invalid"}},
+                [
+                    {
+                        "N_COMP_FF_IMAGE": "y_pixel_size attribute has wrong datatype",
+                    },
+                ],
+                id="Image y_pixel_size invalid",
+            ),
+            pytest.param(
+                {"image": {"y_pixel_units": "invalid"}},
+                [
+                    {
+                        "N_COMP_FF_IMAGE": "y_pixel_units attribute has wrong datatype",
+                    },
+                ],
+                id="Image y_pixel_units invalid",
+            ),
+            pytest.param(
+                {"waveform": {"x_units": "invalid"}},
+                [
+                    {
+                        "N_COMP_SPEC_TRACE": "x_units attribute has wrong datatype",
+                    },
+                ],
+                id="Waveform x_units invalid",
+            ),
+            pytest.param(
+                {"waveform": {"y_units": "invalid"}},
+                [
+                    {
+                        "N_COMP_SPEC_TRACE": "y_units attribute has wrong datatype",
+                    },
+                ],
+                id="Waveform y_units invalid",
+            ),
+            pytest.param(
+                {
+                    "scalar": {"units": "invalid"},
+                    "image": {
+                        "y_pixel_size": "invalid", 
+                        "exposure_time_s": "invalid", 
+                        "gain": "invalid"
+                    },
+                    "waveform": {"x_units": "invalid", "y_units": "invalid"},
+                },
+                [
+                    {"N_COMP_FF_IMAGE": "exposure_time_s attribute has wrong datatype"},
+                    {"N_COMP_FF_IMAGE": "gain attribute has wrong datatype"},
+                    {"N_COMP_FF_IMAGE": "y_pixel_size attribute has wrong datatype"},
+                    {"N_COMP_FF_INTEGRATION": "units attribute has wrong datatype"},
+                    {"N_COMP_SPEC_TRACE": "x_units attribute has wrong datatype"},
+                    {"N_COMP_SPEC_TRACE": "y_units attribute has wrong datatype"},
+                ],
+                id="Mixed invalid optional attributes",
+            ),
+            pytest.param(
+                {"waveform": {"thumbnail": "invalid"}},
+                [
+                    {
+                        "N_COMP_SPEC_TRACE": "thumbnail attribute has wrong datatype",
+                    },
+                ],
+                id="Waveform thumbnail invalid",
+            ),
+            pytest.param(
+                {"image": {"thumbnail": "invalid"}},
+                [
+                    {
+                        "N_COMP_FF_IMAGE": "thumbnail attribute has wrong datatype",
+                    },
+                ],
+                id="Image thumbnail invalid",
             ),
         ],
     )
@@ -703,6 +867,13 @@ class TestChannel:
             images,
             internal_failed_channel,
         ) = await create_test_hdf_file(optional_attributes=optional_attributes)
+        
+        if "image" in optional_attributes:
+            if "thumbnail" in optional_attributes["image"]:
+                record_data.channels["N_COMP_FF_IMAGE"].thumbnail = 25
+        if "waveform" in optional_attributes:
+            if "thumbnail" in optional_attributes["waveform"]:
+                record_data.channels["N_COMP_SPEC_TRACE"].thumbnail = 25
 
         channel_checker = ingestion_validator.ChannelChecks(
             record_data,

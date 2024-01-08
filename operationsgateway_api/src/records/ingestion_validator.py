@@ -289,9 +289,7 @@ class ChannelChecks:
         return rejected_channels
 
     @classmethod
-    def scalar_metadata_checks(cls, key, value_dict, rejected_channels=None):
-
-        rejected_channels = rejected_channels or []
+    def scalar_metadata_checks(cls, key, value_dict, rejected_channels):
 
         if type(value_dict) != dict:
             value_dict = value_dict.model_dump()
@@ -305,9 +303,7 @@ class ChannelChecks:
         return rejected_channels
 
     @classmethod
-    def image_metadata_checks(cls, key, value_dict, rejected_channels=None):
-
-        rejected_channels = rejected_channels or None
+    def image_metadata_checks(cls, key, value_dict, rejected_channels):
 
         if type(value_dict) != dict:
             value_dict = value_dict.model_dump()
