@@ -416,7 +416,7 @@ class ChannelChecks:
                     and type(value.data) != float
                     and type(value.data) != str
                 ):
-                    rejected_channels.append({key: "data attribute has wrong datatype"})
+                    rejected_channels.append({key: "data attribute has wrong datatype"}) # may not be needed
 
             if value.metadata.channel_dtype == "image":
 
@@ -440,7 +440,7 @@ class ChannelChecks:
                             pass
                         else:
                             rejected_channels.append(
-                                {key: "data attribute has wrong shape"},
+                                {key: "flattened data attribute is incorrect"}, # may not be needed
                             )
                     else:
                         rejected_channels.append(
@@ -467,28 +467,38 @@ class ChannelChecks:
 
                 if type(x) != list:
                     rejected_channels.append({key: "x attribute has wrong shape"})
+                else:
+                    if not all(isinstance(element, float) for element in x):
+                        rejected_channels.append(
+                            {
+                                key: "x attribute has wrong datatype, should "
+                                "be a list of floats",
+                            },
+                        )
                 if type(y) != list:
                     rejected_channels.append({key: "y attribute has wrong shape"})
-
-                if all(isinstance(element, float) for element in x):
-                    pass
                 else:
-                    rejected_channels.append(
-                        {
-                            key: "x attribute has wrong datatype, should "
-                            "be a list of floats",
-                        },
-                    )
+                    if not all(isinstance(element, float) for element in y):
+                        rejected_channels.append(
+                            {
+                                key: "y attribute has wrong datatype, should be a "
+                                "list of floats",
+                            },
+                        )
 
-                if all(isinstance(element, float) for element in y):
-                    pass
-                else:
-                    rejected_channels.append(
-                        {
-                            key: "y attribute has wrong datatype, should be a "
-                            "list of floats",
-                        },
-                    )
+        rejected_channels = self._merge_internal_failed(
+            rejected_channels,
+            self.internal_failed_channel,
+            [
+                "data attribute is missing",
+                "data has wrong datatype",
+                "x attribute is missing",
+                "y attribute is missing",
+                "channel failed (channel_dtype)",
+            ],
+        )
+
+        return rejected_channels
 
         return rejected_channels
 

@@ -220,7 +220,7 @@ async def create_test_hdf_file(
                 )
         else:
             n_comp_spec_trace.attrs.create("channel_dtype", "waveform")
-        
+
         if optional_attributes and "waveform" in optional_attributes:
             waveform = optional_attributes["waveform"]
             if "x_units" in waveform:
@@ -746,7 +746,8 @@ class TestChannel:
                 {"image": {"exposure_time_s": "invalid"}},
                 [
                     {
-                        "N_COMP_FF_IMAGE": "exposure_time_s attribute has wrong datatype",
+                        "N_COMP_FF_IMAGE": "exposure_time_s attribute has "
+                        "wrong datatype",
                     },
                 ],
                 id="Image exposure_time_s invalid",
@@ -818,9 +819,9 @@ class TestChannel:
                 {
                     "scalar": {"units": "invalid"},
                     "image": {
-                        "y_pixel_size": "invalid", 
-                        "exposure_time_s": "invalid", 
-                        "gain": "invalid"
+                        "y_pixel_size": "invalid",
+                        "exposure_time_s": "invalid",
+                        "gain": "invalid",
                     },
                     "waveform": {"x_units": "invalid", "y_units": "invalid"},
                 },
@@ -867,7 +868,7 @@ class TestChannel:
             images,
             internal_failed_channel,
         ) = await create_test_hdf_file(optional_attributes=optional_attributes)
-        
+
         if "image" in optional_attributes:
             if "thumbnail" in optional_attributes["image"]:
                 record_data.channels["N_COMP_FF_IMAGE"].thumbnail = 25
@@ -903,18 +904,166 @@ class TestChannel:
 
         assert channel_checker.optional_dtype_checks() == response
 
-    # dataset_response = channel_checker.dataset_checks()
+
+    @pytest.mark.parametrize(
+        "required_attributes, response",
+        [
+            pytest.param(
+                {"scalar": {"data": ["list"]}},
+                [
+                    {
+                        "GEM_SHOT_NUM_VALUE": "data has wrong datatype",
+                    },
+                ],
+                id="Scalar data invalid",
+            ),
+            pytest.param(
+                {"image": {"data": 6780}},
+                [
+                    {
+                        "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
+                        "should be uint16 or uint8",
+                    },
+                ],
+                id="Image data not a NumPy array",
+            ),
+            pytest.param(
+                {"image": {"data": np.array([[1, 2, 3], [4, 5, 6]])}},
+                [
+                    {
+                        "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
+                        "should be uint16 or uint8",
+                    },
+                ],
+                id="Image data NumPy array but not uint8 or uint16",
+            ),
+            pytest.param(
+                {"image": {"data": np.array([1, 2, 3], dtype=np.uint8)}},
+                [
+                    {
+                        "N_COMP_FF_IMAGE": "data attribute has wrong shape",
+                    },
+                ],
+                id="Image data has wrong inner structure",
+            ),
+            pytest.param(
+                {"waveform": {"x": "lgf"}},
+                [
+                    {'N_COMP_SPEC_TRACE': 'x attribute has wrong shape'},
+                ],
+                id="Waveform x attribute has wrong shape (not a list)",
+            ),
+            pytest.param(
+                {"waveform": {"y": 8765}},
+                [
+                    {'N_COMP_SPEC_TRACE': 'y attribute has wrong shape'},
+                ],
+                id="Waveform y attribute has wrong shape (not a list)",
+            ),
+            pytest.param(
+                {"waveform": {"x": ["lgf"]}},
+                [
+                    {
+                        'N_COMP_SPEC_TRACE': "x attribute has wrong datatype, should "
+                                "be a list of floats",
+                    },
+                ],
+                id="Waveform x attribute has wrong data type",
+            ),
+            pytest.param(
+                {"waveform": {"y": ["8765"]}},
+                [
+                    {
+                        'N_COMP_SPEC_TRACE': "y attribute has wrong datatype, should "
+                                "be a list of floats",
+                    },
+                ],
+                id="Waveform y attribute has wrong data type",
+            ),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_dataset_checks_fail(
+        self,
+        remove_hdf_file,
+        required_attributes,
+        response,
+    ):
+        (
+            record_data,
+            waveforms,
+            images,
+            internal_failed_channel,
+        ) = await create_test_hdf_file(required_attributes=required_attributes)
+
+        channel_checker = ingestion_validator.ChannelChecks(
+            record_data,
+            waveforms,
+            images,
+            internal_failed_channel,
+        )
+        """
+        required_attributes = {
+            "scalar": {"data": "missing"},
+            "image": {"data": "missing"},
+            "waveform": {
+                "x": "missing",
+                "y": "missing",
+            },
+        }
+        """
+
+        assert channel_checker.dataset_checks() == response
+        
+    @pytest.mark.parametrize(
+        "unrecognised_attribute, response",
+        [
+            pytest.param(
+                {"scalar": {"data": ["list"]}},
+                [
+                    {
+                        "GEM_SHOT_NUM_VALUE": "data has wrong datatype",
+                    },
+                ],
+                id="unknown",
+            ),
+        ]
+    )
+    @pytest.mark.asyncio
+    async def test_unrecognised_attribute_fail(
+        self,
+        remove_hdf_file,
+        unrecognised_attribute,
+        response,
+    ):
+        (
+            record_data,
+            waveforms,
+            images,
+            internal_failed_channel,
+        ) = await create_test_hdf_file()#unrecognised_attribute=unrecognised_attribute)
+
+        channel_checker = ingestion_validator.ChannelChecks(
+            record_data,
+            waveforms,
+            images,
+            internal_failed_channel,
+        )
+        """
+        """
+        
+        # scalar: channel, metadata
+        # image: channel, metadata, data
+        # waveform: channel, metadata, data
+
+        assert channel_checker.unrecognised_attribute_checks() == response
+
+
+
     # unrecognised_response = channel_checker.unrecognised_attribute_checks()
     # channel_name_response = await channel_checker.channel_name_check()
 
     # response = await channel_checker.channel_checks()
-
-    # print(attribute_response)
-    # print(optional_response)
-    # print(dataset_response)
-    # print(unrecognised_response)
-    # print(channel_name_response)
-    # print(response)
 
 
 class TestPartialImport:
