@@ -126,6 +126,11 @@ class ChannelChecks:
         for key, value in ingested_channels.items():
             if dump:
                 value = value.metadata.model_dump()
+                
+            response = await self.channel_name_check(key)
+            if response != []:
+                rejected_channels.extend(response)
+                continue
 
             if "channel_dtype" in value:
                 if (
@@ -153,7 +158,6 @@ class ChannelChecks:
                 "channel_dtype attribute is missing (cannot perform "
                 "other checks without)",
                 "channel_dtype has wrong data type or its value is unsupported",
-                "channel failed (channel_dtype)",
             ],
         )
 
@@ -282,7 +286,9 @@ class ChannelChecks:
                 "data has wrong datatype",
                 "x attribute is missing",
                 "y attribute is missing",
-                "channel failed (channel_dtype)",
+                "channel_dtype attribute is missing (cannot perform "
+                "other checks without)",
+                "channel_dtype has wrong data type or its value is unsupported",
             ],
         )
 
@@ -416,7 +422,9 @@ class ChannelChecks:
                     and type(value.data) != float
                     and type(value.data) != str
                 ):
-                    rejected_channels.append({key: "data attribute has wrong datatype"}) # may not be needed
+                    rejected_channels.append(
+                        {key: "data attribute has wrong datatype"},
+                    )  # may not be needed
 
             if value.metadata.channel_dtype == "image":
 
@@ -440,7 +448,9 @@ class ChannelChecks:
                             pass
                         else:
                             rejected_channels.append(
-                                {key: "flattened data attribute is incorrect"}, # may not be needed
+                                {
+                                    key: "flattened data attribute is incorrect",
+                                },  # may not be needed
                             )
                     else:
                         rejected_channels.append(
@@ -494,11 +504,11 @@ class ChannelChecks:
                 "data has wrong datatype",
                 "x attribute is missing",
                 "y attribute is missing",
-                "channel failed (channel_dtype)",
+                "channel_dtype attribute is missing (cannot perform "
+                "other checks without)",
+                "channel_dtype has wrong data type or its value is unsupported",
             ],
         )
-
-        return rejected_channels
 
         return rejected_channels
 
@@ -661,23 +671,41 @@ class ChannelChecks:
                     )
 
         return rejected_channels
+    
+    
+    def _check_name(self, rejected_channels, manifest, key):
+        if key not in manifest:
+            rejected_channels.append(
+                {
+                    key: "Channel name is not recognised (does not appear "
+                    "in manifest)",
+                },
+            )
+        return rejected_channels
 
-    async def channel_name_check(self):
-
-        ingested_channels = (self.ingested_record).channels
+    async def channel_name_check(self, mode="direct"):
         manifest = (await get_manifest())["channels"]
-
+        
         rejected_channels = []
+        
+        if mode != "direct":
+            rejected_channels = self._check_name(rejected_channels, manifest, mode)
+            return rejected_channels
+        
+        ingested_channels = (self.ingested_record).channels
 
         for key in list(ingested_channels.keys()):
-            if key not in manifest:
-                rejected_channels.append(
-                    {
-                        key: "Channel name is not recognised (does not appear "
-                        "in manifest)",
-                    },
-                )
+            rejected_channels = self._check_name(rejected_channels, manifest, key)
                 # reject on import?
+                
+        rejected_channels = self._merge_internal_failed(
+            rejected_channels,
+            self.internal_failed_channel,
+            [
+                "Channel name is not recognised (does not appear in manifest)",
+            ],
+        )        
+        
         return rejected_channels
 
     def _organise_dict(self, list_of_dicts):

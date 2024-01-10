@@ -190,10 +190,6 @@ class HDFDataHandler:
                 except ValidationError as exc:
                     raise ModelError(str(exc)) from exc
 
-            else:
-                internal_failed_channel.append(
-                    {channel_name: "channel failed (channel_dtype)"},
-                )
 
             # Put channels into a dictionary to give a good structure to query them in
             # the database

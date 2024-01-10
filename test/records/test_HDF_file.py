@@ -22,6 +22,7 @@ async def create_test_hdf_file(
     channel_dtype=None,
     required_attributes=None,
     optional_attributes=None,
+    channel_name=None,
 ):
 
     data_version = data_version if data_version is not None else ["1.0", "exists"]
@@ -110,6 +111,35 @@ async def create_test_hdf_file(
         else:
             gem_shot_type_string.attrs.create("channel_dtype", "scalar")
         gem_shot_type_string.create_dataset("data", data="FP")
+
+        if channel_name and "scalar" in channel_name:
+            false_scalar = record.create_group("FALSE_SCALAR")
+            false_scalar.attrs.create("channel_dtype", "scalar")
+            false_scalar.attrs.create("units", "ms")
+            false_scalar.create_dataset("data", data=45)
+
+        if channel_name and "image" in channel_name:
+            false_image = record.create_group("FALSE_IMAGE")
+            false_image.attrs.create("channel_dtype", "image")
+            false_image.attrs.create("exposure_time_s", 0.001)
+            false_image.attrs.create("gain", 5.5)
+            false_image.attrs.create("x_pixel_size", 441.0)
+            false_image.attrs.create("x_pixel_units", "µm")
+            false_image.attrs.create("y_pixel_size", 441.0)
+            false_image.attrs.create("y_pixel_units", "µm")
+            # example 2D dataset
+            data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.uint16)
+            false_image.create_dataset("data", data=data)
+
+        if channel_name and "waveform" in channel_name:
+            false_waveform = record.create_group("FALSE_WAVEFORM")
+            false_waveform.attrs.create("channel_dtype", "waveform")
+            false_waveform.attrs.create("x_units", "s")
+            false_waveform.attrs.create("y_units", "kJ")
+            x = [1, 2, 3, 4, 5, 6]
+            y = [8, 3, 6, 2, 3, 8, 425]
+            false_waveform.create_dataset("x", data=x)
+            false_waveform.create_dataset("y", data=y)
 
         gem_wp_pos_value = record.create_group("GEM_WP_POS_VALUE")
         gem_wp_pos_value.attrs.create("channel_dtype", "scalar")
@@ -220,7 +250,6 @@ async def create_test_hdf_file(
                 )
         else:
             n_comp_spec_trace.attrs.create("channel_dtype", "waveform")
-
         if optional_attributes and "waveform" in optional_attributes:
             waveform = optional_attributes["waveform"]
             if "x_units" in waveform:
@@ -904,7 +933,6 @@ class TestChannel:
 
         assert channel_checker.optional_dtype_checks() == response
 
-
     @pytest.mark.parametrize(
         "required_attributes, response",
         [
@@ -949,14 +977,14 @@ class TestChannel:
             pytest.param(
                 {"waveform": {"x": "lgf"}},
                 [
-                    {'N_COMP_SPEC_TRACE': 'x attribute has wrong shape'},
+                    {"N_COMP_SPEC_TRACE": "x attribute has wrong shape"},
                 ],
                 id="Waveform x attribute has wrong shape (not a list)",
             ),
             pytest.param(
                 {"waveform": {"y": 8765}},
                 [
-                    {'N_COMP_SPEC_TRACE': 'y attribute has wrong shape'},
+                    {"N_COMP_SPEC_TRACE": "y attribute has wrong shape"},
                 ],
                 id="Waveform y attribute has wrong shape (not a list)",
             ),
@@ -964,8 +992,8 @@ class TestChannel:
                 {"waveform": {"x": ["lgf"]}},
                 [
                     {
-                        'N_COMP_SPEC_TRACE': "x attribute has wrong datatype, should "
-                                "be a list of floats",
+                        "N_COMP_SPEC_TRACE": "x attribute has wrong datatype, should "
+                        "be a list of floats",
                     },
                 ],
                 id="Waveform x attribute has wrong data type",
@@ -974,8 +1002,8 @@ class TestChannel:
                 {"waveform": {"y": ["8765"]}},
                 [
                     {
-                        'N_COMP_SPEC_TRACE': "y attribute has wrong datatype, should "
-                                "be a list of floats",
+                        "N_COMP_SPEC_TRACE": "y attribute has wrong datatype, should "
+                        "be a list of floats",
                     },
                 ],
                 id="Waveform y attribute has wrong data type",
@@ -1014,7 +1042,7 @@ class TestChannel:
         """
 
         assert channel_checker.dataset_checks() == response
-        
+
     @pytest.mark.parametrize(
         "unrecognised_attribute, response",
         [
@@ -1025,12 +1053,12 @@ class TestChannel:
                         "GEM_SHOT_NUM_VALUE": "data has wrong datatype",
                     },
                 ],
-                id="unknown",
+                id="unfinished",
             ),
-        ]
+        ],
     )
     @pytest.mark.asyncio
-    async def test_unrecognised_attribute_fail(
+    async def test_unrecognised_attribute_fail(             # TODO unfinished
         self,
         remove_hdf_file,
         unrecognised_attribute,
@@ -1041,7 +1069,9 @@ class TestChannel:
             waveforms,
             images,
             internal_failed_channel,
-        ) = await create_test_hdf_file()#unrecognised_attribute=unrecognised_attribute)
+        ) = (
+            await create_test_hdf_file()
+        )  # unrecognised_attribute=unrecognised_attribute)
 
         channel_checker = ingestion_validator.ChannelChecks(
             record_data,
@@ -1051,17 +1081,101 @@ class TestChannel:
         )
         """
         """
-        
+
         # scalar: channel, metadata
         # image: channel, metadata, data
         # waveform: channel, metadata, data
 
         assert channel_checker.unrecognised_attribute_checks() == response
+        
+        
+    @pytest.mark.parametrize(
+        "channel_name, response",
+        [
+            pytest.param(
+                ["scalar"],
+                [
+                    {
+                        "FALSE_SCALAR": "Channel name is not recognised "
+                        "(does not appear in manifest)",
+                    },
+                ],
+                id="Unknown scalar name",
+            ),
+            pytest.param(
+                ["image"],
+                [
+                    {
+                        "FALSE_IMAGE": "Channel name is not recognised "
+                        "(does not appear in manifest)",
+                    },
+                ],
+                id="Unknown image name",
+            ),
+            pytest.param(
+                ["waveform"],
+                [
+                    {
+                        "FALSE_WAVEFORM": "Channel name is not recognised "
+                        "(does not appear in manifest)",
+                    },
+                ],
+                id="Unknown waveform name",
+            ),
+            pytest.param(
+                ["scalar", "image", "waveform"],
+                [
+                    {
+                        "FALSE_IMAGE": "Channel name is not recognised "
+                        "(does not appear in manifest)",
+                    },
+                    {
+                        "FALSE_SCALAR": "Channel name is not recognised "
+                        "(does not appear in manifest)",
+                    },
+                    {
+                        "FALSE_WAVEFORM": "Channel name is not recognised "
+                        "(does not appear in manifest)",
+                    },
+                ],
+                id="Unknown waveform name",
+            ),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_channel_name_fail(
+        self,
+        remove_hdf_file,
+        channel_name,
+        response,
+    ):
+        (
+            record_data,
+            waveforms,
+            images,
+            internal_failed_channel,
+        ) = (
+            await create_test_hdf_file(channel_name=channel_name)
+        )
+
+        channel_checker = ingestion_validator.ChannelChecks(
+            record_data,
+            waveforms,
+            images,
+            internal_failed_channel,
+        )
+        """
+        channel_name = [scalar, image, waveform]
+        """
+
+        assert await channel_checker.channel_name_check() == response
 
 
+
+    # TODO (not done yet)
 
     # unrecognised_response = channel_checker.unrecognised_attribute_checks()
-    # channel_name_response = await channel_checker.channel_name_check()
+    # ^-- in progress
 
     # response = await channel_checker.channel_checks()
 
