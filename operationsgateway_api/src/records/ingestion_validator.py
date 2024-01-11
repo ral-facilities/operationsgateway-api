@@ -126,7 +126,7 @@ class ChannelChecks:
         for key, value in ingested_channels.items():
             if dump:
                 value = value.metadata.model_dump()
-                
+
             response = await self.channel_name_check(key)
             if response != []:
                 rejected_channels.extend(response)
@@ -512,7 +512,7 @@ class ChannelChecks:
 
         return rejected_channels
 
-    def unrecognised_attribute_checks(self):
+    def unrecognised_attribute_checks(self):  # Obsolete
         ingested_channels = (self.ingested_record).channels
         ingested_waveform = self.ingested_waveform
         ingested_image = self.ingested_image
@@ -572,7 +572,7 @@ class ChannelChecks:
                 if unexpected_value_keys:
                     rejected_channels.append(
                         {
-                            key: "unknown attribute in scalar channel: "
+                            key: "unexpected dataset in scalar channel: "
                             f"{unexpected_value_keys}",
                         },
                     )
@@ -583,7 +583,7 @@ class ChannelChecks:
                 if unexpected_metadata_keys:
                     rejected_channels.append(
                         {
-                            key: "unknown attribute in scalar metadata: "
+                            key: "unexpected dataset in scalar metadata: "
                             f"{unexpected_metadata_keys}",
                         },
                     )
@@ -608,7 +608,7 @@ class ChannelChecks:
                 if unexpected_value_keys:
                     rejected_channels.append(
                         {
-                            key: "unknown attribute in image channel: "
+                            key: "unexpected dataset in image channel: "
                             f"{unexpected_value_keys}",
                         },
                     )
@@ -616,7 +616,7 @@ class ChannelChecks:
                 if unexpected_metadata_keys:
                     rejected_channels.append(
                         {
-                            key: "unknown attribute in image metadata: "
+                            key: "unexpected dataset in image metadata: "
                             f"{unexpected_metadata_keys}",
                         },
                     )
@@ -624,7 +624,7 @@ class ChannelChecks:
                 if unexpected_image_keys:
                     rejected_channels.append(
                         {
-                            key: "unknown attribute in image data: "
+                            key: "unexpected dataset in image data: "
                             f"{unexpected_image_keys}",
                         },
                     )
@@ -649,7 +649,7 @@ class ChannelChecks:
                 if unexpected_value_keys:
                     rejected_channels.append(
                         {
-                            key: "unknown attribute in waveform channel: "
+                            key: "unexpected dataset in waveform channel: "
                             f"{unexpected_value_keys}",
                         },
                     )
@@ -657,7 +657,7 @@ class ChannelChecks:
                 if unexpected_metadata_keys:
                     rejected_channels.append(
                         {
-                            key: "unknown attribute in waveform metadata: "
+                            key: "unexpected dataset in waveform metadata: "
                             f"{unexpected_metadata_keys}",
                         },
                     )
@@ -665,14 +665,21 @@ class ChannelChecks:
                 if unexpected_waveform_keys:
                     rejected_channels.append(
                         {
-                            key: "unknown attribute in waveform data: "
+                            key: "unexpected dataset in waveform data: "
                             f"{unexpected_waveform_keys}",
                         },
                     )
 
+        rejected_channels = self._merge_internal_failed(
+            rejected_channels,
+            self.internal_failed_channel,
+            [
+                "unexpected group or dataset in channel group",
+            ],
+        )
+
         return rejected_channels
-    
-    
+
     def _check_name(self, rejected_channels, manifest, key):
         if key not in manifest:
             rejected_channels.append(
@@ -685,27 +692,27 @@ class ChannelChecks:
 
     async def channel_name_check(self, mode="direct"):
         manifest = (await get_manifest())["channels"]
-        
+
         rejected_channels = []
-        
+
         if mode != "direct":
             rejected_channels = self._check_name(rejected_channels, manifest, mode)
             return rejected_channels
-        
+
         ingested_channels = (self.ingested_record).channels
 
         for key in list(ingested_channels.keys()):
             rejected_channels = self._check_name(rejected_channels, manifest, key)
-                # reject on import?
-                
+            # reject on import?
+
         rejected_channels = self._merge_internal_failed(
             rejected_channels,
             self.internal_failed_channel,
             [
                 "Channel name is not recognised (does not appear in manifest)",
             ],
-        )        
-        
+        )
+
         return rejected_channels
 
     def _organise_dict(self, list_of_dicts):

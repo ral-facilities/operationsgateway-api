@@ -22,6 +22,7 @@ async def create_test_hdf_file(
     channel_dtype=None,
     required_attributes=None,
     optional_attributes=None,
+    unrecognised_attribute=None,
     channel_name=None,
 ):
 
@@ -142,8 +143,20 @@ async def create_test_hdf_file(
             false_waveform.create_dataset("y", data=y)
 
         gem_wp_pos_value = record.create_group("GEM_WP_POS_VALUE")
+        if (
+            unrecognised_attribute
+            and "scalar" in unrecognised_attribute
+            and "group" in unrecognised_attribute["scalar"]
+        ):
+            gem_wp_pos_value.create_group("unrecognised_group")
         gem_wp_pos_value.attrs.create("channel_dtype", "scalar")
         gem_wp_pos_value.attrs.create("units", "ms")
+        if (
+            unrecognised_attribute
+            and "scalar" in unrecognised_attribute
+            and "dataset" in unrecognised_attribute["scalar"]
+        ):
+            gem_wp_pos_value.create_dataset("unrecognised_dataset", data=35)
         gem_wp_pos_value.create_dataset("data", data=45)
 
         n_comp_calculatede_value = record.create_group("N_COMP_CALCULATEDE_VALUE")
@@ -157,6 +170,12 @@ async def create_test_hdf_file(
         n_comp_ff_e.create_dataset("data", data=-8895000.0)
 
         n_comp_ff_image = record.create_group("N_COMP_FF_IMAGE")
+        if (
+            unrecognised_attribute
+            and "image" in unrecognised_attribute
+            and "group" in unrecognised_attribute["image"]
+        ):
+            n_comp_ff_image.create_group("unrecognised_group")
         if image_channel_dtype is not None:
             if image_channel_dtype[1] == "exists":
                 n_comp_ff_image.attrs.create("channel_dtype", image_channel_dtype[0])
@@ -202,6 +221,12 @@ async def create_test_hdf_file(
             n_comp_ff_image.attrs.create("y_pixel_size", 441.0)
             n_comp_ff_image.attrs.create("y_pixel_units", "µm")
         # example 2D dataset
+        if (
+            unrecognised_attribute
+            and "image" in unrecognised_attribute
+            and "dataset" in unrecognised_attribute["image"]
+        ):
+            n_comp_ff_image.create_dataset("unrecognised_dataset", data=35)
         data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.uint16)
         if required_attributes and "image" in required_attributes:
             image = required_attributes["image"]
@@ -242,6 +267,18 @@ async def create_test_hdf_file(
         ta3_shot_num_value.create_dataset("data", data=217343.0)
 
         n_comp_spec_trace = record.create_group("N_COMP_SPEC_TRACE")
+        if (
+            unrecognised_attribute
+            and "waveform" in unrecognised_attribute
+            and "group1" in unrecognised_attribute["waveform"]
+        ):
+            n_comp_spec_trace.create_group("unrecognised_group1")
+        if (
+            unrecognised_attribute
+            and "waveform" in unrecognised_attribute
+            and "group2" in unrecognised_attribute["waveform"]
+        ):
+            n_comp_spec_trace.create_group("unrecognised_group2")
         if waveform_channel_dtype is not None:
             if waveform_channel_dtype[1] == "exists":
                 n_comp_spec_trace.attrs.create(
@@ -282,6 +319,18 @@ async def create_test_hdf_file(
         else:
             n_comp_spec_trace.create_dataset("x", data=x)
             n_comp_spec_trace.create_dataset("y", data=y)
+        if (
+            unrecognised_attribute
+            and "waveform" in unrecognised_attribute
+            and "dataset1" in unrecognised_attribute["waveform"]
+        ):
+            n_comp_spec_trace.create_dataset("unrecognised_dataset1", data=35)
+        if (
+            unrecognised_attribute
+            and "waveform" in unrecognised_attribute
+            and "dataset2" in unrecognised_attribute["waveform"]
+        ):
+            n_comp_spec_trace.create_dataset("unrecognised_dataset2", data=35)
 
         types = record.create_group("Type")
         types.attrs.create("channel_dtype", "scalar")
@@ -1047,18 +1096,121 @@ class TestChannel:
         "unrecognised_attribute, response",
         [
             pytest.param(
-                {"scalar": {"data": ["list"]}},
+                {"scalar": ["dataset"]},
                 [
                     {
-                        "GEM_SHOT_NUM_VALUE": "data has wrong datatype",
+                        "GEM_WP_POS_VALUE": "unexpected group or "
+                        "dataset in channel group",
                     },
                 ],
-                id="unfinished",
+                id="Scalar unexpected dataset",
+            ),
+            pytest.param(
+                {"scalar": ["group"]},
+                [
+                    {
+                        "GEM_WP_POS_VALUE": "unexpected group or "
+                        "dataset in channel group",
+                    },
+                ],
+                id="Scalar unexpected group",
+            ),
+            pytest.param(
+                {"scalar": ["dataset", "group"]},
+                [
+                    {
+                        "GEM_WP_POS_VALUE": "unexpected group or "
+                        "dataset in channel group",
+                    },
+                ],
+                id="Scalar unexpected group and dataset",
+            ),
+            pytest.param(
+                {"image": ["dataset"]},
+                [
+                    {
+                        "N_COMP_FF_IMAGE": "unexpected group or "
+                        "dataset in channel group",
+                    },
+                ],
+                id="Image unexpected dataset",
+            ),
+            pytest.param(
+                {"image": ["group"]},
+                [
+                    {
+                        "N_COMP_FF_IMAGE": "unexpected group or "
+                        "dataset in channel group",
+                    },
+                ],
+                id="Image unexpected group",
+            ),
+            pytest.param(
+                {"image": ["dataset", "group"]},
+                [
+                    {
+                        "N_COMP_FF_IMAGE": "unexpected group or "
+                        "dataset in channel group",
+                    },
+                ],
+                id="Image unexpected group and dataset",
+            ),
+            pytest.param(
+                {"waveform": ["dataset2"]},
+                [
+                    {
+                        "N_COMP_SPEC_TRACE": "unexpected group or "
+                        "dataset in channel group",
+                    },
+                ],
+                id="Waveform unexpected dataset",
+            ),
+            pytest.param(
+                {"waveform": ["group2"]},
+                [
+                    {
+                        "N_COMP_SPEC_TRACE": "unexpected group or "
+                        "dataset in channel group",
+                    },
+                ],
+                id="Waveform unexpected group",
+            ),
+            pytest.param(
+                {"waveform": ["dataset1", "dataset2", "group1", "group2"]},
+                [
+                    {
+                        "N_COMP_SPEC_TRACE": "unexpected group or "
+                        "dataset in channel group",
+                    },
+                ],
+                id="Waveform multiple unexpected values",
+            ),
+            pytest.param(
+                {
+                    "scalar": ["dataset", "group"],
+                    "image": ["dataset", "group"],
+                    "waveform": ["dataset1", "dataset2", "group1", "group2"],
+                },
+                [
+                    {
+                        "GEM_WP_POS_VALUE": "unexpected group or "
+                        "dataset in channel group",
+                    },
+                    {
+                        "N_COMP_FF_IMAGE": "unexpected group or "
+                        "dataset in channel group",
+                    },
+                    {
+                        "N_COMP_SPEC_TRACE": "unexpected group or "
+                        "dataset in channel group",
+                    },
+                ],
+                id="Multiple unexpected values",
             ),
         ],
     )
     @pytest.mark.asyncio
-    async def test_unrecognised_attribute_fail(             # TODO unfinished
+    async def test_unrecognised_attribute_fail(
         self,
         remove_hdf_file,
         unrecognised_attribute,
@@ -1069,9 +1221,7 @@ class TestChannel:
             waveforms,
             images,
             internal_failed_channel,
-        ) = (
-            await create_test_hdf_file()
-        )  # unrecognised_attribute=unrecognised_attribute)
+        ) = await create_test_hdf_file(unrecognised_attribute=unrecognised_attribute)
 
         channel_checker = ingestion_validator.ChannelChecks(
             record_data,
@@ -1080,15 +1230,15 @@ class TestChannel:
             internal_failed_channel,
         )
         """
+            unrecognised_attribute = {
+                "scalar": ["dataset", "group"]
+                "image": ["dataset", "group"]
+                "waveform": ["dataset1", "dataset2", "group1", "group2"]
+            }
         """
 
-        # scalar: channel, metadata
-        # image: channel, metadata, data
-        # waveform: channel, metadata, data
-
         assert channel_checker.unrecognised_attribute_checks() == response
-        
-        
+
     @pytest.mark.parametrize(
         "channel_name, response",
         [
@@ -1154,9 +1304,7 @@ class TestChannel:
             waveforms,
             images,
             internal_failed_channel,
-        ) = (
-            await create_test_hdf_file(channel_name=channel_name)
-        )
+        ) = await create_test_hdf_file(channel_name=channel_name)
 
         channel_checker = ingestion_validator.ChannelChecks(
             record_data,
@@ -1170,12 +1318,7 @@ class TestChannel:
 
         assert await channel_checker.channel_name_check() == response
 
-
-
     # TODO (not done yet)
-
-    # unrecognised_response = channel_checker.unrecognised_attribute_checks()
-    # ^-- in progress
 
     # response = await channel_checker.channel_checks()
 

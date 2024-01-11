@@ -93,6 +93,11 @@ class HDFDataHandler:
         """
 
         internal_failed_channel = []
+        acceptable_datasets = {
+            "scalar": ["data"],
+            "image": ["data"],
+            "waveform": ["x", "y"],
+        }
 
         for channel_name, value in self.hdf_file.items():
             channel_metadata = dict(value.attrs)
@@ -107,6 +112,17 @@ class HDFDataHandler:
 
             if value.attrs["channel_dtype"] == "image":
                 image_path = Image.get_image_path(self.record_id, channel_name)
+
+                stop = False
+                for val in value:
+                    if val != acceptable_datasets["image"][0]:
+                        stop = True
+                        break
+                if stop:
+                    internal_failed_channel.append(
+                        {channel_name: "unexpected group or dataset in channel group"},
+                    )
+                    continue
 
                 try:
                     self.images.append(
@@ -132,6 +148,17 @@ class HDFDataHandler:
                 # part of the value
                 raise HDFDataExtractionError("Colour images cannot be ingested")
             elif value.attrs["channel_dtype"] == "scalar":
+                stop = False
+                for val in value:
+                    if val != acceptable_datasets["scalar"][0]:
+                        stop = True
+                        break
+                if stop:
+                    internal_failed_channel.append(
+                        {channel_name: "unexpected group or dataset in channel group"},
+                    )
+                    continue
+
                 try:
                     channel = ScalarChannelModel(
                         metadata=ScalarChannelMetadataModel(**channel_metadata),
@@ -159,6 +186,15 @@ class HDFDataHandler:
             elif value.attrs["channel_dtype"] == "waveform":
                 waveform_id = f"{self.record_id}_{channel_name}"
                 log.debug("Waveform ID: %s", waveform_id)
+
+                value_list = []
+                for val in value:
+                    value_list.append(val)
+                if (list(set(value_list) - set(acceptable_datasets["waveform"]))) != []:
+                    internal_failed_channel.append(
+                        {channel_name: "unexpected group or dataset in channel group"},
+                    )
+                    continue
 
                 try:
                     channel = WaveformChannelModel(
@@ -189,7 +225,6 @@ class HDFDataHandler:
                     continue
                 except ValidationError as exc:
                     raise ModelError(str(exc)) from exc
-
 
             # Put channels into a dictionary to give a good structure to query them in
             # the database
