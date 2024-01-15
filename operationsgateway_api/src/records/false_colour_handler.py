@@ -145,6 +145,7 @@ class FalseColourHandler:
         May need to be extended later to handle colour images etc.
         """
         # See: https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes
+        log.debug(image.mode)
         if image.mode == "L":
             # 8-bit black and white
             return 8

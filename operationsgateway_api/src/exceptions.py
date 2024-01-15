@@ -97,3 +97,9 @@ class ExperimentDetailsError(ApiError):
     def __init__(self, msg="Error during handling of experiments", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)
         self.status_code = 500
+
+
+class FunctionParseError(ApiError):
+    def __init__(self, msg="Problem with function syntax", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 400

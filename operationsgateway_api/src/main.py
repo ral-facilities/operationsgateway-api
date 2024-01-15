@@ -20,6 +20,7 @@ from operationsgateway_api.src.routes import (
     auth,
     channels,
     experiments,
+    functions,
     images,
     ingest_data,
     records,
@@ -126,6 +127,7 @@ add_router_to_app(experiments.router)
 add_router_to_app(sessions.router)
 add_router_to_app(user_preferences.router)
 add_router_to_app(users.router)
+add_router_to_app(functions.router)
 
 log.debug("ROUTE_MAPPINGS contents:")
 for item in ROUTE_MAPPINGS.items():
