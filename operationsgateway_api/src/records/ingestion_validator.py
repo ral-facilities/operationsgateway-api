@@ -512,163 +512,9 @@ class ChannelChecks:
 
         return rejected_channels
 
-    def unrecognised_attribute_checks(self):  # Obsolete
-        ingested_channels = (self.ingested_record).channels
-        ingested_waveform = self.ingested_waveform
-        ingested_image = self.ingested_image
-
-        scalar_values = [
-            "metadata",
-            "data",
-        ]
-        scalar_metadata = [
-            "channel_dtype",
-            "units",
-        ]
-
-        image_values = [
-            "metadata",
-            "image_path",
-            "thumbnail",
-        ]
-        image_metadata = [
-            "channel_dtype",
-            "exposure_time_s",
-            "gain",
-            "x_pixel_size",
-            "y_pixel_size",
-            "x_pixel_units",
-            "y_pixel_units",
-        ]
-        image_data = [
-            "path",
-            "data",
-        ]
-
-        waveform_values = [
-            "metadata",
-            "thumbnail",
-            "waveform_id",
-        ]
-        waveform_metadata = [
-            "channel_dtype",
-            "x_units",
-            "y_units",
-        ]
-        waveform_data = [
-            "id_",
-            "x",
-            "y",
-        ]
+    def unrecognised_attribute_checks(self):
 
         rejected_channels = []
-
-        for key, value in ingested_channels.items():
-            if value.metadata.channel_dtype == "scalar":
-
-                value_keys = value.model_dump().keys()
-                unexpected_value_keys = set(value_keys) - set(scalar_values)
-
-                if unexpected_value_keys:
-                    rejected_channels.append(
-                        {
-                            key: "unexpected dataset in scalar channel: "
-                            f"{unexpected_value_keys}",
-                        },
-                    )
-
-                metadata_keys = value.metadata.model_dump().keys()
-                unexpected_metadata_keys = set(metadata_keys) - set(scalar_metadata)
-
-                if unexpected_metadata_keys:
-                    rejected_channels.append(
-                        {
-                            key: "unexpected dataset in scalar metadata: "
-                            f"{unexpected_metadata_keys}",
-                        },
-                    )
-
-            if value.metadata.channel_dtype == "image":
-                path_to_check = value.image_path
-                matching_image = None
-
-                for image in ingested_image:
-                    if image.path == path_to_check:
-                        matching_image = image
-
-                value_keys = value.model_dump().keys()
-                unexpected_value_keys = set(value_keys) - set(image_values)
-
-                metadata_keys = value.metadata.model_dump().keys()
-                unexpected_metadata_keys = set(metadata_keys) - set(image_metadata)
-
-                image_keys = matching_image.model_dump().keys()
-                unexpected_image_keys = set(image_keys) - set(image_data)
-
-                if unexpected_value_keys:
-                    rejected_channels.append(
-                        {
-                            key: "unexpected dataset in image channel: "
-                            f"{unexpected_value_keys}",
-                        },
-                    )
-
-                if unexpected_metadata_keys:
-                    rejected_channels.append(
-                        {
-                            key: "unexpected dataset in image metadata: "
-                            f"{unexpected_metadata_keys}",
-                        },
-                    )
-
-                if unexpected_image_keys:
-                    rejected_channels.append(
-                        {
-                            key: "unexpected dataset in image data: "
-                            f"{unexpected_image_keys}",
-                        },
-                    )
-
-            if value.metadata.channel_dtype == "waveform":
-                id_to_check = value.waveform_id
-                matching_waveform = None
-
-                for waveform in ingested_waveform:
-                    if waveform.id_ == id_to_check:
-                        matching_waveform = waveform
-
-                value_keys = value.model_dump().keys()
-                unexpected_value_keys = set(value_keys) - set(waveform_values)
-
-                metadata_keys = value.metadata.model_dump().keys()
-                unexpected_metadata_keys = set(metadata_keys) - set(waveform_metadata)
-
-                waveform_keys = matching_waveform.model_dump().keys()
-                unexpected_waveform_keys = set(waveform_keys) - set(waveform_data)
-
-                if unexpected_value_keys:
-                    rejected_channels.append(
-                        {
-                            key: "unexpected dataset in waveform channel: "
-                            f"{unexpected_value_keys}",
-                        },
-                    )
-
-                if unexpected_metadata_keys:
-                    rejected_channels.append(
-                        {
-                            key: "unexpected dataset in waveform metadata: "
-                            f"{unexpected_metadata_keys}",
-                        },
-                    )
-
-                if unexpected_waveform_keys:
-                    rejected_channels.append(
-                        {
-                            key: "unexpected dataset in waveform data: "
-                            f"{unexpected_waveform_keys}",
-                        },
-                    )
 
         rejected_channels = self._merge_internal_failed(
             rejected_channels,
@@ -754,7 +600,9 @@ class ChannelChecks:
                 if key not in rejected_channels:
                     rejected_channels[key] = reasons
                 else:
-                    rejected_channels[key].extend(reasons)
+                    for reason in reasons:
+                        if reason not in rejected_channels[key]:
+                            rejected_channels[key].append(reason)
 
         channel_list = ingested_channels.keys()
 

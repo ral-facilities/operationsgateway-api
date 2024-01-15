@@ -86,6 +86,14 @@ class HDFDataHandler:
 
         return record, self.waveforms, self.images, self.internal_failed_channel
 
+    def _unexpected_attribute(self, channel_type, value):
+        stop = False
+        for val in value:
+            if val != self.acceptable_datasets[channel_type][0]:
+                stop = True
+                break
+        return stop
+
     async def extract_channels(self) -> None:
         """
         Extract data from each data channel in the HDF file and place the data into
@@ -93,7 +101,7 @@ class HDFDataHandler:
         """
 
         internal_failed_channel = []
-        acceptable_datasets = {
+        self.acceptable_datasets = {
             "scalar": ["data"],
             "image": ["data"],
             "waveform": ["x", "y"],
@@ -113,11 +121,7 @@ class HDFDataHandler:
             if value.attrs["channel_dtype"] == "image":
                 image_path = Image.get_image_path(self.record_id, channel_name)
 
-                stop = False
-                for val in value:
-                    if val != acceptable_datasets["image"][0]:
-                        stop = True
-                        break
+                stop = self._unexpected_attribute("image", value)
                 if stop:
                     internal_failed_channel.append(
                         {channel_name: "unexpected group or dataset in channel group"},
@@ -148,11 +152,8 @@ class HDFDataHandler:
                 # part of the value
                 raise HDFDataExtractionError("Colour images cannot be ingested")
             elif value.attrs["channel_dtype"] == "scalar":
-                stop = False
-                for val in value:
-                    if val != acceptable_datasets["scalar"][0]:
-                        stop = True
-                        break
+
+                stop = self._unexpected_attribute("scalar", value)
                 if stop:
                     internal_failed_channel.append(
                         {channel_name: "unexpected group or dataset in channel group"},
@@ -190,7 +191,9 @@ class HDFDataHandler:
                 value_list = []
                 for val in value:
                     value_list.append(val)
-                if (list(set(value_list) - set(acceptable_datasets["waveform"]))) != []:
+                if (
+                    list(set(value_list) - set(self.acceptable_datasets["waveform"]))
+                ) != []:
                     internal_failed_channel.append(
                         {channel_name: "unexpected group or dataset in channel group"},
                     )
