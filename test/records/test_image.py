@@ -92,19 +92,19 @@ class TestImage:
         assert channel_name == expected_channel_name
 
     @patch(
-        "operationsgateway_api.src.config.Config.config.images.echo_url",
+        "operationsgateway_api.src.config.Config.config.echo.url",
         config_echo_url,
     )
     @patch(
-        "operationsgateway_api.src.config.Config.config.images.echo_access_key",
+        "operationsgateway_api.src.config.Config.config.echo.access_key",
         config_echo_access_key,
     )
     @patch(
-        "operationsgateway_api.src.config.Config.config.images.echo_secret_key",
+        "operationsgateway_api.src.config.Config.config.echo.secret_key",
         config_echo_secret_key,
     )
     @patch(
-        "operationsgateway_api.src.config.Config.config.images.image_bucket_name",
+        "operationsgateway_api.src.config.Config.config.echo.bucket_name",
         config_image_bucket_name,
     )
     @patch("boto3.resource")
@@ -128,19 +128,19 @@ class TestImage:
         assert mock_upload_file_object.call_args.args[1] == f"images/{self.test_image_path}"
 
     @patch(
-        "operationsgateway_api.src.config.Config.config.images.echo_url",
+        "operationsgateway_api.src.config.Config.config.echo.url",
         config_echo_url,
     )
     @patch(
-        "operationsgateway_api.src.config.Config.config.images.echo_access_key",
+        "operationsgateway_api.src.config.Config.config.echo.access_key",
         config_echo_access_key,
     )
     @patch(
-        "operationsgateway_api.src.config.Config.config.images.echo_secret_key",
+        "operationsgateway_api.src.config.Config.config.echo.secret_key",
         config_echo_secret_key,
     )
     @patch(
-        "operationsgateway_api.src.config.Config.config.images.image_bucket_name",
+        "operationsgateway_api.src.config.Config.config.echo.bucket_name",
         config_image_bucket_name,
     )
     @patch("boto3.resource")
@@ -160,19 +160,19 @@ class TestImage:
 
     @pytest.mark.asyncio
     @patch(
-        "operationsgateway_api.src.config.Config.config.images.echo_url",
+        "operationsgateway_api.src.config.Config.config.echo.url",
         config_echo_url,
     )
     @patch(
-        "operationsgateway_api.src.config.Config.config.images.echo_access_key",
+        "operationsgateway_api.src.config.Config.config.echo.access_key",
         config_echo_access_key,
     )
     @patch(
-        "operationsgateway_api.src.config.Config.config.images.echo_secret_key",
+        "operationsgateway_api.src.config.Config.config.echo.secret_key",
         config_echo_secret_key,
     )
     @patch(
-        "operationsgateway_api.src.config.Config.config.images.image_bucket_name",
+        "operationsgateway_api.src.config.Config.config.echo.bucket_name",
         config_image_bucket_name,
     )
     @patch("boto3.resource")
@@ -215,19 +215,19 @@ class TestImage:
 
     @pytest.mark.asyncio
     @patch(
-        "operationsgateway_api.src.config.Config.config.images.echo_url",
+        "operationsgateway_api.src.config.Config.config.echo.url",
         config_echo_url,
     )
     @patch(
-        "operationsgateway_api.src.config.Config.config.images.echo_access_key",
+        "operationsgateway_api.src.config.Config.config.echo.access_key",
         config_echo_access_key,
     )
     @patch(
-        "operationsgateway_api.src.config.Config.config.images.echo_secret_key",
+        "operationsgateway_api.src.config.Config.config.echo.secret_key",
         config_echo_secret_key,
     )
     @patch(
-        "operationsgateway_api.src.config.Config.config.images.image_bucket_name",
+        "operationsgateway_api.src.config.Config.config.echo.bucket_name",
         config_image_bucket_name,
     )
     @patch("boto3.resource")
