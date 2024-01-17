@@ -64,11 +64,12 @@ class Waveform:
         """
         TODO
         """
-        channel_name = waveform_id.split("_")[0]
-        id_ = waveform_id.split("_")[1:]
-        if len(id_) > 1:
-            id_ = "_".join(id_)
-        return f'{"/".join([channel_name, id_])}.json'
+        id_ = waveform_id.split("_")[0]
+        channel_name = waveform_id.split("_")[1:]
+
+        # Covers a situation where the channel name contains underscores
+        channel_name = "_".join(channel_name) if len(channel_name) > 1 else channel_name[0]
+        return f'{"/".join([id_, channel_name])}.json'
 
     async def _is_waveform_stored(self, echo: EchoInterface) -> bool:
         """
