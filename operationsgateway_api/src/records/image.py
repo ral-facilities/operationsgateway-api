@@ -10,6 +10,7 @@ from PIL import Image as PILImage
 
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.config import Config
+from operationsgateway_api.src.constants import ECHO_IMAGES_PREFIX
 from operationsgateway_api.src.exceptions import (
     EchoS3Error,
     ImageError,
@@ -81,8 +82,9 @@ class Image:
             raise ImageError("Image data is not in correct format to be read") from exc
 
         echo = EchoInterface()
-        log.info("Storing image on S3: %s", input_image.image.path)
-        echo.upload_file_object(image_bytes, input_image.image.path)
+        storage_path = f"{ECHO_IMAGES_PREFIX}/{input_image.image.path}"
+        log.info("Storing image on S3: %s", storage_path)
+        echo.upload_file_object(image_bytes, storage_path)
 
     @staticmethod
     async def get_image(
@@ -111,7 +113,7 @@ class Image:
 
         try:
             original_image_path = Image.get_image_path(record_id, channel_name)
-            image_bytes = echo.download_file_object(original_image_path)
+            image_bytes = echo.download_file_object(f"images/{original_image_path}")
 
             if original_image:
                 log.debug(
