@@ -1,12 +1,15 @@
 import base64
 from io import BytesIO
+import json
 import logging
 
+from botocore.exceptions import ClientError
 import matplotlib.pyplot as plt
 
-from operationsgateway_api.src.exceptions import MissingDocumentError
+from operationsgateway_api.src.exceptions import EchoS3Error, WaveformError
 from operationsgateway_api.src.models import WaveformModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
+from operationsgateway_api.src.records.echo_interface import EchoInterface
 
 
 log = logging.getLogger()
@@ -18,16 +21,27 @@ class Waveform:
         self.thumbnail = None
         self.is_stored = False
 
+    def to_json(self):
+        """
+        Use `self.waveform` and return a JSON file stored in a BytesIO object
+        """
+        b = BytesIO()
+        b.write(self.waveform.model_dump_json(by_alias=True, indent=2).encode())
+        b.seek(0)
+        return b
+
     async def insert_waveform(self) -> None:
         """
         If the waveform stored in this object isn't already stored in the database,
         insert it in the waveforms collection
         """
-        await self._is_waveform_stored()
+        echo = EchoInterface()
+        await self._is_waveform_stored(echo)
         if not self.is_stored:
-            await MongoDBInterface.insert_one(
-                "waveforms",
-                self.waveform.model_dump(by_alias=True),
+            bytes_json = self.to_json()
+            echo.upload_file_object(
+                bytes_json,
+                f"waveforms/{Waveform.convert_id_to_path(self.waveform.id_)}",
             )
 
     def create_thumbnail(self) -> None:
@@ -44,8 +58,19 @@ class Waveform:
         waveform. For example, 20220408140310_N_COMP_SPEC_TRACE -> N_COMP_SPEC_TRACE
         """
         return "_".join(self.waveform.id_.split("_")[1:])
+    
+    @staticmethod
+    def convert_id_to_path(waveform_id: str) -> str:
+        """
+        TODO
+        """
+        channel_name = waveform_id.split("_")[0]
+        id_ = waveform_id.split("_")[1:]
+        if len(id_) > 1:
+            id_ = "_".join(id_)
+        return f'{"/".join([channel_name, id_])}.json'
 
-    async def _is_waveform_stored(self) -> bool:
+    async def _is_waveform_stored(self, echo: EchoInterface) -> bool:
         """
         Use the object's waveform ID to detect whether it is stored in MongoDB and
         return the appropriate boolean depending on the result of the MongoDB query
@@ -85,13 +110,15 @@ class Waveform:
         assumes that the waveform should exist; if no waveform can be found, a
         `MissingDocumentError` will be raised
         """
-        waveform_data = await MongoDBInterface.find_one(
-            "waveforms",
-            {"_id": waveform_id},
-        )
-
-        if waveform_data:
+        echo = EchoInterface()
+    
+        try:
+            waveform_path = Waveform.convert_id_to_path(waveform_id)
+            waveform_file = echo.download_file_object(f"waveforms/{waveform_path}")
+            waveform_data = json.loads(waveform_file.getvalue().decode())
             return WaveformModel(**waveform_data)
-        else:
-            log.error("Waveform cannot be found, ID: %s", waveform_id)
-            raise MissingDocumentError("Waveform cannot be found")
+        except (ClientError, EchoS3Error) as exc:
+            log.error("Waveform could not be found: %s", waveform_path)
+            raise WaveformError(
+                f"Waveform could not be found on object storage: {waveform_path}",
+            )
