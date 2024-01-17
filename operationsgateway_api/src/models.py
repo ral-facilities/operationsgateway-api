@@ -87,7 +87,7 @@ class WaveformChannelMetadataModel(BaseModel):
 class WaveformChannelModel(BaseModel):
     metadata: WaveformChannelMetadataModel
     thumbnail: Optional[str] = None
-    waveform_id: str
+    waveform_path: str
 
 
 class RecordMetadataModel(BaseModel):

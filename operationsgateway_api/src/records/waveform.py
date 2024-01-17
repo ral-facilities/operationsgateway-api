@@ -36,6 +36,8 @@ class Waveform:
         insert it in the waveforms collection
         """
         echo = EchoInterface()
+        # Passing instance of `EchoInterface` as it doesn't make sense to create one in
+        # this function and a separate one for `_is_waveform_stored()`
         await self._is_waveform_stored(echo)
         if not self.is_stored:
             bytes_json = self.to_json()
@@ -105,16 +107,23 @@ class Waveform:
         plt.clf()
 
     @staticmethod
-    async def get_waveform(waveform_id: str) -> WaveformModel:
+    def get_waveform_path(record_id: str, channel_name: str) -> str:
         """
-        Given a waveform ID, find the waveform that's stored in MongoDB. This function
+        TODO, base it off get_image_path()
+        """
+        return f"{record_id}/{channel_name}.json"
+
+    @staticmethod
+    async def get_waveform(waveform_path: str) -> WaveformModel:
+        """
+        Given a waveform path, find the waveform that's stored in MongoDB. This function
         assumes that the waveform should exist; if no waveform can be found, a
         `MissingDocumentError` will be raised
         """
         echo = EchoInterface()
     
         try:
-            waveform_path = Waveform.convert_id_to_path(waveform_id)
+            # TODO - change waveform prefix here (and possibly in other places)
             waveform_file = echo.download_file_object(f"waveforms/{waveform_path}")
             waveform_data = json.loads(waveform_file.getvalue().decode())
             return WaveformModel(**waveform_data)
@@ -122,4 +131,4 @@ class Waveform:
             log.error("Waveform could not be found: %s", waveform_path)
             raise WaveformError(
                 f"Waveform could not be found on object storage: {waveform_path}",
-            )
+            ) from exc

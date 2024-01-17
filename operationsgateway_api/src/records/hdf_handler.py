@@ -21,6 +21,7 @@ from operationsgateway_api.src.models import (
     WaveformModel,
 )
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.waveform import Waveform
 
 
 log = logging.getLogger()
@@ -122,12 +123,13 @@ class HDFDataHandler:
                     raise ModelError(str(exc)) from exc
             elif value.attrs["channel_dtype"] == "waveform":
                 waveform_id = f"{self.record_id}_{channel_name}"
+                waveform_path = Waveform.get_waveform_path(self.record_id, channel_name)
                 log.debug("Waveform ID: %s", waveform_id)
 
                 try:
                     channel = WaveformChannelModel(
                         metadata=WaveformChannelMetadataModel(**channel_metadata),
-                        waveform_id=waveform_id,
+                        waveform_path=waveform_path,
                     )
 
                     self.waveforms.append(
