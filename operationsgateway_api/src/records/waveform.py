@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 
 from operationsgateway_api.src.exceptions import EchoS3Error, WaveformError
 from operationsgateway_api.src.models import WaveformModel
-from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.echo_interface import EchoInterface
 
 
@@ -26,7 +25,7 @@ class Waveform:
         Use `self.waveform` and return a JSON file stored in a BytesIO object
         """
         b = BytesIO()
-        b.write(self.waveform.model_dump_json(by_alias=True, indent=2).encode())
+        b.write(self.waveform.model_dump_json(indent=2).encode())
         b.seek(0)
         return b
 
@@ -43,7 +42,7 @@ class Waveform:
             bytes_json = self.to_json()
             echo.upload_file_object(
                 bytes_json,
-                f"waveforms/{Waveform.convert_id_to_path(self.waveform.id_)}",
+                f"waveforms/{self.waveform.path}",
             )
 
     def create_thumbnail(self) -> None:
@@ -56,10 +55,14 @@ class Waveform:
 
     def get_channel_name_from_id(self) -> str:
         """
-        From a waveform ID, extract and return the channel name associated with the
-        waveform. For example, 20220408140310_N_COMP_SPEC_TRACE -> N_COMP_SPEC_TRACE
+        From a waveform path, extract and return the channel name associated with the
+        waveform. For example, 20220408140310/N_COMP_SPEC_TRACE.json -> N_COMP_SPEC_TRACE
+
+        20220408140310/N_COMP_SPEC_TRACE.json
         """
-        return "_".join(self.waveform.id_.split("_")[1:])
+        filename = self.waveform.path.split("/")[1:][0]
+        channel_name = filename.split(".json")[0]
+        return channel_name
     
     @staticmethod
     def convert_id_to_path(waveform_id: str) -> str:
