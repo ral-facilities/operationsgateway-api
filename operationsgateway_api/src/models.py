@@ -69,7 +69,7 @@ class ImageChannelMetadataModel(BaseModel):
 class ImageChannelModel(BaseModel):
     metadata: ImageChannelMetadataModel
     image_path: str
-    thumbnail: Optional[str] = None
+    thumbnail: Optional[bytes] = None
 
 
 class ScalarChannelMetadataModel(BaseModel):
@@ -90,7 +90,7 @@ class WaveformChannelMetadataModel(BaseModel):
 
 class WaveformChannelModel(BaseModel):
     metadata: WaveformChannelMetadataModel
-    thumbnail: Optional[str] = None
+    thumbnail: Optional[bytes] = None
     waveform_path: str
 
 
