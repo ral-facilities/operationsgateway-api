@@ -1,3 +1,5 @@
+import copy
+
 import h5py
 import numpy as np
 import pytest
@@ -13,6 +15,48 @@ from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
 # poetry run pytest -s "test/records/test_HDF_file.py" -v -vv
 
 
+def generate_channel_check_block(record, test_type):
+    if test_type == "test1":
+        false_scalar = record.create_group("FALSE_SCALAR")
+        false_scalar.attrs.create("channel_dtype", "thing")
+        false_scalar.attrs.create("units", "ms")
+        false_scalar.create_dataset("data", data=45)
+
+    if test_type == "test2":
+        n_comp_ff_image = record.create_group("N_COMP_FF_IMAGE")
+        n_comp_ff_image.attrs.create("channel_dtype", "image")
+        n_comp_ff_image.attrs.create("exposure_time_s", 0.001)
+        n_comp_ff_image.attrs.create("gain", 5.5)
+        n_comp_ff_image.attrs.create("x_pixel_size", "441")
+        n_comp_ff_image.attrs.create("x_pixel_units", 42)
+        n_comp_ff_image.attrs.create("y_pixel_size", 441.0)
+        n_comp_ff_image.attrs.create("y_pixel_units", "µm")
+        # example 2D dataset
+        data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.uint32)
+        n_comp_ff_image.create_dataset("data", data=data)
+
+    if test_type == "test3":
+        n_comp_spec_trace = record.create_group("N_COMP_SPEC_TRACE")
+        n_comp_spec_trace.attrs.create("channel_dtype", "waveform")
+        n_comp_spec_trace.attrs.create("x_units", 23)
+        n_comp_spec_trace.attrs.create("y_units", "kJ")
+        x = [1, 2, 3, 4, 5, 6]
+        n_comp_spec_trace.create_dataset("x", data=x)
+        n_comp_spec_trace.create_dataset("y", data=6)
+
+    if test_type == "test4":
+        n_comp_ff_image = record.create_group("N_COMP_FF_IMAGE")
+        n_comp_ff_image.create_group("unrecognised_group")
+        n_comp_ff_image.attrs.create("channel_dtype", "image")
+        n_comp_ff_image.attrs.create("exposure_time_s", 0.001)
+        n_comp_ff_image.attrs.create("gain", 5.5)
+        n_comp_ff_image.attrs.create("x_pixel_size", "441.0")
+        n_comp_ff_image.attrs.create("x_pixel_units", 456)
+        n_comp_ff_image.attrs.create("y_pixel_size", 441.0)
+        n_comp_ff_image.attrs.create("y_pixel_units", "µm")
+        n_comp_ff_image.create_dataset("unrecognised_dataset", data=4)
+
+
 async def create_test_hdf_file(
     data_version=None,
     timestamp=None,
@@ -24,6 +68,8 @@ async def create_test_hdf_file(
     optional_attributes=None,
     unrecognised_attribute=None,
     channel_name=None,
+    channels_check=False,
+    test_type=None,
 ):
 
     data_version = data_version if data_version is not None else ["1.0", "exists"]
@@ -81,6 +127,9 @@ async def create_test_hdf_file(
 
         if active_experiment[1] == "exists":
             record.attrs.create("active_experiment", active_experiment[0])
+
+        if test_type:
+            generate_channel_check_block(record, test_type)
 
         gem_shot_num_value = record.create_group("GEM_SHOT_NUM_VALUE")
         gem_shot_num_value.attrs.create("channel_dtype", "scalar")
@@ -169,71 +218,75 @@ async def create_test_hdf_file(
         n_comp_ff_e.attrs.create("units", "mg")
         n_comp_ff_e.create_dataset("data", data=-8895000.0)
 
-        n_comp_ff_image = record.create_group("N_COMP_FF_IMAGE")
-        if (
-            unrecognised_attribute
-            and "image" in unrecognised_attribute
-            and "group" in unrecognised_attribute["image"]
-        ):
-            n_comp_ff_image.create_group("unrecognised_group")
-        if image_channel_dtype is not None:
-            if image_channel_dtype[1] == "exists":
-                n_comp_ff_image.attrs.create("channel_dtype", image_channel_dtype[0])
-        else:
-            n_comp_ff_image.attrs.create("channel_dtype", "image")
-        if optional_attributes and "image" in optional_attributes:
-            image = optional_attributes["image"]
-            if "exposure_time_s" in image:
-                if image["exposure_time_s"] == "invalid":
-                    n_comp_ff_image.attrs.create("exposure_time_s", "0.001")
+        if test_type != "test2" and test_type != "test4":
+            n_comp_ff_image = record.create_group("N_COMP_FF_IMAGE")
+            if (
+                unrecognised_attribute
+                and "image" in unrecognised_attribute
+                and "group" in unrecognised_attribute["image"]
+            ):
+                n_comp_ff_image.create_group("unrecognised_group")
+            if image_channel_dtype is not None:
+                if image_channel_dtype[1] == "exists":
+                    n_comp_ff_image.attrs.create(
+                        "channel_dtype",
+                        image_channel_dtype[0],
+                    )
+            else:
+                n_comp_ff_image.attrs.create("channel_dtype", "image")
+            if optional_attributes and "image" in optional_attributes:
+                image = optional_attributes["image"]
+                if "exposure_time_s" in image:
+                    if image["exposure_time_s"] == "invalid":
+                        n_comp_ff_image.attrs.create("exposure_time_s", "0.001")
+                else:
+                    n_comp_ff_image.attrs.create("exposure_time_s", 0.001)
+                if "gain" in image:
+                    if image["gain"] == "invalid":
+                        n_comp_ff_image.attrs.create("gain", "5.5")
+                else:
+                    n_comp_ff_image.attrs.create("gain", 5.5)
+                if "x_pixel_size" in image:
+                    if image["x_pixel_size"] == "invalid":
+                        n_comp_ff_image.attrs.create("x_pixel_size", "441.0")
+                else:
+                    n_comp_ff_image.attrs.create("x_pixel_size", 441.0)
+                if "x_pixel_units" in image:
+                    if image["x_pixel_units"] == "invalid":
+                        n_comp_ff_image.attrs.create("x_pixel_units", 436)
+                else:
+                    n_comp_ff_image.attrs.create("x_pixel_units", "µm")
+                if "y_pixel_size" in image:
+                    if image["y_pixel_size"] == "invalid":
+                        n_comp_ff_image.attrs.create("y_pixel_size", "441.0")
+                else:
+                    n_comp_ff_image.attrs.create("y_pixel_size", 441.0)
+                if "y_pixel_units" in image:
+                    if image["y_pixel_units"] == "invalid":
+                        n_comp_ff_image.attrs.create("y_pixel_units", 346)
+                else:
+                    n_comp_ff_image.attrs.create("y_pixel_units", "µm")
             else:
                 n_comp_ff_image.attrs.create("exposure_time_s", 0.001)
-            if "gain" in image:
-                if image["gain"] == "invalid":
-                    n_comp_ff_image.attrs.create("gain", "5.5")
-            else:
                 n_comp_ff_image.attrs.create("gain", 5.5)
-            if "x_pixel_size" in image:
-                if image["x_pixel_size"] == "invalid":
-                    n_comp_ff_image.attrs.create("x_pixel_size", "441.0")
-            else:
                 n_comp_ff_image.attrs.create("x_pixel_size", 441.0)
-            if "x_pixel_units" in image:
-                if image["x_pixel_units"] == "invalid":
-                    n_comp_ff_image.attrs.create("x_pixel_units", 436)
-            else:
                 n_comp_ff_image.attrs.create("x_pixel_units", "µm")
-            if "y_pixel_size" in image:
-                if image["y_pixel_size"] == "invalid":
-                    n_comp_ff_image.attrs.create("y_pixel_size", "441.0")
-            else:
                 n_comp_ff_image.attrs.create("y_pixel_size", 441.0)
-            if "y_pixel_units" in image:
-                if image["y_pixel_units"] == "invalid":
-                    n_comp_ff_image.attrs.create("y_pixel_units", 346)
-            else:
                 n_comp_ff_image.attrs.create("y_pixel_units", "µm")
-        else:
-            n_comp_ff_image.attrs.create("exposure_time_s", 0.001)
-            n_comp_ff_image.attrs.create("gain", 5.5)
-            n_comp_ff_image.attrs.create("x_pixel_size", 441.0)
-            n_comp_ff_image.attrs.create("x_pixel_units", "µm")
-            n_comp_ff_image.attrs.create("y_pixel_size", 441.0)
-            n_comp_ff_image.attrs.create("y_pixel_units", "µm")
-        # example 2D dataset
-        if (
-            unrecognised_attribute
-            and "image" in unrecognised_attribute
-            and "dataset" in unrecognised_attribute["image"]
-        ):
-            n_comp_ff_image.create_dataset("unrecognised_dataset", data=35)
-        data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.uint16)
-        if required_attributes and "image" in required_attributes:
-            image = required_attributes["image"]
-            if image["data"] != "missing":
-                n_comp_ff_image.create_dataset("data", data=(image["data"]))
-        else:
-            n_comp_ff_image.create_dataset("data", data=data)
+            # example 2D dataset
+            if (
+                unrecognised_attribute
+                and "image" in unrecognised_attribute
+                and "dataset" in unrecognised_attribute["image"]
+            ):
+                n_comp_ff_image.create_dataset("unrecognised_dataset", data=35)
+            data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.uint16)
+            if required_attributes and "image" in required_attributes:
+                image = required_attributes["image"]
+                if image["data"] != "missing":
+                    n_comp_ff_image.create_dataset("data", data=(image["data"]))
+            else:
+                n_comp_ff_image.create_dataset("data", data=data)
 
         n_comp_ff_intergration = record.create_group("N_COMP_FF_INTEGRATION")
         n_comp_ff_intergration.attrs.create("channel_dtype", "scalar")
@@ -252,10 +305,17 @@ async def create_test_hdf_file(
         n_comp_ff_xpos.attrs.create("units", "mm")
         n_comp_ff_xpos.create_dataset("data", data=330.523)
 
-        n_comp_ff_ypos = record.create_group("N_COMP_FF_YPOS")
-        n_comp_ff_ypos.attrs.create("channel_dtype", "scalar")
-        n_comp_ff_ypos.attrs.create("units", "mm")
-        n_comp_ff_ypos.create_dataset("data", data=243.771)
+        if channels_check:
+            n_comp_ff_ypos = record.create_group("ALL_FALSE_SCALAR")
+            n_comp_ff_ypos.attrs.create("channel_dtype", "thing")
+            n_comp_ff_ypos.attrs.create("units", 44)
+            n_comp_ff_ypos.create_dataset("data", data=["data"])
+            n_comp_ff_ypos.create_dataset("unrecognised_scalar_dataset", data=[32])
+        else:
+            n_comp_ff_ypos = record.create_group("N_COMP_FF_YPOS")
+            n_comp_ff_ypos.attrs.create("channel_dtype", "scalar")
+            n_comp_ff_ypos.attrs.create("units", "mm")
+            n_comp_ff_ypos.create_dataset("data", data=243.771)
 
         n_comp_throughpute_value = record.create_group("N_COMP_THROUGHPUTE_VALUE")
         n_comp_throughpute_value.attrs.create("channel_dtype", "scalar")
@@ -266,71 +326,72 @@ async def create_test_hdf_file(
         ta3_shot_num_value.attrs.create("channel_dtype", "scalar")
         ta3_shot_num_value.create_dataset("data", data=217343.0)
 
-        n_comp_spec_trace = record.create_group("N_COMP_SPEC_TRACE")
-        if (
-            unrecognised_attribute
-            and "waveform" in unrecognised_attribute
-            and "group1" in unrecognised_attribute["waveform"]
-        ):
-            n_comp_spec_trace.create_group("unrecognised_group1")
-        if (
-            unrecognised_attribute
-            and "waveform" in unrecognised_attribute
-            and "group2" in unrecognised_attribute["waveform"]
-        ):
-            n_comp_spec_trace.create_group("unrecognised_group2")
-        if waveform_channel_dtype is not None:
-            if waveform_channel_dtype[1] == "exists":
-                n_comp_spec_trace.attrs.create(
-                    "channel_dtype",
-                    waveform_channel_dtype[0],
-                )
-        else:
-            n_comp_spec_trace.attrs.create("channel_dtype", "waveform")
-        if optional_attributes and "waveform" in optional_attributes:
-            waveform = optional_attributes["waveform"]
-            if "x_units" in waveform:
-                if waveform["x_units"] == "invalid":
-                    n_comp_spec_trace.attrs.create("x_units", 35)
+        if test_type != "test3":
+            n_comp_spec_trace = record.create_group("N_COMP_SPEC_TRACE")
+            if (
+                unrecognised_attribute
+                and "waveform" in unrecognised_attribute
+                and "group1" in unrecognised_attribute["waveform"]
+            ):
+                n_comp_spec_trace.create_group("unrecognised_group1")
+            if (
+                unrecognised_attribute
+                and "waveform" in unrecognised_attribute
+                and "group2" in unrecognised_attribute["waveform"]
+            ):
+                n_comp_spec_trace.create_group("unrecognised_group2")
+            if waveform_channel_dtype is not None:
+                if waveform_channel_dtype[1] == "exists":
+                    n_comp_spec_trace.attrs.create(
+                        "channel_dtype",
+                        waveform_channel_dtype[0],
+                    )
+            else:
+                n_comp_spec_trace.attrs.create("channel_dtype", "waveform")
+            if optional_attributes and "waveform" in optional_attributes:
+                waveform = optional_attributes["waveform"]
+                if "x_units" in waveform:
+                    if waveform["x_units"] == "invalid":
+                        n_comp_spec_trace.attrs.create("x_units", 35)
+                else:
+                    n_comp_spec_trace.attrs.create("x_units", "s")
+                if "y_units" in waveform:
+                    if waveform["y_units"] == "invalid":
+                        n_comp_spec_trace.attrs.create("y_units", 42)
+                else:
+                    n_comp_spec_trace.attrs.create("y_units", "kJ")
             else:
                 n_comp_spec_trace.attrs.create("x_units", "s")
-            if "y_units" in waveform:
-                if waveform["y_units"] == "invalid":
-                    n_comp_spec_trace.attrs.create("y_units", 42)
-            else:
                 n_comp_spec_trace.attrs.create("y_units", "kJ")
-        else:
-            n_comp_spec_trace.attrs.create("x_units", "s")
-            n_comp_spec_trace.attrs.create("y_units", "kJ")
-        x = [1, 2, 3, 4, 5, 6]
-        y = [8, 3, 6, 2, 3, 8, 425]
-        if required_attributes and "waveform" in required_attributes:
-            waveform = required_attributes["waveform"]
-            if "x" in waveform:
-                if waveform["x"] != "missing":
-                    n_comp_spec_trace.create_dataset("x", data=(waveform["x"]))
+            x = [1, 2, 3, 4, 5, 6]
+            y = [8, 3, 6, 2, 3, 8, 425]
+            if required_attributes and "waveform" in required_attributes:
+                waveform = required_attributes["waveform"]
+                if "x" in waveform:
+                    if waveform["x"] != "missing":
+                        n_comp_spec_trace.create_dataset("x", data=(waveform["x"]))
+                else:
+                    n_comp_spec_trace.create_dataset("x", data=x)
+                if "y" in waveform:
+                    if waveform["y"] != "missing":
+                        n_comp_spec_trace.create_dataset("y", data=(waveform["y"]))
+                else:
+                    n_comp_spec_trace.create_dataset("y", data=y)
             else:
                 n_comp_spec_trace.create_dataset("x", data=x)
-            if "y" in waveform:
-                if waveform["y"] != "missing":
-                    n_comp_spec_trace.create_dataset("y", data=(waveform["y"]))
-            else:
                 n_comp_spec_trace.create_dataset("y", data=y)
-        else:
-            n_comp_spec_trace.create_dataset("x", data=x)
-            n_comp_spec_trace.create_dataset("y", data=y)
-        if (
-            unrecognised_attribute
-            and "waveform" in unrecognised_attribute
-            and "dataset1" in unrecognised_attribute["waveform"]
-        ):
-            n_comp_spec_trace.create_dataset("unrecognised_dataset1", data=35)
-        if (
-            unrecognised_attribute
-            and "waveform" in unrecognised_attribute
-            and "dataset2" in unrecognised_attribute["waveform"]
-        ):
-            n_comp_spec_trace.create_dataset("unrecognised_dataset2", data=35)
+            if (
+                unrecognised_attribute
+                and "waveform" in unrecognised_attribute
+                and "dataset1" in unrecognised_attribute["waveform"]
+            ):
+                n_comp_spec_trace.create_dataset("unrecognised_dataset1", data=35)
+            if (
+                unrecognised_attribute
+                and "waveform" in unrecognised_attribute
+                and "dataset2" in unrecognised_attribute["waveform"]
+            ):
+                n_comp_spec_trace.create_dataset("unrecognised_dataset2", data=35)
 
         types = record.create_group("Type")
         types.attrs.create("channel_dtype", "scalar")
@@ -340,7 +401,7 @@ async def create_test_hdf_file(
     return await hdf_handler.extract_data()
 
 
-def create_channel_response(responses, extra=None):
+def create_channel_response(responses, extra=None, channels=False):
     model_response = {
         "accepted channels": [
             "GEM_SHOT_NUM_VALUE",
@@ -363,6 +424,9 @@ def create_channel_response(responses, extra=None):
 
     if extra:
         responses = extra
+
+    if channels:
+        model_response["accepted channels"].remove("N_COMP_FF_YPOS")
 
     for response in responses:
         for channel, message in response.items():
@@ -1465,25 +1529,106 @@ class TestChannel:
         assert await channel_checker.channel_name_check() == response
 
     @pytest.mark.parametrize(
-        "channel_dtype, response",
+        "channel_dtype, required_attributes, optional_attributes, "
+        "unrecognised_attribute, channel_name, channels_check, response",
         [
             pytest.param(
                 ["scalar", "missing", "scalar"],
+                {
+                    "scalar": {"data": "missing"},
+                    "image": {
+                        "image_path": "missing",
+                        "path": "missing",
+                        "data": "missing",
+                    },
+                    "waveform": {
+                        "waveform_id": "missing",
+                        "id_": "missing",
+                        "x": "missing",
+                        "y": "missing",
+                    },
+                },
+                {
+                    "scalar": {"units": "invalid"},
+                    "image": {
+                        "exposure_time_s": "invalid",
+                        "gain": "invalid",
+                        "x_pixel_size": "invalid",
+                        "x_pixel_units": "invalid",
+                        "y_pixel_size": "invalid",
+                        "y_pixel_units": "invalid",
+                        "thumbnail": "invalid",
+                    },
+                    "waveform": {
+                        "x_units": "invalid",
+                        "y_units": "invalid",
+                        "thumbnail": "invalid",
+                    },
+                },
+                {
+                    "scalar": ["dataset", "group"],
+                    "image": ["dataset", "group"],
+                    "waveform": ["dataset1", "dataset2", "group1", "group2"],
+                },
+                ["scalar", "image", "waveform"],
+                True,
                 [
                     {
                         "GEM_SHOT_SOURCE_STRING": "channel_dtype attribute is missing "
                         "(cannot perform other checks without)",
                     },
+                    {"GEM_SHOT_NUM_VALUE": "data attribute is missing"},
+                    {"N_COMP_FF_INTEGRATION": "units attribute has wrong datatype"},
+                    {
+                        "GEM_WP_POS_VALUE": "unexpected group or dataset "
+                        "in channel group",
+                    },
+                    {"N_COMP_FF_IMAGE": "unexpected group or dataset in channel group"},
+                    {
+                        "N_COMP_SPEC_TRACE": "unexpected group or dataset "
+                        "in channel group",
+                    },
+                    {
+                        "ALL_FALSE_SCALAR": "Channel name is not recognised "
+                        "(does not appear in manifest)",
+                    },
+                    {
+                        "FALSE_IMAGE": "Channel name is not recognised "
+                        "(does not appear in manifest)",
+                    },
+                    {
+                        "FALSE_SCALAR": "Channel name is not recognised "
+                        "(does not appear in manifest)",
+                    },
+                    {
+                        "FALSE_WAVEFORM": "Channel name is not recognised "
+                        "(does not appear in manifest)",
+                    },
                 ],
-                id="Scalar channel_dtype missing",
+                id="Large mix of fails",
+            ),
+            pytest.param(
+                None,
+                None,
+                None,
+                None,
+                None,
+                False,
+                [],
+                id="All pass",
             ),
         ],
     )
     @pytest.mark.asyncio
-    async def test_channel_checks_fail(  # TODO not done yet (very complicated one)
+    async def test_channel_checks_separate(
         self,
         remove_hdf_file,
         channel_dtype,
+        required_attributes,
+        optional_attributes,
+        unrecognised_attribute,
+        channel_name,
+        channels_check,
         response,
     ):
         (
@@ -1491,7 +1636,14 @@ class TestChannel:
             waveforms,
             images,
             internal_failed_channel,
-        ) = await create_test_hdf_file(channel_dtype=channel_dtype)
+        ) = await create_test_hdf_file(
+            channel_dtype=channel_dtype,
+            required_attributes=required_attributes,
+            optional_attributes=optional_attributes,
+            unrecognised_attribute=unrecognised_attribute,
+            channel_name=channel_name,
+            channels_check=channels_check,
+        )
 
         channel_checker = ingestion_validator.ChannelChecks(
             record_data,
@@ -1499,9 +1651,129 @@ class TestChannel:
             images,
             internal_failed_channel,
         )
+
         """
-        channel_checks = [scalar, image, waveform]
+            channel_dtype=["scalar", "missing", "scalar"]
+
+            required_attributes = {
+                "scalar": {"data": "missing"},
+                "image": {"image_path": "missing", "path": "missing", "data": "missing"}
+                "waveform": {
+                    "waveform_id": "missing",
+                    "id_": "missing",
+                    "x": "missing",
+                    "y": "missing"
+                },
+            }
+
+            optional_attributes = {
+                "scalar": {"units": "invalid"},
+                "image": {
+                    "exposure_time_s": "invalid",
+                    "gain": "invalid",
+                    "x_pixel_size": "invalid",
+                    "x_pixel_units": "invalid",
+                    "y_pixel_size": "invalid",
+                    "y_pixel_units": "invalid",
+                    "thumbnail": "invalid",
+                },
+                "waveform": {
+                    "x_units": "invalid",
+                    "y_units": "invalid",
+                    "thumbnail": "invalid"
+                },
+            }
+
+            unrecognised_attribute = {
+                "scalar": ["dataset", "group"]
+                "image": ["dataset", "group"]
+                "waveform": ["dataset1", "dataset2", "group1", "group2"]
+            }
+
+            channel_name = [scalar, image, waveform]
         """
+
+        channel_response = create_channel_response(response, channels=channels_check)
+
+        assert await channel_checker.channel_checks() == channel_response
+
+    @pytest.mark.parametrize(
+        "test_type, response",
+        [
+            pytest.param(
+                "test1",
+                [
+                    {
+                        "FALSE_SCALAR": "Channel name is not recognised "
+                        "(does not appear in manifest)",
+                    },
+                ],
+                id="Scalar name and dtype fail",
+            ),
+            pytest.param(
+                "test2",
+                [
+                    {
+                        "N_COMP_FF_IMAGE": "x_pixel_size attribute has wrong datatype",
+                    },
+                    {
+                        "N_COMP_FF_IMAGE": "x_pixel_units attribute has wrong datatype",
+                    },
+                    {
+                        "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
+                        "should be uint16 or uint8",
+                    },
+                ],
+                id="Image required and optional attributes fail",
+            ),
+            pytest.param(
+                "test3",
+                [
+                    {
+                        "N_COMP_SPEC_TRACE": "x or y has wrong datatype, should "
+                        "be a list of floats",
+                    },
+                    {
+                        "N_COMP_SPEC_TRACE": "x_units attribute has wrong datatype",
+                    },
+                    {
+                        "N_COMP_SPEC_TRACE": "y attribute has wrong shape",
+                    },
+                ],
+                id="Waveform optional attributes and dataset fail",
+            ),
+            pytest.param(
+                "test4",
+                [
+                    {
+                        "N_COMP_FF_IMAGE": "unexpected group or dataset in "
+                        "channel group",
+                    },
+                ],
+                id="Image optional attribute, unrecognised attribute and dataset fail",
+            ),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_channel_checks_fail(
+        self,
+        remove_hdf_file,
+        test_type,
+        response,
+    ):
+        (
+            record_data,
+            waveforms,
+            images,
+            internal_failed_channel,
+        ) = await create_test_hdf_file(test_type=test_type)
+
+        channel_checker = ingestion_validator.ChannelChecks(
+            record_data,
+            waveforms,
+            images,
+            internal_failed_channel,
+        )
 
         channel_response = create_channel_response(response)
 
@@ -1509,4 +1781,217 @@ class TestChannel:
 
 
 class TestPartialImport:
-    pass
+    @pytest.mark.parametrize(
+        "test_type, response",
+        [
+            pytest.param(
+                "match",
+                "accept record and merge",
+                id="Metadata matches",
+            ),
+            pytest.param(
+                "time",
+                "timestamp matches, other metadata does not",
+                id="Timestamp matches",
+            ),
+            pytest.param(
+                "num",
+                "shotnum matches, other metadata does not",
+                id="Shotnum matches",
+            ),
+            pytest.param(
+                "neither",
+                "accept as a new record",
+                id="Neither shotnum nor timestamp matches",
+            ),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_metadata_checks(self, remove_hdf_file, test_type, response):
+
+        (
+            record_data,
+            waveforms,
+            images,
+            internal_failed_channel,
+        ) = await create_test_hdf_file()
+
+        if test_type == "match":
+            stored_record = copy.deepcopy(record_data)
+
+        if test_type == "time":
+            stored_record = copy.deepcopy(record_data)
+            # alter so only time matches
+            stored_record.metadata.epac_ops_data_version = "2.3"
+            stored_record.metadata.shotnum = 234
+            stored_record.metadata.active_area = "ae2"
+            stored_record.metadata.active_experiment = "4898"
+
+        if test_type == "num":
+            stored_record = copy.deepcopy(record_data)
+            # alter so only num matches
+            stored_record.metadata.epac_ops_data_version = "2.3"
+            stored_record.metadata.timestamp = "3122-04-07 14:28:16"
+            stored_record.metadata.active_area = "ae2"
+            stored_record.metadata.active_experiment = "4898"
+
+        if test_type == "neither":
+            stored_record = copy.deepcopy(record_data)
+            # alter so neither shotnum nor timestamp matches
+            stored_record.metadata.timestamp = "3122-04-07 14:28:16"
+            stored_record.metadata.shotnum = 234
+
+        partial_import_checker = ingestion_validator.PartialImportChecks(
+            record_data,
+            stored_record,
+        )
+
+        if test_type == "match" or test_type == "neither":
+            assert partial_import_checker.metadata_checks() == response
+        else:
+            with pytest.raises(RejectRecordError, match=response):
+                partial_import_checker.metadata_checks()
+
+    @pytest.mark.parametrize(
+        "test_type, response",
+        [
+            pytest.param(
+                "all",
+                {
+                    "accepted channels": [],
+                    "rejected channels": {
+                        "GEM_SHOT_NUM_VALUE": "Channel is already present in "
+                        "existing record",
+                        "GEM_SHOT_SOURCE_STRING": "Channel is already present "
+                        "in existing record",
+                        "GEM_SHOT_TYPE_STRING": "Channel is already present in "
+                        "existing record",
+                        "GEM_WP_POS_VALUE": "Channel is already present in "
+                        "existing record",
+                        "N_COMP_CALCULATEDE_VALUE": "Channel is already present "
+                        "in existing record",
+                        "N_COMP_FF_E": "Channel is already present in existing record",
+                        "N_COMP_FF_IMAGE": "Channel is already present in existing "
+                        "record",
+                        "N_COMP_FF_INTEGRATION": "Channel is already present in "
+                        "existing record",
+                        "N_COMP_FF_XPOS": "Channel is already present in existing "
+                        "record",
+                        "N_COMP_FF_YPOS": "Channel is already present in existing "
+                        "record",
+                        "N_COMP_SPEC_TRACE": "Channel is already present in "
+                        "existing record",
+                        "N_COMP_THROUGHPUTE_VALUE": "Channel is already present in "
+                        "existing record",
+                        "TA3_SHOT_NUM_VALUE": "Channel is already present in "
+                        "existing record",
+                        "Type": "Channel is already present in existing record",
+                    },
+                },
+                id="All channels match",
+            ),
+            pytest.param(
+                "some",
+                {
+                    "accepted channels": [
+                        "GEM_SHOT_NUM_VALUE",
+                        "N_COMP_FF_YPOS",
+                        "Type",
+                    ],
+                    "rejected channels": {
+                        "GEM_SHOT_SOURCE_STRING": "Channel is already present in "
+                        "existing record",
+                        "GEM_SHOT_TYPE_STRING": "Channel is already present in "
+                        "existing record",
+                        "GEM_WP_POS_VALUE": "Channel is already present in existing "
+                        "record",
+                        "N_COMP_CALCULATEDE_VALUE": "Channel is already present in "
+                        "existing record",
+                        "N_COMP_FF_E": "Channel is already present in existing record",
+                        "N_COMP_FF_IMAGE": "Channel is already present in existing "
+                        "record",
+                        "N_COMP_FF_INTEGRATION": "Channel is already present in "
+                        "existing record",
+                        "N_COMP_FF_XPOS": "Channel is already present in existing "
+                        "record",
+                        "N_COMP_SPEC_TRACE": "Channel is already present in "
+                        "existing record",
+                        "N_COMP_THROUGHPUTE_VALUE": "Channel is already present in "
+                        "existing record",
+                        "TA3_SHOT_NUM_VALUE": "Channel is already present in existing "
+                        "record",
+                    },
+                },
+                id="Some channels match",
+            ),
+            pytest.param(
+                "none",
+                {
+                    "accepted channels": [
+                        "GEM_SHOT_NUM_VALUE",
+                        "GEM_SHOT_SOURCE_STRING",
+                        "GEM_SHOT_TYPE_STRING",
+                        "GEM_WP_POS_VALUE",
+                        "N_COMP_CALCULATEDE_VALUE",
+                        "N_COMP_FF_E",
+                        "N_COMP_FF_IMAGE",
+                        "N_COMP_FF_INTEGRATION",
+                        "N_COMP_FF_XPOS",
+                        "N_COMP_FF_YPOS",
+                        "N_COMP_SPEC_TRACE",
+                        "N_COMP_THROUGHPUTE_VALUE",
+                        "TA3_SHOT_NUM_VALUE",
+                        "Type",
+                    ],
+                    "rejected channels": {},
+                },
+                id="No channels match",
+            ),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_import_channel_checks(self, remove_hdf_file, test_type, response):
+
+        (
+            record_data,
+            waveforms,
+            images,
+            internal_failed_channel,
+        ) = await create_test_hdf_file()
+
+        if test_type == "all":
+            stored_record = copy.deepcopy(record_data)
+
+        if test_type == "some":
+            stored_record = copy.deepcopy(record_data)
+            channels = stored_record.channels
+            # alter so only some match
+            channels["GEM"] = channels.pop("GEM_SHOT_NUM_VALUE")
+            channels["COMP"] = channels.pop("N_COMP_FF_YPOS")
+            channels["TYP"] = channels.pop("Type")
+
+        if test_type == "none":
+            stored_record = copy.deepcopy(record_data)
+            channels = stored_record.channels
+            # alter so all match
+            channels["a"] = channels.pop("GEM_SHOT_NUM_VALUE")
+            channels["b"] = channels.pop("GEM_SHOT_SOURCE_STRING")
+            channels["c"] = channels.pop("GEM_SHOT_TYPE_STRING")
+            channels["d"] = channels.pop("GEM_WP_POS_VALUE")
+            channels["e"] = channels.pop("N_COMP_CALCULATEDE_VALUE")
+            channels["f"] = channels.pop("N_COMP_FF_E")
+            channels["g"] = channels.pop("N_COMP_FF_IMAGE")
+            channels["h"] = channels.pop("N_COMP_FF_INTEGRATION")
+            channels["i"] = channels.pop("N_COMP_FF_XPOS")
+            channels["j"] = channels.pop("N_COMP_FF_YPOS")
+            channels["k"] = channels.pop("N_COMP_SPEC_TRACE")
+            channels["l"] = channels.pop("N_COMP_THROUGHPUTE_VALUE")
+            channels["m"] = channels.pop("TA3_SHOT_NUM_VALUE")
+            channels["n"] = channels.pop("Type")
+
+        partial_import_checker = ingestion_validator.PartialImportChecks(
+            record_data,
+            stored_record,
+        )
+
+        assert partial_import_checker.channel_checks() == response

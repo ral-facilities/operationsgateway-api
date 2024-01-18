@@ -652,7 +652,7 @@ class PartialImportChecks:
             and not area_match
             and not experiment_match
         ):
-            raise RejectRecordError("timestamp is matches, other metadata does not")
+            raise RejectRecordError("timestamp matches, other metadata does not")
 
         elif (
             shot_match
@@ -661,7 +661,7 @@ class PartialImportChecks:
             and not area_match
             and not experiment_match
         ):
-            raise RejectRecordError("shotnum is matches, other metadata does not")
+            raise RejectRecordError("shotnum matches, other metadata does not")
 
         elif not time_match and not shot_match:
             return "accept as a new record"
