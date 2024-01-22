@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 
 from operationsgateway_api.src.exceptions import EchoS3Error, WaveformError
 from operationsgateway_api.src.models import WaveformModel
-from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.echo_interface import EchoInterface
 
 
@@ -37,16 +36,12 @@ class Waveform:
         If the waveform stored in this object isn't already stored in the database,
         insert it in the waveforms collection
         """
+        bytes_json = self.to_json()
         echo = EchoInterface()
-        # Passing instance of `EchoInterface` as it doesn't make sense to create one in
-        # this function and a separate one for `_is_waveform_stored()`
-        await self._is_waveform_stored(echo)
-        if not self.is_stored:
-            bytes_json = self.to_json()
-            echo.upload_file_object(
-                bytes_json,
-                Waveform.get_full_path(self.waveform.path),
-            )
+        echo.upload_file_object(
+            bytes_json,
+            Waveform.get_full_path(self.waveform.path),
+        )
 
     def create_thumbnail(self) -> None:
         """
@@ -66,17 +61,6 @@ class Waveform:
         filename = self.waveform.path.split("/")[1:][0]
         channel_name = filename.split(".json")[0]
         return channel_name
-
-    async def _is_waveform_stored(self, echo: EchoInterface) -> bool:
-        """
-        Use the object's waveform ID to detect whether it is stored in MongoDB and
-        return the appropriate boolean depending on the result of the MongoDB query
-        """
-        waveform_exist = await MongoDBInterface.find_one(
-            "waveforms",
-            filter_={"_id": self.waveform.id_},
-        )
-        self.is_stored = True if waveform_exist else False
 
     def _create_plot(self, buffer) -> None:
         """
