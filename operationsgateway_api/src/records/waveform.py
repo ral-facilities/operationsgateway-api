@@ -5,6 +5,7 @@ import logging
 
 from botocore.exceptions import ClientError
 import matplotlib.pyplot as plt
+from operationsgateway_api.src.constants import ECHO_WAVEFORMS_PREFIX
 
 from operationsgateway_api.src.exceptions import EchoS3Error, WaveformError
 from operationsgateway_api.src.models import WaveformModel
@@ -42,7 +43,7 @@ class Waveform:
             bytes_json = self.to_json()
             echo.upload_file_object(
                 bytes_json,
-                f"waveforms/{self.waveform.path}",
+                f"{ECHO_WAVEFORMS_PREFIX}/{self.waveform.path}",
             )
 
     def create_thumbnail(self) -> None:
@@ -63,7 +64,7 @@ class Waveform:
         filename = self.waveform.path.split("/")[1:][0]
         channel_name = filename.split(".json")[0]
         return channel_name
-    
+
     @staticmethod
     def convert_id_to_path(waveform_id: str) -> str:
         """
@@ -127,7 +128,9 @@ class Waveform:
     
         try:
             # TODO - change waveform prefix here (and possibly in other places)
-            waveform_file = echo.download_file_object(f"waveforms/{waveform_path}")
+            waveform_file = echo.download_file_object(
+                f"{ECHO_WAVEFORMS_PREFIX}/{waveform_path}",
+            )
             waveform_data = json.loads(waveform_file.getvalue().decode())
             return WaveformModel(**waveform_data)
         except (ClientError, EchoS3Error) as exc:

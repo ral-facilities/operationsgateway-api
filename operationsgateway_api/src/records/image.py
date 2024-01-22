@@ -113,7 +113,9 @@ class Image:
 
         try:
             original_image_path = Image.get_image_path(record_id, channel_name)
-            image_bytes = echo.download_file_object(f"images/{original_image_path}")
+            image_bytes = echo.download_file_object(
+                f"{ECHO_IMAGES_PREFIX}/{original_image_path}",
+            )
 
             if original_image:
                 log.debug(
