@@ -260,6 +260,6 @@ class TestImage:
                     "jet",
                 )
 
-    def test_get_image_path(self):
-        test_path = Image.get_image_path("20220408165857", "N_INP_NF_IMAGE")
+    def test_get_relative_path(self):
+        test_path = Image.get_relative_path("20220408165857", "N_INP_NF_IMAGE")
         assert test_path == "20220408165857/N_INP_NF_IMAGE.png"

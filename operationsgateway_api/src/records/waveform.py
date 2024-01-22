@@ -5,10 +5,10 @@ import logging
 
 from botocore.exceptions import ClientError
 import matplotlib.pyplot as plt
-from operationsgateway_api.src.constants import ECHO_WAVEFORMS_PREFIX
 
 from operationsgateway_api.src.exceptions import EchoS3Error, WaveformError
 from operationsgateway_api.src.models import WaveformModel
+from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.echo_interface import EchoInterface
 
 
@@ -16,6 +16,8 @@ log = logging.getLogger()
 
 
 class Waveform:
+    echo_prefix = "waveforms"
+
     def __init__(self, waveform: WaveformModel) -> None:
         self.waveform = waveform
         self.thumbnail = None
@@ -43,7 +45,7 @@ class Waveform:
             bytes_json = self.to_json()
             echo.upload_file_object(
                 bytes_json,
-                f"{ECHO_WAVEFORMS_PREFIX}/{self.waveform.path}",
+                Waveform.get_full_path(self.waveform.path),
             )
 
     def create_thumbnail(self) -> None:
@@ -64,18 +66,6 @@ class Waveform:
         filename = self.waveform.path.split("/")[1:][0]
         channel_name = filename.split(".json")[0]
         return channel_name
-
-    @staticmethod
-    def convert_id_to_path(waveform_id: str) -> str:
-        """
-        TODO
-        """
-        id_ = waveform_id.split("_")[0]
-        channel_name = waveform_id.split("_")[1:]
-
-        # Covers a situation where the channel name contains underscores
-        channel_name = "_".join(channel_name) if len(channel_name) > 1 else channel_name[0]
-        return f'{"/".join([id_, channel_name])}.json'
 
     async def _is_waveform_stored(self, echo: EchoInterface) -> bool:
         """
@@ -111,11 +101,15 @@ class Waveform:
         plt.clf()
 
     @staticmethod
-    def get_waveform_path(record_id: str, channel_name: str) -> str:
+    def get_relative_path(record_id: str, channel_name: str) -> str:
         """
         TODO, base it off get_image_path()
         """
         return f"{record_id}/{channel_name}.json"
+
+    @staticmethod
+    def get_full_path(relative_path: str) -> str:
+        return f"{Waveform.echo_prefix}/{relative_path}"
 
     @staticmethod
     async def get_waveform(waveform_path: str) -> WaveformModel:
@@ -127,9 +121,8 @@ class Waveform:
         echo = EchoInterface()
     
         try:
-            # TODO - change waveform prefix here (and possibly in other places)
             waveform_file = echo.download_file_object(
-                f"{ECHO_WAVEFORMS_PREFIX}/{waveform_path}",
+                Waveform.get_full_path(waveform_path),
             )
             waveform_data = json.loads(waveform_file.getvalue().decode())
             return WaveformModel(**waveform_data)

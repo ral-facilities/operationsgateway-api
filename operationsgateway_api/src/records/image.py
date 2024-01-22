@@ -10,7 +10,6 @@ from PIL import Image as PILImage
 
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.config import Config
-from operationsgateway_api.src.constants import ECHO_IMAGES_PREFIX
 from operationsgateway_api.src.exceptions import (
     EchoS3Error,
     ImageError,
@@ -28,6 +27,7 @@ log = logging.getLogger()
 
 class Image:
     lookup_table_16_to_8_bit = [i / 256 for i in range(65536)]
+    echo_prefix = "images"
 
     def __init__(self, image: ImageModel) -> None:
         self.image = image
@@ -82,7 +82,7 @@ class Image:
             raise ImageError("Image data is not in correct format to be read") from exc
 
         echo = EchoInterface()
-        storage_path = f"{ECHO_IMAGES_PREFIX}/{input_image.image.path}"
+        storage_path = Image.get_full_path(input_image.image.path)
         log.info("Storing image on S3: %s", storage_path)
         echo.upload_file_object(image_bytes, storage_path)
 
@@ -112,9 +112,9 @@ class Image:
         echo = EchoInterface()
 
         try:
-            original_image_path = Image.get_image_path(record_id, channel_name)
+            original_image_path = Image.get_relative_path(record_id, channel_name)
             image_bytes = echo.download_file_object(
-                f"{ECHO_IMAGES_PREFIX}/{original_image_path}",
+                Image.get_full_path(original_image_path),
             )
 
             if original_image:
@@ -179,12 +179,16 @@ class Image:
                 ) from exc
 
     @staticmethod
-    def get_image_path(record_id: str, channel_name: str) -> str:
+    def get_relative_path(record_id: str, channel_name: str) -> str:
         """
         Returns an image path given a record ID and channel name
         """
 
         return f"{record_id}/{channel_name}.png"
+
+    @staticmethod
+    def get_full_path(relative_path: str) -> str:
+        return f"{Image.echo_prefix}/{relative_path}"
 
     @staticmethod
     async def get_preferred_colourmap(access_token: str) -> str:

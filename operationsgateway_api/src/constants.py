@@ -7,5 +7,3 @@ ROUTE_MAPPINGS = {}
 ID_DATETIME_FORMAT = "%Y%m%d%H%M%S"
 DATA_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 LOG_CONFIG_LOCATION = str(Path(__file__).parent.parent / "logging.ini")
-ECHO_IMAGES_PREFIX = "images"
-ECHO_WAVEFORMS_PREFIX = "waveforms"
