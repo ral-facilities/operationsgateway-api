@@ -1,6 +1,6 @@
 script_options:
   wipe_database: true
-  delete_images: false
+  wipe_echo: false
   launch_api: true
 ssh:
   enabled: false
@@ -15,7 +15,7 @@ echo:
   access_key: access_key
   secret_key: secret_key
   simulated_data_bucket: og-realistic-data
-  images_bucket: na-bucket
+  storage_bucket: na-bucket
   # Number of HDF files downloaded & ingested in one go
   page_size: 30
 api:

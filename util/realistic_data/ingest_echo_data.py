@@ -30,17 +30,18 @@ def main():
 
     if Config.config.script_options.wipe_database:
         print("Wiping database")
-        collection_names = ["channels", "experiments", "records", "waveforms"]
+        collection_names = ["channels", "experiments", "records"]
         if Config.config.ssh.enabled:
             ssh.drop_database_collections(collection_names)
         else:
             local_commands.drop_database_collections(collection_names)
 
     echo = S3Interface()
-
-    if Config.config.script_options.delete_images:
-        print(f"Deleting images from Echo, bucket: {Config.config.echo.images_bucket}")
-        echo.delete_images()
+    if Config.config.script_options.wipe_echo:
+        print(
+            f"Wiping data stored in Echo, bucket: {Config.config.echo.storage_bucket}",
+        )
+        echo.delete_all()
 
     starter = APIStarter()
     api_url = f"http://{Config.config.api.host}:{Config.config.api.port}"

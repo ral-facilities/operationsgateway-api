@@ -115,7 +115,7 @@ jobs:
         env:
           ECHO_S3_SECRET_KEY: ${{secrets.ECHO_S3_SECRET_KEY}}
       - name: Configure bucket name for current run
-        run: yq -i '.echo.images_bucket = "og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}"' .github/ci_ingest_echo_config.yml
+        run: yq -i '.echo.storage_bucket = "og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}"' .github/ci_ingest_echo_config.yml
       - name: Copy config for Echo Ingest script to correct place
         run: cp .github/ci_ingest_echo_config.yml util/realistic_data/config.yml
 

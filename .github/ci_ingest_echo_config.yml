@@ -1,6 +1,6 @@
 script_options:
   wipe_database: false
-  delete_images: false
+  wipe_echo: false
   launch_api: true
 ssh:
   enabled: false
@@ -15,7 +15,7 @@ echo:
   access_key: access_key
   secret_key: secret_key
   simulated_data_bucket: og-ci-simulated-data
-  images_bucket: og-bucket
+  storage_bucket: og-bucket
   page_size: 1
 api:
   host: 127.0.0.1
