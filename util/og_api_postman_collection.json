@@ -1435,7 +1435,7 @@
 		},
 		{
 			"key": "og-api",
-			"value": "opsgateway-epac-dev.clf.stfc.ac.uk:8000",
+			"value": "https://opsgateway-epac-dev.clf.stfc.ac.uk",
 			"disabled": true
 		},
 		{
