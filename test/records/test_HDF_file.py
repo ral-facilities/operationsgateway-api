@@ -186,10 +186,21 @@ async def create_test_hdf_file(
             false_waveform.attrs.create("channel_dtype", "waveform")
             false_waveform.attrs.create("x_units", "s")
             false_waveform.attrs.create("y_units", "kJ")
-            x = [1, 2, 3, 4, 5, 6]
+            x = [1, 2, 3, 4, 5, 5456]
             y = [8, 3, 6, 2, 3, 8, 425]
             false_waveform.create_dataset("x", data=x)
             false_waveform.create_dataset("y", data=y)
+
+        n_comp_nf_image = record.create_group("N_COMP_NF_IMAGE")
+        n_comp_nf_image.attrs.create("channel_dtype", "image")
+        n_comp_nf_image.attrs.create("exposure_time_s", 0.001)
+        n_comp_nf_image.attrs.create("gain", 5.5)
+        n_comp_nf_image.attrs.create("x_pixel_size", 441.0)
+        n_comp_nf_image.attrs.create("x_pixel_units", "µm")
+        n_comp_nf_image.attrs.create("y_pixel_size", 441.0)
+        n_comp_nf_image.attrs.create("y_pixel_units", "µm")
+        data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.uint16)
+        n_comp_nf_image.create_dataset("data", data=data)
 
         gem_wp_pos_value = record.create_group("GEM_WP_POS_VALUE")
         if (
@@ -414,6 +425,7 @@ def create_channel_response(responses, extra=None, channels=False):
             "N_COMP_FF_INTEGRATION",
             "N_COMP_FF_XPOS",
             "N_COMP_FF_YPOS",
+            "N_COMP_NF_IMAGE",
             "N_COMP_SPEC_TRACE",
             "N_COMP_THROUGHPUTE_VALUE",
             "TA3_SHOT_NUM_VALUE",
@@ -662,6 +674,7 @@ class TestChannel:
                 "N_COMP_FF_INTEGRATION",
                 "N_COMP_FF_XPOS",
                 "N_COMP_FF_YPOS",
+                "N_COMP_NF_IMAGE",
                 "N_COMP_SPEC_TRACE",
                 "N_COMP_THROUGHPUTE_VALUE",
                 "TA3_SHOT_NUM_VALUE",
@@ -821,12 +834,14 @@ class TestChannel:
                 {"image": {"data": 42}},
                 [
                     {
-                        "N_COMP_FF_IMAGE": "data has wrong datatype, should be ndarray",
+                        "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
+                        "should be ndarray",
                     },
                 ],
                 [
                     {
-                        "N_COMP_FF_IMAGE": "data has wrong datatype, should be ndarray",
+                        "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
+                        "should be ndarray",
                     },
                     {
                         "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
@@ -849,14 +864,12 @@ class TestChannel:
                 {"waveform": {"x": 53}},
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "x or y has wrong datatype, "
-                        "should be a list of floats",
+                        "N_COMP_SPEC_TRACE": "x attribute must be a list of floats",
                     },
                 ],
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "x or y has wrong datatype, "
-                        "should be a list of floats",
+                        "N_COMP_SPEC_TRACE": "x attribute must be a list of floats",
                     },
                     {"N_COMP_SPEC_TRACE": "x attribute has wrong shape"},
                 ],
@@ -876,14 +889,12 @@ class TestChannel:
                 {"waveform": {"y": 53}},
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "x or y has wrong datatype, "
-                        "should be a list of floats",
+                        "N_COMP_SPEC_TRACE": "y attribute must be a list of floats",
                     },
                 ],
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "x or y has wrong datatype, "
-                        "should be a list of floats",
+                        "N_COMP_SPEC_TRACE": "y attribute must be a list of floats",
                     },
                     {"N_COMP_SPEC_TRACE": "y attribute has wrong shape"},
                 ],
@@ -896,13 +907,19 @@ class TestChannel:
                     "waveform": {"x": "missing", "y": "missing"},
                 },
                 [
-                    {"N_COMP_FF_IMAGE": "data has wrong datatype, should be ndarray"},
+                    {
+                        "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
+                        "should be ndarray",
+                    },
                     {"GEM_SHOT_NUM_VALUE": "data attribute is missing"},
                     {"N_COMP_SPEC_TRACE": "x attribute is missing"},
                     {"N_COMP_SPEC_TRACE": "y attribute is missing"},
                 ],
                 [
-                    {"N_COMP_FF_IMAGE": "data has wrong datatype, should be ndarray"},
+                    {
+                        "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
+                        "should be ndarray",
+                    },
                     {
                         "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
                         "should be uint16 or uint8",
@@ -913,22 +930,41 @@ class TestChannel:
                 ],
                 id="Mixed failed required attributes",
             ),
+            pytest.param(
+                "double_waveform",
+                [],
+                [
+                    {
+                        "FALSE_WAVEFORM": "Channel name is not recognised (does "
+                        "not appear in manifest)",
+                    },
+                ],
+                id="Two waveforms present test",
+            ),
         ],
     )
     @pytest.mark.asyncio
-    async def test_required_attribute_fail(
+    async def test_required_attribute(
         self,
         remove_hdf_file,
         required_attributes,
         response,
         extra,
     ):
-        (
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
-        ) = await create_test_hdf_file(required_attributes=required_attributes)
+        if required_attributes == "double_waveform":
+            (
+                record_data,
+                waveforms,
+                images,
+                internal_failed_channel,
+            ) = await create_test_hdf_file(channel_name=["waveform"])
+        else:
+            (
+                record_data,
+                waveforms,
+                images,
+                internal_failed_channel,
+            ) = await create_test_hdf_file(required_attributes=required_attributes)
 
         channel_checker = ingestion_validator.ChannelChecks(
             record_data,
@@ -952,8 +988,6 @@ class TestChannel:
         channel_response = create_channel_response(response, extra)
 
         assert await channel_checker.channel_checks() == channel_response
-
-        # TODO image: image_path, path. waveform: waveform_id, id_     mocking
 
         assert channel_checker.required_attribute_checks() == response
 
@@ -1157,7 +1191,10 @@ class TestChannel:
                     },
                 ],
                 [
-                    {"N_COMP_FF_IMAGE": "data has wrong datatype, should be ndarray"},
+                    {
+                        "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
+                        "should be ndarray",
+                    },
                     {
                         "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
                         "should be uint16 or uint8",
@@ -1193,8 +1230,7 @@ class TestChannel:
                 ],
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "x or y has wrong datatype, "
-                        "should be a list of floats",
+                        "N_COMP_SPEC_TRACE": "x attribute must be a list of floats",
                     },
                     {"N_COMP_SPEC_TRACE": "x attribute has wrong shape"},
                 ],
@@ -1207,8 +1243,7 @@ class TestChannel:
                 ],
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "x or y has wrong datatype, "
-                        "should be a list of floats",
+                        "N_COMP_SPEC_TRACE": "y attribute must be a list of floats",
                     },
                     {"N_COMP_SPEC_TRACE": "y attribute has wrong shape"},
                 ],
@@ -1224,8 +1259,7 @@ class TestChannel:
                 ],
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "x or y has wrong datatype, should "
-                        "be a list of floats",
+                        "N_COMP_SPEC_TRACE": "x attribute must be a list of floats",
                     },
                     {
                         "N_COMP_SPEC_TRACE": "x attribute has wrong datatype, should "
@@ -1244,8 +1278,7 @@ class TestChannel:
                 ],
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "x or y has wrong datatype, should "
-                        "be a list of floats",
+                        "N_COMP_SPEC_TRACE": "y attribute must be a list of floats",
                     },
                     {
                         "N_COMP_SPEC_TRACE": "y attribute has wrong datatype, should "
@@ -1730,8 +1763,7 @@ class TestChannel:
                 "test3",
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "x or y has wrong datatype, should "
-                        "be a list of floats",
+                        "N_COMP_SPEC_TRACE": "y attribute must be a list of floats",
                     },
                     {
                         "N_COMP_SPEC_TRACE": "x_units attribute has wrong datatype",
@@ -1879,6 +1911,8 @@ class TestPartialImport:
                         "record",
                         "N_COMP_FF_YPOS": "Channel is already present in existing "
                         "record",
+                        "N_COMP_NF_IMAGE": "Channel is already present in existing "
+                        "record",
                         "N_COMP_SPEC_TRACE": "Channel is already present in "
                         "existing record",
                         "N_COMP_THROUGHPUTE_VALUE": "Channel is already present in "
@@ -1914,6 +1948,8 @@ class TestPartialImport:
                         "existing record",
                         "N_COMP_FF_XPOS": "Channel is already present in existing "
                         "record",
+                        "N_COMP_NF_IMAGE": "Channel is already present in existing "
+                        "record",
                         "N_COMP_SPEC_TRACE": "Channel is already present in "
                         "existing record",
                         "N_COMP_THROUGHPUTE_VALUE": "Channel is already present in "
@@ -1938,6 +1974,7 @@ class TestPartialImport:
                         "N_COMP_FF_INTEGRATION",
                         "N_COMP_FF_XPOS",
                         "N_COMP_FF_YPOS",
+                        "N_COMP_NF_IMAGE",
                         "N_COMP_SPEC_TRACE",
                         "N_COMP_THROUGHPUTE_VALUE",
                         "TA3_SHOT_NUM_VALUE",
@@ -1984,10 +2021,11 @@ class TestPartialImport:
             channels["h"] = channels.pop("N_COMP_FF_INTEGRATION")
             channels["i"] = channels.pop("N_COMP_FF_XPOS")
             channels["j"] = channels.pop("N_COMP_FF_YPOS")
-            channels["k"] = channels.pop("N_COMP_SPEC_TRACE")
-            channels["l"] = channels.pop("N_COMP_THROUGHPUTE_VALUE")
-            channels["m"] = channels.pop("TA3_SHOT_NUM_VALUE")
-            channels["n"] = channels.pop("Type")
+            channels["k"] = channels.pop("N_COMP_NF_IMAGE")
+            channels["l"] = channels.pop("N_COMP_SPEC_TRACE")
+            channels["m"] = channels.pop("N_COMP_THROUGHPUTE_VALUE")
+            channels["n"] = channels.pop("TA3_SHOT_NUM_VALUE")
+            channels["o"] = channels.pop("Type")
 
         partial_import_checker = ingestion_validator.PartialImportChecks(
             record_data,
