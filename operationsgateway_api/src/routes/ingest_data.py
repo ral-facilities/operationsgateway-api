@@ -44,20 +44,45 @@ async def submit_hdf(
     log.debug("Filename: %s, Content: %s", file.filename, file.content_type)
 
     hdf_handler = HDFDataHandler(file.file)
-    record_data, waveforms, images, _ = await hdf_handler.extract_data()
+    (
+        record_data,
+        waveforms,
+        images,
+        internal_failed_channel,
+    ) = await hdf_handler.extract_data()
+
+    record_original = Record(record_data)
+
+    stored_record = await record_original.find_existing_record()
+    ################################################################################
+    if stored_record:
+        partial_import_checker = ingestion_validator.PartialImportChecks(
+            record_data,
+            stored_record,
+        )
+        accept_type = partial_import_checker.metadata_checks()
+        channel_dict = partial_import_checker.channel_checks()
+
+    file_checker = ingestion_validator.FileChecks(record_data)
+    warning = file_checker.epac_data_version_checks()
+
+    record_checker = ingestion_validator.RecordChecks(record_data)
+    record_checker.active_area_checks()
+    record_checker.optional_metadata_checks()
+
+    channel_checker = ingestion_validator.ChannelChecks(
+        record_data,
+        waveforms,
+        images,
+        internal_failed_channel,
+    )
+    channel_dict = await channel_checker.channel_checks()
+    ################################################################################
+
+    # TODO loop though rejected things and remove channels from record_data
+    # also delete from waveforms and images (by using the key)
+
     record = Record(record_data)
-
-    stored_record = await record.find_existing_record()
-    # TODO - when I implement the validation, it should only run if `stored_record`
-    # actually contains something (i.e. isn't None)
-    # ingest_checker = IngestionValidator(record_data, stored_record, failed_values)
-    # file_checker = ingest_checker.FileChecks(ingest_checker)
-    # import_checker = ingest_checker.PartialImportChecks(ingest_checker)
-    # import_checker.channel_checks()
-
-    # ingest_checker.form_response()
-
-    # await file_checker.example()
 
     log.debug("Processing waveforms")
     for w in waveforms:
@@ -76,7 +101,7 @@ async def submit_hdf(
         pool = ThreadPool(processes=Config.config.images.upload_image_threads)
         pool.map(Image.upload_image, image_instances)
 
-    if stored_record:
+    if stored_record:  # this function is used for partial imports
         log.debug(
             "Record matching ID %s already exists in the database, updating existing"
             " document",

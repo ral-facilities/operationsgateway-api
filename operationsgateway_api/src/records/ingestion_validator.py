@@ -23,7 +23,7 @@ class FileChecks:
         if (
             hasattr(ingested_metadata, "epac_ops_data_version")
             and ingested_metadata.epac_ops_data_version is not None
-        ):  # is the has attribute needed?
+        ):
             epac_number = ingested_metadata.epac_ops_data_version
             if type(ingested_metadata.epac_ops_data_version) != str:
                 raise RejectFileError(
@@ -52,7 +52,7 @@ class RecordChecks:
         if (
             hasattr(ingested_metadata, "active_area")
             and ingested_metadata.active_area is not None
-        ):  # is the has attribute needed?
+        ):
             if type(ingested_metadata.active_area) != str:
                 raise RejectRecordError(
                     "active_area has wrong datatype. Expected string",
@@ -65,7 +65,7 @@ class RecordChecks:
         if (
             hasattr(ingested_metadata, "active_experiment")
             and ingested_metadata.active_experiment is not None
-        ):  # is the has attribute needed?
+        ):
             if type(ingested_metadata.active_experiment) != str:
                 raise RejectRecordError(
                     "active_experiment has wrong datatype. Expected string",
@@ -73,7 +73,7 @@ class RecordChecks:
         if (
             hasattr(ingested_metadata, "shotnum")
             and ingested_metadata.shotnum is not None
-        ):  # is the has attribute needed?
+        ):
             if type(ingested_metadata.shotnum) != int:
                 raise RejectRecordError("shotnum has wrong datatype. Expected integer")
 
@@ -301,13 +301,6 @@ class ChannelChecks:
                     rejected_channels,
                 )
 
-                if hasattr(value, "thumbnail") and (
-                    type(value.thumbnail) != str and value.thumbnail is not None
-                ):
-                    rejected_channels.append(
-                        {key: "thumbnail attribute has wrong datatype"},
-                    )
-
             if value.metadata.channel_dtype == "waveform":
                 if hasattr(value.metadata, "x_units") and (
                     type(value.metadata.x_units) != str
@@ -324,13 +317,19 @@ class ChannelChecks:
                         {key: "y_units attribute has wrong datatype"},
                     )
 
-                if hasattr(value, "thumbnail") and (
-                    type(value.thumbnail) != str and value.thumbnail is not None
-                ):
-                    rejected_channels.append(
-                        {key: "thumbnail attribute has wrong datatype"},
-                    )
+        return rejected_channels
 
+    def _waveform_dataset_check(self, rejected_channels, value, key, letter):
+        if type(value) != list:
+            rejected_channels.append({key: letter + " attribute has wrong shape"})
+        else:
+            if not all(isinstance(element, float) for element in value):
+                rejected_channels.append(
+                    {
+                        key: letter + " attribute has wrong datatype, should "
+                        "be a list of floats",
+                    },
+                )
         return rejected_channels
 
     def dataset_checks(self):
@@ -341,43 +340,17 @@ class ChannelChecks:
         rejected_channels = []
 
         for key, value in ingested_channels.items():
-            if value.metadata.channel_dtype == "scalar":
-                if (
-                    type(value.data) != int
-                    and type(value.data) != float
-                    and type(value.data) != str
-                ):
-                    rejected_channels.append(
-                        {key: "data attribute has wrong datatype"},
-                    )  # may not be needed
-
             if value.metadata.channel_dtype == "image":
-
-                path_to_check = value.image_path
-                matching_image = None
-
+                data = None
                 for image in ingested_image:
-                    if image.path == path_to_check:
-                        matching_image = image
-
-                data = matching_image.data
+                    if image.path == value.image_path:
+                        data = image.data
+                        continue
 
                 if isinstance(data, np.ndarray) and (
                     data.dtype == np.uint16 or data.dtype == np.uint8
                 ):
-                    if all(isinstance(element, np.ndarray) for element in data):
-                        if all(
-                            isinstance(inner_list, data.dtype.type)
-                            for inner_list in data.flat
-                        ):
-                            pass
-                        else:
-                            rejected_channels.append(
-                                {
-                                    key: "flattened data attribute is incorrect",
-                                },  # may not be needed
-                            )
-                    else:
+                    if not all(isinstance(element, np.ndarray) for element in data):
                         rejected_channels.append(
                             {key: "data attribute has wrong shape"},
                         )
@@ -390,36 +363,28 @@ class ChannelChecks:
                     )
 
             if value.metadata.channel_dtype == "waveform":
-                id_to_check = value.waveform_id
                 matching_waveform = None
 
                 for waveform in ingested_waveform:
-                    if waveform.id_ == id_to_check:
+                    if waveform.id_ == value.waveform_id:
                         matching_waveform = waveform
+                        continue
 
                 x = matching_waveform.x
                 y = matching_waveform.y
 
-                if type(x) != list:
-                    rejected_channels.append({key: "x attribute has wrong shape"})
-                else:
-                    if not all(isinstance(element, float) for element in x):
-                        rejected_channels.append(
-                            {
-                                key: "x attribute has wrong datatype, should "
-                                "be a list of floats",
-                            },
-                        )
-                if type(y) != list:
-                    rejected_channels.append({key: "y attribute has wrong shape"})
-                else:
-                    if not all(isinstance(element, float) for element in y):
-                        rejected_channels.append(
-                            {
-                                key: "y attribute has wrong datatype, should be a "
-                                "list of floats",
-                            },
-                        )
+                rejected_channels = self._waveform_dataset_check(
+                    rejected_channels,
+                    x,
+                    key,
+                    "x",
+                )
+                rejected_channels = self._waveform_dataset_check(
+                    rejected_channels,
+                    y,
+                    key,
+                    "y",
+                )
 
         rejected_channels = self._merge_internal_failed(
             rejected_channels,
@@ -474,7 +439,6 @@ class ChannelChecks:
 
         for key in list(ingested_channels.keys()):
             rejected_channels = self._check_name(rejected_channels, manifest, key)
-            # reject on import?
 
         rejected_channels = self._merge_internal_failed(
             rejected_channels,
@@ -546,7 +510,6 @@ class ChannelChecks:
 
 
 class PartialImportChecks:
-    # checked in certain circumstances
     def __init__(self, ingested_record: RecordModel, stored_record: RecordModel):
         self.ingested_record = ingested_record
         self.stored_record = stored_record
@@ -608,6 +571,5 @@ class PartialImportChecks:
             "accepted channels": accepted_channels,
             "rejected channels": rejected_channels,
         }
-        print("IF THIS IS SHOWN THE CODE CHECKER IS BAD")
 
         return channel_response

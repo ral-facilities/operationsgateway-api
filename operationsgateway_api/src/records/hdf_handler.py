@@ -94,6 +94,124 @@ class HDFDataHandler:
                 break
         return stop
 
+    def _extract_image(
+        self,
+        internal_failed_channel,
+        channel_name,
+        channel_metadata,
+        value,
+    ):
+        image_path = Image.get_image_path(self.record_id, channel_name)
+
+        if self._unexpected_attribute("image", value):
+            internal_failed_channel.append(
+                {channel_name: "unexpected group or dataset in channel group"},
+            )
+            return None, internal_failed_channel
+
+        try:
+            self.images.append(
+                ImageModel(path=image_path, data=value["data"][()]),
+            )
+
+            channel = ImageChannelModel(
+                metadata=ImageChannelMetadataModel(**channel_metadata),
+                image_path=image_path,
+            )
+            return channel, False
+        except KeyError:
+            internal_failed_channel.append(
+                {channel_name: "data attribute is missing"},
+            )
+            return None, internal_failed_channel
+        except ValidationError as exc:
+            raise ModelError(str(exc)) from exc
+
+    def _extract_scalar(
+        self,
+        internal_failed_channel,
+        channel_name,
+        channel_metadata,
+        value,
+    ):
+        if self._unexpected_attribute("scalar", value):
+            internal_failed_channel.append(
+                {channel_name: "unexpected group or dataset in channel group"},
+            )
+            return None, internal_failed_channel
+
+        try:
+            channel = ScalarChannelModel(
+                metadata=ScalarChannelMetadataModel(**channel_metadata),
+                data=value["data"][()],
+            )
+            return channel, False
+        except KeyError:
+            internal_failed_channel.append(
+                {channel_name: "data attribute is missing"},
+            )
+            return None, internal_failed_channel
+        except ValidationError as exc:
+            for error in exc.errors():
+                if (
+                    error["type"] == "int_type"
+                    or error["type"] == "float_type"
+                    or error["type"] == "string_type"
+                ):
+                    internal_failed_channel.append(
+                        {channel_name: "data has wrong datatype"},
+                    )
+                    break
+                else:
+                    raise ModelError(str(exc)) from exc
+            return None, internal_failed_channel
+
+    def _extract_waveform(
+        self,
+        internal_failed_channel,
+        channel_name,
+        channel_metadata,
+        value,
+    ):
+        waveform_id = f"{self.record_id}_{channel_name}"
+        log.debug("Waveform ID: %s", waveform_id)
+
+        value_list = []
+        for val in value:
+            value_list.append(val)
+        if (list(set(value_list) - set(self.acceptable_datasets["waveform"]))) != []:
+            internal_failed_channel.append(
+                {channel_name: "unexpected group or dataset in channel group"},
+            )
+            return None, internal_failed_channel
+
+        try:
+            channel = WaveformChannelModel(
+                metadata=WaveformChannelMetadataModel(**channel_metadata),
+                waveform_id=waveform_id,
+            )
+
+            self.waveforms.append(
+                WaveformModel(
+                    _id=waveform_id,
+                    x=value["x"][()],
+                    y=value["y"][()],
+                ),
+            )
+
+            return channel, False
+        except KeyError:
+            for key in ["x", "y"]:
+                try:
+                    value[key]
+                except KeyError:
+                    internal_failed_channel.append(
+                        {channel_name: f"{key} attribute is missing"},
+                    )
+            return None, internal_failed_channel
+        except ValidationError as exc:
+            raise ModelError(str(exc)) from exc
+
     async def extract_channels(self) -> None:
         """
         Extract data from each data channel in the HDF file and place the data into
@@ -119,31 +237,16 @@ class HDFDataHandler:
                 continue
 
             if value.attrs["channel_dtype"] == "image":
-                image_path = Image.get_image_path(self.record_id, channel_name)
-
-                stop = self._unexpected_attribute("image", value)
-                if stop:
-                    internal_failed_channel.append(
-                        {channel_name: "unexpected group or dataset in channel group"},
-                    )
+                channel, fail = self._extract_image(
+                    internal_failed_channel,
+                    channel_name,
+                    channel_metadata,
+                    value,
+                )
+                if fail:
+                    internal_failed_channel = fail
                     continue
 
-                try:
-                    self.images.append(
-                        ImageModel(path=image_path, data=value["data"][()]),
-                    )
-
-                    channel = ImageChannelModel(
-                        metadata=ImageChannelMetadataModel(**channel_metadata),
-                        image_path=image_path,
-                    )
-                except KeyError:
-                    internal_failed_channel.append(
-                        {channel_name: "data attribute is missing"},
-                    )
-                    continue
-                except ValidationError as exc:
-                    raise ModelError(str(exc)) from exc
             elif value.attrs["channel_dtype"] == "rgb-image":
                 # TODO - implement colour image ingestion. Currently waiting on the
                 # OG-HDF5 converter to support conversion of colour images.
@@ -152,84 +255,28 @@ class HDFDataHandler:
                 # part of the value
                 raise HDFDataExtractionError("Colour images cannot be ingested")
             elif value.attrs["channel_dtype"] == "scalar":
-
-                stop = self._unexpected_attribute("scalar", value)
-                if stop:
-                    internal_failed_channel.append(
-                        {channel_name: "unexpected group or dataset in channel group"},
-                    )
+                channel, fail = self._extract_scalar(
+                    internal_failed_channel,
+                    channel_name,
+                    channel_metadata,
+                    value,
+                )
+                if fail:
+                    internal_failed_channel = fail
                     continue
 
-                try:
-                    channel = ScalarChannelModel(
-                        metadata=ScalarChannelMetadataModel(**channel_metadata),
-                        data=value["data"][()],
-                    )
-                except KeyError:
-                    internal_failed_channel.append(
-                        {channel_name: "data attribute is missing"},
-                    )
-                    continue
-                except ValidationError as exc:
-                    for error in exc.errors():
-                        if (
-                            error["type"] == "int_type"
-                            or error["type"] == "float_type"
-                            or error["type"] == "string_type"
-                        ):
-                            internal_failed_channel.append(
-                                {channel_name: "data has wrong datatype"},
-                            )
-                            break
-                        else:
-                            raise ModelError(str(exc)) from exc
-                    continue
             elif value.attrs["channel_dtype"] == "waveform":
-                waveform_id = f"{self.record_id}_{channel_name}"
-                log.debug("Waveform ID: %s", waveform_id)
-
-                value_list = []
-                for val in value:
-                    value_list.append(val)
-                if (
-                    list(set(value_list) - set(self.acceptable_datasets["waveform"]))
-                ) != []:
-                    internal_failed_channel.append(
-                        {channel_name: "unexpected group or dataset in channel group"},
-                    )
+                channel, fail = self._extract_waveform(
+                    internal_failed_channel,
+                    channel_name,
+                    channel_metadata,
+                    value,
+                )
+                if fail:
+                    internal_failed_channel = fail
                     continue
-
-                try:
-                    channel = WaveformChannelModel(
-                        metadata=WaveformChannelMetadataModel(**channel_metadata),
-                        waveform_id=waveform_id,
-                    )
-
-                    self.waveforms.append(
-                        WaveformModel(
-                            _id=waveform_id,
-                            x=value["x"][()],
-                            y=value["y"][()],
-                        ),
-                    )
-                except KeyError:
-                    try:
-                        value["x"]
-                    except KeyError:
-                        internal_failed_channel.append(
-                            {channel_name: "x attribute is missing"},
-                        )
-                    try:
-                        value["y"]
-                    except KeyError:
-                        internal_failed_channel.append(
-                            {channel_name: "y attribute is missing"},
-                        )
-                    continue
-                except ValidationError as exc:
-                    raise ModelError(str(exc)) from exc
 
             # Put channels into a dictionary to give a good structure to query them in
             # the database
             self.channels[channel_name] = channel
-            self.internal_failed_channel = internal_failed_channel
+        self.internal_failed_channel = internal_failed_channel

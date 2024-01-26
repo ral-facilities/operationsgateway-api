@@ -1,5 +1,6 @@
 import copy
 
+from fastapi.testclient import TestClient
 import h5py
 import numpy as np
 import pytest
@@ -23,41 +24,41 @@ def generate_channel_check_block(record, test_type):
         false_scalar.create_dataset("data", data=45)
 
     if test_type == "test2":
-        n_comp_ff_image = record.create_group("N_COMP_FF_IMAGE")
-        n_comp_ff_image.attrs.create("channel_dtype", "image")
-        n_comp_ff_image.attrs.create("exposure_time_s", 0.001)
-        n_comp_ff_image.attrs.create("gain", 5.5)
-        n_comp_ff_image.attrs.create("x_pixel_size", "441")
-        n_comp_ff_image.attrs.create("x_pixel_units", 42)
-        n_comp_ff_image.attrs.create("y_pixel_size", 441.0)
-        n_comp_ff_image.attrs.create("y_pixel_units", "µm")
+        pm_201_fe_cam_1 = record.create_group("PM-201-FE-CAM-1")
+        pm_201_fe_cam_1.attrs.create("channel_dtype", "image")
+        pm_201_fe_cam_1.attrs.create("exposure_time_s", 0.001)
+        pm_201_fe_cam_1.attrs.create("gain", 5.5)
+        pm_201_fe_cam_1.attrs.create("x_pixel_size", "441")
+        pm_201_fe_cam_1.attrs.create("x_pixel_units", 42)
+        pm_201_fe_cam_1.attrs.create("y_pixel_size", 441.0)
+        pm_201_fe_cam_1.attrs.create("y_pixel_units", "µm")
         # example 2D dataset
         data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.uint32)
-        n_comp_ff_image.create_dataset("data", data=data)
+        pm_201_fe_cam_1.create_dataset("data", data=data)
 
     if test_type == "test3":
-        n_comp_spec_trace = record.create_group("N_COMP_SPEC_TRACE")
-        n_comp_spec_trace.attrs.create("channel_dtype", "waveform")
-        n_comp_spec_trace.attrs.create("x_units", 23)
-        n_comp_spec_trace.attrs.create("y_units", "kJ")
+        pm_201_hj_pd = record.create_group("PM-201-HJ-PD")
+        pm_201_hj_pd.attrs.create("channel_dtype", "waveform")
+        pm_201_hj_pd.attrs.create("x_units", 23)
+        pm_201_hj_pd.attrs.create("y_units", "kJ")
         x = [1, 2, 3, 4, 5, 6]
-        n_comp_spec_trace.create_dataset("x", data=x)
-        n_comp_spec_trace.create_dataset("y", data=6)
+        pm_201_hj_pd.create_dataset("x", data=x)
+        pm_201_hj_pd.create_dataset("y", data=6)
 
     if test_type == "test4":
-        n_comp_ff_image = record.create_group("N_COMP_FF_IMAGE")
-        n_comp_ff_image.create_group("unrecognised_group")
-        n_comp_ff_image.attrs.create("channel_dtype", "image")
-        n_comp_ff_image.attrs.create("exposure_time_s", 0.001)
-        n_comp_ff_image.attrs.create("gain", 5.5)
-        n_comp_ff_image.attrs.create("x_pixel_size", "441.0")
-        n_comp_ff_image.attrs.create("x_pixel_units", 456)
-        n_comp_ff_image.attrs.create("y_pixel_size", 441.0)
-        n_comp_ff_image.attrs.create("y_pixel_units", "µm")
-        n_comp_ff_image.create_dataset("unrecognised_dataset", data=4)
+        pm_201_fe_cam_1 = record.create_group("PM-201-FE-CAM-1")
+        pm_201_fe_cam_1.create_group("unrecognised_group")
+        pm_201_fe_cam_1.attrs.create("channel_dtype", "image")
+        pm_201_fe_cam_1.attrs.create("exposure_time_s", 0.001)
+        pm_201_fe_cam_1.attrs.create("gain", 5.5)
+        pm_201_fe_cam_1.attrs.create("x_pixel_size", "441.0")
+        pm_201_fe_cam_1.attrs.create("x_pixel_units", 456)
+        pm_201_fe_cam_1.attrs.create("y_pixel_size", 441.0)
+        pm_201_fe_cam_1.attrs.create("y_pixel_units", "µm")
+        pm_201_fe_cam_1.create_dataset("unrecognised_dataset", data=4)
 
 
-async def create_test_hdf_file(
+async def create_test_hdf_file(  # noqa: C901
     data_version=None,
     timestamp=None,
     active_area=None,
@@ -131,36 +132,36 @@ async def create_test_hdf_file(
         if test_type:
             generate_channel_check_block(record, test_type)
 
-        gem_shot_num_value = record.create_group("GEM_SHOT_NUM_VALUE")
-        gem_shot_num_value.attrs.create("channel_dtype", "scalar")
+        pm_201_fe_en = record.create_group("PM-201-FE-EM")
+        pm_201_fe_en.attrs.create("channel_dtype", "scalar")
         if required_attributes and "scalar" in required_attributes:
             scalar = required_attributes["scalar"]
             if scalar["data"] != "missing":
-                gem_shot_num_value.create_dataset("data", data=(scalar["data"]))
+                pm_201_fe_en.create_dataset("data", data=(scalar["data"]))
         else:
-            gem_shot_num_value.create_dataset("data", data=366272)
+            pm_201_fe_en.create_dataset("data", data=366272)
 
-        gem_shot_source_string = record.create_group("GEM_SHOT_SOURCE_STRING")
+        pm_201_fe_cam_2_cenx = record.create_group("PM-201-FE-CAM-2-CENX")
         if scalar_1_channel_dtype is not None:
             if scalar_1_channel_dtype[1] == "exists":
-                gem_shot_source_string.attrs.create(
+                pm_201_fe_cam_2_cenx.attrs.create(
                     "channel_dtype",
                     scalar_1_channel_dtype[0],
                 )
         else:
-            gem_shot_source_string.attrs.create("channel_dtype", "scalar")
-        gem_shot_source_string.create_dataset("data", data="EX")
+            pm_201_fe_cam_2_cenx.attrs.create("channel_dtype", "scalar")
+        pm_201_fe_cam_2_cenx.create_dataset("data", data="EX")
 
-        gem_shot_type_string = record.create_group("GEM_SHOT_TYPE_STRING")
+        pm_201_fe_cam_2_fwhmx = record.create_group("PM-201-FE-CAM-2-FWHMX")
         if scalar_2_channel_dtype is not None:
             if scalar_2_channel_dtype[1] == "exists":
-                gem_shot_type_string.attrs.create(
+                pm_201_fe_cam_2_fwhmx.attrs.create(
                     "channel_dtype",
                     scalar_2_channel_dtype[0],
                 )
         else:
-            gem_shot_type_string.attrs.create("channel_dtype", "scalar")
-        gem_shot_type_string.create_dataset("data", data="FP")
+            pm_201_fe_cam_2_fwhmx.attrs.create("channel_dtype", "scalar")
+        pm_201_fe_cam_2_fwhmx.create_dataset("data", data="FP")
 
         if channel_name and "scalar" in channel_name:
             false_scalar = record.create_group("FALSE_SCALAR")
@@ -191,222 +192,225 @@ async def create_test_hdf_file(
             false_waveform.create_dataset("x", data=x)
             false_waveform.create_dataset("y", data=y)
 
-        n_comp_nf_image = record.create_group("N_COMP_NF_IMAGE")
-        n_comp_nf_image.attrs.create("channel_dtype", "image")
-        n_comp_nf_image.attrs.create("exposure_time_s", 0.001)
-        n_comp_nf_image.attrs.create("gain", 5.5)
-        n_comp_nf_image.attrs.create("x_pixel_size", 441.0)
-        n_comp_nf_image.attrs.create("x_pixel_units", "µm")
-        n_comp_nf_image.attrs.create("y_pixel_size", 441.0)
-        n_comp_nf_image.attrs.create("y_pixel_units", "µm")
+        pm_201_fe_cam_2 = record.create_group("PM-201-FE-CAM-2")
+        pm_201_fe_cam_2.attrs.create("channel_dtype", "image")
+        pm_201_fe_cam_2.attrs.create("exposure_time_s", 0.001)
+        pm_201_fe_cam_2.attrs.create("gain", 5.5)
+        pm_201_fe_cam_2.attrs.create("x_pixel_size", 441.0)
+        pm_201_fe_cam_2.attrs.create("x_pixel_units", "µm")
+        pm_201_fe_cam_2.attrs.create("y_pixel_size", 441.0)
+        pm_201_fe_cam_2.attrs.create("y_pixel_units", "µm")
         data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.uint16)
-        n_comp_nf_image.create_dataset("data", data=data)
+        pm_201_fe_cam_2.create_dataset("data", data=data)
 
-        gem_wp_pos_value = record.create_group("GEM_WP_POS_VALUE")
+        pm_201_fe_cam_2_ceny = record.create_group("PM-201-FE-CAM-2-CENY")
         if (
             unrecognised_attribute
             and "scalar" in unrecognised_attribute
             and "group" in unrecognised_attribute["scalar"]
         ):
-            gem_wp_pos_value.create_group("unrecognised_group")
-        gem_wp_pos_value.attrs.create("channel_dtype", "scalar")
-        gem_wp_pos_value.attrs.create("units", "ms")
+            pm_201_fe_cam_2_ceny.create_group("unrecognised_group")
+        pm_201_fe_cam_2_ceny.attrs.create("channel_dtype", "scalar")
+        pm_201_fe_cam_2_ceny.attrs.create("units", "ms")
         if (
             unrecognised_attribute
             and "scalar" in unrecognised_attribute
             and "dataset" in unrecognised_attribute["scalar"]
         ):
-            gem_wp_pos_value.create_dataset("unrecognised_dataset", data=35)
-        gem_wp_pos_value.create_dataset("data", data=45)
+            pm_201_fe_cam_2_ceny.create_dataset("unrecognised_dataset", data=35)
+        pm_201_fe_cam_2_ceny.create_dataset("data", data=45)
 
-        n_comp_calculatede_value = record.create_group("N_COMP_CALCULATEDE_VALUE")
-        n_comp_calculatede_value.attrs.create("channel_dtype", "scalar")
-        n_comp_calculatede_value.attrs.create("units", "mm")
-        n_comp_calculatede_value.create_dataset("data", data=10.84)
+        pm_201_fe_cam_2_fwhmy = record.create_group("PM-201-FE-CAM-2-FWHMY")
+        pm_201_fe_cam_2_fwhmy.attrs.create("channel_dtype", "scalar")
+        pm_201_fe_cam_2_fwhmy.attrs.create("units", "mm")
+        pm_201_fe_cam_2_fwhmy.create_dataset("data", data=10.84)
 
-        n_comp_ff_e = record.create_group("N_COMP_FF_E")
-        n_comp_ff_e.attrs.create("channel_dtype", "scalar")
-        n_comp_ff_e.attrs.create("units", "mg")
-        n_comp_ff_e.create_dataset("data", data=-8895000.0)
+        pm_201_pa1_em = record.create_group("PM-201-PA1-EM")
+        pm_201_pa1_em.attrs.create("channel_dtype", "scalar")
+        pm_201_pa1_em.attrs.create("units", "mg")
+        pm_201_pa1_em.create_dataset("data", data=-8895000.0)
 
         if test_type != "test2" and test_type != "test4":
-            n_comp_ff_image = record.create_group("N_COMP_FF_IMAGE")
+            pm_201_fe_cam_1 = record.create_group("PM-201-FE-CAM-1")
             if (
                 unrecognised_attribute
                 and "image" in unrecognised_attribute
                 and "group" in unrecognised_attribute["image"]
             ):
-                n_comp_ff_image.create_group("unrecognised_group")
+                pm_201_fe_cam_1.create_group("unrecognised_group")
             if image_channel_dtype is not None:
                 if image_channel_dtype[1] == "exists":
-                    n_comp_ff_image.attrs.create(
+                    pm_201_fe_cam_1.attrs.create(
                         "channel_dtype",
                         image_channel_dtype[0],
                     )
             else:
-                n_comp_ff_image.attrs.create("channel_dtype", "image")
+                pm_201_fe_cam_1.attrs.create("channel_dtype", "image")
             if optional_attributes and "image" in optional_attributes:
                 image = optional_attributes["image"]
                 if "exposure_time_s" in image:
                     if image["exposure_time_s"] == "invalid":
-                        n_comp_ff_image.attrs.create("exposure_time_s", "0.001")
+                        pm_201_fe_cam_1.attrs.create("exposure_time_s", "0.001")
                 else:
-                    n_comp_ff_image.attrs.create("exposure_time_s", 0.001)
+                    pm_201_fe_cam_1.attrs.create("exposure_time_s", 0.001)
                 if "gain" in image:
                     if image["gain"] == "invalid":
-                        n_comp_ff_image.attrs.create("gain", "5.5")
+                        pm_201_fe_cam_1.attrs.create("gain", "5.5")
                 else:
-                    n_comp_ff_image.attrs.create("gain", 5.5)
+                    pm_201_fe_cam_1.attrs.create("gain", 5.5)
                 if "x_pixel_size" in image:
                     if image["x_pixel_size"] == "invalid":
-                        n_comp_ff_image.attrs.create("x_pixel_size", "441.0")
+                        pm_201_fe_cam_1.attrs.create("x_pixel_size", "441.0")
                 else:
-                    n_comp_ff_image.attrs.create("x_pixel_size", 441.0)
+                    pm_201_fe_cam_1.attrs.create("x_pixel_size", 441.0)
                 if "x_pixel_units" in image:
                     if image["x_pixel_units"] == "invalid":
-                        n_comp_ff_image.attrs.create("x_pixel_units", 436)
+                        pm_201_fe_cam_1.attrs.create("x_pixel_units", 436)
                 else:
-                    n_comp_ff_image.attrs.create("x_pixel_units", "µm")
+                    pm_201_fe_cam_1.attrs.create("x_pixel_units", "µm")
                 if "y_pixel_size" in image:
                     if image["y_pixel_size"] == "invalid":
-                        n_comp_ff_image.attrs.create("y_pixel_size", "441.0")
+                        pm_201_fe_cam_1.attrs.create("y_pixel_size", "441.0")
                 else:
-                    n_comp_ff_image.attrs.create("y_pixel_size", 441.0)
+                    pm_201_fe_cam_1.attrs.create("y_pixel_size", 441.0)
                 if "y_pixel_units" in image:
                     if image["y_pixel_units"] == "invalid":
-                        n_comp_ff_image.attrs.create("y_pixel_units", 346)
+                        pm_201_fe_cam_1.attrs.create("y_pixel_units", 346)
                 else:
-                    n_comp_ff_image.attrs.create("y_pixel_units", "µm")
+                    pm_201_fe_cam_1.attrs.create("y_pixel_units", "µm")
             else:
-                n_comp_ff_image.attrs.create("exposure_time_s", 0.001)
-                n_comp_ff_image.attrs.create("gain", 5.5)
-                n_comp_ff_image.attrs.create("x_pixel_size", 441.0)
-                n_comp_ff_image.attrs.create("x_pixel_units", "µm")
-                n_comp_ff_image.attrs.create("y_pixel_size", 441.0)
-                n_comp_ff_image.attrs.create("y_pixel_units", "µm")
+                pm_201_fe_cam_1.attrs.create("exposure_time_s", 0.001)
+                pm_201_fe_cam_1.attrs.create("gain", 5.5)
+                pm_201_fe_cam_1.attrs.create("x_pixel_size", 441.0)
+                pm_201_fe_cam_1.attrs.create("x_pixel_units", "µm")
+                pm_201_fe_cam_1.attrs.create("y_pixel_size", 441.0)
+                pm_201_fe_cam_1.attrs.create("y_pixel_units", "µm")
             # example 2D dataset
             if (
                 unrecognised_attribute
                 and "image" in unrecognised_attribute
                 and "dataset" in unrecognised_attribute["image"]
             ):
-                n_comp_ff_image.create_dataset("unrecognised_dataset", data=35)
+                pm_201_fe_cam_1.create_dataset("unrecognised_dataset", data=35)
             data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.uint16)
             if required_attributes and "image" in required_attributes:
                 image = required_attributes["image"]
                 if image["data"] != "missing":
-                    n_comp_ff_image.create_dataset("data", data=(image["data"]))
+                    pm_201_fe_cam_1.create_dataset("data", data=(image["data"]))
             else:
-                n_comp_ff_image.create_dataset("data", data=data)
+                pm_201_fe_cam_1.create_dataset("data", data=data)
 
-        n_comp_ff_intergration = record.create_group("N_COMP_FF_INTEGRATION")
-        n_comp_ff_intergration.attrs.create("channel_dtype", "scalar")
+        pm_201_pa2_em = record.create_group("PM-201-PA2-EM")
+        pm_201_pa2_em.attrs.create("channel_dtype", "scalar")
         if optional_attributes and "scalar" in optional_attributes:
             scalar = optional_attributes["scalar"]
             if scalar["units"] == "invalid":
-                n_comp_ff_intergration.attrs.create("units", 764)
+                pm_201_pa2_em.attrs.create("units", 764)
             else:
-                n_comp_ff_intergration.attrs.create("units", "µm")
+                pm_201_pa2_em.attrs.create("units", "µm")
         else:
-            n_comp_ff_intergration.attrs.create("units", "µm")
-        n_comp_ff_intergration.create_dataset("data", data=8895000.0)
+            pm_201_pa2_em.attrs.create("units", "µm")
+        pm_201_pa2_em.create_dataset("data", data=8895000.0)
 
-        n_comp_ff_xpos = record.create_group("N_COMP_FF_XPOS")
-        n_comp_ff_xpos.attrs.create("channel_dtype", "scalar")
-        n_comp_ff_xpos.attrs.create("units", "mm")
-        n_comp_ff_xpos.create_dataset("data", data=330.523)
+        pm_201_tj_em = record.create_group("PM-201-TJ-EM")
+        pm_201_tj_em.attrs.create("channel_dtype", "scalar")
+        pm_201_tj_em.attrs.create("units", "mm")
+        pm_201_tj_em.create_dataset("data", data=330.523)
 
         if channels_check:
-            n_comp_ff_ypos = record.create_group("ALL_FALSE_SCALAR")
-            n_comp_ff_ypos.attrs.create("channel_dtype", "thing")
-            n_comp_ff_ypos.attrs.create("units", 44)
-            n_comp_ff_ypos.create_dataset("data", data=["data"])
-            n_comp_ff_ypos.create_dataset("unrecognised_scalar_dataset", data=[32])
+            pm_201_tj_cam_2_cenx = record.create_group("ALL_FALSE_SCALAR")
+            pm_201_tj_cam_2_cenx.attrs.create("channel_dtype", "thing")
+            pm_201_tj_cam_2_cenx.attrs.create("units", 44)
+            pm_201_tj_cam_2_cenx.create_dataset("data", data=["data"])
+            pm_201_tj_cam_2_cenx.create_dataset(
+                "unrecognised_scalar_dataset",
+                data=[32],
+            )
         else:
-            n_comp_ff_ypos = record.create_group("N_COMP_FF_YPOS")
-            n_comp_ff_ypos.attrs.create("channel_dtype", "scalar")
-            n_comp_ff_ypos.attrs.create("units", "mm")
-            n_comp_ff_ypos.create_dataset("data", data=243.771)
+            pm_201_tj_cam_2_cenx = record.create_group("PM-201-TJ-CAM-2-CENX")
+            pm_201_tj_cam_2_cenx.attrs.create("channel_dtype", "scalar")
+            pm_201_tj_cam_2_cenx.attrs.create("units", "mm")
+            pm_201_tj_cam_2_cenx.create_dataset("data", data=243.771)
 
-        n_comp_throughpute_value = record.create_group("N_COMP_THROUGHPUTE_VALUE")
-        n_comp_throughpute_value.attrs.create("channel_dtype", "scalar")
-        n_comp_throughpute_value.attrs.create("units", "cm")
-        n_comp_throughpute_value.create_dataset("data", data=74)
+        pm_201_tj_cam_2_fwhmx = record.create_group("PM-201-TJ-CAM-2-FWHMX")
+        pm_201_tj_cam_2_fwhmx.attrs.create("channel_dtype", "scalar")
+        pm_201_tj_cam_2_fwhmx.attrs.create("units", "cm")
+        pm_201_tj_cam_2_fwhmx.create_dataset("data", data=74)
 
-        ta3_shot_num_value = record.create_group("TA3_SHOT_NUM_VALUE")
-        ta3_shot_num_value.attrs.create("channel_dtype", "scalar")
-        ta3_shot_num_value.create_dataset("data", data=217343.0)
+        pm_201_tj_cam_2_ceny = record.create_group("PM-201-TJ-CAM-2-CENY")
+        pm_201_tj_cam_2_ceny.attrs.create("channel_dtype", "scalar")
+        pm_201_tj_cam_2_ceny.create_dataset("data", data=217343.0)
 
         if test_type != "test3":
-            n_comp_spec_trace = record.create_group("N_COMP_SPEC_TRACE")
+            pm_201_hj_pd = record.create_group("PM-201-HJ-PD")
             if (
                 unrecognised_attribute
                 and "waveform" in unrecognised_attribute
                 and "group1" in unrecognised_attribute["waveform"]
             ):
-                n_comp_spec_trace.create_group("unrecognised_group1")
+                pm_201_hj_pd.create_group("unrecognised_group1")
             if (
                 unrecognised_attribute
                 and "waveform" in unrecognised_attribute
                 and "group2" in unrecognised_attribute["waveform"]
             ):
-                n_comp_spec_trace.create_group("unrecognised_group2")
+                pm_201_hj_pd.create_group("unrecognised_group2")
             if waveform_channel_dtype is not None:
                 if waveform_channel_dtype[1] == "exists":
-                    n_comp_spec_trace.attrs.create(
+                    pm_201_hj_pd.attrs.create(
                         "channel_dtype",
                         waveform_channel_dtype[0],
                     )
             else:
-                n_comp_spec_trace.attrs.create("channel_dtype", "waveform")
+                pm_201_hj_pd.attrs.create("channel_dtype", "waveform")
             if optional_attributes and "waveform" in optional_attributes:
                 waveform = optional_attributes["waveform"]
                 if "x_units" in waveform:
                     if waveform["x_units"] == "invalid":
-                        n_comp_spec_trace.attrs.create("x_units", 35)
+                        pm_201_hj_pd.attrs.create("x_units", 35)
                 else:
-                    n_comp_spec_trace.attrs.create("x_units", "s")
+                    pm_201_hj_pd.attrs.create("x_units", "s")
                 if "y_units" in waveform:
                     if waveform["y_units"] == "invalid":
-                        n_comp_spec_trace.attrs.create("y_units", 42)
+                        pm_201_hj_pd.attrs.create("y_units", 42)
                 else:
-                    n_comp_spec_trace.attrs.create("y_units", "kJ")
+                    pm_201_hj_pd.attrs.create("y_units", "kJ")
             else:
-                n_comp_spec_trace.attrs.create("x_units", "s")
-                n_comp_spec_trace.attrs.create("y_units", "kJ")
+                pm_201_hj_pd.attrs.create("x_units", "s")
+                pm_201_hj_pd.attrs.create("y_units", "kJ")
             x = [1, 2, 3, 4, 5, 6]
             y = [8, 3, 6, 2, 3, 8, 425]
             if required_attributes and "waveform" in required_attributes:
                 waveform = required_attributes["waveform"]
                 if "x" in waveform:
                     if waveform["x"] != "missing":
-                        n_comp_spec_trace.create_dataset("x", data=(waveform["x"]))
+                        pm_201_hj_pd.create_dataset("x", data=(waveform["x"]))
                 else:
-                    n_comp_spec_trace.create_dataset("x", data=x)
+                    pm_201_hj_pd.create_dataset("x", data=x)
                 if "y" in waveform:
                     if waveform["y"] != "missing":
-                        n_comp_spec_trace.create_dataset("y", data=(waveform["y"]))
+                        pm_201_hj_pd.create_dataset("y", data=(waveform["y"]))
                 else:
-                    n_comp_spec_trace.create_dataset("y", data=y)
+                    pm_201_hj_pd.create_dataset("y", data=y)
             else:
-                n_comp_spec_trace.create_dataset("x", data=x)
-                n_comp_spec_trace.create_dataset("y", data=y)
+                pm_201_hj_pd.create_dataset("x", data=x)
+                pm_201_hj_pd.create_dataset("y", data=y)
             if (
                 unrecognised_attribute
                 and "waveform" in unrecognised_attribute
                 and "dataset1" in unrecognised_attribute["waveform"]
             ):
-                n_comp_spec_trace.create_dataset("unrecognised_dataset1", data=35)
+                pm_201_hj_pd.create_dataset("unrecognised_dataset1", data=35)
             if (
                 unrecognised_attribute
                 and "waveform" in unrecognised_attribute
                 and "dataset2" in unrecognised_attribute["waveform"]
             ):
-                n_comp_spec_trace.create_dataset("unrecognised_dataset2", data=35)
+                pm_201_hj_pd.create_dataset("unrecognised_dataset2", data=35)
 
-        types = record.create_group("Type")
-        types.attrs.create("channel_dtype", "scalar")
-        types.create_dataset("data", data="GS")
+        pm_201_tj_cam_2_fwhmy = record.create_group("PM-201-TJ-CAM-2-FWHMY")
+        pm_201_tj_cam_2_fwhmy.attrs.create("channel_dtype", "scalar")
+        pm_201_tj_cam_2_fwhmy.create_dataset("data", data="GS")
 
     hdf_handler = HDFDataHandler(hdf_file_path)
     return await hdf_handler.extract_data()
@@ -415,21 +419,21 @@ async def create_test_hdf_file(
 def create_channel_response(responses, extra=None, channels=False):
     model_response = {
         "accepted channels": [
-            "GEM_SHOT_NUM_VALUE",
-            "GEM_SHOT_SOURCE_STRING",
-            "GEM_SHOT_TYPE_STRING",
-            "GEM_WP_POS_VALUE",
-            "N_COMP_CALCULATEDE_VALUE",
-            "N_COMP_FF_E",
-            "N_COMP_FF_IMAGE",
-            "N_COMP_FF_INTEGRATION",
-            "N_COMP_FF_XPOS",
-            "N_COMP_FF_YPOS",
-            "N_COMP_NF_IMAGE",
-            "N_COMP_SPEC_TRACE",
-            "N_COMP_THROUGHPUTE_VALUE",
-            "TA3_SHOT_NUM_VALUE",
-            "Type",
+            "PM-201-FE-CAM-1",
+            "PM-201-FE-CAM-2",
+            "PM-201-FE-CAM-2-CENX",
+            "PM-201-FE-CAM-2-CENY",
+            "PM-201-FE-CAM-2-FWHMX",
+            "PM-201-FE-CAM-2-FWHMY",
+            "PM-201-FE-EM",
+            "PM-201-HJ-PD",
+            "PM-201-PA1-EM",
+            "PM-201-PA2-EM",
+            "PM-201-TJ-CAM-2-CENX",
+            "PM-201-TJ-CAM-2-CENY",
+            "PM-201-TJ-CAM-2-FWHMX",
+            "PM-201-TJ-CAM-2-FWHMY",
+            "PM-201-TJ-EM",
         ],
         "rejected channels": {},
     }
@@ -438,7 +442,7 @@ def create_channel_response(responses, extra=None, channels=False):
         responses = extra
 
     if channels:
-        model_response["accepted channels"].remove("N_COMP_FF_YPOS")
+        model_response["accepted channels"].remove("PM-201-TJ-CAM-2-CENX")
 
     for response in responses:
         for channel, message in response.items():
@@ -664,21 +668,21 @@ class TestChannel:
 
         assert await channel_checker.channel_checks() == {
             "accepted channels": [
-                "GEM_SHOT_NUM_VALUE",
-                "GEM_SHOT_SOURCE_STRING",
-                "GEM_SHOT_TYPE_STRING",
-                "GEM_WP_POS_VALUE",
-                "N_COMP_CALCULATEDE_VALUE",
-                "N_COMP_FF_E",
-                "N_COMP_FF_IMAGE",
-                "N_COMP_FF_INTEGRATION",
-                "N_COMP_FF_XPOS",
-                "N_COMP_FF_YPOS",
-                "N_COMP_NF_IMAGE",
-                "N_COMP_SPEC_TRACE",
-                "N_COMP_THROUGHPUTE_VALUE",
-                "TA3_SHOT_NUM_VALUE",
-                "Type",
+                "PM-201-FE-CAM-1",
+                "PM-201-FE-CAM-2",
+                "PM-201-FE-CAM-2-CENX",
+                "PM-201-FE-CAM-2-CENY",
+                "PM-201-FE-CAM-2-FWHMX",
+                "PM-201-FE-CAM-2-FWHMY",
+                "PM-201-FE-EM",
+                "PM-201-HJ-PD",
+                "PM-201-PA1-EM",
+                "PM-201-PA2-EM",
+                "PM-201-TJ-CAM-2-CENX",
+                "PM-201-TJ-CAM-2-CENY",
+                "PM-201-TJ-CAM-2-FWHMX",
+                "PM-201-TJ-CAM-2-FWHMY",
+                "PM-201-TJ-EM",
             ],
             "rejected channels": {},
         }
@@ -690,7 +694,7 @@ class TestChannel:
                 ["scalar", "missing", "scalar"],
                 [
                     {
-                        "GEM_SHOT_SOURCE_STRING": "channel_dtype attribute is "
+                        "PM-201-FE-CAM-2-CENX": "channel_dtype attribute is "
                         "missing (cannot perform other checks without)",
                     },
                 ],
@@ -700,7 +704,7 @@ class TestChannel:
                 ["image", "missing", "image"],
                 [
                     {
-                        "N_COMP_FF_IMAGE": "channel_dtype attribute is missing "
+                        "PM-201-FE-CAM-1": "channel_dtype attribute is missing "
                         "(cannot perform other checks without)",
                     },
                 ],
@@ -710,7 +714,7 @@ class TestChannel:
                 ["waveform", "missing", "waveform"],
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "channel_dtype attribute is missing "
+                        "PM-201-HJ-PD": "channel_dtype attribute is missing "
                         "(cannot perform other checks without)",
                     },
                 ],
@@ -720,7 +724,7 @@ class TestChannel:
                 [487, "exists", "scalar"],
                 [
                     {
-                        "GEM_SHOT_SOURCE_STRING": "channel_dtype has wrong data "
+                        "PM-201-FE-CAM-2-CENX": "channel_dtype has wrong data "
                         "type or its value is unsupported",
                     },
                 ],
@@ -730,7 +734,7 @@ class TestChannel:
                 ["487", "exists", "image"],
                 [
                     {
-                        "N_COMP_FF_IMAGE": "channel_dtype has wrong data type "
+                        "PM-201-FE-CAM-1": "channel_dtype has wrong data type "
                         "or its value is unsupported",
                     },
                 ],
@@ -740,7 +744,7 @@ class TestChannel:
                 ["None", "exists", "waveform"],
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "channel_dtype has wrong data "
+                        "PM-201-HJ-PD": "channel_dtype has wrong data "
                         "type or its value is unsupported",
                     },
                 ],
@@ -755,19 +759,19 @@ class TestChannel:
                 ],
                 [
                     {
-                        "GEM_SHOT_SOURCE_STRING": "channel_dtype has wrong data "
-                        "type or its value is unsupported",
-                    },
-                    {
-                        "GEM_SHOT_TYPE_STRING": "channel_dtype has wrong data "
-                        "type or its value is unsupported",
-                    },
-                    {
-                        "N_COMP_FF_IMAGE": "channel_dtype attribute is missing "
+                        "PM-201-FE-CAM-1": "channel_dtype attribute is missing "
                         "(cannot perform other checks without)",
                     },
                     {
-                        "N_COMP_SPEC_TRACE": "channel_dtype has wrong data type "
+                        "PM-201-FE-CAM-2-CENX": "channel_dtype has wrong data "
+                        "type or its value is unsupported",
+                    },
+                    {
+                        "PM-201-FE-CAM-2-FWHMX": "channel_dtype has wrong data "
+                        "type or its value is unsupported",
+                    },
+                    {
+                        "PM-201-HJ-PD": "channel_dtype has wrong data type "
                         "or its value is unsupported",
                     },
                 ],
@@ -804,7 +808,7 @@ class TestChannel:
                 {"scalar": {"data": "missing"}},
                 [
                     {
-                        "GEM_SHOT_NUM_VALUE": "data attribute is missing",
+                        "PM-201-FE-EM": "data attribute is missing",
                     },
                 ],
                 None,
@@ -814,7 +818,7 @@ class TestChannel:
                 {"scalar": {"data": ["list type"]}},
                 [
                     {
-                        "GEM_SHOT_NUM_VALUE": "data has wrong datatype",
+                        "PM-201-FE-EM": "data has wrong datatype",
                     },
                 ],
                 None,
@@ -824,7 +828,7 @@ class TestChannel:
                 {"image": {"data": "missing"}},
                 [
                     {
-                        "N_COMP_FF_IMAGE": "data attribute is missing",
+                        "PM-201-FE-CAM-1": "data attribute is missing",
                     },
                 ],
                 None,
@@ -834,17 +838,17 @@ class TestChannel:
                 {"image": {"data": 42}},
                 [
                     {
-                        "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
                         "should be ndarray",
                     },
                 ],
                 [
                     {
-                        "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
                         "should be ndarray",
                     },
                     {
-                        "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
                         "should be uint16 or uint8",
                     },
                 ],
@@ -854,7 +858,7 @@ class TestChannel:
                 {"waveform": {"x": "missing"}},
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "x attribute is missing",
+                        "PM-201-HJ-PD": "x attribute is missing",
                     },
                 ],
                 None,
@@ -864,14 +868,14 @@ class TestChannel:
                 {"waveform": {"x": 53}},
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "x attribute must be a list of floats",
+                        "PM-201-HJ-PD": "x attribute must be a list of floats",
                     },
                 ],
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "x attribute must be a list of floats",
+                        "PM-201-HJ-PD": "x attribute must be a list of floats",
                     },
-                    {"N_COMP_SPEC_TRACE": "x attribute has wrong shape"},
+                    {"PM-201-HJ-PD": "x attribute has wrong shape"},
                 ],
                 id="Waveform x invalid",
             ),
@@ -879,7 +883,7 @@ class TestChannel:
                 {"waveform": {"y": "missing"}},
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "y attribute is missing",
+                        "PM-201-HJ-PD": "y attribute is missing",
                     },
                 ],
                 None,
@@ -889,14 +893,14 @@ class TestChannel:
                 {"waveform": {"y": 53}},
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "y attribute must be a list of floats",
+                        "PM-201-HJ-PD": "y attribute must be a list of floats",
                     },
                 ],
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "y attribute must be a list of floats",
+                        "PM-201-HJ-PD": "y attribute must be a list of floats",
                     },
-                    {"N_COMP_SPEC_TRACE": "y attribute has wrong shape"},
+                    {"PM-201-HJ-PD": "y attribute has wrong shape"},
                 ],
                 id="Waveform y invalid",
             ),
@@ -908,25 +912,25 @@ class TestChannel:
                 },
                 [
                     {
-                        "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
                         "should be ndarray",
                     },
-                    {"GEM_SHOT_NUM_VALUE": "data attribute is missing"},
-                    {"N_COMP_SPEC_TRACE": "x attribute is missing"},
-                    {"N_COMP_SPEC_TRACE": "y attribute is missing"},
+                    {"PM-201-FE-EM": "data attribute is missing"},
+                    {"PM-201-HJ-PD": "x attribute is missing"},
+                    {"PM-201-HJ-PD": "y attribute is missing"},
                 ],
                 [
                     {
-                        "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
                         "should be ndarray",
                     },
                     {
-                        "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
                         "should be uint16 or uint8",
                     },
-                    {"GEM_SHOT_NUM_VALUE": "data attribute is missing"},
-                    {"N_COMP_SPEC_TRACE": "x attribute is missing"},
-                    {"N_COMP_SPEC_TRACE": "y attribute is missing"},
+                    {"PM-201-FE-EM": "data attribute is missing"},
+                    {"PM-201-HJ-PD": "x attribute is missing"},
+                    {"PM-201-HJ-PD": "y attribute is missing"},
                 ],
                 id="Mixed failed required attributes",
             ),
@@ -998,7 +1002,7 @@ class TestChannel:
                 {"scalar": {"units": "invalid"}},
                 [
                     {
-                        "N_COMP_FF_INTEGRATION": "units attribute has wrong datatype",
+                        "PM-201-PA2-EM": "units attribute has wrong datatype",
                     },
                 ],
                 id="Scalar units invalid",
@@ -1007,7 +1011,7 @@ class TestChannel:
                 {"image": {"exposure_time_s": "invalid"}},
                 [
                     {
-                        "N_COMP_FF_IMAGE": "exposure_time_s attribute has "
+                        "PM-201-FE-CAM-1": "exposure_time_s attribute has "
                         "wrong datatype",
                     },
                 ],
@@ -1017,7 +1021,7 @@ class TestChannel:
                 {"image": {"gain": "invalid"}},
                 [
                     {
-                        "N_COMP_FF_IMAGE": "gain attribute has wrong datatype",
+                        "PM-201-FE-CAM-1": "gain attribute has wrong datatype",
                     },
                 ],
                 id="Image gain invalid",
@@ -1026,7 +1030,7 @@ class TestChannel:
                 {"image": {"x_pixel_size": "invalid"}},
                 [
                     {
-                        "N_COMP_FF_IMAGE": "x_pixel_size attribute has wrong datatype",
+                        "PM-201-FE-CAM-1": "x_pixel_size attribute has wrong datatype",
                     },
                 ],
                 id="Image x_pixel_size invalid",
@@ -1035,7 +1039,7 @@ class TestChannel:
                 {"image": {"x_pixel_units": "invalid"}},
                 [
                     {
-                        "N_COMP_FF_IMAGE": "x_pixel_units attribute has wrong datatype",
+                        "PM-201-FE-CAM-1": "x_pixel_units attribute has wrong datatype",
                     },
                 ],
                 id="Image x_pixel_units invalid",
@@ -1044,7 +1048,7 @@ class TestChannel:
                 {"image": {"y_pixel_size": "invalid"}},
                 [
                     {
-                        "N_COMP_FF_IMAGE": "y_pixel_size attribute has wrong datatype",
+                        "PM-201-FE-CAM-1": "y_pixel_size attribute has wrong datatype",
                     },
                 ],
                 id="Image y_pixel_size invalid",
@@ -1053,7 +1057,7 @@ class TestChannel:
                 {"image": {"y_pixel_units": "invalid"}},
                 [
                     {
-                        "N_COMP_FF_IMAGE": "y_pixel_units attribute has wrong datatype",
+                        "PM-201-FE-CAM-1": "y_pixel_units attribute has wrong datatype",
                     },
                 ],
                 id="Image y_pixel_units invalid",
@@ -1062,7 +1066,7 @@ class TestChannel:
                 {"waveform": {"x_units": "invalid"}},
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "x_units attribute has wrong datatype",
+                        "PM-201-HJ-PD": "x_units attribute has wrong datatype",
                     },
                 ],
                 id="Waveform x_units invalid",
@@ -1071,7 +1075,7 @@ class TestChannel:
                 {"waveform": {"y_units": "invalid"}},
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "y_units attribute has wrong datatype",
+                        "PM-201-HJ-PD": "y_units attribute has wrong datatype",
                     },
                 ],
                 id="Waveform y_units invalid",
@@ -1087,32 +1091,14 @@ class TestChannel:
                     "waveform": {"x_units": "invalid", "y_units": "invalid"},
                 },
                 [
-                    {"N_COMP_FF_IMAGE": "exposure_time_s attribute has wrong datatype"},
-                    {"N_COMP_FF_IMAGE": "gain attribute has wrong datatype"},
-                    {"N_COMP_FF_IMAGE": "y_pixel_size attribute has wrong datatype"},
-                    {"N_COMP_FF_INTEGRATION": "units attribute has wrong datatype"},
-                    {"N_COMP_SPEC_TRACE": "x_units attribute has wrong datatype"},
-                    {"N_COMP_SPEC_TRACE": "y_units attribute has wrong datatype"},
+                    {"PM-201-FE-CAM-1": "exposure_time_s attribute has wrong datatype"},
+                    {"PM-201-FE-CAM-1": "gain attribute has wrong datatype"},
+                    {"PM-201-FE-CAM-1": "y_pixel_size attribute has wrong datatype"},
+                    {"PM-201-HJ-PD": "x_units attribute has wrong datatype"},
+                    {"PM-201-HJ-PD": "y_units attribute has wrong datatype"},
+                    {"PM-201-PA2-EM": "units attribute has wrong datatype"},
                 ],
                 id="Mixed invalid optional attributes",
-            ),
-            pytest.param(
-                {"waveform": {"thumbnail": "invalid"}},
-                [
-                    {
-                        "N_COMP_SPEC_TRACE": "thumbnail attribute has wrong datatype",
-                    },
-                ],
-                id="Waveform thumbnail invalid",
-            ),
-            pytest.param(
-                {"image": {"thumbnail": "invalid"}},
-                [
-                    {
-                        "N_COMP_FF_IMAGE": "thumbnail attribute has wrong datatype",
-                    },
-                ],
-                id="Image thumbnail invalid",
             ),
         ],
     )
@@ -1130,13 +1116,6 @@ class TestChannel:
             internal_failed_channel,
         ) = await create_test_hdf_file(optional_attributes=optional_attributes)
 
-        if "image" in optional_attributes:
-            if "thumbnail" in optional_attributes["image"]:
-                record_data.channels["N_COMP_FF_IMAGE"].thumbnail = 25
-        if "waveform" in optional_attributes:
-            if "thumbnail" in optional_attributes["waveform"]:
-                record_data.channels["N_COMP_SPEC_TRACE"].thumbnail = 25
-
         channel_checker = ingestion_validator.ChannelChecks(
             record_data,
             waveforms,
@@ -1153,12 +1132,10 @@ class TestChannel:
                 "x_pixel_units": "invalid",
                 "y_pixel_size": "invalid",
                 "y_pixel_units": "invalid",
-                "thumbnail": "invalid",
             },
             "waveform": {
                 "x_units": "invalid",
                 "y_units": "invalid",
-                "thumbnail": "invalid"
             },
         }
         """
@@ -1176,7 +1153,7 @@ class TestChannel:
                 {"scalar": {"data": ["list"]}},
                 [
                     {
-                        "GEM_SHOT_NUM_VALUE": "data has wrong datatype",
+                        "PM-201-FE-EM": "data has wrong datatype",
                     },
                 ],
                 None,
@@ -1186,17 +1163,17 @@ class TestChannel:
                 {"image": {"data": 6780}},
                 [
                     {
-                        "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
                         "should be uint16 or uint8",
                     },
                 ],
                 [
                     {
-                        "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
                         "should be ndarray",
                     },
                     {
-                        "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
                         "should be uint16 or uint8",
                     },
                 ],
@@ -1206,7 +1183,7 @@ class TestChannel:
                 {"image": {"data": np.array([[1, 2, 3], [4, 5, 6]])}},
                 [
                     {
-                        "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
                         "should be uint16 or uint8",
                     },
                 ],
@@ -1217,7 +1194,7 @@ class TestChannel:
                 {"image": {"data": np.array([1, 2, 3], dtype=np.uint8)}},
                 [
                     {
-                        "N_COMP_FF_IMAGE": "data attribute has wrong shape",
+                        "PM-201-FE-CAM-1": "data attribute has wrong shape",
                     },
                 ],
                 None,
@@ -1226,26 +1203,26 @@ class TestChannel:
             pytest.param(
                 {"waveform": {"x": "lgf"}},
                 [
-                    {"N_COMP_SPEC_TRACE": "x attribute has wrong shape"},
+                    {"PM-201-HJ-PD": "x attribute has wrong shape"},
                 ],
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "x attribute must be a list of floats",
+                        "PM-201-HJ-PD": "x attribute must be a list of floats",
                     },
-                    {"N_COMP_SPEC_TRACE": "x attribute has wrong shape"},
+                    {"PM-201-HJ-PD": "x attribute has wrong shape"},
                 ],
                 id="Waveform x attribute has wrong shape (not a list)",
             ),
             pytest.param(
                 {"waveform": {"y": 8765}},
                 [
-                    {"N_COMP_SPEC_TRACE": "y attribute has wrong shape"},
+                    {"PM-201-HJ-PD": "y attribute has wrong shape"},
                 ],
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "y attribute must be a list of floats",
+                        "PM-201-HJ-PD": "y attribute must be a list of floats",
                     },
-                    {"N_COMP_SPEC_TRACE": "y attribute has wrong shape"},
+                    {"PM-201-HJ-PD": "y attribute has wrong shape"},
                 ],
                 id="Waveform y attribute has wrong shape (not a list)",
             ),
@@ -1253,16 +1230,16 @@ class TestChannel:
                 {"waveform": {"x": ["lgf"]}},
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "x attribute has wrong datatype, should "
+                        "PM-201-HJ-PD": "x attribute has wrong datatype, should "
                         "be a list of floats",
                     },
                 ],
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "x attribute must be a list of floats",
+                        "PM-201-HJ-PD": "x attribute must be a list of floats",
                     },
                     {
-                        "N_COMP_SPEC_TRACE": "x attribute has wrong datatype, should "
+                        "PM-201-HJ-PD": "x attribute has wrong datatype, should "
                         "be a list of floats",
                     },
                 ],
@@ -1272,16 +1249,16 @@ class TestChannel:
                 {"waveform": {"y": ["8765"]}},
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "y attribute has wrong datatype, should "
+                        "PM-201-HJ-PD": "y attribute has wrong datatype, should "
                         "be a list of floats",
                     },
                 ],
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "y attribute must be a list of floats",
+                        "PM-201-HJ-PD": "y attribute must be a list of floats",
                     },
                     {
-                        "N_COMP_SPEC_TRACE": "y attribute has wrong datatype, should "
+                        "PM-201-HJ-PD": "y attribute has wrong datatype, should "
                         "be a list of floats",
                     },
                 ],
@@ -1334,7 +1311,7 @@ class TestChannel:
                 {"scalar": ["dataset"]},
                 [
                     {
-                        "GEM_WP_POS_VALUE": "unexpected group or "
+                        "PM-201-FE-CAM-2-CENY": "unexpected group or "
                         "dataset in channel group",
                     },
                 ],
@@ -1344,7 +1321,7 @@ class TestChannel:
                 {"scalar": ["group"]},
                 [
                     {
-                        "GEM_WP_POS_VALUE": "unexpected group or "
+                        "PM-201-FE-CAM-2-CENY": "unexpected group or "
                         "dataset in channel group",
                     },
                 ],
@@ -1354,7 +1331,7 @@ class TestChannel:
                 {"scalar": ["dataset", "group"]},
                 [
                     {
-                        "GEM_WP_POS_VALUE": "unexpected group or "
+                        "PM-201-FE-CAM-2-CENY": "unexpected group or "
                         "dataset in channel group",
                     },
                 ],
@@ -1364,7 +1341,7 @@ class TestChannel:
                 {"image": ["dataset"]},
                 [
                     {
-                        "N_COMP_FF_IMAGE": "unexpected group or "
+                        "PM-201-FE-CAM-1": "unexpected group or "
                         "dataset in channel group",
                     },
                 ],
@@ -1374,7 +1351,7 @@ class TestChannel:
                 {"image": ["group"]},
                 [
                     {
-                        "N_COMP_FF_IMAGE": "unexpected group or "
+                        "PM-201-FE-CAM-1": "unexpected group or "
                         "dataset in channel group",
                     },
                 ],
@@ -1384,7 +1361,7 @@ class TestChannel:
                 {"image": ["dataset", "group"]},
                 [
                     {
-                        "N_COMP_FF_IMAGE": "unexpected group or "
+                        "PM-201-FE-CAM-1": "unexpected group or "
                         "dataset in channel group",
                     },
                 ],
@@ -1394,7 +1371,7 @@ class TestChannel:
                 {"waveform": ["dataset2"]},
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "unexpected group or "
+                        "PM-201-HJ-PD": "unexpected group or "
                         "dataset in channel group",
                     },
                 ],
@@ -1404,7 +1381,7 @@ class TestChannel:
                 {"waveform": ["group2"]},
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "unexpected group or "
+                        "PM-201-HJ-PD": "unexpected group or "
                         "dataset in channel group",
                     },
                 ],
@@ -1414,7 +1391,7 @@ class TestChannel:
                 {"waveform": ["dataset1", "dataset2", "group1", "group2"]},
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "unexpected group or "
+                        "PM-201-HJ-PD": "unexpected group or "
                         "dataset in channel group",
                     },
                 ],
@@ -1428,15 +1405,15 @@ class TestChannel:
                 },
                 [
                     {
-                        "GEM_WP_POS_VALUE": "unexpected group or "
+                        "PM-201-FE-CAM-1": "unexpected group or "
                         "dataset in channel group",
                     },
                     {
-                        "N_COMP_FF_IMAGE": "unexpected group or "
+                        "PM-201-FE-CAM-2-CENY": "unexpected group or "
                         "dataset in channel group",
                     },
                     {
-                        "N_COMP_SPEC_TRACE": "unexpected group or "
+                        "PM-201-HJ-PD": "unexpected group or "
                         "dataset in channel group",
                     },
                 ],
@@ -1590,12 +1567,10 @@ class TestChannel:
                         "x_pixel_units": "invalid",
                         "y_pixel_size": "invalid",
                         "y_pixel_units": "invalid",
-                        "thumbnail": "invalid",
                     },
                     "waveform": {
                         "x_units": "invalid",
                         "y_units": "invalid",
-                        "thumbnail": "invalid",
                     },
                 },
                 {
@@ -1607,18 +1582,18 @@ class TestChannel:
                 True,
                 [
                     {
-                        "GEM_SHOT_SOURCE_STRING": "channel_dtype attribute is missing "
+                        "PM-201-FE-CAM-2-CENX": "channel_dtype attribute is missing "
                         "(cannot perform other checks without)",
                     },
-                    {"GEM_SHOT_NUM_VALUE": "data attribute is missing"},
-                    {"N_COMP_FF_INTEGRATION": "units attribute has wrong datatype"},
+                    {"PM-201-FE-EM": "data attribute is missing"},
+                    {"PM-201-PA2-EM": "units attribute has wrong datatype"},
                     {
-                        "GEM_WP_POS_VALUE": "unexpected group or dataset "
+                        "PM-201-FE-CAM-2-CENY": "unexpected group or dataset "
                         "in channel group",
                     },
-                    {"N_COMP_FF_IMAGE": "unexpected group or dataset in channel group"},
+                    {"PM-201-FE-CAM-1": "unexpected group or dataset in channel group"},
                     {
-                        "N_COMP_SPEC_TRACE": "unexpected group or dataset "
+                        "PM-201-HJ-PD": "unexpected group or dataset "
                         "in channel group",
                     },
                     {
@@ -1708,12 +1683,10 @@ class TestChannel:
                     "x_pixel_units": "invalid",
                     "y_pixel_size": "invalid",
                     "y_pixel_units": "invalid",
-                    "thumbnail": "invalid",
                 },
                 "waveform": {
                     "x_units": "invalid",
                     "y_units": "invalid",
-                    "thumbnail": "invalid"
                 },
             }
 
@@ -1747,13 +1720,13 @@ class TestChannel:
                 "test2",
                 [
                     {
-                        "N_COMP_FF_IMAGE": "x_pixel_size attribute has wrong datatype",
+                        "PM-201-FE-CAM-1": "x_pixel_size attribute has wrong datatype",
                     },
                     {
-                        "N_COMP_FF_IMAGE": "x_pixel_units attribute has wrong datatype",
+                        "PM-201-FE-CAM-1": "x_pixel_units attribute has wrong datatype",
                     },
                     {
-                        "N_COMP_FF_IMAGE": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
                         "should be uint16 or uint8",
                     },
                 ],
@@ -1763,13 +1736,13 @@ class TestChannel:
                 "test3",
                 [
                     {
-                        "N_COMP_SPEC_TRACE": "y attribute must be a list of floats",
+                        "PM-201-HJ-PD": "y attribute must be a list of floats",
                     },
                     {
-                        "N_COMP_SPEC_TRACE": "x_units attribute has wrong datatype",
+                        "PM-201-HJ-PD": "x_units attribute has wrong datatype",
                     },
                     {
-                        "N_COMP_SPEC_TRACE": "y attribute has wrong shape",
+                        "PM-201-HJ-PD": "y attribute has wrong shape",
                     },
                 ],
                 id="Waveform optional attributes and dataset fail",
@@ -1778,7 +1751,7 @@ class TestChannel:
                 "test4",
                 [
                     {
-                        "N_COMP_FF_IMAGE": "unexpected group or dataset in "
+                        "PM-201-FE-CAM-1": "unexpected group or dataset in "
                         "channel group",
                     },
                 ],
@@ -1892,34 +1865,36 @@ class TestPartialImport:
                 {
                     "accepted channels": [],
                     "rejected channels": {
-                        "GEM_SHOT_NUM_VALUE": "Channel is already present in "
+                        "PM-201-FE-EM": "Channel is already present in "
                         "existing record",
-                        "GEM_SHOT_SOURCE_STRING": "Channel is already present "
+                        "PM-201-FE-CAM-2-CENX": "Channel is already present "
                         "in existing record",
-                        "GEM_SHOT_TYPE_STRING": "Channel is already present in "
+                        "PM-201-FE-CAM-2-FWHMX": "Channel is already present in "
                         "existing record",
-                        "GEM_WP_POS_VALUE": "Channel is already present in "
+                        "PM-201-FE-CAM-2-CENY": "Channel is already present in "
                         "existing record",
-                        "N_COMP_CALCULATEDE_VALUE": "Channel is already present "
+                        "PM-201-FE-CAM-2-FWHMY": "Channel is already present "
                         "in existing record",
-                        "N_COMP_FF_E": "Channel is already present in existing record",
-                        "N_COMP_FF_IMAGE": "Channel is already present in existing "
+                        "PM-201-PA1-EM": "Channel is already present in existing "
                         "record",
-                        "N_COMP_FF_INTEGRATION": "Channel is already present in "
-                        "existing record",
-                        "N_COMP_FF_XPOS": "Channel is already present in existing "
+                        "PM-201-FE-CAM-1": "Channel is already present in existing "
                         "record",
-                        "N_COMP_FF_YPOS": "Channel is already present in existing "
+                        "PM-201-PA2-EM": "Channel is already present in "
+                        "existing record",
+                        "PM-201-TJ-EM": "Channel is already present in existing "
                         "record",
-                        "N_COMP_NF_IMAGE": "Channel is already present in existing "
+                        "PM-201-TJ-CAM-2-CENX": "Channel is already present in "
+                        "existing record",
+                        "PM-201-FE-CAM-2": "Channel is already present in existing "
                         "record",
-                        "N_COMP_SPEC_TRACE": "Channel is already present in "
+                        "PM-201-HJ-PD": "Channel is already present in "
                         "existing record",
-                        "N_COMP_THROUGHPUTE_VALUE": "Channel is already present in "
+                        "PM-201-TJ-CAM-2-FWHMX": "Channel is already present in "
                         "existing record",
-                        "TA3_SHOT_NUM_VALUE": "Channel is already present in "
+                        "PM-201-TJ-CAM-2-CENY": "Channel is already present in "
                         "existing record",
-                        "Type": "Channel is already present in existing record",
+                        "PM-201-TJ-CAM-2-FWHMY": "Channel is already present in "
+                        "existing record",
                     },
                 },
                 id="All channels match",
@@ -1928,34 +1903,35 @@ class TestPartialImport:
                 "some",
                 {
                     "accepted channels": [
-                        "GEM_SHOT_NUM_VALUE",
-                        "N_COMP_FF_YPOS",
-                        "Type",
+                        "PM-201-FE-EM",
+                        "PM-201-TJ-CAM-2-CENX",
+                        "PM-201-TJ-CAM-2-FWHMY",
                     ],
                     "rejected channels": {
-                        "GEM_SHOT_SOURCE_STRING": "Channel is already present in "
+                        "PM-201-FE-CAM-2-CENX": "Channel is already present in "
                         "existing record",
-                        "GEM_SHOT_TYPE_STRING": "Channel is already present in "
+                        "PM-201-FE-CAM-2-FWHMX": "Channel is already present in "
                         "existing record",
-                        "GEM_WP_POS_VALUE": "Channel is already present in existing "
+                        "PM-201-FE-CAM-2-CENY": "Channel is already present in "
+                        "existing record",
+                        "PM-201-FE-CAM-2-FWHMY": "Channel is already present in "
+                        "existing record",
+                        "PM-201-PA1-EM": "Channel is already present in existing "
                         "record",
-                        "N_COMP_CALCULATEDE_VALUE": "Channel is already present in "
-                        "existing record",
-                        "N_COMP_FF_E": "Channel is already present in existing record",
-                        "N_COMP_FF_IMAGE": "Channel is already present in existing "
+                        "PM-201-FE-CAM-1": "Channel is already present in existing "
                         "record",
-                        "N_COMP_FF_INTEGRATION": "Channel is already present in "
+                        "PM-201-PA2-EM": "Channel is already present in "
                         "existing record",
-                        "N_COMP_FF_XPOS": "Channel is already present in existing "
+                        "PM-201-TJ-EM": "Channel is already present in existing "
                         "record",
-                        "N_COMP_NF_IMAGE": "Channel is already present in existing "
+                        "PM-201-FE-CAM-2": "Channel is already present in existing "
                         "record",
-                        "N_COMP_SPEC_TRACE": "Channel is already present in "
+                        "PM-201-HJ-PD": "Channel is already present in "
                         "existing record",
-                        "N_COMP_THROUGHPUTE_VALUE": "Channel is already present in "
+                        "PM-201-TJ-CAM-2-FWHMX": "Channel is already present in "
                         "existing record",
-                        "TA3_SHOT_NUM_VALUE": "Channel is already present in existing "
-                        "record",
+                        "PM-201-TJ-CAM-2-CENY": "Channel is already present in "
+                        "existing record",
                     },
                 },
                 id="Some channels match",
@@ -1964,21 +1940,21 @@ class TestPartialImport:
                 "none",
                 {
                     "accepted channels": [
-                        "GEM_SHOT_NUM_VALUE",
-                        "GEM_SHOT_SOURCE_STRING",
-                        "GEM_SHOT_TYPE_STRING",
-                        "GEM_WP_POS_VALUE",
-                        "N_COMP_CALCULATEDE_VALUE",
-                        "N_COMP_FF_E",
-                        "N_COMP_FF_IMAGE",
-                        "N_COMP_FF_INTEGRATION",
-                        "N_COMP_FF_XPOS",
-                        "N_COMP_FF_YPOS",
-                        "N_COMP_NF_IMAGE",
-                        "N_COMP_SPEC_TRACE",
-                        "N_COMP_THROUGHPUTE_VALUE",
-                        "TA3_SHOT_NUM_VALUE",
-                        "Type",
+                        "PM-201-FE-CAM-1",
+                        "PM-201-FE-CAM-2",
+                        "PM-201-FE-CAM-2-CENX",
+                        "PM-201-FE-CAM-2-CENY",
+                        "PM-201-FE-CAM-2-FWHMX",
+                        "PM-201-FE-CAM-2-FWHMY",
+                        "PM-201-FE-EM",
+                        "PM-201-HJ-PD",
+                        "PM-201-PA1-EM",
+                        "PM-201-PA2-EM",
+                        "PM-201-TJ-CAM-2-CENX",
+                        "PM-201-TJ-CAM-2-CENY",
+                        "PM-201-TJ-CAM-2-FWHMX",
+                        "PM-201-TJ-CAM-2-FWHMY",
+                        "PM-201-TJ-EM",
                     ],
                     "rejected channels": {},
                 },
@@ -2003,29 +1979,29 @@ class TestPartialImport:
             stored_record = copy.deepcopy(record_data)
             channels = stored_record.channels
             # alter so only some match
-            channels["GEM"] = channels.pop("GEM_SHOT_NUM_VALUE")
-            channels["COMP"] = channels.pop("N_COMP_FF_YPOS")
-            channels["TYP"] = channels.pop("Type")
+            channels["GEM"] = channels.pop("PM-201-FE-EM")
+            channels["COMP"] = channels.pop("PM-201-TJ-CAM-2-CENX")
+            channels["TYP"] = channels.pop("PM-201-TJ-CAM-2-FWHMY")
 
         if test_type == "none":
             stored_record = copy.deepcopy(record_data)
             channels = stored_record.channels
             # alter so all match
-            channels["a"] = channels.pop("GEM_SHOT_NUM_VALUE")
-            channels["b"] = channels.pop("GEM_SHOT_SOURCE_STRING")
-            channels["c"] = channels.pop("GEM_SHOT_TYPE_STRING")
-            channels["d"] = channels.pop("GEM_WP_POS_VALUE")
-            channels["e"] = channels.pop("N_COMP_CALCULATEDE_VALUE")
-            channels["f"] = channels.pop("N_COMP_FF_E")
-            channels["g"] = channels.pop("N_COMP_FF_IMAGE")
-            channels["h"] = channels.pop("N_COMP_FF_INTEGRATION")
-            channels["i"] = channels.pop("N_COMP_FF_XPOS")
-            channels["j"] = channels.pop("N_COMP_FF_YPOS")
-            channels["k"] = channels.pop("N_COMP_NF_IMAGE")
-            channels["l"] = channels.pop("N_COMP_SPEC_TRACE")
-            channels["m"] = channels.pop("N_COMP_THROUGHPUTE_VALUE")
-            channels["n"] = channels.pop("TA3_SHOT_NUM_VALUE")
-            channels["o"] = channels.pop("Type")
+            channels["a"] = channels.pop("PM-201-FE-EM")
+            channels["b"] = channels.pop("PM-201-FE-CAM-2-CENX")
+            channels["c"] = channels.pop("PM-201-FE-CAM-2-FWHMX")
+            channels["d"] = channels.pop("PM-201-FE-CAM-2-CENY")
+            channels["e"] = channels.pop("PM-201-FE-CAM-2-FWHMY")
+            channels["f"] = channels.pop("PM-201-PA1-EM")
+            channels["g"] = channels.pop("PM-201-FE-CAM-1")
+            channels["h"] = channels.pop("PM-201-PA2-EM")
+            channels["i"] = channels.pop("PM-201-TJ-EM")
+            channels["j"] = channels.pop("PM-201-TJ-CAM-2-CENX")
+            channels["k"] = channels.pop("PM-201-FE-CAM-2")
+            channels["l"] = channels.pop("PM-201-HJ-PD")
+            channels["m"] = channels.pop("PM-201-TJ-CAM-2-FWHMX")
+            channels["n"] = channels.pop("PM-201-TJ-CAM-2-CENY")
+            channels["o"] = channels.pop("PM-201-TJ-CAM-2-FWHMY")
 
         partial_import_checker = ingestion_validator.PartialImportChecks(
             record_data,
@@ -2033,3 +2009,64 @@ class TestPartialImport:
         )
 
         assert partial_import_checker.channel_checks() == response
+
+
+class TestIntegrationIngestData:
+    @pytest.mark.parametrize(
+        "test_type, response",
+        [
+            pytest.param(
+                "match",
+                "accept record and merge",
+                id="Metadata matches",
+            ),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_ingest_data(
+        self,
+        remove_hdf_file,
+        test_app: TestClient,
+        test_type,
+        response,
+    ):
+
+        (
+            record_data,
+            waveforms,
+            images,
+            internal_failed_channel,
+        ) = await create_test_hdf_file()
+        stored_record = None
+
+        if stored_record:
+            partial_import_checker = ingestion_validator.PartialImportChecks(
+                record_data,
+                stored_record,
+            )
+            accept_type = partial_import_checker.metadata_checks()
+            channel_list = partial_import_checker.channel_checks()
+
+            # TODO do something here about merging stored and incoming
+
+        file_checker = ingestion_validator.FileChecks(record_data)
+        warning = file_checker.epac_data_version_checks()
+
+        print(warning)
+
+        record_checker = ingestion_validator.RecordChecks(record_data)
+        record_checker.active_area_checks()
+        record_checker.optional_metadata_checks()
+
+        channel_checker = ingestion_validator.ChannelChecks(
+            record_data,
+            waveforms,
+            images,
+            internal_failed_channel,
+        )
+        channel_list = await channel_checker.channel_checks()
+
+        # test_response = test_app.get(
+        #    f"/records/{record_id}?truncate={json.dumps(truncate)}",
+        #    headers={"Authorization": f"Bearer {login_and_get_token}"},
+        # )
