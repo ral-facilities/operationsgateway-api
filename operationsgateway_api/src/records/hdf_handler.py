@@ -135,7 +135,6 @@ class HDFDataHandler:
                     self.waveforms.append(
                         WaveformModel(
                             path=waveform_path,
-                            #_id=waveform_id,
                             x=value["x"][()],
                             y=value["y"][()],
                         ),

@@ -54,9 +54,8 @@ class Waveform:
     def get_channel_name_from_id(self) -> str:
         """
         From a waveform path, extract and return the channel name associated with the
-        waveform. For example, 20220408140310/N_COMP_SPEC_TRACE.json -> N_COMP_SPEC_TRACE
-
-        20220408140310/N_COMP_SPEC_TRACE.json
+        waveform.
+        For example, 20220408140310/N_COMP_SPEC_TRACE.json -> N_COMP_SPEC_TRACE
         """
         filename = self.waveform.path.split("/")[1:][0]
         channel_name = filename.split(".json")[0]
@@ -103,7 +102,7 @@ class Waveform:
         `MissingDocumentError` will be raised
         """
         echo = EchoInterface()
-    
+
         try:
             waveform_file = echo.download_file_object(
                 Waveform.get_full_path(waveform_path),

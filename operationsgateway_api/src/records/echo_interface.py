@@ -57,7 +57,7 @@ class EchoInterface:
                 Config.config.echo.bucket_name,
             )
             raise EchoS3Error("Bucket for image storage cannot be found")
-        
+
     def file_search(self, path):
         # https://www.google.com/search?q=boto3+search+for+file+in+s3
         pass

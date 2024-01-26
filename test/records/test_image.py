@@ -125,7 +125,10 @@ class TestImage:
 
         assert len(mock_upload_file_object.call_args.args) == 2
         assert isinstance(mock_upload_file_object.call_args.args[0], BytesIO)
-        assert mock_upload_file_object.call_args.args[1] == f"images/{self.test_image_path}"
+        assert (
+            mock_upload_file_object.call_args.args[1]
+            == f"images/{self.test_image_path}"
+        )
 
     @patch(
         "operationsgateway_api.src.config.Config.config.echo.url",

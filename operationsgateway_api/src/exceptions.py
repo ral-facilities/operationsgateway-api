@@ -98,6 +98,7 @@ class ExperimentDetailsError(ApiError):
         super().__init__(msg, *args, **kwargs)
         self.status_code = 500
 
+
 class WaveformError(ApiError):
     def __init__(self, msg="Waveform error", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)
