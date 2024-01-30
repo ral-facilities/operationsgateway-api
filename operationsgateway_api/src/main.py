@@ -20,6 +20,7 @@ from operationsgateway_api.src.routes import (
     auth,
     channels,
     experiments,
+    export,
     images,
     ingest_data,
     records,
@@ -122,6 +123,7 @@ add_router_to_app(waveforms.router)
 add_router_to_app(auth.router)
 add_router_to_app(channels.router)
 add_router_to_app(experiments.router)
+add_router_to_app(export.router)
 add_router_to_app(sessions.router)
 add_router_to_app(user_preferences.router)
 
