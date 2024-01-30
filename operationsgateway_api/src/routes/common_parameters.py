@@ -1,9 +1,6 @@
 from datetime import datetime
 
-from dateutil.parser import parse
 import pymongo
-
-from operationsgateway_api.src.exceptions import QueryParameterError
 
 
 class ParameterHandler:
@@ -49,17 +46,8 @@ class ParameterHandler:
                 ParameterHandler.encode_date_for_conditions(element)
         elif isinstance(value, str):
             try:
-                parse(value, fuzzy=False)
-            except ValueError:
-                # Not a date, nothing to do here
-                return
-
-            try:
                 new_date = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
-            except ValueError as exc:
-                raise QueryParameterError(
-                    "Incorrect date format used in query parameter. Use"
-                    " %Y-%m-%dT%H:%M:%S to filter by datetimes",
-                ) from exc
-
+            except ValueError:
+                # Not a date in the correct format, nothing to do here
+                return
             return new_date
