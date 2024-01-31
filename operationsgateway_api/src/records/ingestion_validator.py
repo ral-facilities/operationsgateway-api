@@ -518,7 +518,9 @@ class PartialImportChecks:
         ingested_metadata = (self.ingested_record).metadata
         stored_metadata = (self.stored_record).metadata
 
-        time_match = (ingested_metadata.timestamp).replace(tzinfo=None) == stored_metadata.timestamp
+        time_match = (ingested_metadata.timestamp).replace(
+            tzinfo=None,
+        ) == stored_metadata.timestamp
         epac_match = (
             ingested_metadata.epac_ops_data_version
             == stored_metadata.epac_ops_data_version
@@ -529,13 +531,7 @@ class PartialImportChecks:
             ingested_metadata.active_experiment == stored_metadata.active_experiment
         )
 
-        if (
-            time_match,
-            epac_match,
-            shot_match,
-            area_match,
-            experiment_match,
-        ):
+        if time_match and epac_match and shot_match and area_match and experiment_match:
             log.info("record metadata matches existing record perfectly")
             return "accept_merge"
 
