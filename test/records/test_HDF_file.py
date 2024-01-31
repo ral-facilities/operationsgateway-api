@@ -418,7 +418,7 @@ async def create_test_hdf_file(  # noqa: C901
 
 def create_channel_response(responses, extra=None, channels=False):
     model_response = {
-        "accepted channels": [
+        "accepted_channels": [
             "PM-201-FE-CAM-1",
             "PM-201-FE-CAM-2",
             "PM-201-FE-CAM-2-CENX",
@@ -435,25 +435,25 @@ def create_channel_response(responses, extra=None, channels=False):
             "PM-201-TJ-CAM-2-FWHMY",
             "PM-201-TJ-EM",
         ],
-        "rejected channels": {},
+        "rejected_channels": {},
     }
 
     if extra:
         responses = extra
 
     if channels:
-        model_response["accepted channels"].remove("PM-201-TJ-CAM-2-CENX")
+        model_response["accepted_channels"].remove("PM-201-TJ-CAM-2-CENX")
 
     for response in responses:
         for channel, message in response.items():
-            if channel in model_response["accepted channels"]:
-                model_response["accepted channels"].remove(channel)
+            if channel in model_response["accepted_channels"]:
+                model_response["accepted_channels"].remove(channel)
 
-            if channel not in model_response["rejected channels"]:
-                model_response["rejected channels"][channel] = [message]
+            if channel not in model_response["rejected_channels"]:
+                model_response["rejected_channels"][channel] = [message]
             else:
-                if message not in model_response["rejected channels"][channel]:
-                    (model_response["rejected channels"][channel]).extend([message])
+                if message not in model_response["rejected_channels"][channel]:
+                    (model_response["rejected_channels"][channel]).extend([message])
 
     return model_response
 
@@ -667,7 +667,7 @@ class TestChannel:
             assert await async_function() == []
 
         assert await channel_checker.channel_checks() == {
-            "accepted channels": [
+            "accepted_channels": [
                 "PM-201-FE-CAM-1",
                 "PM-201-FE-CAM-2",
                 "PM-201-FE-CAM-2-CENX",
@@ -684,7 +684,7 @@ class TestChannel:
                 "PM-201-TJ-CAM-2-FWHMY",
                 "PM-201-TJ-EM",
             ],
-            "rejected channels": {},
+            "rejected_channels": {},
         }
 
     @pytest.mark.parametrize(
@@ -1791,7 +1791,7 @@ class TestPartialImport:
         [
             pytest.param(
                 "match",
-                "accept record and merge",
+                "accept_merge",
                 id="Metadata matches",
             ),
             pytest.param(
@@ -1806,7 +1806,7 @@ class TestPartialImport:
             ),
             pytest.param(
                 "neither",
-                "accept as a new record",
+                "accept_new",
                 id="Neither shotnum nor timestamp matches",
             ),
         ],
@@ -1863,8 +1863,8 @@ class TestPartialImport:
             pytest.param(
                 "all",
                 {
-                    "accepted channels": [],
-                    "rejected channels": {
+                    "accepted_channels": [],
+                    "rejected_channels": {
                         "PM-201-FE-EM": "Channel is already present in "
                         "existing record",
                         "PM-201-FE-CAM-2-CENX": "Channel is already present "
@@ -1902,12 +1902,12 @@ class TestPartialImport:
             pytest.param(
                 "some",
                 {
-                    "accepted channels": [
+                    "accepted_channels": [
                         "PM-201-FE-EM",
                         "PM-201-TJ-CAM-2-CENX",
                         "PM-201-TJ-CAM-2-FWHMY",
                     ],
-                    "rejected channels": {
+                    "rejected_channels": {
                         "PM-201-FE-CAM-2-CENX": "Channel is already present in "
                         "existing record",
                         "PM-201-FE-CAM-2-FWHMX": "Channel is already present in "
@@ -1939,7 +1939,7 @@ class TestPartialImport:
             pytest.param(
                 "none",
                 {
-                    "accepted channels": [
+                    "accepted_channels": [
                         "PM-201-FE-CAM-1",
                         "PM-201-FE-CAM-2",
                         "PM-201-FE-CAM-2-CENX",
@@ -1956,7 +1956,7 @@ class TestPartialImport:
                         "PM-201-TJ-CAM-2-FWHMY",
                         "PM-201-TJ-EM",
                     ],
-                    "rejected channels": {},
+                    "rejected_channels": {},
                 },
                 id="No channels match",
             ),
@@ -2017,7 +2017,7 @@ class TestIntegrationIngestData:
         [
             pytest.param(
                 "match",
-                "accept record and merge",
+                "accept_merge",
                 id="Metadata matches",
             ),
         ],
@@ -2045,14 +2045,10 @@ class TestIntegrationIngestData:
                 stored_record,
             )
             accept_type = partial_import_checker.metadata_checks()
-            channel_list = partial_import_checker.channel_checks()
-
-            # TODO do something here about merging stored and incoming
+            partial_channel_dict = partial_import_checker.channel_checks()
 
         file_checker = ingestion_validator.FileChecks(record_data)
         warning = file_checker.epac_data_version_checks()
-
-        print(warning)
 
         record_checker = ingestion_validator.RecordChecks(record_data)
         record_checker.active_area_checks()
@@ -2064,9 +2060,23 @@ class TestIntegrationIngestData:
             images,
             internal_failed_channel,
         )
-        channel_list = await channel_checker.channel_checks()
+        channel_dict = await channel_checker.channel_checks()
 
         # test_response = test_app.get(
-        #    f"/records/{record_id}?truncate={json.dumps(truncate)}",
+        #    f"/submit/hdf",
         #    headers={"Authorization": f"Bearer {login_and_get_token}"},
+        #    files=test_file
         # )
+
+
+# List of integration tests:
+#     all channels fail
+#     file exists and channels removed by both checks
+#     file rejected
+#     record rejected (record)
+#     record rejected (partial import)
+#     record merges (partial import)
+#     record accepted as new (partial import)
+#     channel failed (waveform data removed)
+#     channel failed (image data removed)
+#     generic channel fail

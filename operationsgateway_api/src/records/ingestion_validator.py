@@ -502,8 +502,8 @@ class ChannelChecks:
         ]
 
         channel_response = {
-            "accepted channels": accepted_channels,
-            "rejected channels": rejected_channels,
+            "accepted_channels": accepted_channels,
+            "rejected_channels": rejected_channels,
         }
 
         return channel_response
@@ -518,7 +518,7 @@ class PartialImportChecks:
         ingested_metadata = (self.ingested_record).metadata
         stored_metadata = (self.stored_record).metadata
 
-        time_match = ingested_metadata.timestamp == stored_metadata.timestamp
+        time_match = (ingested_metadata.timestamp).replace(tzinfo=None) == stored_metadata.timestamp
         epac_match = (
             ingested_metadata.epac_ops_data_version
             == stored_metadata.epac_ops_data_version
@@ -529,9 +529,15 @@ class PartialImportChecks:
             ingested_metadata.active_experiment == stored_metadata.active_experiment
         )
 
-        if ingested_metadata == stored_metadata:
+        if (
+            time_match,
+            epac_match,
+            shot_match,
+            area_match,
+            experiment_match,
+        ):
             log.info("record metadata matches existing record perfectly")
-            return "accept record and merge"
+            return "accept_merge"
 
         elif (
             time_match
@@ -552,14 +558,14 @@ class PartialImportChecks:
             raise RejectRecordError("shotnum matches, other metadata does not")
 
         elif not time_match and not shot_match:
-            return "accept as a new record"
+            return "accept_new"
 
     def channel_checks(self):
         ingested_channels = (self.ingested_record).channels
         stored_channels = (self.stored_record).channels
 
-        rejected_channels = {}
         accepted_channels = []
+        rejected_channels = {}
 
         for key in list(ingested_channels.keys()):
             if key in stored_channels:
@@ -568,8 +574,8 @@ class PartialImportChecks:
                 accepted_channels.append(key)
 
         channel_response = {
-            "accepted channels": accepted_channels,
-            "rejected channels": rejected_channels,
+            "accepted_channels": accepted_channels,
+            "rejected_channels": rejected_channels,
         }
 
         return channel_response

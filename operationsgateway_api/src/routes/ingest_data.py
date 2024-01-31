@@ -55,13 +55,14 @@ async def submit_hdf(
 
     stored_record = await record_original.find_existing_record()
     ################################################################################
+    accept_type = None
     if stored_record:
         partial_import_checker = ingestion_validator.PartialImportChecks(
             record_data,
             stored_record,
         )
         accept_type = partial_import_checker.metadata_checks()
-        channel_dict = partial_import_checker.channel_checks()
+        partial_channel_dict = partial_import_checker.channel_checks()
 
     file_checker = ingestion_validator.FileChecks(record_data)
     warning = file_checker.epac_data_version_checks()
@@ -77,10 +78,42 @@ async def submit_hdf(
         internal_failed_channel,
     )
     channel_dict = await channel_checker.channel_checks()
+    
+    if stored_record:
+        for key in channel_dict["rejected_channels"].keys():
+            if key in partial_channel_dict["accepted_channels"]:
+                partial_channel_dict["accepted_channels"].remove(key)
+                (partial_channel_dict["rejected_channels"])[key] = channel_dict["rejected_channels"][key]
+        checker_response = partial_channel_dict
+    else:
+        checker_response = channel_dict
+        
+    if warning:
+        checker_response["warnings"] = list(warning)
+    else:
+        checker_response["warnings"] = []
+        
     ################################################################################
 
-    # TODO loop though rejected things and remove channels from record_data
-    # also delete from waveforms and images (by using the key)
+    for key in checker_response["rejected_channels"].keys():
+        channel = record_data.channels[key]
+        
+        if channel.metadata.channel_dtype == "image":
+            image_path = channel.image_path
+            for image in images:
+                if image.path == image_path:
+                    images.remove(image)
+            del record_data.channels[key]
+            
+        elif channel.metadata.channel_dtype == "waveform":
+            waveform_id = channel.waveform_id
+            for waveform in waveforms:
+                if waveform.id_ == waveform_id:
+                    waveforms.remove(waveform)
+            del record_data.channels[key]
+            
+        else:
+            del record_data.channels[key]
 
     record = Record(record_data)
 
@@ -101,19 +134,25 @@ async def submit_hdf(
         pool = ThreadPool(processes=Config.config.images.upload_image_threads)
         pool.map(Image.upload_image, image_instances)
 
-    if stored_record:  # this function is used for partial imports
+    if stored_record and accept_type == "accept_merge":
         log.debug(
             "Record matching ID %s already exists in the database, updating existing"
             " document",
             record.record.id_,
         )
         await record.update()
-        return f"Updated {stored_record.id_}"
+        content = {
+            "message": f"Updated {stored_record.id_}", "response": checker_response
+        }
+        return content
     else:
         log.debug("Inserting new record into MongoDB")
         await record.insert()
+        content = {
+            "message": f"Added as {record.record.id_}", "response": checker_response
+        }
         return JSONResponse(
-            record.record.id_,
+            content,
             status_code=status.HTTP_201_CREATED,
             headers={"Location": f"/records/{record.record.id_}"},
         )
