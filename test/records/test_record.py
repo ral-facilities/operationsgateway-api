@@ -1,4 +1,8 @@
-import numpy as np
+import base64
+import io
+
+import imagehash
+from PIL import Image
 import pytest
 
 from operationsgateway_api.src.exceptions import FunctionParseError
@@ -29,17 +33,15 @@ class TestRecord:
         ],
     )
     @pytest.mark.parametrize(
-        "functions, all_variables, values",
+        "functions, values",
         [
             pytest.param(
                 [
                     {
                         "name": "a",
                         "expression": "N_COMP_FF_YPOS / 10",
-                        "variables": ["N_COMP_FF_YPOS"],
                     },
                 ],
-                {"N_COMP_FF_YPOS"},
                 {"a": {"data": 23.5734, "metadata": {"channel_dtype": "scalar"}}},
                 id="Scalar operation",
             ),
@@ -48,15 +50,12 @@ class TestRecord:
                     {
                         "name": "a",
                         "expression": "N_COMP_FF_YPOS / 10",
-                        "variables": ["N_COMP_FF_YPOS"],
                     },
                     {
                         "name": "b",
                         "expression": "log(a)",
-                        "variables": [],
                     },
                 ],
-                {"N_COMP_FF_YPOS"},
                 {
                     "a": {"data": 23.5734, "metadata": {"channel_dtype": "scalar"}},
                     "b": {
@@ -72,17 +71,11 @@ class TestRecord:
                     {
                         "name": "a",
                         "expression": "N_COMP_SPEC_TRACE - 737.0041036717063",
-                        "variables": ["N_COMP_SPEC_TRACE"],
                     },
                 ],
-                {"N_COMP_SPEC_TRACE"},
                 {
                     "a": {
-                        "data": [
-                            -24.004103671706275,
-                            10.995896328293725,
-                            41.995896328293725,
-                        ],
+                        "thumbnail": "eee681193ac4dc69",
                         "metadata": {"channel_dtype": "waveform"},
                     },
                 },
@@ -93,17 +86,11 @@ class TestRecord:
                     {
                         "name": "a",
                         "expression": "log(N_COMP_SPEC_TRACE)",
-                        "variables": ["N_COMP_SPEC_TRACE"],
                     },
                 ],
-                {"N_COMP_SPEC_TRACE"},
                 {
                     "a": {
-                        "data": [
-                            6.569481420414296,
-                            6.617402977974478,
-                            6.658011045870748,
-                        ],
+                        "thumbnail": "eee681193ac0de69",
                         "metadata": {"channel_dtype": "waveform"},
                     },
                 },
@@ -113,11 +100,9 @@ class TestRecord:
                 [
                     {
                         "name": "a",
-                        "expression": "avg(N_COMP_SPEC_TRACE)",
-                        "variables": ["N_COMP_SPEC_TRACE"],
+                        "expression": "mean(N_COMP_SPEC_TRACE)",
                     },
                 ],
-                {"N_COMP_SPEC_TRACE"},
                 {
                     "a": {
                         "data": 737.0041036717063,
@@ -132,13 +117,11 @@ class TestRecord:
                     {
                         "name": "a",
                         "expression": "N_COMP_FF_IMAGE - 4",
-                        "variables": ["N_COMP_FF_IMAGE"],
                     },
                 ],
-                {"N_COMP_FF_IMAGE"},
                 {
                     "a": {
-                        "data": [-1, 1, -2],
+                        "thumbnail": "f3638c8c63739c8c",
                         "metadata": {
                             "channel_dtype": "image",
                             "x_pixel_size": 656,
@@ -153,13 +136,11 @@ class TestRecord:
                     {
                         "name": "a",
                         "expression": "log(N_COMP_FF_IMAGE)",
-                        "variables": ["N_COMP_FF_IMAGE"],
                     },
                 ],
-                {"N_COMP_FF_IMAGE"},
                 {
                     "a": {
-                        "data": [1.09861229, 1.60943791, 0.69314718],
+                        "thumbnail": "f3609c9963799cc4",
                         "metadata": {
                             "channel_dtype": "image",
                             "x_pixel_size": 656,
@@ -173,11 +154,9 @@ class TestRecord:
                 [
                     {
                         "name": "a",
-                        "expression": "avg(N_COMP_FF_IMAGE)",
-                        "variables": ["N_COMP_FF_IMAGE"],
+                        "expression": "mean(N_COMP_FF_IMAGE)",
                     },
                 ],
-                {"N_COMP_FF_IMAGE"},
                 {
                     "a": {
                         "data": 6.841775081465389,
@@ -190,15 +169,13 @@ class TestRecord:
     )
     async def test_apply_functions(
         self,
-        record,
-        functions,
-        all_variables,
-        values,
+        record: dict,
+        functions: list,
+        values: dict,
     ):
         await Record.apply_functions(
             record,
             functions,
-            all_variables.copy(),
             0,
             255,
             "binary",
@@ -209,19 +186,17 @@ class TestRecord:
             assert key in record["channels"]
             assert "metadata" in record["channels"][key]
             assert record["channels"][key]["metadata"] == value["metadata"]
-            assert "data" in record["channels"][key]
-            expected_data = value["data"]
-            test_data = record["channels"][key]["data"]
-            if isinstance(expected_data, float):
+            if "data" in value:
+                assert "data" in record["channels"][key]
+                test_data = record["channels"][key]["data"]
                 assert test_data == value["data"]
             else:
-                # Only assert on first few entries for convenience
-                if isinstance(test_data[0], list):
-                    test_data = test_data[0]
-                test_data_slice = test_data[: len(expected_data)]
-                message = f"{test_data_slice} == {expected_data}"
-                assert np.allclose(test_data_slice, expected_data), message
                 assert "thumbnail" in record["channels"][key]
+                image_b64 = record["channels"][key]["thumbnail"]
+                image_bytes = base64.b64decode(image_b64)
+                image = Image.open(io.BytesIO(image_bytes))
+                image_phash = str(imagehash.phash(image))
+                assert image_phash == value["thumbnail"]
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -231,12 +206,10 @@ class TestRecord:
                 {
                     "name": "a",
                     "expression": "b / 10",
-                    "variables": [],
                 },
                 {
                     "name": "b",
                     "expression": "log(a)",
-                    "variables": [],
                 },
             ],
         ],
@@ -245,7 +218,8 @@ class TestRecord:
         self,
         functions,
     ):
+        record = {"_id": "20220407141616"}
         with pytest.raises(FunctionParseError) as e:
-            await Record.apply_functions({}, functions, {}, 0, 255, "binary")
+            await Record.apply_functions(record, functions, 0, 255, "binary")
 
-        assert str(e.value) == "ERR200 - Failed to create variable: 'b'Symbol Error"
+        assert str(e.value) == "Unable to parse variables: {'b'}"

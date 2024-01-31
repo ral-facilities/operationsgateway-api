@@ -1,14 +1,14 @@
 import logging
 
-from cexprtk import check_expression, ParseException
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, Query
+from lark import LarkError, UnexpectedCharacters, UnexpectedEOF
+from pydantic import Json
 from typing_extensions import Annotated
 
-from operationsgateway_api.src.auth.authorisation import (
-    authorise_token,
-)
+from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import FunctionParseError
+from operationsgateway_api.src.functions import tokens, TypeTransformer
 
 
 log = logging.getLogger()
@@ -34,79 +34,17 @@ async def get_function_tokens(
 
     log.info("Getting function tokens")
 
-    # TODO will probably need help text as well as just the symbols
-    # mathematical_operators = [
-    #     "+", "-", "*", "/", "%", "^", "(", ")"
-    # ]
-    # functions = ["avg", "exp", "max", "min", "log"]
-
-    # TODO NYI
-    # TODO include implementation details for complex functions
-    # unknown_functions = [
-    #     "centre",
-    #     "fwhm",
-    #     "integration",
-    #     "falling",
-    #     "rising",
-    #     "background",
-    # ]
-
-    return [
-        {"symbol": "+", "name": "Add"},
-        {"symbol": "-", "name": "Subtract"},
-        {"symbol": "*", "name": "Multiply"},
-        {"symbol": "/", "name": "Divide"},
-        {"symbol": "%", "name": "Remainder (modular division)"},
-        {"symbol": "^", "name": "Raise to power"},
-        {"symbol": "(", "name": "Open bracket"},
-        {"symbol": ")", "name": "Close bracket"},
-        {
-            "symbol": "avg",
-            "name": "Mean",
-            "details": (
-                "Calculate the mean of a trace (using the y variable) or image input. "
-                "No effect on a scalar input."
-            ),
-        },
-        {
-            "symbol": "exp",
-            "name": "Exponential",
-            "details": (
-                "Raise `e` to the power of the input argument (element-wise if a trace "
-                "or image is provided)."
-            ),
-        },
-        {
-            "symbol": "log",
-            "name": "Natural logarithm",
-            "details": (
-                "Calculate the logarithm in base `e` of the input argument "
-                "(element-wise if a trace or image is provided)."
-            ),
-        },
-        {
-            "symbol": "max",
-            "name": "Maximum",
-            "details": (
-                "Calculate the maximum value in a trace (using the y variable) or "
-                "image input. No effect on a scalar input."
-            ),
-        },
-        {
-            "symbol": "min",
-            "name": "Minimum",
-            "details": (
-                "Calculate the minimum value in a trace (using the y variable) or "
-                "image input. No effect on a scalar input."
-            ),
-        },
-    ]
+    return tokens
 
 
 @router.get(
     "/functions",
     summary="Validate function",
-    response_description="200 OK (no response body) if the function is valid",
+    response_description=(
+        "Checks the syntax, variable names and typing of the provided "
+        "function, and returns the output type (scalar, waveform or image) of "
+        "the function",
+    ),
     responses={
         400: {"description": "The function was invalid"},
     },
@@ -115,21 +53,52 @@ async def get_function_tokens(
 @endpoint_error_handling
 async def validate_function(
     access_token: AuthoriseToken,
-    expression: str = Query(
-        description="Function to validate",
+    function: Json = Query(
+        description="Functions to evaluate on the record data being returned",
+    ),
+    function_types: Json = Query(
+        default={},
+        description=(
+            "Return types of other functions upon which the expression depends"
+        ),
     ),
 ):
     """
-    Checks `expression` for Syntax, but not undefined Symbol errors.
+    Checks `expression` for Syntax and undefined variable errors.
     """
-
     log.info("Validating function")
 
-    # TODO handle recursion here? would require us to submit multiple functions...
-    # TODO check we get useful information back for the user
+    error = None
+    transformer = TypeTransformer(function_types=function_types)
+    expression = function["expression"]
     try:
-        check_expression(expression)
-    except ParseException as e:
-        raise FunctionParseError(str(e)) from e
+        return_type = await transformer.evaluate(function["name"], expression)
 
-    return Response(status_code=status.HTTP_200_OK)
+    except ValueError as e:
+        error = e.args[0]
+
+    except UnexpectedEOF:
+        error = (
+            f"Unexpected end-of-input in '{expression}', check all brackets "
+            "are closed"
+        )
+
+    except UnexpectedCharacters:
+        error = f"Unexpected character in '{expression}', check all brackets are opened"
+
+    except LarkError as e:
+        message: str = e.args[0]
+        root_message = message.split("\n\n")[1].strip('"')
+        if 'Error trying to process rule "variable"' in message:
+            error = f"Unexpected variable in '{expression}': {root_message}"
+        elif 'Error trying to process rule "unknown"' in message:
+            error = f"Unsupported function in '{expression}': {root_message}"
+        else:
+            error = f"Unsupported type in '{expression}': {root_message}"
+
+    finally:
+        if error is not None:
+            log.error(error)
+            raise FunctionParseError(error)
+
+    return return_type

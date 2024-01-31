@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Union
 
 from bson.objectid import ObjectId
@@ -44,7 +45,7 @@ class WaveformModel(BaseModel):
     @field_validator("x", "y", mode="before")
     def encode_values(cls, value):  # noqa: N805
         if isinstance(value, np.ndarray):
-            return str(list(value))
+            return json.dumps(list(value))
         else:
             # Typically will be a string when putting waveform data into the model from
             # results of a MongoDB query

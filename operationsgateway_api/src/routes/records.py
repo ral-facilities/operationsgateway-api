@@ -101,12 +101,6 @@ async def get_records(
     if colourmap_name is None:
         colourmap_name = await Image.get_preferred_colourmap(access_token)
 
-    if functions:
-        log.debug("Parsed functions: %s", functions)
-        all_variables = []
-        for function in functions:
-            all_variables += function["variables"]
-
     for record_data in records_data:
         if record_data.get("channels"):
             await Record.apply_false_colour_to_thumbnails(
@@ -123,7 +117,6 @@ async def get_records(
             await Record.apply_functions(
                 record_data,
                 functions,
-                set(all_variables),
                 lower_level,
                 upper_level,
                 colourmap_name,
