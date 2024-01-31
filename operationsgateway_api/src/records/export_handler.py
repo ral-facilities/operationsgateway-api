@@ -44,6 +44,7 @@ class ExportHandler:
         self.export_waveform_images = export_waveform_images
 
         self.record_ids = []
+        self.errors_file_in_memory = io.StringIO()
         self.main_csv_file_in_memory = io.StringIO()
         self.zip_file_in_memory = io.BytesIO()
         self.zip_file = zipfile.ZipFile(
@@ -99,6 +100,7 @@ class ExportHandler:
                 self.main_csv_file_in_memory.write(line + "\n")
 
         self._add_main_csv_file_to_zip()
+        self._add_messages_file_to_zip()
 
         # end of adding files to the zip file
         # close the file to finish writing the directory entry etc.
@@ -149,7 +151,7 @@ class ExportHandler:
         if self.channel_manifest_dict["channels"][channel_name]["type"] == "image":
             log.info("Channel %s is an image", channel_name)
             if self.export_images:
-                await self._add_image_to_zip(record_id, channel_name)
+                await self._add_image_to_zip(record_data, record_id, channel_name)
         # process a waveform channel
         elif self.channel_manifest_dict["channels"][channel_name]["type"] == "waveform":
             log.info("Channel %s is a waveform", channel_name)
@@ -161,7 +163,13 @@ class ExportHandler:
                 y_units = record_data["channels"][channel_name]["metadata"]["y_units"]
             except KeyError:
                 y_units = ""
-            await self._add_waveform_to_zip(record_id, channel_name, x_units, y_units)
+            await self._add_waveform_to_zip(
+                record_data,
+                record_id,
+                channel_name,
+                x_units,
+                y_units,
+            )
         # process a scalar channel
         else:
             log.info("Channel %s is a scalar", channel_name)
@@ -170,7 +178,12 @@ class ExportHandler:
             line = ExportHandler.add_value_to_csv_line(line, value)
         return line
 
-    async def _add_image_to_zip(self, record_id: str, channel_name: str) -> None:
+    async def _add_image_to_zip(
+        self,
+        record_data: Dict,
+        record_id: str,
+        channel_name: str,
+    ) -> None:
         """
         Get an image from disk (Echo) and add it to the zip file being created for
         download.
@@ -180,6 +193,14 @@ class ExportHandler:
         supports this so it is easy to pass the false colour parameters on if they are
         specified. If none of them are specified the original image is used.
         """
+        try:
+            # first check that there should be an image to process
+            _ = record_data["channels"][channel_name]
+        except KeyError:
+            # there is no entry for this channel in the record
+            # so there is no image to process
+            return
+
         log.info("Getting image to add to zip: %s %s", record_id, channel_name)
         # if none of the false colour parameters are set then the original
         # image is required
@@ -188,24 +209,30 @@ class ExportHandler:
             and self.upper_level == 255
             and self.colourmap_name is None
         )
-        # TODO: handle images that don't exist
-        # make a list of them and add a file listing errors to the zip file ???
-        image_bytes = await Image.get_image(
-            record_id,
-            channel_name,
-            original_image,
-            self.lower_level,
-            self.upper_level,
-            self.colourmap_name,
-        )
-        self.zip_file.writestr(
-            f"{record_id}_{channel_name}.png",
-            image_bytes.getvalue(),
-        )
-        ExportHandler.check_zip_file_size(self.zip_file_in_memory)
+        try:
+            if record_id == "20220407142816":
+                raise ExportError("Couldn't find this file!")
+            image_bytes = await Image.get_image(
+                record_id,
+                channel_name,
+                original_image,
+                self.lower_level,
+                self.upper_level,
+                self.colourmap_name,
+            )
+            self.zip_file.writestr(
+                f"{record_id}_{channel_name}.png",
+                image_bytes.getvalue(),
+            )
+            ExportHandler.check_zip_file_size(self.zip_file_in_memory)
+        except Exception:
+            self.errors_file_in_memory.write(
+                f"Could not find image for {record_id} {channel_name}\n",
+            )
 
     async def _add_waveform_to_zip(
         self,
+        record_data: Dict,
         record_id: str,
         channel_name: str,
         x_units: str,
@@ -216,15 +243,30 @@ class ExportHandler:
         CSV file or create a rendered image of the waveform (or both) and add the
         created file(s) to the zip file being created ready for download.
         """
+        try:
+            # first check that there should be a waveform to process
+            _ = record_data["channels"][channel_name]
+        except KeyError:
+            # there is no entry for this channel in the record
+            # so there is no waveform to process
+            return
+
         if self.export_waveform_csvs or self.export_waveform_images:
             log.info(
                 "Getting waveform to add to zip: %s %s",
                 record_id,
                 channel_name,
             )
-            # TODO: handle waveforms that don't exist
-            # make a list of them and add a file listing errors to the zip file ???
-            waveform_model = await Waveform.get_waveform(f"{record_id}_{channel_name}")
+            try:
+                waveform_model = await Waveform.get_waveform(
+                    f"{record_id}_{channel_name}",
+                )
+            except Exception:
+                self.errors_file_in_memory.write(
+                    f"Could not find waveform for {record_id} {channel_name}\n",
+                )
+                # no point trying to process the waveform so return at this point
+                return
 
             if self.export_waveform_csvs:
                 # TODO: this is taking the x and y values from the Waveform that
@@ -272,6 +314,17 @@ class ExportHandler:
                     self.main_csv_file_in_memory.getvalue(),
                 )
                 ExportHandler.check_zip_file_size(self.zip_file_in_memory)
+
+    def _add_messages_file_to_zip(self):
+        """
+        Add a file listing any errors that might be useful to the user to the zip such
+        as any files or waveforms that were not found.
+        """
+        if len(self.errors_file_in_memory.getvalue()) > 0:
+            self.zip_file.writestr(
+                "EXPORT_ERRORS.txt",
+                self.errors_file_in_memory.getvalue(),
+            )
 
     def get_export_file_bytes(self) -> Union[io.BytesIO, io.StringIO]:
         """
@@ -350,7 +403,8 @@ class ExportHandler:
             # or a value if we have reached the value we need
             dict_or_value = record_dict.get(next_projection_part)
         except AttributeError:
-            # there is no value for this item in this record
+            # there is no value for this item in this record - this is probably OK
+            # return empty string so that alignment is maintained in the CSV file
             return ""
         if len(projection_array) == 1:
             # we should have reached an item value in the most nested dictionary
