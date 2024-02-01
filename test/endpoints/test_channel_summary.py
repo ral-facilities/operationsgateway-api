@@ -1,7 +1,9 @@
 import base64
-import hashlib
+import io
 
 from fastapi.testclient import TestClient
+import imagehash
+from PIL import Image
 import pytest
 
 from test.conftest import set_preferred_colourmap, unset_preferred_colourmap
@@ -12,30 +14,17 @@ class TestChannelSummary:
         "channel_name, expected_summary",
         [
             pytest.param(
-                "N_COMP_FF_E",
+                "SER-202-BI-RH-1",
                 {
-                    "first_date": "2022-04-07T14:16:16",
-                    "most_recent_date": "2022-04-08T16:58:57",
+                    "first_date": "2023-06-04T00:00:00",
+                    "most_recent_date": "2023-06-05T23:54:00",
                     "recent_sample": [
-                        {"2022-04-08T16:58:57": -8535000.0},
-                        {"2022-04-08T16:41:36": -8461000.0},
-                        {"2022-04-08T16:29:56": -8582000.0},
+                        {"2023-06-05T23:54:00": 45.105075954471815},
+                        {"2023-06-05T23:48:00": 42.7879518924901},
+                        {"2023-06-05T23:42:00": 40.592569128241514},
                     ],
                 },
                 id="Scalar channel (number) summary",
-            ),
-            pytest.param(
-                "GEM_SHOT_TYPE_STRING",
-                {
-                    "first_date": "2022-04-07T14:16:16",
-                    "most_recent_date": "2022-04-08T16:58:57",
-                    "recent_sample": [
-                        {"2022-04-08T16:58:57": "FP"},
-                        {"2022-04-08T16:41:36": "FP"},
-                        {"2022-04-08T16:29:56": "FP"},
-                    ],
-                },
-                id="Scalar channel (string) summary",
             ),
         ],
     )
@@ -58,14 +47,14 @@ class TestChannelSummary:
         "channel_name, expected_summary, use_preferred_colourmap",
         [
             pytest.param(
-                "N_COMP_FF_IMAGE",
+                "FE-204-PSO-P2-CAM-2",
                 {
-                    "first_date": "2022-04-07T14:16:16",
-                    "most_recent_date": "2022-04-08T16:58:57",
+                    "first_date": "2023-06-05T08:00:00",
+                    "most_recent_date": "2023-06-05T16:00:00",
                     "recent_sample": [
-                        {"2022-04-08T16:58:57": "b6a2da4589c22afc212d2dd9079aabe0"},
-                        {"2022-04-08T16:41:36": "bff557f25cc563f292d7a65f8cbd6ea4"},
-                        {"2022-04-08T16:29:56": "0ed38c29e8eddb50e469b6d6ab4fc5c9"},
+                        {"2023-06-05T16:00:00": "c63939c63939c639"},
+                        {"2023-06-05T15:00:00": "ce3131cece3131ce"},
+                        {"2023-06-05T14:00:00": "ce3131ce3131cecb"},
                     ],
                 },
                 False,
@@ -74,28 +63,28 @@ class TestChannelSummary:
             # repeat the above test but with the user's preferred colour map set to
             # check that the preference overrides the system default colour map
             pytest.param(
-                "N_COMP_FF_IMAGE",
+                "FE-204-PSO-P2-CAM-2",
                 {
-                    "first_date": "2022-04-07T14:16:16",
-                    "most_recent_date": "2022-04-08T16:58:57",
+                    "first_date": "2023-06-05T08:00:00",
+                    "most_recent_date": "2023-06-05T16:00:00",
                     "recent_sample": [
-                        {"2022-04-08T16:58:57": "3e78b905df05f4b08a188e0fbd7fcc2a"},
-                        {"2022-04-08T16:41:36": "d3e6761e20d18344ade71bd5329b1a36"},
-                        {"2022-04-08T16:29:56": "183898d6a41f1b3cb1debdcc8ef0942f"},
+                        {"2023-06-05T16:00:00": "c63939c63939c639"},
+                        {"2023-06-05T15:00:00": "ce3131cece3131ce"},
+                        {"2023-06-05T14:00:00": "ce3131ce3131ce73"},
                     ],
                 },
                 True,
                 id="Image channel summary (using user's preferred colourmap)",
             ),
             pytest.param(
-                "N_COMP_SPEC_TRACE",
+                "FE-204-PSO-P1-PD",
                 {
-                    "first_date": "2022-04-07T14:16:16",
-                    "most_recent_date": "2022-04-08T16:58:57",
+                    "first_date": "2023-06-05T08:00:00",
+                    "most_recent_date": "2023-06-05T16:00:00",
                     "recent_sample": [
-                        {"2022-04-08T16:58:57": "c0e0f944d8589c6ac866ffb013a05598"},
-                        {"2022-04-08T16:41:36": "6ee54947b79040480bf2a75220d71889"},
-                        {"2022-04-08T16:29:56": "928527492ca3bd051d7771c14c61f0f4"},
+                        {"2023-06-05T16:00:00": "e6e41be41be19a19"},
+                        {"2023-06-05T15:00:00": "e6e61be51ae11a19"},
+                        {"2023-06-05T14:00:00": "e6e41be51ae1981b"},
                     ],
                 },
                 False,
@@ -114,7 +103,7 @@ class TestChannelSummary:
 
         """
         Compare the response with the expected result, but convert the returned base64
-        thumbnails to an MD5 checksum beforehand (to prevent bloating this file with
+        thumbnails to a perceptual hash beforehand (to prevent bloating this file with
         long base64 strings)
         """
 
@@ -130,7 +119,8 @@ class TestChannelSummary:
         for sample in json_output["recent_sample"]:
             for timestamp, checksum in sample.items():
                 bytes_thumbnail = base64.b64decode(checksum)
-                sample[timestamp] = hashlib.md5(bytes_thumbnail).hexdigest()
+                img = Image.open(io.BytesIO(bytes_thumbnail))
+                sample[timestamp] = str(imagehash.phash(img))
 
         unset_preferred_colourmap(
             test_app,

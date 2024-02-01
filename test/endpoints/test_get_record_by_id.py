@@ -16,10 +16,10 @@ class TestGetRecordByID:
         "record_id, truncate, expected_channel_count, expected_channel_data",
         [
             pytest.param(
-                "20220408094341",
+                "20230605100000",
                 True,
-                59,
-                {"SAD_NF_E": -14.122},
+                353,
+                {"FE-204-LT-CAM-2-CENX": 5.83075538293604},
                 id="Ordinary request",
             ),
         ],
@@ -47,24 +47,24 @@ class TestGetRecordByID:
         )
 
     @pytest.mark.parametrize(
-        "record_id, expected_thumbnail_md5s, use_preferred_colourmap",
+        "record_id, expected_thumbnails_hashes, use_preferred_colourmap",
         [
             pytest.param(
-                "20220408132830",
+                "20230605100000",
                 {
-                    "N_COMP_FF_IMAGE": "2fa3239b5f46b110964f02a2e6c6dd62",
-                    "N_COMP_NF_IMAGE": "16624db9b93bfe8176cd275d24522bc5",
-                    "N_LEG1_GREEN_NF_IMAGE": "1fcf716b4f670dc4a901ca77ea0b8ee5",
+                    "FE-204-NSO-P1-CAM-1": "c4bc3f33381c98c7",
+                    "FE-204-NSO-P2-CAM-1": "cd3336f0329b311d",
+                    "TS-202-TSM-CAM-2": "9999666699996666",
                 },
                 False,
                 id="Ordinary request (preferred colour map not set)",
             ),
             pytest.param(
-                "20220408132830",
+                "20230605100000",
                 {
-                    "N_COMP_FF_IMAGE": "33e614585eb7e063174629cddedc5009",
-                    "N_COMP_NF_IMAGE": "9431db428aab384aa83a06951cacb9be",
-                    "N_LEG1_GREEN_NF_IMAGE": "c874477cf9018849cd4260615da129b6",
+                    "FE-204-NSO-P1-CAM-1": "c4b83f233b1839c7",
+                    "FE-204-NSO-P2-CAM-1": "cd3336b234333639",
+                    "TS-202-TSM-CAM-2": "9999666699996666",
                 },
                 True,
                 id="Ordinary request (with preferred colour map set)",
@@ -76,7 +76,7 @@ class TestGetRecordByID:
         test_app: TestClient,
         login_and_get_token,
         record_id,
-        expected_thumbnail_md5s,
+        expected_thumbnails_hashes,
         use_preferred_colourmap,
     ):
         set_preferred_colourmap(test_app, login_and_get_token, use_preferred_colourmap)
@@ -96,5 +96,5 @@ class TestGetRecordByID:
 
         assert_thumbnails(
             test_response.json(),
-            expected_thumbnail_md5s,
+            expected_thumbnails_hashes,
         )

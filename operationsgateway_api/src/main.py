@@ -93,6 +93,7 @@ def setup_logger():
         "s3transfer",
         "matplotlib.font_manager",
         "zeep",
+        "multipart",
     ]
     for name in libraries_info_logging:
         logging.getLogger(name).setLevel(logging.INFO)

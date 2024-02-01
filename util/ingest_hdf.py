@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from pprint import pprint
 import socket
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
 import sys
 import threading
 from time import sleep, time
@@ -112,7 +112,6 @@ if DELETE_IMAGES:
         aws_secret_access_key=Config.config.images.echo_secret_key,
     )
 
-
     bucket = s3_resource.Bucket(BUCKET_NAME)
     print(f"Retrieved '{BUCKET_NAME}' bucket, going to delete all files in the bucket")
     bucket.objects.all().delete()
@@ -128,12 +127,14 @@ def is_api_alive(host, port):
     except Exception:
         return False
 
+
 def clear_buffers(process, output=False):
     out = process.stdout.read()
     err = process.stderr.read()
     if output:
         print(out.decode("utf-8"))
         print(err.decode("utf-8"))
+
 
 # Start API if an API URL isn't given as a command line option
 if not args.url:
@@ -220,19 +221,19 @@ for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
                     if response.status_code == 201:
                         print(
                             f"Ingested {file.name}, time taken: {duration:0.2f}"
-                            " seconds"
+                            " seconds",
                         )
                     elif response.status_code == 200:
                         print(
                             f"Updated {file.name}, time taken: {duration:0.2f}"
-                            " seconds"
+                            " seconds",
                         )
                     else:
                         print(f"{response.status_code} returned")
                         pprint(response.text)
         directory_end_time = time()
         directory_duration = directory_end_time - directory_start_time
-        
+
         print(
             f"Ingestion of {entry.path} complete, time taken:"
             f" {directory_duration:0.2f} seconds",

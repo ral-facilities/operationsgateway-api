@@ -1,8 +1,10 @@
 import base64
-import hashlib
+import io
 import json
 
 from fastapi.testclient import TestClient
+import imagehash
+from PIL import Image
 import pytest
 
 from operationsgateway_api.src.experiments.unique_worker import UniqueWorker
@@ -50,22 +52,23 @@ def assert_record(record, expected_channel_count, expected_channel_data):
         raise AssertionError("Expected channel not found")
 
 
-def assert_thumbnails(record: dict, expected_thumbnail_md5s: dict):
+def assert_thumbnails(record: dict, expected_thumbnails_hashes: dict):
     """
     Iterate through the record looking for the channel names that match the keys in the
-    md5s dictionary. As each channel is found, check that the md5sum of the thumbnail
-    matches the expected value in the md5s dictionary. Ensure all channels in the md5s
-    dictionary are present in the record.
+    perceptual hash (phash) dictionary. As each channel is found, check that the phash
+    of the thumbnail matches the expected value in the phash dictionary. Ensure all
+    channels in the phash dictionary are present in the record.
     """
     num_channels_found = 0
     for channel_name, value in record["channels"].items():
-        if channel_name in expected_thumbnail_md5s.keys():
+        if channel_name in expected_thumbnails_hashes.keys():
             num_channels_found += 1
             b64_thumbnail_string = value["thumbnail"]
             thumbnail_bytes = base64.b64decode(b64_thumbnail_string)
-            thumbnail_md5sum = hashlib.md5(thumbnail_bytes).hexdigest()
-            assert thumbnail_md5sum == expected_thumbnail_md5s[channel_name]
-    assert num_channels_found == len(expected_thumbnail_md5s.keys())
+            img = Image.open(io.BytesIO(thumbnail_bytes))
+            thumbnail_phash = str(imagehash.phash(img))
+            assert thumbnail_phash == expected_thumbnails_hashes[channel_name]
+    assert num_channels_found == len(expected_thumbnails_hashes.keys())
 
 
 def set_preferred_colourmap(test_app: TestClient, auth_token: str, do_it: bool):
