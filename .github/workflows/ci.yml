@@ -31,7 +31,9 @@ jobs:
 
       # Install dependencies of python-ldap
       - name: Install python-ldap dependencies
-        run: sudo apt-get install -y libsasl2-dev python${{ matrix.python-version }}-dev libldap2-dev libssl-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsasl2-dev python${{ matrix.python-version }}-dev libldap2-dev libssl-dev
 
       # Setup Python and environment dependencies (via cache)
       - name: Setup Python
