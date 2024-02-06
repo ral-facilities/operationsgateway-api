@@ -58,11 +58,6 @@ class EchoInterface:
             )
             raise EchoS3Error("Bucket for image storage cannot be found")
 
-    def file_search(self, path):
-        # https://www.google.com/search?q=boto3+search+for+file+in+s3
-        pass
-
-    # TODO - make generic, not specific to images
     def download_file_object(self, object_path: str) -> BytesIO:
         """
         Download an object from S3 using `download_fileobj()` and return a BytesIO

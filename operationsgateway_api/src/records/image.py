@@ -181,13 +181,18 @@ class Image:
     @staticmethod
     def get_relative_path(record_id: str, channel_name: str) -> str:
         """
-        Returns an image path given a record ID and channel name
+        Returns a relative image path given a record ID and channel name. The path is
+        relative to the base directory of where images are stored in Echo
         """
 
         return f"{record_id}/{channel_name}.png"
 
     @staticmethod
     def get_full_path(relative_path: str) -> str:
+        """
+        Converts a relative image path to a full path by adding the 'prefix' onto a
+        relative path of an image. The full path doesn't include the bucket name
+        """
         return f"{Image.echo_prefix}/{relative_path}"
 
     @staticmethod

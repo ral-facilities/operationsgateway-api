@@ -33,9 +33,9 @@ class Waveform:
 
     async def insert_waveform(self) -> None:
         """
-        If the waveform stored in this object isn't already stored in the database,
-        insert it in the waveforms collection
+        Store the waveform from this object in Echo
         """
+        log.info("Storing waveform: %s", self.waveform.path)
         bytes_json = self.to_json()
         echo = EchoInterface()
         echo.upload_file_object(
@@ -86,20 +86,25 @@ class Waveform:
     @staticmethod
     def get_relative_path(record_id: str, channel_name: str) -> str:
         """
-        TODO, base it off get_image_path()
+        Returns a relative waveform path given a record ID and channel name. The path is
+        relative to the base directory of where waveforms are stored in Echo
         """
         return f"{record_id}/{channel_name}.json"
 
     @staticmethod
     def get_full_path(relative_path: str) -> str:
+        """
+        Converts a relative waveform path to a full path by adding the 'prefix' onto a
+        relative path of a waveform. The full path doesn't include the bucket name
+        """
         return f"{Waveform.echo_prefix}/{relative_path}"
 
     @staticmethod
     async def get_waveform(waveform_path: str) -> WaveformModel:
         """
-        Given a waveform path, find the waveform that's stored in MongoDB. This function
-        assumes that the waveform should exist; if no waveform can be found, a
-        `MissingDocumentError` will be raised
+        Given a waveform path, find the waveform from Echo. This function assumes that
+        the waveform should exist; if no waveform can be found, a `WaveformError` will
+        be raised
         """
         echo = EchoInterface()
 
