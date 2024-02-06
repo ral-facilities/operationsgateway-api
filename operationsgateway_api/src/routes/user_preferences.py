@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.get(
-    "/user_preferences/{name}",
+    "/users/preferences/{name}",
     summary="Retrieve a user preference value",
     response_description="Value of the user preference for the logged in user",
     responses={
@@ -51,7 +51,7 @@ async def get_user_preference(
 
 
 @router.delete(
-    "/user_preferences/{name}",
+    "/users/preferences/{name}",
     summary="Delete a specific user preference",
     response_description="No content",
     status_code=204,
@@ -95,7 +95,7 @@ async def delete_user_preference(
 
 
 @router.post(
-    "/user_preferences",
+    "/users/preferences",
     summary="Store a user preference into the user's record in the database",
     response_description="No content",
     status_code=201,
@@ -129,5 +129,5 @@ async def save_user_preference(
 
     return Response(
         status_code=status.HTTP_201_CREATED,
-        headers={"Location": f"/user_preferences/{name}"},
+        headers={"Location": f"/users/preferences/{name}"},
     )
