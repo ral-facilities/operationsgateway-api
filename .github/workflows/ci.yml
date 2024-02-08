@@ -121,10 +121,10 @@ jobs:
       - name: Copy config for Echo Ingest script to correct place
         run: cp .github/ci_ingest_echo_config.yml util/realistic_data/config.yml
 
-      #- name: Setup tmate session
-      #  uses: mxschmitt/action-tmate@v3
-      #  with:
-      #    detached: true
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
 
       - name: Run Echo Ingest script
         run: poetry run python util/realistic_data/ingest_echo_data.py
