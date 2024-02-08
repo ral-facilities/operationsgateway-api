@@ -14,6 +14,7 @@ from operationsgateway_api.src.exceptions import (
     ImageNotFoundError,
 )
 from operationsgateway_api.src.models import ImageModel
+from operationsgateway_api.src.records.echo_interface import EchoInterface
 from operationsgateway_api.src.records.image import Image
 
 
@@ -119,7 +120,8 @@ class TestImage:
                 data=np.ones(shape=(300, 300), dtype=np.int8),
             ),
         )
-        Image.upload_image(test_image)
+        echo = EchoInterface()
+        Image.upload_image(test_image, echo)
 
         assert mock_upload_file_object.call_count == 1
 
@@ -159,7 +161,8 @@ class TestImage:
             ),
         )
         with pytest.raises(ImageError):
-            Image.upload_image(test_image)
+            echo = EchoInterface()
+            Image.upload_image(test_image, echo)
 
     @pytest.mark.asyncio
     @patch(
