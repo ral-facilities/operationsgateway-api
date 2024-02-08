@@ -9,6 +9,7 @@ from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.error_handling import endpoint_error_handling
+from operationsgateway_api.src.records.echo_interface import EchoInterface
 from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.ingestion_validator import IngestionValidator
@@ -53,9 +54,12 @@ async def submit_hdf(
     ingest_checker = IngestionValidator(record_data, stored_record)  # noqa: F841
 
     log.debug("Processing waveforms")
+    if waveforms or images:
+        echo = EchoInterface()
+
     for w in waveforms:
         waveform = Waveform(w)
-        await waveform.insert_waveform()
+        await waveform.insert_waveform(echo)
         waveform.create_thumbnail()
         record.store_thumbnail(waveform)
 
@@ -64,10 +68,13 @@ async def submit_hdf(
     for image in image_instances:
         image.create_thumbnail()
         record.store_thumbnail(image)
+        Image.upload_image(image, echo)
 
+    """
     if len(image_instances) > 0:
         pool = ThreadPool(processes=Config.config.images.upload_image_threads)
         pool.map(Image.upload_image, image_instances)
+    """
 
     if stored_record:
         log.debug(

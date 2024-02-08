@@ -31,13 +31,13 @@ class Waveform:
         b.seek(0)
         return b
 
-    async def insert_waveform(self) -> None:
+    async def insert_waveform(self, echo: EchoInterface) -> None:
         """
         Store the waveform from this object in Echo
         """
         log.info("Storing waveform: %s", self.waveform.path)
         bytes_json = self.to_json()
-        echo = EchoInterface()
+        #echo = EchoInterface()
         echo.upload_file_object(
             bytes_json,
             Waveform.get_full_path(self.waveform.path),

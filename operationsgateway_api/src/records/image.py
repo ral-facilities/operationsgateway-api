@@ -67,7 +67,7 @@ class Image:
         return record_id, channel_name
 
     @staticmethod
-    def upload_image(input_image: Image) -> None:
+    def upload_image(input_image: Image, echo: EchoInterface) -> None:
         """
         Save the image on Echo S3 object storage
         """
@@ -81,7 +81,7 @@ class Image:
             log.exception(msg=exc)
             raise ImageError("Image data is not in correct format to be read") from exc
 
-        echo = EchoInterface()
+        #echo = EchoInterface()
         storage_path = Image.get_full_path(input_image.image.path)
         log.info("Storing image on S3: %s", storage_path)
         echo.upload_file_object(image_bytes, storage_path)
