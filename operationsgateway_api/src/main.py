@@ -96,7 +96,8 @@ def setup_logger():
         "multipart",
     ]
     for name in libraries_info_logging:
-        logging.getLogger(name).setLevel(logging.INFO)
+        pass
+        #logging.getLogger(name).setLevel(logging.INFO)
     logging.config.fileConfig(LOG_CONFIG_LOCATION)
 
 
