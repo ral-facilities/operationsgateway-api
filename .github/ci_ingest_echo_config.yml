@@ -24,4 +24,4 @@ api:
   password: back
   log_config_path: /home/runner/work/operationsgateway-api/operationsgateway-api/operationsgateway_api/logging.ini
   gunicorn_num_workers: "1"
-  timeout_seconds: 1000
+  timeout_seconds: 2000

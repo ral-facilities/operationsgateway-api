@@ -67,7 +67,10 @@ def main():
         object_names = [hdf_file["Key"] for hdf_file in page["Contents"]]
         page_start_time = time()
 
-        download_and_ingest(object_names, echo, og_api)
+        #download_and_ingest(object_names, echo, og_api)
+        for name in object_names:
+            hdf_file_dict = echo.download_hdf_file(name)
+            og_api.submit_hdf(hdf_file_dict)
 
         page_end_time = time()
         page_duration = page_end_time - page_start_time
