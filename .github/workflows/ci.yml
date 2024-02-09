@@ -128,6 +128,7 @@ jobs:
 
       - name: Run Echo Ingest script
         run: poetry run python util/realistic_data/ingest_echo_data.py
+        timeout-minutes: 70
 
       - name: Load Poetry cache for Nox tests session
         uses: actions/cache@v3
