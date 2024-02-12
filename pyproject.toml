@@ -10,7 +10,7 @@ authors = ["Matthew Richards <matthew.richards@stfc.ac.uk>"]
 # but python3.8 is only compatible with scipy<=1.10.1
 # so it is not possible to target both at the same time
 python = ">=3.8,<3.12"
-fastapi = "^0.103.2"
+fastapi = "^0.109.1"
 motor = "^3.3.2"
 uvicorn = "^0.20.0"
 python-multipart = "^0.0.5"
@@ -27,7 +27,7 @@ gunicorn = "^20.1.0"
 orjson = "3.9.10"
 python-dateutil = "^2.8.2"
 PyJWT = "2.4.0"
-cryptography = "^41.0.6"
+cryptography = "^42.0.0"
 python-ldap = "3.4.2"
 boto3 = "^1.26.97"
 cron-converter = "^1.0.1"
