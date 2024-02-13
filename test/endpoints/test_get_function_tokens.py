@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from operationsgateway_api.src.functions import tokens
+from operationsgateway_api.src.functions import TOKENS
 
 
 class TestGetFunctionTokens:
@@ -15,4 +15,5 @@ class TestGetFunctionTokens:
         )
 
         assert test_response.status_code == 200
-        assert test_response.json() == tokens
+        assert len(TOKENS) == 22
+        assert test_response.json() == TOKENS

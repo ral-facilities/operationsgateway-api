@@ -1,15 +1,6 @@
-from operationsgateway_api.src.functions.builtins.background import BACKGROUND_TOKEN
-from operationsgateway_api.src.functions.builtins.centre import CENTRE_TOKEN
-from operationsgateway_api.src.functions.builtins.centroid_x import CENTROID_X_TOKEN
-from operationsgateway_api.src.functions.builtins.centroid_y import CENTROID_Y_TOKEN
-from operationsgateway_api.src.functions.builtins.falling import FALLING_TOKEN
-from operationsgateway_api.src.functions.builtins.fwhm import FWHM_TOKEN
-from operationsgateway_api.src.functions.builtins.fwhm_x import FWHM_X_TOKEN
-from operationsgateway_api.src.functions.builtins.fwhm_y import FWHM_Y_TOKEN
-from operationsgateway_api.src.functions.builtins.integrate import INTEGRATE_TOKEN
-from operationsgateway_api.src.functions.builtins.rising import RISING_TOKEN
+from operationsgateway_api.src.functions.builtins.builtins import Builtins
 
-tokens = [
+TOKENS = [
     {"symbol": "+", "name": "Add"},
     {"symbol": "-", "name": "Subtract"},
     {"symbol": "*", "name": "Multiply"},
@@ -62,14 +53,5 @@ tokens = [
             "https://numpy.org/doc/stable/reference/generated/numpy.min.html"
         ),
     },
-    BACKGROUND_TOKEN,
-    CENTRE_TOKEN,
-    CENTROID_X_TOKEN,
-    CENTROID_Y_TOKEN,
-    FALLING_TOKEN,
-    FWHM_X_TOKEN,
-    FWHM_Y_TOKEN,
-    FWHM_TOKEN,
-    INTEGRATE_TOKEN,
-    RISING_TOKEN,
+    *Builtins.tokens,
 ]

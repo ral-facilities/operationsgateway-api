@@ -26,34 +26,14 @@ parser = Lark(
                   | max
                   | log
                   | exp
-                  | rising
-                  | falling
-                  | centre
-                  | fwhm
-                  | background
-                  | integrate
-                  | centroid_x
-                  | centroid_y
-                  | fwhm_x
-                  | fwhm_y
-                  | unknown
+                  | builtin
 
     mean          : "mean(" term ")"
     min           : "min(" term ")"
     max           : "max(" term ")"
     log           : "log(" term ")"
     exp           : "exp(" term ")"
-    rising        : "rising(" term ")"
-    falling       : "falling(" term ")"
-    centre        : "centre(" term ")"
-    fwhm          : "fwhm(" term ")"
-    background    : "background(" term ")"
-    integrate     : "integrate(" term ")"
-    centroid_x    : "centroid_x(" term ")"
-    centroid_y    : "centroid_y(" term ")"
-    fwhm_x        : "fwhm_x(" term ")"
-    fwhm_y        : "fwhm_y(" term ")"
-    unknown       : CNAME "(" term ")"
+    builtin       : CNAME "(" term ")"
 
     %import common.CNAME
     %import common.SIGNED_NUMBER

@@ -3,18 +3,7 @@ from typing import Literal
 from lark import Transformer
 
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
-from operationsgateway_api.src.functions.builtins import (
-    background_type_check,
-    centre_type_check,
-    centroid_x_type_check,
-    centroid_y_type_check,
-    falling_type_check,
-    fwhm_type_check,
-    fwhm_x_type_check,
-    fwhm_y_type_check,
-    integrate_type_check,
-    rising_type_check,
-)
+from operationsgateway_api.src.functions.builtins.builtins import Builtins
 from operationsgateway_api.src.functions.parser import parser
 
 
@@ -72,8 +61,8 @@ class TypeTransformer(Transformer):
     exponentiation = operation
 
     # Functions
-    def unknown(self, tokens: list) -> None:
-        raise AttributeError(f"'{tokens[0]}' is not a recognised function name")
+    def builtin(self, tokens: list) -> str:
+        return Builtins.type_check(tokens)
 
     def scalar_function(self, _) -> Literal["scalar"]:
         return "scalar"
@@ -87,14 +76,3 @@ class TypeTransformer(Transformer):
 
     log = element_wise_function
     exp = element_wise_function
-
-    rising = rising_type_check
-    falling = falling_type_check
-    centre = centre_type_check
-    fwhm = fwhm_type_check
-    background = background_type_check
-    integrate = integrate_type_check
-    centroid_x = centroid_x_type_check
-    centroid_y = centroid_y_type_check
-    fwhm_x = fwhm_x_type_check
-    fwhm_y = fwhm_y_type_check

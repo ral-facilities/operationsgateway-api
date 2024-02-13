@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from operationsgateway_api.src.functions import WaveformVariable
-from operationsgateway_api.src.functions.builtins import integrate, integrate_type_check
+from operationsgateway_api.src.functions.builtins.integrate import Integrate
 
 
 class TestIntegrate:
@@ -50,26 +50,19 @@ class TestIntegrate:
     )
     def test_integrate(
         self,
-        argument: list[int],
+        argument: "list[int]",
         expected_result: int,
     ):
-        result = integrate(None, [argument])
+        result = Integrate.evaluate(argument)
 
         assert np.isclose(result, expected_result)
 
     def test_integrate_error(self):
         with pytest.raises(TypeError) as e:
-            integrate(None, [None])
+            Integrate.evaluate(None)
 
         message = (
             "'integrate' accepts [WaveformVariable, np.ndarray], "
             "<class 'NoneType'> provided"
         )
-        assert str(e.value) == message
-
-    def test_integrate_type_check_error(self):
-        with pytest.raises(TypeError) as e:
-            integrate_type_check(None, ["scalar"])
-
-        message = "'integrate' accepts ['waveform', 'image'] type(s), 'scalar' provided"
         assert str(e.value) == message

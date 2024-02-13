@@ -1,4 +1,4 @@
-from operationsgateway_api.src.functions.builtins import tokens
+from operationsgateway_api.src.functions.builtins.tokens import TOKENS
 from operationsgateway_api.src.functions.expression_transformer import (
     ExpressionTransformer,
 )
@@ -8,7 +8,7 @@ from operationsgateway_api.src.functions.waveform_variable import WaveformVariab
 
 __all__ = (
     ExpressionTransformer,
-    tokens,
+    TOKENS,
     TypeTransformer,
     VariableTransformer,
     WaveformVariable,

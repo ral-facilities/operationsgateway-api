@@ -35,7 +35,7 @@ class TestExpressionTransformer:
             expression_transformer.evaluate("unknown(1)")
 
         expected_message = (
-            'Error trying to process rule "unknown":\n\n'
-            "'unknown' is not a recognised function name"
+            'Error trying to process rule "builtin":\n\n'
+            "'unknown' is not a recognised builtin function name"
         )
         assert str(e.value) == expected_message

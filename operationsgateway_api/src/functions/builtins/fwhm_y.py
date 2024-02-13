@@ -1,59 +1,43 @@
-from typing import Literal
-
-from lark import Transformer
 import numpy as np
 
-from operationsgateway_api.src.functions.builtins.centroid_x import centroid_x
-from operationsgateway_api.src.functions.builtins.common import (
-    calculate_fwhm,
-    type_check,
-)
+from operationsgateway_api.src.functions.builtins.builtin import Builtin
+from operationsgateway_api.src.functions.builtins.centroid_x import CentroidX
+from operationsgateway_api.src.functions.builtins.fwhm import FWHM
 from operationsgateway_api.src.functions.waveform_variable import WaveformVariable
 
 
-FWHM_Y_TOKEN = {
-    "symbol": "fwhm_y",
-    "name": "Full Width Half Maximum (y)",
-    "details": (
-        "Calculate the FWHM of an image across the y axis, at the x position "
-        "of the image centroid. Errors if waveform or scalar "
-        "provided. Implementation: First, calculates the centroid and extracts "
-        "the x position. Then applies smoothing by taking weighted "
-        "nearest and next-nearest neighbour contributions to pixel values whose "
-        "difference from their neighbours is more than 0.2 times the total "
-        "range in values. The maximum value is then identified along with the "
-        "positions bounding the FWHM and the distance in pixels returned."
-    ),
-}
+class FWHMY(Builtin):
+    input_types = {"image"}
+    output_type = "scalar"
+    symbol = "fmhw_y"
+    token = {
+        "symbol": symbol,
+        "name": "Full Width Half Maximum (y)",
+        "details": (
+            "Calculate the FWHM of an image across the y axis, at the x position "
+            "of the image centroid. Errors if waveform or scalar "
+            "provided. Implementation: First, calculates the centroid and extracts "
+            "the x position. Then applies smoothing by taking weighted "
+            "nearest and next-nearest neighbour contributions to pixel values whose "
+            "difference from their neighbours is more than 0.2 times the total "
+            "range in values. The maximum value is then identified along with the "
+            "positions bounding the FWHM and the distance in pixels returned."
+        ),
+    }
 
+    @staticmethod
+    def evaluate(image: np.ndarray) -> float:
+        """
+        First, calculates the centroid and extracts the x position. Then applies
+        smoothing by taking weighted nearest and next-nearest neighbour
+        contributions to pixel values whose difference from their neighbours is more
+        than 0.2 times the total range in values. The maximum value is then
+        identified along with the positions bounding the FWHM and the distance in
+        pixels returned.
+        """
+        centroid_position = CentroidX.evaluate(image)
+        y = image[:, centroid_position]
+        waveform_variable = WaveformVariable(x=np.array(range(len(y))), y=y)
 
-def fwhm_y_type_check(self: Transformer, arguments: list) -> Literal["scalar"]:
-    """
-    Raises an error unless `arguments[0] in ["image"]`, and returns "scalar".
-    """
-    (argument,) = arguments
-    return type_check(argument, ["image"], "scalar", "fwhm_y")
-
-
-def fwhm_y(self: Transformer, arguments: list) -> float:
-    """
-    The first element of `arguments` must be a `WaveformVariable`.
-
-    First, calculates the centroid and extracts the x position. Then applies
-    smoothing by taking weighted nearest and next-nearest neighbour
-    contributions to pixel values whose difference from their neighbours is more
-    than 0.2 times the total range in values. The maximum value is then
-    identified along with the positions bounding the FWHM and the distance in
-    pixels returned.
-    """
-    image = arguments[0]
-    if not isinstance(image, np.ndarray):
-        message = f"'fwhm_y' accepts np.ndarray, {type(image)} provided"
-        raise TypeError(message)
-
-    centroid_position = centroid_x(None, [image])
-    y = image[:, centroid_position]
-    waveform_variable = WaveformVariable(x=np.array(range(len(y))), y=y)
-
-    half_max_left, half_max_right = calculate_fwhm(waveform_variable)
-    return half_max_right - half_max_left
+        half_max_left, half_max_right = FWHM.calculate_fwhm(waveform_variable)
+        return half_max_right - half_max_left

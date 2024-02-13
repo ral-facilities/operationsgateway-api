@@ -414,7 +414,7 @@ class Record:
 
     @staticmethod
     async def apply_functions(
-        record: dict[str, dict],
+        record: "dict[str, dict]",
         functions: list,
         lower_level: int,
         upper_level: int,
@@ -450,7 +450,7 @@ class Record:
 
     @staticmethod
     async def _apply_function(
-        record: dict[str, dict],
+        record: "dict[str, dict]",
         lower_level: int,
         upper_level: int,
         colourmap_name: str,
@@ -516,7 +516,7 @@ class Record:
         record_id: str,
         name: str,
         channel_value: dict,
-    ) -> np.ndarray | WaveformVariable | float:
+    ) -> "np.ndarray | WaveformVariable | float":
         """
         Extracts and returns the relevant data from `channel_value`, handling
         extra calls needed for "image" and "waveform" types.
@@ -556,7 +556,7 @@ class Record:
         upper_level: int,
         colourmap_name: str,
         function_name: str,
-        result: np.ndarray | WaveformVariable | np.float64,
+        result: "np.ndarray | WaveformVariable | np.float64",
         truncate_response: bool = True,
     ) -> None:
         """

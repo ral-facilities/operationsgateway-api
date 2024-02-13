@@ -1,12 +1,8 @@
 import numpy as np
 import pytest
 
-from operationsgateway_api.src.functions.builtins import (
-    centroid_x,
-    centroid_x_type_check,
-    centroid_y,
-    centroid_y_type_check,
-)
+from operationsgateway_api.src.functions.builtins.centroid_x import CentroidX
+from operationsgateway_api.src.functions.builtins.centroid_y import CentroidY
 
 
 class TestCentroid:
@@ -25,39 +21,11 @@ class TestCentroid:
     )
     def test_centroid(
         self,
-        argument: list[int],
-        expected_results: tuple[int, int],
+        argument: "list[int]",
+        expected_results: "tuple[int, int]",
     ):
-        x_result = centroid_x(None, [argument])
-        y_result = centroid_y(None, [argument])
+        x_result = CentroidX.evaluate(argument)
+        y_result = CentroidY.evaluate(argument)
 
         assert np.isclose(x_result, expected_results[0])
         assert np.isclose(y_result, expected_results[1])
-
-    def test_centroid_x_error(self):
-        with pytest.raises(TypeError) as e:
-            centroid_x(None, [None])
-
-        message = "'centroid_x' accepts np.ndarray, <class 'NoneType'> provided"
-        assert str(e.value) == message
-
-    def test_centroid_y_error(self):
-        with pytest.raises(TypeError) as e:
-            centroid_y(None, [None])
-
-        message = "'centroid_y' accepts np.ndarray, <class 'NoneType'> provided"
-        assert str(e.value) == message
-
-    def test_centroid_x_type_check_error(self):
-        with pytest.raises(TypeError) as e:
-            centroid_x_type_check(None, ["scalar"])
-
-        message = "'centroid_x' accepts ['image'] type(s), 'scalar' provided"
-        assert str(e.value) == message
-
-    def test_centroid_y_type_check_error(self):
-        with pytest.raises(TypeError) as e:
-            centroid_y_type_check(None, ["scalar"])
-
-        message = "'centroid_y' accepts ['image'] type(s), 'scalar' provided"
-        assert str(e.value) == message

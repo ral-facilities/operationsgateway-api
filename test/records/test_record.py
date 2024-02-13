@@ -165,6 +165,21 @@ class TestRecord:
                 },
                 id="Image reductive function",
             ),
+            pytest.param(
+                [
+                    {
+                        "name": "a",
+                        "expression": "background(N_COMP_FF_IMAGE)",
+                    },
+                ],
+                {
+                    "a": {
+                        "data": 3.77,
+                        "metadata": {"channel_dtype": "scalar"},
+                    },
+                },
+                id="Image builtin function",
+            ),
         ],
     )
     async def test_apply_functions(

@@ -8,7 +8,7 @@ from typing_extensions import Annotated
 from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import FunctionParseError
-from operationsgateway_api.src.functions import tokens, TypeTransformer
+from operationsgateway_api.src.functions import TOKENS, TypeTransformer
 
 
 log = logging.getLogger()
@@ -34,7 +34,7 @@ async def get_function_tokens(
 
     log.info("Getting function tokens")
 
-    return tokens
+    return TOKENS
 
 
 @router.get(
@@ -91,7 +91,7 @@ async def validate_function(
         root_message = message.split("\n\n")[1].strip('"')
         if 'Error trying to process rule "variable"' in message:
             error = f"Unexpected variable in '{expression}': {root_message}"
-        elif 'Error trying to process rule "unknown"' in message:
+        elif "is not a recognised builtin function name" in message:
             error = f"Unsupported function in '{expression}': {root_message}"
         else:
             error = f"Unsupported type in '{expression}': {root_message}"

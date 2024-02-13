@@ -29,7 +29,7 @@ class TestWaveformVariable:
     def test_waveform_variable_element_wise(
         self,
         expression: callable,
-        expected_result: list[float],
+        expected_result: "list[float]",
     ):
         array = np.array([1.0, 2.0, 3.0])
         waveform_variable = WaveformVariable(x=array.copy(), y=array.copy())

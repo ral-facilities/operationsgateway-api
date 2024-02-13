@@ -124,7 +124,7 @@ class TestValidateFunction:
                 {},
                 (
                     "Unsupported type in 'centre(1)': "
-                    "'centre' accepts ['waveform'] type(s), 'scalar' provided"
+                    "'centre' accepts {'waveform'} type(s), 'scalar' provided"
                 ),
                 id="Wrong function argument type",
             ),
@@ -133,7 +133,7 @@ class TestValidateFunction:
                 {},
                 (
                     "Unsupported function in 'unknown(1)': "
-                    "'unknown' is not a recognised function name"
+                    "'unknown' is not a recognised builtin function name"
                 ),
                 id="Unknown function",
             ),
