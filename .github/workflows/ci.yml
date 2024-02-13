@@ -126,6 +126,9 @@ jobs:
       #  with:
       #    detached: true
 
+      - name: Run test script to launch and kill API
+        run: poetry run python util/realistic_data/kill_api.py
+
       - name: Run Echo Ingest script
         run: poetry run python util/realistic_data/ingest_echo_data.py
         timeout-minutes: 70
