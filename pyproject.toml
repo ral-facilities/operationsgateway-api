@@ -13,7 +13,7 @@ python = ">=3.8,<3.12"
 fastapi = "^0.109.1"
 motor = "^3.3.2"
 uvicorn = "^0.20.0"
-python-multipart = "^0.0.5"
+python-multipart = "^0.0.7"
 PyYAML = "^6.0"
 ImageHash = "4.3.1"
 # scipy is a dependency of ImageHash but is listed to mitigate
