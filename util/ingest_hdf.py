@@ -120,11 +120,19 @@ if DELETE_IMAGES:
         aws_secret_access_key=Config.config.images.echo_secret_key,
     )
 
-
     bucket = s3_resource.Bucket(BUCKET_NAME)
     print(f"Retrieved '{BUCKET_NAME}' bucket, going to delete all files in the bucket")
     bucket.objects.all().delete()
     print(f"Remove all files from the '{BUCKET_NAME}' bucket")
+
+if JSON_USERS is not None:
+    client = AsyncIOMotorClient(DATABASE_CONNECTION_URL)
+    db = client[DATABASE_NAME]
+    with open(JSON_USERS) as f:
+        users = [json.loads(line) for line in f.readlines()]
+
+    records_drop = db.users.insert_many(users)
+    print(f"Imported {len(users)} users")
 
 
 def is_api_alive(host, port):
@@ -136,12 +144,14 @@ def is_api_alive(host, port):
     except Exception:
         return False
 
+
 def clear_buffers(process, output=False):
     out = process.stdout.read()
     err = process.stderr.read()
     if output:
         print(out.decode("utf-8"))
         print(err.decode("utf-8"))
+
 
 # Start API if an API URL isn't given as a command line option
 if not args.url:
@@ -240,7 +250,7 @@ for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
                         pprint(response.text)
         directory_end_time = time()
         directory_duration = directory_end_time - directory_start_time
-        
+
         print(
             f"Ingestion of {entry.path} complete, time taken:"
             f" {directory_duration:0.2f} seconds",
@@ -261,15 +271,6 @@ if REINGEST_EXPERIMENTS:
     else:
         print(f"{response.status_code} returned")
         pprint(response.text)
-
-if JSON_USERS is not None:
-    client = AsyncIOMotorClient(DATABASE_CONNECTION_URL)
-    db = client[DATABASE_NAME]
-    with open(JSON_USERS) as f:
-        users = [json.loads(line) for line in f.readlines()]
-
-    records_drop = db.users.insert_many(users)
-    print(f"Imported {len(users)} users")
 
 # Kill API process if it was started in this script
 # Using args.url because API_URL will be populated when API process was started
