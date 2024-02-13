@@ -188,20 +188,23 @@ if not args.url:
     API_URL = f"http://{host}:{port}"
     print(f"API started on {API_URL}")
 
-# Login to get an access token
-print(f"Login as '{USERNAME}' to get access token")
-credentials_json = json.dumps({"username": USERNAME, "password": PASSWORD})
-response = requests.post(
-    f"{API_URL}/login",
-    data=credentials_json,
-)
-# strip the first and last characters off the response
-# (the double quotes that surround it)
-token = response.text[1:-1]
+
+def login() -> str:
+    # Login to get an access token
+    print(f"Login as '{USERNAME}' to get access token")
+    credentials_json = json.dumps({"username": USERNAME, "password": PASSWORD})
+    response = requests.post(
+        f"{API_URL}/login",
+        data=credentials_json,
+    )
+    # strip the first and last characters off the response
+    # (the double quotes that surround it)
+    return response.text[1:-1]
 
 
 # Ingesting channel manifest file
 with open(f"{BASE_DIR}/channel_manifest.json", "r") as channel_manifest:
+    token = login()
     response = requests.post(
         f"{API_URL}/submit/manifest",
         files={"file": channel_manifest.read()},
@@ -218,6 +221,7 @@ for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
     if entry.is_dir():
         print(f"Iterating through {entry.path}")
         directory_start_time = time()
+        token = login()
         for file in sorted(os.scandir(entry.path), key=lambda e: e.name):
             if file.name.endswith(".h5"):
                 start_time = time()
@@ -258,6 +262,7 @@ for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
 
 # Getting experiments from Scheduler and storing them in the database
 if REINGEST_EXPERIMENTS:
+    token = login()
     response = requests.post(
         f"{API_URL}/experiments",
         headers={"Authorization": f"Bearer {token}"},
