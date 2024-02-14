@@ -23,7 +23,7 @@ auth:
   private_key_path: /home/runner/work/operationsgateway-api/id_rsa
   public_key_path: /home/runner/work/operationsgateway-api/id_rsa.pub
   jwt_algorithm: RS256
-  access_token_validity_mins: 60
+  access_token_validity_mins: 120
   refresh_token_validity_days: 7
   fedid_server_url: ldap://fed.cclrc.ac.uk:389
   fedid_server_ldap_realm: FED.CCLRC.AC.UK

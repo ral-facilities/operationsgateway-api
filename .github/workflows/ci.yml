@@ -8,11 +8,21 @@ on:
 
 jobs:
   tests:
-    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9"]
+        os: [ubuntu-20.04, ubuntu-22.04]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        exclude:
+          - os: ubuntu-22.04
+            python-version: "3.8"
+          - os: ubuntu-22.04
+            python-version: "3.9"
+          - os: ubuntu-20.04
+            python-version: "3.10"
+          - os: ubuntu-20.04
+            python-version: "3.11"
+    runs-on: ${{ matrix.os }}
 
     name: Python ${{ matrix.python-version }} Tests
     steps:
@@ -21,7 +31,9 @@ jobs:
 
       # Install dependencies of python-ldap
       - name: Install python-ldap dependencies
-        run: sudo apt-get install -y libsasl2-dev python${{ matrix.python-version }}-dev libldap2-dev libssl-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsasl2-dev python${{ matrix.python-version }}-dev libldap2-dev libssl-dev
 
       # Setup Python and environment dependencies (via cache)
       - name: Setup Python
@@ -45,9 +57,6 @@ jobs:
       # Read the database name from the config file and store it in an environment variable
       - name: Get database name from ci_config.yml
         run: echo "DATABASE_NAME=$(grep database_name .github/ci_config.yml | cut -d ':' -f 2 | tr -d '[:space:]')" >> $GITHUB_ENV
-
-      - name: Add test users to OperationsGateway database
-        run: mongoimport --db='${{ env.DATABASE_NAME }}' --collection='users' --file='util/users_for_mongoimport.json'
 
       # Load Poetry virtual environment dependencies and install API dependencies
       - name: Load Poetry cache
@@ -112,8 +121,9 @@ jobs:
           repository: ral-facilities/operationsgateway-test-data
           path: operationsgateway-test-data
           ssh-key: ${{ secrets.SSH_PRIV_OG_TEST_DATA_ACTIONS }}
+
       - name: Run ingestion script
-        run: poetry run python util/ingest_hdf.py -p operationsgateway-test-data/dev_server -U backend -P back
+        run: poetry run python util/ingest_hdf.py -p operationsgateway-test-data/dev_server -U backend -P back -j util/users_for_mongoimport.json
 
       - name: Load Poetry cache for Nox tests session
         uses: actions/cache@v3
