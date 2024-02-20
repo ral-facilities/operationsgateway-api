@@ -518,9 +518,13 @@ class PartialImportChecks:
         ingested_metadata = (self.ingested_record).metadata
         stored_metadata = (self.stored_record).metadata
 
-        time_match = (ingested_metadata.timestamp).replace(
-            tzinfo=None,
-        ) == stored_metadata.timestamp
+        try:
+            time_match = (ingested_metadata.timestamp).replace(
+                tzinfo=None,
+            ) == stored_metadata.timestamp
+        except Exception:
+            time_match = (ingested_metadata.timestamp) == stored_metadata.timestamp
+
         epac_match = (
             ingested_metadata.epac_ops_data_version
             == stored_metadata.epac_ops_data_version
@@ -555,6 +559,9 @@ class PartialImportChecks:
 
         elif not time_match and not shot_match:
             return "accept_new"
+
+        else:
+            raise RejectRecordError("inconsistent metadata")
 
     def channel_checks(self):
         ingested_channels = (self.ingested_record).channels

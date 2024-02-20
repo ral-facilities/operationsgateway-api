@@ -75,7 +75,7 @@ async def create_test_hdf_file(  # noqa: C901
 
     data_version = data_version if data_version is not None else ["1.0", "exists"]
     timestamp = (
-        timestamp if timestamp is not None else ["2022-04-07 14:28:16", "exists"]
+        timestamp if timestamp is not None else ["2020-04-07 14:28:16", "exists"]
     )
     active_area = active_area if active_area is not None else ["ea1", "exists"]
     shotnum = shotnum if shotnum is not None else ["valid", "exists"]
@@ -178,7 +178,6 @@ async def create_test_hdf_file(  # noqa: C901
             false_image.attrs.create("x_pixel_units", "µm")
             false_image.attrs.create("y_pixel_size", 441.0)
             false_image.attrs.create("y_pixel_units", "µm")
-            # example 2D dataset
             data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.uint16)
             false_image.create_dataset("data", data=data)
 
@@ -188,7 +187,7 @@ async def create_test_hdf_file(  # noqa: C901
             false_waveform.attrs.create("x_units", "s")
             false_waveform.attrs.create("y_units", "kJ")
             x = [1, 2, 3, 4, 5, 5456]
-            y = [8, 3, 6, 2, 3, 8, 425]
+            y = [8, 3, 6, 2, 3, 8]
             false_waveform.create_dataset("x", data=x)
             false_waveform.create_dataset("y", data=y)
 
@@ -379,7 +378,7 @@ async def create_test_hdf_file(  # noqa: C901
                 pm_201_hj_pd.attrs.create("x_units", "s")
                 pm_201_hj_pd.attrs.create("y_units", "kJ")
             x = [1, 2, 3, 4, 5, 6]
-            y = [8, 3, 6, 2, 3, 8, 425]
+            y = [8, 3, 6, 2, 3, 8]
             if required_attributes and "waveform" in required_attributes:
                 waveform = required_attributes["waveform"]
                 if "x" in waveform:
@@ -1785,6 +1784,7 @@ class TestChannel:
         assert await channel_checker.channel_checks() == channel_response
 
 
+# poetry run pytest -s "test/records/test_HDF_file.py::TestPartialImport" -v -vv
 class TestPartialImport:
     @pytest.mark.parametrize(
         "test_type, response",
@@ -1808,6 +1808,11 @@ class TestPartialImport:
                 "neither",
                 "accept_new",
                 id="Neither shotnum nor timestamp matches",
+            ),
+            pytest.param(
+                "single",
+                "inconsistent metadata",
+                id="Shotnum does not match",
             ),
         ],
     )
@@ -1844,6 +1849,11 @@ class TestPartialImport:
             stored_record = copy.deepcopy(record_data)
             # alter so neither shotnum nor timestamp matches
             stored_record.metadata.timestamp = "3122-04-07 14:28:16"
+            stored_record.metadata.shotnum = 234
+
+        if test_type == "single":
+            stored_record = copy.deepcopy(record_data)
+            # alter so only shotnum is wrong
             stored_record.metadata.shotnum = 234
 
         partial_import_checker = ingestion_validator.PartialImportChecks(
@@ -2011,72 +2021,371 @@ class TestPartialImport:
         assert partial_import_checker.channel_checks() == response
 
 
+def create_integration_test_hdf(fails=None, generic_fail=None):
+    if not fails:
+        fails = []
+    if not generic_fail:
+        generic_fail = []
+
+    with h5py.File("test.h5", "w") as f:
+        f.attrs.create("epac_ops_data_version", "1.0")
+        record = f["/"]
+        record.attrs.create("timestamp", "2020-04-07 14:28:16")
+        record.attrs.create("shotnum", 366272, dtype="u8")
+        record.attrs.create("active_area", "ea1")
+        record.attrs.create("active_experiment", "90097341")
+
+        if "scalar" in fails:
+            pm_201_tj_cam_2_fwhmy = record.create_group("FALSE_SCALAR")
+        else:
+            pm_201_tj_cam_2_fwhmy = record.create_group("PM-201-TJ-CAM-2-FWHMY")
+        pm_201_tj_cam_2_fwhmy.attrs.create("channel_dtype", "scalar")
+        if "scalar" in generic_fail:
+            pm_201_tj_cam_2_fwhmy.create_dataset("data", data=["GS"])
+        else:
+            pm_201_tj_cam_2_fwhmy.create_dataset("data", data="GS")
+
+        if "image" in fails:
+            pm_201_fe_cam_2 = record.create_group("FALSE_IMAGE")
+        else:
+            pm_201_fe_cam_2 = record.create_group("PM-201-FE-CAM-2")
+        pm_201_fe_cam_2.attrs.create("channel_dtype", "image")
+        pm_201_fe_cam_2.attrs.create("exposure_time_s", 0.001)
+        pm_201_fe_cam_2.attrs.create("gain", 5.5)
+        pm_201_fe_cam_2.attrs.create("x_pixel_size", 441.0)
+        pm_201_fe_cam_2.attrs.create("x_pixel_units", "µm")
+        pm_201_fe_cam_2.attrs.create("y_pixel_size", 441.0)
+        pm_201_fe_cam_2.attrs.create("y_pixel_units", "µm")
+        data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.uint16)
+        if "image" in generic_fail:
+            pm_201_fe_cam_2.create_dataset("data", data=12)
+        else:
+            pm_201_fe_cam_2.create_dataset("data", data=data)
+
+        if "waveform" in fails:
+            pm_201_hj_pd = record.create_group("FALSE_WAVEFORM")
+        else:
+            pm_201_hj_pd = record.create_group("PM-201-HJ-PD")
+        pm_201_hj_pd.attrs.create("channel_dtype", "waveform")
+        pm_201_hj_pd.attrs.create("x_units", "s")
+        pm_201_hj_pd.attrs.create("y_units", "kJ")
+        x = [1, 2, 3, 4, 5, 5456]
+        y = [8, 3, 6, 2, 3, 8]
+        pm_201_hj_pd.create_dataset("x", data=x)
+        if "waveform" in generic_fail:
+            pm_201_hj_pd.create_dataset("y", data=2)
+        else:
+            pm_201_hj_pd.create_dataset("y", data=y)
+
+
+# poetry run pytest -s "test/records/test_HDF_file.py::TestIntegrationIngestData" -v -vv
 class TestIntegrationIngestData:
+    @pytest.mark.asyncio
+    async def test_ingest_data_success(
+        self,
+        reset_databases,
+        test_app: TestClient,
+        login_and_get_token,
+    ):
+
+        (
+            _record_data,
+            _waveforms,
+            _images,
+            _internal_failed_channel,
+        ) = await create_test_hdf_file()
+
+        test_file = "test.h5"
+        files = {"file": ("test.h5", open(test_file, "rb"))}
+        test_response = test_app.post(
+            "/submit/hdf",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+            files=files,
+        )
+
+        text_response = (
+            '{"message":"Added as 20200407142816","response":{"accepted_channels"'
+            ':["PM-201-FE-CAM-1","PM-201-FE-CAM-2","PM-201-FE-CAM-2-CENX",'
+            '"PM-201-FE-CAM-2-CENY","PM-201-FE-CAM-2-FWHMX","PM-201-FE-CAM-2-FWHMY'
+            '","PM-201-FE-EM","PM-201-HJ-PD","PM-201-PA1-EM","PM-201-PA2-EM",'
+            '"PM-201-TJ-CAM-2-CENX","PM-201-TJ-CAM-2-CENY","PM-201-TJ-CAM-2-FWHMX"'
+            ',"PM-201-TJ-CAM-2-FWHMY","PM-201-TJ-EM"],"rejected_channels":{},'
+            '"warnings":[]}}'
+        )
+
+        code_response = 201
+
+        assert test_response.text == text_response
+        assert test_response.status_code == code_response
+
+    @pytest.mark.asyncio
+    async def test_merge_record_success(
+        self,
+        reset_databases,
+        test_app: TestClient,
+        login_and_get_token,
+    ):
+
+        (
+            _record_data,
+            _waveforms,
+            _images,
+            _internal_failed_channel,
+        ) = await create_test_hdf_file()
+
+        test_file = "test.h5"
+        files = {"file": ("test.h5", open(test_file, "rb"))}
+        test_app.post(
+            "/submit/hdf",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+            files=files,
+        )
+
+        test_response = test_app.post(
+            "/submit/hdf",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+            files=files,
+        )
+
+        text_response = (
+            '{"message":"Updated 20200407142816","response":{"accepted_channels"'
+            ':[],"rejected_channels":{"PM-201-FE-CAM-1":"Channel is already present '
+            'in existing record","PM-201-FE-CAM-2":"Channel is already present in '
+            'existing record","PM-201-FE-CAM-2-CENX":"Channel is already present in '
+            'existing record","PM-201-FE-CAM-2-CENY":"Channel is already present in '
+            'existing record","PM-201-FE-CAM-2-FWHMX":"Channel is already present in '
+            'existing record","PM-201-FE-CAM-2-FWHMY":"Channel is already present in '
+            'existing record","PM-201-FE-EM":"Channel is already present in existing '
+            'record","PM-201-HJ-PD":"Channel is already present in existing record","'
+            'PM-201-PA1-EM":"Channel is already present in existing record",'
+            '"PM-201-PA2-EM":"Channel is already present in existing record",'
+            '"PM-201-TJ-CAM-2-CENX":"Channel is already present in existing record",'
+            '"PM-201-TJ-CAM-2-CENY":"Channel is already present in existing record",'
+            '"PM-201-TJ-CAM-2-FWHMX":"Channel is already present in existing record",'
+            '"PM-201-TJ-CAM-2-FWHMY":"Channel is already present in existing record",'
+            '"PM-201-TJ-EM":"Channel is already present in existing record"},'
+            '"warnings":[]}}'
+        )
+
+        code_response = 200
+
+        assert test_response.text == text_response
+        assert test_response.status_code == code_response
+
     @pytest.mark.parametrize(
-        "test_type, response",
+        "data_version, active_area, text_response",
         [
             pytest.param(
-                "match",
-                "accept_merge",
-                id="Metadata matches",
+                ["1.0", "missing"],
+                None,
+                '{"detail":"epac_ops_data_version does not exist"}',
+                id="Reject file",
+            ),
+            pytest.param(
+                None,
+                ["ea1", "missing"],
+                '{"detail":"active_area is missing"}',
+                id="Reject record",
             ),
         ],
     )
     @pytest.mark.asyncio
-    async def test_ingest_data(
+    async def test_hdf_rejects(
         self,
-        remove_hdf_file,
+        data_version,
+        active_area,
+        text_response,
+        reset_databases,
         test_app: TestClient,
-        test_type,
-        response,
+        login_and_get_token,
     ):
+        (
+            _record_data,
+            _waveforms,
+            _images,
+            _internal_failed_channel,
+        ) = await create_test_hdf_file(
+            data_version=data_version,
+            active_area=active_area,
+        )
+
+        test_file = "test.h5"
+        files = {"file": ("test.h5", open(test_file, "rb"))}
+
+        test_response = test_app.post(
+            "/submit/hdf",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+            files=files,
+        )
+
+        code_response = 400
+
+        assert test_response.text == text_response
+        assert test_response.status_code == code_response
+
+    @pytest.mark.asyncio
+    async def test_partial_import_record_reject(
+        self,
+        reset_databases,
+        test_app: TestClient,
+        login_and_get_token,
+    ):
+        (
+            _record_data,
+            _waveforms,
+            _images,
+            _internal_failed_channel,
+        ) = await create_test_hdf_file()
+
+        test_file = "test.h5"
+        files = {"file": ("test.h5", open(test_file, "rb"))}
+
+        test_app.post(
+            "/submit/hdf",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+            files=files,
+        )
 
         (
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
-        ) = await create_test_hdf_file()
-        stored_record = None
+            _record_data,
+            _waveforms,
+            _images,
+            _internal_failed_channel,
+        ) = await create_test_hdf_file(shotnum=["valid", "missing"])
 
-        if stored_record:
-            partial_import_checker = ingestion_validator.PartialImportChecks(
-                record_data,
-                stored_record,
-            )
-            accept_type = partial_import_checker.metadata_checks()
-            partial_channel_dict = partial_import_checker.channel_checks()
+        files = {"file": ("test.h5", open(test_file, "rb"))}
 
-        file_checker = ingestion_validator.FileChecks(record_data)
-        warning = file_checker.epac_data_version_checks()
-
-        record_checker = ingestion_validator.RecordChecks(record_data)
-        record_checker.active_area_checks()
-        record_checker.optional_metadata_checks()
-
-        channel_checker = ingestion_validator.ChannelChecks(
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
+        test_response = test_app.post(
+            "/submit/hdf",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+            files=files,
         )
-        channel_dict = await channel_checker.channel_checks()
 
-        # test_response = test_app.get(
-        #    f"/submit/hdf",
-        #    headers={"Authorization": f"Bearer {login_and_get_token}"},
-        #    files=test_file
-        # )
+        text_response = '{"detail":"inconsistent metadata"}'
 
+        code_response = 400
 
-# List of integration tests:
-#     all channels fail
-#     file exists and channels removed by both checks
-#     file rejected
-#     record rejected (record)
-#     record rejected (partial import)
-#     record merges (partial import)
-#     record accepted as new (partial import)
-#     channel failed (waveform data removed)
-#     channel failed (image data removed)
-#     generic channel fail
+        assert test_response.text == text_response
+        assert test_response.status_code == code_response
+
+    @pytest.mark.asyncio
+    async def test_partial_import_timestamp_match(
+        self,
+        reset_databases,
+        test_app: TestClient,
+        login_and_get_token,
+    ):
+        (
+            _record_data,
+            _waveforms,
+            _images,
+            _internal_failed_channel,
+        ) = await create_test_hdf_file()
+
+        test_file = "test.h5"
+        files = {"file": ("test.h5", open(test_file, "rb"))}
+
+        test_app.post(
+            "/submit/hdf",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+            files=files,
+        )
+
+        (
+            _record_data,
+            _waveforms,
+            _images,
+            _internal_failed_channel,
+        ) = await create_test_hdf_file(
+            shotnum=["valid", "missing"],
+            data_version=["1.0", "missing"],
+            active_area=["ea1", "missing"],
+            active_experiment=["90097341", "missing"],
+        )
+
+        files = {"file": ("test.h5", open(test_file, "rb"))}
+
+        test_response = test_app.post(
+            "/submit/hdf",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+            files=files,
+        )
+
+        text_response = '{"detail":"timestamp matches, other metadata does not"}'
+
+        code_response = 400
+
+        assert test_response.text == text_response
+        assert test_response.status_code == code_response
+
+    @pytest.mark.asyncio
+    async def test_channel_all_fail(
+        self,
+        reset_databases,
+        test_app: TestClient,
+        login_and_get_token,
+    ):
+        create_integration_test_hdf(fails=["scalar", "image", "waveform"])
+
+        test_file = "test.h5"
+        files = {"file": ("test.h5", open(test_file, "rb"))}
+
+        test_response = test_app.post(
+            "/submit/hdf",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+            files=files,
+        )
+
+        text_response = (
+            '{"message":"Added as 20200407142816","response":{"accepted'
+            '_channels":[],"rejected_channels":{"FALSE_IMAGE":["Channel name is not '
+            'recognised (does not appear in manifest)"],"FALSE_SCALAR":["Channel name i'
+            's not recognised (does not appear in manifest)"],"FALSE_WAVEFORM":["Channe'
+            'l name is not recognised (does not appear in manifest)"]},"warnings":[]}}'
+        )
+
+        code_response = 201
+
+        assert test_response.text == text_response
+        assert test_response.status_code == code_response
+
+    @pytest.mark.asyncio
+    async def test_channel_multiple_reject_types(
+        self,
+        reset_databases,
+        test_app: TestClient,
+        login_and_get_token,
+    ):
+        create_integration_test_hdf(fails=["scalar"])
+
+        test_file = "test.h5"
+        files = {"file": ("test.h5", open(test_file, "rb"))}
+
+        test_app.post(
+            "/submit/hdf",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+            files=files,
+        )
+
+        create_integration_test_hdf(generic_fail=["image"])
+
+        files = {"file": ("test.h5", open(test_file, "rb"))}
+
+        test_response = test_app.post(
+            "/submit/hdf",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+            files=files,
+        )
+
+        text_response = (
+            '{"message":"Updated 20200407142816","response":{"accepted_channels":["PM-2'
+            '01-TJ-CAM-2-FWHMY"],"rejected_channels":{"PM-201-FE-CAM-2":["data attribut'
+            'e has wrong datatype, should be ndarray","data attribute has wrong datatyp'
+            'e, should be uint16 or uint8"],"PM-201-HJ-PD":"Channel is already present '
+            'in existing record"},"warnings":[]}}'
+        )
+
+        code_response = 200
+
+        assert test_response.text == text_response
+        assert test_response.status_code == code_response

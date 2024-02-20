@@ -23,7 +23,10 @@ AuthoriseRoute = Annotated[str, Depends(authorise_route)]
 
 def _update_data(checker_response, record_data, images, waveforms):
     for key in checker_response["rejected_channels"].keys():
-        channel = record_data.channels[key]
+        try:
+            channel = record_data.channels[key]
+        except KeyError:
+            continue
 
         if channel.metadata.channel_dtype == "image":
             image_path = channel.image_path
@@ -77,7 +80,7 @@ async def submit_hdf(
     record_original = Record(record_data)
 
     stored_record = await record_original.find_existing_record()
-    ################################################################################
+
     accept_type = None
     if stored_record:
         partial_import_checker = ingestion_validator.PartialImportChecks(
@@ -103,9 +106,14 @@ async def submit_hdf(
     channel_dict = await channel_checker.channel_checks()
 
     if stored_record:
+        log.info("existent record found")
         for key in channel_dict["rejected_channels"].keys():
             if key in partial_channel_dict["accepted_channels"]:
                 partial_channel_dict["accepted_channels"].remove(key)
+                (partial_channel_dict["rejected_channels"])[key] = channel_dict[
+                    "rejected_channels"
+                ][key]
+            else:
                 (partial_channel_dict["rejected_channels"])[key] = channel_dict[
                     "rejected_channels"
                 ][key]
@@ -117,8 +125,6 @@ async def submit_hdf(
         checker_response["warnings"] = list(warning)
     else:
         checker_response["warnings"] = []
-
-    ################################################################################
 
     record_data, images, waveforms = _update_data(
         checker_response,

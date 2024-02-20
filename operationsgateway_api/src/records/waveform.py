@@ -2,7 +2,10 @@ import base64
 from io import BytesIO
 import logging
 
-import matplotlib.pyplot as plt
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  # noqa: I202
 
 from operationsgateway_api.src.exceptions import MissingDocumentError
 from operationsgateway_api.src.models import WaveformModel

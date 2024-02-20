@@ -104,6 +104,37 @@ class EchoInterface:
             ) from exc
         log.debug("Uploaded image successfully to %s", image_path)
 
-    def delete_file_object(self) -> None:
+    def delete_file_object(self, image_path: str) -> None:
         # TODO - this will be implemented when DELETE /records is implemented
-        pass
+
+        # current version is for ingestion_validator integration tests
+
+        """
+        Delete an image
+        """
+        log.info("Deleting image from %s", image_path)
+        try:
+            self.bucket.Object(image_path).delete()
+        except ClientError as exc:
+            log.error(
+                "%s: %s",
+                exc.response["Error"]["Code"],
+                exc.response["Error"].get("Message"),
+            )
+            raise EchoS3Error(
+                f"{exc.response['Error']['Code']} when deleting file at"
+                f" '{image_path}'",
+            ) from exc
+
+        obj = self.bucket.Object(image_path)
+        try:
+            obj.load()
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "404":
+                log.info("%s Deletion successful.", image_path)
+        else:
+            log.error(
+                "The object with key %s still exists. Deletion might not "
+                "have been successful.",
+                image_path,
+            )
