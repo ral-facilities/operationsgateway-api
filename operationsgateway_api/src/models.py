@@ -123,6 +123,13 @@ class UserModel(BaseModel):
     authorised_routes: Optional[List[str]] = None
 
 
+class UpdateUserModel(BaseModel):
+    username: str = Field(alias="_id")
+    updated_password: Optional[str] = None
+    add_authorised_routes: Optional[List[str]] = None
+    remove_authorised_routes: Optional[List[str]] = None
+
+
 class ChannelModel(BaseModel):
     # Field names where modifications to the data cannot be made
     protected_fields: ClassVar[List[str]] = ["type_", "units"]
