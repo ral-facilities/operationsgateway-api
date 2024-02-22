@@ -1,9 +1,12 @@
 import argparse
 import base64
-import hashlib
+import io
+
+import imagehash
+from PIL import Image
 
 """
-This script is used to generate MD5 checksums, used to assert thumbnails in tests
+This script is used to generate perceptual hashes, used to assert thumbnails in tests
 """
 
 parser = argparse.ArgumentParser()
@@ -20,6 +23,7 @@ args = parser.parse_args()
 BASE64_THUMBNAIL = args.thumbnail
 
 bytes_thumbnail = base64.b64decode(BASE64_THUMBNAIL)
-md5_checksum = hashlib.md5(bytes_thumbnail).hexdigest()
+image = Image.open(io.BytesIO(bytes_thumbnail))
+phash = imagehash.phash(image)
 
-print(f"MD5 Checksum: {md5_checksum}")
+print(f"Perceptual hash: {phash}")
