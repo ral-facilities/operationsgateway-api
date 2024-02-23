@@ -75,6 +75,13 @@ parser.add_argument(
     action="store_true",
     default=False,
 )
+parser.add_argument(
+    "-j",
+    "--json-users",
+    help="Path to JSON file containing additional users to import",
+    type=str,
+    default=None,
+)
 
 # Put command line options into variables
 args = parser.parse_args()
@@ -88,6 +95,7 @@ DATABASE_NAME = args.database_name
 DELETE_IMAGES = args.delete_images
 BUCKET_NAME = Config.config.images.image_bucket_name
 REINGEST_EXPERIMENTS = args.experiments
+JSON_USERS = args.json_users
 
 
 # Wipe collections in the database
@@ -116,6 +124,15 @@ if DELETE_IMAGES:
     print(f"Retrieved '{BUCKET_NAME}' bucket, going to delete all files in the bucket")
     bucket.objects.all().delete()
     print(f"Remove all files from the '{BUCKET_NAME}' bucket")
+
+if JSON_USERS is not None:
+    client = AsyncIOMotorClient(DATABASE_CONNECTION_URL)
+    db = client[DATABASE_NAME]
+    with open(JSON_USERS) as f:
+        users = [json.loads(line) for line in f.readlines()]
+
+    records_drop = db.users.insert_many(users)
+    print(f"Imported {len(users)} users")
 
 
 def is_api_alive(host, port):
