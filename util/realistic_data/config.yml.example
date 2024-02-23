@@ -14,10 +14,10 @@ echo:
   endpoint_url: https://s3.echo.stfc.ac.uk
   access_key: access_key
   secret_key: secret_key
-  simulated_data_bucket: og-realistic-data
-  images_bucket: na-bucket
+  simulated_data_bucket: og-ci-simulated-data
+  images_bucket: og-bucket-name
   # Number of HDF files downloaded & ingested in one go
-  page_size: 30
+  page_size: 2
 api:
   host: 127.0.0.1
   port: 8000
@@ -26,5 +26,5 @@ api:
   log_config_path: /home/user/operationsgateway-api/operationsgateway_api/logging.ini
   # If the API is launched by the script, this defines how many gunicorn workers are
   # assigned to the instance
-  gunicorn_num_workers: "8"
+  gunicorn_num_workers: "2"
   timeout_seconds: 300
