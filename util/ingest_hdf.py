@@ -135,7 +135,7 @@ if JSON_USERS is not None:
             f"--file={JSON_USERS}",
         ],
     )
-    print(f"Imported test users into database")
+    print("Imported test users into database")
 
 
 def is_api_alive(host, port):
