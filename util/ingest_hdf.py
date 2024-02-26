@@ -107,6 +107,8 @@ if WIPE_DATABASE:
     print("Records collection dropped")
     waveforms_drop = db.waveforms.drop()
     print("Waveforms collection dropped")
+    channels_drop = db.channels.drop()
+    print("Channels collection dropped")
     if REINGEST_EXPERIMENTS:
         experiments_drop = db.experiments.drop()
         print("Experiments collection dropped")
