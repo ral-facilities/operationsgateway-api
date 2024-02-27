@@ -4,21 +4,48 @@ from operationsgateway_api.src.functions.parser import parser
 
 
 class VariableTransformer(Transformer):
-    def __init__(self, visit_tokens: bool = True) -> None:
-        """
-        Creates an empty set for recording any input variables and initialise
-        the Lark Transformer for evaluating variables.
+    """Subclass of the Lark `Transformer` for extracting variable names from an
+    expression.
+
+    The purpose of a Lark `Transformer` is to `transform` a `ParseTree` of
+    `Token`s into some other format. To achieve this, callback functions defined
+    on the class are called whenever a matching `Token` with that name is
+    encountered in the `ParseTree`.
+
+    For utility, the `evaluate` function accepts a `str` and performs the
+    parsing under the hood.
+
+    Attributes:
+        variables (set):
+            Record of all variable names encountered when evaluating the
+            expression, once populated can be used for looking up channel data.
+            Note this may also include names for other function outputs.
+
+    Examples:
+        >>> variable_transformer = VariableTransformer()
+        >>> variable_transformer.evaluate("(channel_1 + function_1) / 2")
+        >>> variable_transformer.variables
+        {'channel_1', 'function_1'}
+    """
+
+    def __init__(self) -> None:
+        """Initialises the Transformer and creates an empty set for recording
+        `variables`.
         """
         self.variables = set()
-        super().__init__(visit_tokens)
+        super().__init__()
 
     def evaluate(self, expression: str) -> None:
-        """
-        Parse `expression` and record the variables it depends on as inputs.
+        """Parse and transform `expression`, recording the input variables of
+        the expression in the process.
+
+        Args:
+            expression (str): Expression to be evaluated for variable names.
         """
         tree = parser.parse(expression)
         self.transform(tree)
 
+    # Transformer callback functions
     def variable(self, channel_name: list) -> list:
         self.variables.add(str(channel_name[0]))
         return channel_name

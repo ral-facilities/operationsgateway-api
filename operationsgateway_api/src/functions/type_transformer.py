@@ -8,18 +8,57 @@ from operationsgateway_api.src.functions.parser import parser
 
 
 class TypeTransformer(Transformer):
-    def __init__(self, function_types: dict, visit_tokens: bool = True) -> None:
-        """
-        Store `function_types` (return types for other functions) and initialise
-        the Lark Transformer for evaluating return types.
+    """Subclass of the Lark `Transformer` for determining the return type of an
+    expression.
+
+    The purpose of a Lark `Transformer` is to `transform` a `ParseTree` of
+    `Token`s into some other format. To achieve this, callback functions defined
+    on the class are called whenever a matching `Token` with that name is
+    encountered in the `ParseTree`.
+
+    For utility, the `evaluate` function accepts a `str` and performs the
+    parsing under the hood.
+
+    Attributes:
+        function_types (dict):
+            Map from name to return type for other functions that the expression
+            being evaluated may depend on.
+        channel_manifest (dict):
+            Metadata for all known channels, including the data type.
+
+    Examples:
+        >>> type_transformer = TypeTransformer({"function_1": "image"})
+        >>> type_transformer.evaluate("(channel_1 + function_1) / 2")
+        'image'
+    """
+
+    def __init__(self, function_types: dict) -> None:
+        """Initialises the Transformer and stores `function_types`.
+
+        Args:
+            function_types (dict):
+                Map from name to return type for other functions that the
+                expression being evaluated may depend on.
         """
         self.function_types = function_types
-        super().__init__(visit_tokens)
+        super().__init__()
 
     async def evaluate(self, name: str, expression: str) -> str:
-        """
-        Parse `expression` and return the type that it will return.
-        Types of channels are obtained from the channel manifest.
+        """Parse and transform `expression` into the data type that the
+        expression returns.
+
+        Also fetches the most recent channel manifest asynchronously for
+        lookups.
+
+        Args:
+            name (str): Name used to label the output of the `expression`.
+            expression (str): Expression to be evaluated for return type.
+
+        Raises:
+            ValueError: If `name` is already a channel name.
+
+        Returns:
+            str: Return type of the function ("scalar", "waveform" or "image").
         """
         manifest = await ChannelManifest.get_most_recent_manifest()
         self.channel_manifest = manifest["channels"]
@@ -29,6 +68,8 @@ class TypeTransformer(Transformer):
 
         tree = parser.parse(expression)
         return self.transform(tree)
+
+    # Transformer callback functions
 
     # Values
     def constant(self, _) -> Literal["scalar"]:
