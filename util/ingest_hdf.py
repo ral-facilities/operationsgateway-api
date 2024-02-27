@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from pprint import pprint
 import socket
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
 import sys
 import threading
 from time import sleep, time
@@ -135,7 +135,7 @@ if JSON_USERS is not None:
             f"--file={JSON_USERS}",
         ],
     )
-    print(f"Imported test users into database")
+    print("Imported test users into database")
 
 
 def is_api_alive(host, port):
@@ -241,12 +241,12 @@ for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
                     if response.status_code == 201:
                         print(
                             f"Ingested {file.name}, time taken: {duration:0.2f}"
-                            " seconds"
+                            " seconds",
                         )
                     elif response.status_code == 200:
                         print(
                             f"Updated {file.name}, time taken: {duration:0.2f}"
-                            " seconds"
+                            " seconds",
                         )
                     else:
                         print(f"{response.status_code} returned")

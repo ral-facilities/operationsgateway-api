@@ -6,7 +6,7 @@ from nox.command import CommandFailed
 
 # Separating Black away from the rest of the sessions
 nox.options.sessions = "lint", "safety", "tests"
-code_locations = "operationsgateway_api", "test", "noxfile.py"
+code_locations = "operationsgateway_api", "test", "noxfile.py", "util"
 
 
 def install_with_constraints(session, *args, **kwargs):
@@ -110,5 +110,5 @@ def safety(session):
 @nox.session(python=["3.8", "3.9", "3.10", "3.11"], reuse_venv=True)
 def tests(session):
     args = session.posargs
-    session.run("poetry", "install", external=True)
+    session.run("poetry", "install", "--without", "simulated-data", external=True)
     session.run("pytest", *args)

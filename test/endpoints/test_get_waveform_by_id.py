@@ -1,5 +1,3 @@
-import json
-
 from fastapi.testclient import TestClient
 import pytest
 
@@ -9,10 +7,10 @@ class TestGetWaveformByID:
         "record_id, channel_name, expected_first_x, expected_first_y",
         [
             pytest.param(
-                "20220407141616",
-                "N_COMP_SPEC_TRACE",
-                649.8,
-                713.0,
+                "20230605100000",
+                "CM-202-CVC-SP",
+                645.0,
+                1803.1355895081488,
                 id="Ordinary request",
             ),
         ],
@@ -33,5 +31,5 @@ class TestGetWaveformByID:
 
         assert test_response.status_code == 200
 
-        assert json.loads(test_response.json()["x"])[0] == expected_first_x
-        assert json.loads(test_response.json()["y"])[0] == expected_first_y
+        assert test_response.json()["x"][0] == expected_first_x
+        assert test_response.json()["y"][0] == expected_first_y
