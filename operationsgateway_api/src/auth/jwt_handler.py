@@ -6,11 +6,13 @@ from typing import Union
 from cryptography.hazmat.primitives import serialization
 import jwt
 
-from operationsgateway_api.src.auth.auth_keys import PRIVATE_KEY, PUBLIC_KEY
+from operationsgateway_api.src.auth.auth_keys import get_private_key, get_public_key
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import ForbiddenError
 from operationsgateway_api.src.models import UserModel
 
+PRIVATE_KEY = get_private_key()
+PUBLIC_KEY = get_public_key()
 
 log = logging.getLogger()
 algorithm = Config.config.auth.jwt_algorithm
