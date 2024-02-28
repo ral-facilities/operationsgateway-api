@@ -17,6 +17,8 @@ algorithm = Config.config.auth.jwt_algorithm
 
 
 class JwtHandler:
+    blacklisted_tokens_filename = "blacklisted_tokens.txt"
+
     def __init__(self, user_model: UserModel):
         self.user_model = user_model
 
@@ -111,10 +113,10 @@ class JwtHandler:
         Each token must be on a separate line.
         :return: a list of blacklisted refresh tokens
         """
-        blacklisted_tokens_filename = "blacklisted_tokens.txt"
         try:
             with open(
-                Path(__file__).parent.parent.parent / blacklisted_tokens_filename,
+                Path(__file__).parent.parent.parent
+                / JwtHandler.blacklisted_tokens_filename,
                 "r",
             ) as f:
                 tokens_list = f.read().split("\n")
@@ -122,7 +124,7 @@ class JwtHandler:
         except FileNotFoundError:
             log.debug(
                 "Blacklisted tokens file '%s' not found",
-                blacklisted_tokens_filename,
+                JwtHandler.blacklisted_tokens_filename,
             )
             return []
 
