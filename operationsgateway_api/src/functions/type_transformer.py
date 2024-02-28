@@ -75,8 +75,8 @@ class TypeTransformer(Transformer):
     def constant(self, _) -> Literal["scalar"]:
         return "scalar"
 
-    def variable(self, name) -> str:
-        (name,) = name
+    def variable(self, channel_name: list) -> str:
+        name = "".join(channel_name)
         if name in self.channel_manifest:
             return self.channel_manifest[name]["type"]
         elif name in self.function_types:

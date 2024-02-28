@@ -14,17 +14,17 @@ class TestRecord:
     @pytest.mark.parametrize(
         "record",
         [
-            pytest.param({"_id": "20220407141616"}, id="No channels"),
+            pytest.param({"_id": "20230605100000"}, id="No channels"),
             pytest.param(
                 {
-                    "_id": "20220407141616",
+                    "_id": "20230605100000",
                     "channels": {
-                        "N_COMP_FF_YPOS": {"data": 235.734},
-                        "N_COMP_SPEC_TRACE": {
-                            "waveform_id": "20220407141616_N_COMP_SPEC_TRACE",
+                        "TS-202-TSM-P1-CAM-2-CENX": {"data": 4.145480878063205},
+                        "CM-202-CVC-SP": {
+                            "waveform_id": "20230605100000_CM-202-CVC-SP",
                         },
-                        "N_COMP_FF_IMAGE": {
-                            "image_path": "20220407141616/N_COMP_FF_IMAGE.png",
+                        "FE-204-NSO-P1-CAM-1": {
+                            "image_path": "20230605100000/FE-204-NSO-P1-CAM-1.png",
                         },
                     },
                 },
@@ -39,17 +39,22 @@ class TestRecord:
                 [
                     {
                         "name": "a",
-                        "expression": "N_COMP_FF_YPOS / 10",
+                        "expression": "TS-202-TSM-P1-CAM-2-CENX / 10",
                     },
                 ],
-                {"a": {"data": 23.5734, "metadata": {"channel_dtype": "scalar"}}},
+                {
+                    "a": {
+                        "data": 0.4145480878063205,
+                        "metadata": {"channel_dtype": "scalar"},
+                    },
+                },
                 id="Scalar operation",
             ),
             pytest.param(
                 [
                     {
                         "name": "a",
-                        "expression": "N_COMP_FF_YPOS / 10",
+                        "expression": "TS-202-TSM-P1-CAM-2-CENX / 10",
                     },
                     {
                         "name": "b",
@@ -57,9 +62,12 @@ class TestRecord:
                     },
                 ],
                 {
-                    "a": {"data": 23.5734, "metadata": {"channel_dtype": "scalar"}},
+                    "a": {
+                        "data": 0.4145480878063205,
+                        "metadata": {"channel_dtype": "scalar"},
+                    },
                     "b": {
-                        "data": 3.160118957711578,
+                        "data": -0.880566297127881,
                         "metadata": {"channel_dtype": "scalar"},
                     },
                 },
@@ -70,12 +78,12 @@ class TestRecord:
                 [
                     {
                         "name": "a",
-                        "expression": "N_COMP_SPEC_TRACE - 737.0041036717063",
+                        "expression": "CM-202-CVC-SP - 737.0041036717063",
                     },
                 ],
                 {
                     "a": {
-                        "thumbnail": "eee681193ac4dc69",
+                        "thumbnail": "bbb14eb0c14eb14e",
                         "metadata": {"channel_dtype": "waveform"},
                     },
                 },
@@ -85,12 +93,12 @@ class TestRecord:
                 [
                     {
                         "name": "a",
-                        "expression": "log(N_COMP_SPEC_TRACE)",
+                        "expression": "log(CM-202-CVC-SP)",
                     },
                 ],
                 {
                     "a": {
-                        "thumbnail": "eee681193ac0de69",
+                        "thumbnail": "ce39b1474e6c91a9",
                         "metadata": {"channel_dtype": "waveform"},
                     },
                 },
@@ -100,12 +108,12 @@ class TestRecord:
                 [
                     {
                         "name": "a",
-                        "expression": "mean(N_COMP_SPEC_TRACE)",
+                        "expression": "mean(CM-202-CVC-SP)",
                     },
                 ],
                 {
                     "a": {
-                        "data": 737.0041036717063,
+                        "data": 1721.4288093253808,
                         "metadata": {"channel_dtype": "scalar"},
                     },
                 },
@@ -116,16 +124,16 @@ class TestRecord:
                 [
                     {
                         "name": "a",
-                        "expression": "N_COMP_FF_IMAGE - 4",
+                        "expression": "FE-204-NSO-P1-CAM-1 - 1",
                     },
                 ],
                 {
                     "a": {
-                        "thumbnail": "f3638c8c63739c8c",
+                        "thumbnail": "b694dbc8d849cca9",
                         "metadata": {
                             "channel_dtype": "image",
-                            "x_pixel_size": 656,
-                            "y_pixel_size": 494,
+                            "x_pixel_size": 1936,
+                            "y_pixel_size": 1216,
                         },
                     },
                 },
@@ -135,16 +143,16 @@ class TestRecord:
                 [
                     {
                         "name": "a",
-                        "expression": "log(N_COMP_FF_IMAGE)",
+                        "expression": "log(FE-204-NSO-P1-CAM-1)",
                     },
                 ],
                 {
                     "a": {
-                        "thumbnail": "f3609c9963799cc4",
+                        "thumbnail": "bf84c94ad84bc7a8",
                         "metadata": {
                             "channel_dtype": "image",
-                            "x_pixel_size": 656,
-                            "y_pixel_size": 494,
+                            "x_pixel_size": 1936,
+                            "y_pixel_size": 1216,
                         },
                     },
                 },
@@ -154,12 +162,12 @@ class TestRecord:
                 [
                     {
                         "name": "a",
-                        "expression": "mean(N_COMP_FF_IMAGE)",
+                        "expression": "mean(FE-204-NSO-P1-CAM-1)",
                     },
                 ],
                 {
                     "a": {
-                        "data": 6.841775081465389,
+                        "data": 376.9670147856405,
                         "metadata": {"channel_dtype": "scalar"},
                     },
                 },
@@ -169,12 +177,12 @@ class TestRecord:
                 [
                     {
                         "name": "a",
-                        "expression": "background(N_COMP_FF_IMAGE)",
+                        "expression": "background(FE-204-NSO-P1-CAM-1)",
                     },
                 ],
                 {
                     "a": {
-                        "data": 3.77,
+                        "data": 156.09,
                         "metadata": {"channel_dtype": "scalar"},
                     },
                 },
@@ -233,7 +241,7 @@ class TestRecord:
         self,
         functions,
     ):
-        record = {"_id": "20220407141616"}
+        record = {"_id": "20230605100000"}
         with pytest.raises(FunctionParseError) as e:
             await Record.apply_functions(record, functions, 0, 255, "binary")
 

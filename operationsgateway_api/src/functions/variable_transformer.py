@@ -47,5 +47,5 @@ class VariableTransformer(Transformer):
 
     # Transformer callback functions
     def variable(self, channel_name: list) -> list:
-        self.variables.add(str(channel_name[0]))
+        self.variables.add("".join(channel_name))
         return channel_name

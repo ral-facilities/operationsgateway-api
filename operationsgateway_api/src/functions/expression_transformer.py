@@ -65,8 +65,7 @@ class ExpressionTransformer(Transformer):
         return float(number)
 
     def variable(self, channel_name) -> "np.ndarray | WaveformVariable | float":
-        (channel_name,) = channel_name
-        return self.channels[str(channel_name)]
+        return self.channels["".join(channel_name)]
 
     # Operations
     def subtraction(self, operands) -> "np.ndarray | WaveformVariable | float":

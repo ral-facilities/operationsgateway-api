@@ -538,9 +538,9 @@ class Record:
             )
             img_src = PILImage.open(image_bytes)
             img_array = np.array(img_src)
-            # TODO data quality lacking, unclear if this is true 32 bit, 16
-            # bit shifted etc. Needs to be resolved for generated data
-            img_array //= 256
+            # TODO Simulated test data seems to have a random max value, and 11 equally
+            # spaced, non-integer possible pixel values. This does not make the nature
+            # of real data and the potential need to bitshift any clearer.
             return img_array
         elif channel_dtype == "waveform":
             waveform_id = channel_value["waveform_id"]
@@ -576,7 +576,7 @@ class Record:
                 image_array = result[::step_size, ::step_size]
                 image_bytes = FalseColourHandler.apply_false_colour(
                     image_array,
-                    8,  # TODO handle depth dynamically, based on the array?
+                    8,
                     lower_level,
                     upper_level,
                     colourmap_name,
@@ -590,7 +590,7 @@ class Record:
             else:
                 image_bytes = FalseColourHandler.apply_false_colour(
                     result,
-                    8,  # TODO handle depth dynamically, based on the array?
+                    8,
                     lower_level,
                     upper_level,
                     colourmap_name,

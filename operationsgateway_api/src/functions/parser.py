@@ -4,10 +4,13 @@ from lark import Lark
 parser = Lark(
     r"""
     ?term         : SIGNED_NUMBER -> constant
-                  | CNAME -> variable
+                  | variable
                   | function
                   | operation
                   | "(" term ")"
+
+    variable      : LETTER (SEPARATOR|LETTER|DIGIT)*
+    SEPARATOR     : ("_"|"-")
 
     ?operation    : subtraction
                   | addition
@@ -15,10 +18,10 @@ parser = Lark(
                   | division
                   | exponentiation
 
-    subtraction   : term "-" term
-    addition      : term "+" term
-    multiplication: term "*" term
-    division      : term "/" term
+    subtraction   : term " - " term
+    addition      : term " + " term
+    multiplication: term " * " term
+    division      : term " / " term
     exponentiation: term "**" term
 
     ?function     : mean
@@ -36,9 +39,10 @@ parser = Lark(
     builtin       : CNAME "(" term ")"
 
     %import common.CNAME
+    %import common.DIGIT
+    %import common.LETTER
     %import common.SIGNED_NUMBER
     %import common.WS
-    %ignore WS
 """,
     start="term",
 )

@@ -17,61 +17,61 @@ class TestValidateFunction:
                 id="Function types",
             ),
             pytest.param(
-                {"name": "a", "expression": "N_COMP_FF_YPOS / 10"},
+                {"name": "a", "expression": "TS-202-TSM-P1-CAM-2-CENX / 10"},
                 {},
                 "scalar",
                 id="Scalar operation",
             ),
             pytest.param(
-                {"name": "a", "expression": "log(N_COMP_FF_YPOS / 10)"},
+                {"name": "a", "expression": "log(TS-202-TSM-P1-CAM-2-CENX / 10)"},
                 {},
                 "scalar",
                 id="Scalar element-wise",
             ),
             pytest.param(
-                {"name": "a", "expression": "mean(log(N_COMP_FF_YPOS / 10))"},
+                {"name": "a", "expression": "mean(log(TS-202-TSM-P1-CAM-2-CENX / 10))"},
                 {},
                 "scalar",
                 id="Scalar reductive",
             ),
             pytest.param(
-                {"name": "a", "expression": "N_COMP_SPEC_TRACE - 737"},
+                {"name": "a", "expression": "CM-202-CVC-SP - 737"},
                 {},
                 "waveform",
                 id="Trace operation",
             ),
             pytest.param(
-                {"name": "a", "expression": "log(N_COMP_SPEC_TRACE - 737)"},
+                {"name": "a", "expression": "log(CM-202-CVC-SP - 737)"},
                 {},
                 "waveform",
                 id="Trace element-wise",
             ),
             pytest.param(
-                {"name": "a", "expression": "mean(log(N_COMP_SPEC_TRACE - 737))"},
+                {"name": "a", "expression": "mean(log(CM-202-CVC-SP - 737))"},
                 {},
                 "scalar",
                 id="Trace reductive",
             ),
             pytest.param(
-                {"name": "a", "expression": "centre(N_COMP_SPEC_TRACE)"},
+                {"name": "a", "expression": "centre(CM-202-CVC-SP)"},
                 {},
                 "scalar",
                 id="Trace centre",
             ),
             pytest.param(
-                {"name": "a", "expression": "N_COMP_FF_IMAGE - 4"},
+                {"name": "a", "expression": "FE-204-NSO-P1-CAM-1 - 4"},
                 {},
                 "image",
                 id="Image operation",
             ),
             pytest.param(
-                {"name": "a", "expression": "log(N_COMP_FF_IMAGE - 4)"},
+                {"name": "a", "expression": "log(FE-204-NSO-P1-CAM-1 - 4)"},
                 {},
                 "image",
                 id="Image element-wise",
             ),
             pytest.param(
-                {"name": "a", "expression": "mean(log(N_COMP_FF_IMAGE - 4))"},
+                {"name": "a", "expression": "mean(log(FE-204-NSO-P1-CAM-1 - 4))"},
                 {},
                 "scalar",
                 id="Image reductive",
@@ -93,9 +93,7 @@ class TestValidateFunction:
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
 
-        assert test_response.status_code == 200, test_response.content.decode()[
-            "detail"
-        ]
+        assert test_response.status_code == 200, test_response.content.decode()
         assert test_response.content.decode() == f'"{return_type}"'
 
     @pytest.mark.parametrize(
@@ -147,9 +145,9 @@ class TestValidateFunction:
                 id="Unsupported operands",
             ),
             pytest.param(
-                {"name": "N_COMP_FF_YPOS", "expression": "1"},
+                {"name": "TS-202-TSM-P1-CAM-2-CENX", "expression": "1"},
                 {},
-                "Function name 'N_COMP_FF_YPOS' is already a channel name",
+                "Function name 'TS-202-TSM-P1-CAM-2-CENX' is already a channel name",
                 id="Reuse channel name",
             ),
         ],

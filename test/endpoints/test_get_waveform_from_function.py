@@ -9,11 +9,11 @@ class TestGetWaveformFromFunction:
         "record_id, function_name, functions, expected_first_x, expected_first_y",
         [
             pytest.param(
-                "20220407141616",
+                "20230605100000",
                 "a",
-                {"name": "a", "expression": "N_COMP_SPEC_TRACE / 100"},
-                649.8,
-                7.130,
+                {"name": "a", "expression": "CM-202-CVC-SP / 100"},
+                645.0,
+                18.031355895081488,
                 id="Single function",
             ),
         ],
@@ -35,5 +35,5 @@ class TestGetWaveformFromFunction:
 
         assert test_response.status_code == 200
 
-        assert json.loads(test_response.json()["x"])[0] == expected_first_x
-        assert json.loads(test_response.json()["y"])[0] == expected_first_y
+        assert test_response.json()["x"][0] == expected_first_x
+        assert test_response.json()["y"][0] == expected_first_y

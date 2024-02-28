@@ -11,7 +11,7 @@ class TestExpressionTransformer:
     @pytest.mark.parametrize(
         "expression, expected_result",
         [
-            pytest.param("36 / 6 * 3 + 2 ** 2 - (3 + 5)", 14, id="BIDMAS"),
+            pytest.param("36 / 6 * 3 + 2**2 - (3 + 5)", 14, id="BIDMAS"),
             pytest.param("min(a)", 0, id="Min"),
             pytest.param("max(a)", 3, id="Max"),
             pytest.param("mean(a)", 1.5, id="Mean"),
