@@ -17,6 +17,7 @@ images:
   echo_access_key: access_key
   echo_secret_key: secret_key
   image_bucket_name: test-bucket
+  upload_image_threads: 4
   preferred_colour_map_pref_name: PREFERRED_COLOUR_MAP
 mongodb:
   mongodb_url: mongodb://localhost:27017

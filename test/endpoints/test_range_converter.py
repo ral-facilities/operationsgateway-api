@@ -10,41 +10,41 @@ class TestRangeConverter:
         [
             pytest.param(
                 None,
-                {"min": 366275, "max": 366280},
-                {"from": "2022-04-07T15:05:38", "to": "2022-04-08T00:21:14"},
+                {"min": 423648036000, "max": 423648288000},
+                {"from": "2023-06-05T09:00:00", "to": "2023-06-05T16:00:00"},
                 id="Shotnum to date range",
             ),
             pytest.param(
-                {"from": "2022-04-07 14:16:19", "to": "2022-04-07 21:00:00"},
+                {"from": "2023-06-05 08:16:19", "to": "2023-06-05 21:00:00"},
                 None,
-                {"min": 366272, "max": 366278},
+                {"min": 423648036000, "max": 423648288000},
                 id="Date to shotnum range",
             ),
             pytest.param(
                 None,
-                {"min": 1234, "max": 366280},
-                {"from": "2022-04-07T14:16:16", "to": "2022-04-08T00:21:14"},
+                {"min": 1234, "max": 423648072000},
+                {"from": "2023-06-05T08:00:00", "to": "2023-06-05T10:00:00"},
                 id="Shotnum to date range where min shotnum < first shotnum stored in"
                 " database",
             ),
             pytest.param(
                 None,
-                {"min": 366350, "max": 9999999},
-                {"from": "2022-04-08T09:43:41", "to": "2022-04-08T16:58:57"},
+                {"min": 423648072000, "max": 999999999999},
+                {"from": "2023-06-05T10:00:00", "to": "2023-06-05T16:00:00"},
                 id="Shotnum to date range where max shotnum > last shotnum stored in"
                 " database",
             ),
             pytest.param(
-                {"from": "2000-01-01 00:00:00", "to": "2022-04-08 15:00:00"},
+                {"from": "2000-01-01 00:00:00", "to": "2023-06-05 12:00:00"},
                 None,
-                {"min": 366271, "max": 366367},
+                {"min": 423648000000, "max": 423648144000},
                 id="Date to shotnum range where from date < first timestamp stored in"
                 " database",
             ),
             pytest.param(
                 {"from": "2022-04-07T15:10:00", "to": "2100-01-01 18:00:00"},
                 None,
-                {"min": 366276, "max": 366376},
+                {"min": 423648000000, "max": 423648288000},
                 id="Date to shotnum range where to date > last timestamp stored in"
                 " database",
             ),

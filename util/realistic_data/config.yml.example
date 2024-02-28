@@ -1,0 +1,32 @@
+script_options:
+  wipe_database: true
+  delete_images: false
+  launch_api: true
+  import_users: true
+ssh:
+  enabled: false
+  ssh_connection_url: 127.0.0.1
+database:
+  hostname: localhost
+  port: 27017
+  name: opsgateway
+  remote_experiments_file_path: /tmp/experiments_for_mongoimport.json
+  test_users_file_path: util/users_for_mongoimport.json
+echo:
+  endpoint_url: https://s3.echo.stfc.ac.uk
+  access_key: access_key
+  secret_key: secret_key
+  simulated_data_bucket: og-ci-simulated-data
+  images_bucket: og-developersname-dev
+  # Number of HDF files downloaded & ingested in one go
+  page_size: 2
+api:
+  host: 127.0.0.1
+  port: 8000
+  username: backend
+  password: back
+  log_config_path: /home/user/operationsgateway-api/operationsgateway_api/logging.ini
+  # If the API is launched by the script, this defines how many gunicorn workers are
+  # assigned to the instance
+  gunicorn_num_workers: "2"
+  timeout_seconds: 300

@@ -23,9 +23,12 @@ class TestGetRecords:
                 "metadata.shotnum ASC",
                 None,
                 False,
-                [59, 59],
+                [353, 377],
                 [],
-                [{"N_COMP_FF_XPOS": 329.333}, {"N_COMP_FF_XPOS": 330.523}],
+                [
+                    {"TS-202-TSM-P1-CAM-2-CENX": 3.0393419803062542},
+                    {"TS-202-TSM-P1-CAM-2-CENX": -3.0646222644792527},
+                ],
                 id="Simple example",
             ),
             pytest.param(
@@ -39,19 +42,19 @@ class TestGetRecords:
                 [],
                 [
                     {
-                        "_id": "20220407141616",
+                        "_id": "20230605080000",
                         "metadata": {
                             "epac_ops_data_version": "1.0",
-                            "shotnum": 366271,
-                            "timestamp": "2022-04-07T14:16:16",
+                            "shotnum": 423648000000,
+                            "timestamp": "2023-06-05T08:00:00",
                         },
                     },
                     {
-                        "_id": "20220407142816",
+                        "_id": "20230605090000",
                         "metadata": {
                             "epac_ops_data_version": "1.0",
-                            "shotnum": 366272,
-                            "timestamp": "2022-04-07T14:28:16",
+                            "shotnum": 423648036000,
+                            "timestamp": "2023-06-05T09:00:00",
                         },
                     },
                 ],
@@ -68,46 +71,46 @@ class TestGetRecords:
                 [],
                 [
                     {
-                        "_id": "20220407141616",
+                        "_id": "20230605080000",
                         "metadata": {
-                            "shotnum": 366271,
-                            "timestamp": "2022-04-07T14:16:16",
+                            "shotnum": 423648000000,
+                            "timestamp": "2023-06-05T08:00:00",
                         },
                     },
                     {
-                        "_id": "20220407142816",
+                        "_id": "20230605090000",
                         "metadata": {
-                            "shotnum": 366272,
-                            "timestamp": "2022-04-07T14:28:16",
+                            "shotnum": 423648036000,
+                            "timestamp": "2023-06-05T09:00:00",
                         },
                     },
                 ],
-                id="Query using a multiple projections",
+                id="Query using multiple projections",
             ),
             pytest.param(
                 {"metadata.shotnum": {"$exists": True}},
                 0,
                 2,
                 "metadata.shotnum ASC",
-                ["channels.N_COMP_FF_YPOS.data"],
+                ["channels.TS-202-TSM-P1-CAM-2-FWHMX.data"],
                 False,
                 None,
                 [],
                 [
                     {
-                        "_id": "20220407141616",
+                        "_id": "20230605080000",
                         "channels": {
-                            "N_COMP_FF_YPOS": {"data": 235.734},
+                            "TS-202-TSM-P1-CAM-2-FWHMX": {"data": 46.402748185135856},
                         },
                     },
                     {
-                        "_id": "20220407142816",
+                        "_id": "20230605090000",
                         "channels": {
-                            "N_COMP_FF_YPOS": {"data": 243.771},
+                            "TS-202-TSM-P1-CAM-2-FWHMX": {"data": 54.5600997950534},
                         },
                     },
                 ],
-                id="Query using a single channels projection",
+                id="Query using a single channel projection",
             ),
             pytest.param(
                 {"metadata.shotnum": 366351},
@@ -116,7 +119,7 @@ class TestGetRecords:
                 "metadata.shotnum ASC",
                 None,
                 False,
-                [59],
+                [353],
                 [],
                 [{"N_COMP_FF_XPOS": 323.75}],
                 id="Query to retrieve specific shot",
@@ -128,9 +131,12 @@ class TestGetRecords:
                 "metadata.shotnum ASC",
                 None,
                 True,
-                [59, 59],
+                [353, 377],
                 [],
-                [{"N_COMP_FF_XPOS": 329.333}, {"N_COMP_FF_XPOS": 330.523}],
+                [
+                    {"TS-202-TSM-P1-CAM-2-CENX": 3.0393419803062542},
+                    {"TS-202-TSM-P1-CAM-2-CENX": -3.0646222644792527},
+                ],
                 id="Query with truncate",
             ),
             pytest.param(
@@ -141,7 +147,7 @@ class TestGetRecords:
                 None,
                 False,
                 [60, 60],
-                [{"name": "test", "expression": "1", "variables": []}],
+                [{"name": "test", "expression": "1"}],
                 [
                     {"N_COMP_FF_XPOS": 329.333, "test": 1},
                     {"N_COMP_FF_XPOS": 330.523, "test": 1},
@@ -205,53 +211,54 @@ class TestGetRecords:
         "use_preferred_colourmap, expected_thumbnails_hashes",
         [
             pytest.param(
-                {"metadata.shotnum": 366372},
+                {"metadata.shotnum": 423648072000},
                 None,
                 None,
                 None,
                 None,
                 False,
                 {
-                    "N_COMP_NF_IMAGE": "c0c73f8f783c3930",
+                    "TS-202-TSM-P2-CAM-1": "cdc134273f0e36e1",
                 },
                 id="Whole record: all channels have channel_dtype returned",
             ),
             # ensure setting the user's preferred colour map overrides the system
             # default
             pytest.param(
-                {"metadata.shotnum": 366372},
+                {"metadata.shotnum": 423648072000},
                 None,
                 None,
                 None,
                 None,
                 True,
                 {
-                    "N_COMP_NF_IMAGE": "c2c73f0f783c3330",
+                    "TS-202-TSM-P2-CAM-1": "ccc139332d6c3733",
                 },
                 id="Whole record: all channels have channel_dtype returned and user's "
                 "preferred colour map is set",
             ),
             pytest.param(
-                {"metadata.shotnum": 366372},
-                "channels.N_COMP_NF_IMAGE.thumbnail",
+                {"metadata.shotnum": 423648072000},
+                "channels.TS-202-TSM-P2-CAM-1.thumbnail",
                 None,
                 None,
                 None,
                 False,
                 {
-                    "N_COMP_NF_IMAGE": "c0c73f8f783c3930",
+                    "TS-202-TSM-P2-CAM-1": "cdc134273f0e36e1",
                 },
-                id="Partial record: only N_COMP_NF_IMAGE and no channel_dtype returned",
+                id="Partial record: only TS-202-TSM-P2-CAM-1 and no channel_dtype"
+                " returned",
             ),
             pytest.param(
-                {"metadata.shotnum": 366372},
+                {"metadata.shotnum": 423648072000},
                 None,
                 50,
                 200,
                 "jet_r",
                 False,
                 {
-                    "N_COMP_NF_IMAGE": "c3c13f0fc0383f8d",
+                    "TS-202-TSM-P2-CAM-1": "8000000000000000",
                 },
                 id="Whole record: all channels have channel_dtype returned "
                 "and custom false colour settings applied",
@@ -259,31 +266,31 @@ class TestGetRecords:
             # repeat the test above but with the user's preferred colour map set
             # ensure this does not affect the outcome
             pytest.param(
-                {"metadata.shotnum": 366372},
+                {"metadata.shotnum": 423648072000},
                 None,
                 50,
                 200,
                 "jet_r",
                 True,
                 {
-                    "N_COMP_NF_IMAGE": "c3c13f0fc0383f8d",
+                    "TS-202-TSM-P2-CAM-1": "8000000000000000",
                 },
                 id="Whole record: all channels have channel_dtype returned "
                 "and custom false colour settings applied even with user's "
                 "preferred colour map set",
             ),
             pytest.param(
-                {"metadata.shotnum": 366372},
-                "channels.N_COMP_NF_IMAGE.thumbnail",
+                {"metadata.shotnum": 423648072000},
+                "channels.TS-202-TSM-P2-CAM-1.thumbnail",
                 50,
                 200,
                 "jet_r",
                 False,
                 {
-                    "N_COMP_NF_IMAGE": "c3c13f0fc0383f8d",
+                    "TS-202-TSM-P2-CAM-1": "8000000000000000",
                 },
-                id="Partial record: only N_COMP_NF_IMAGE and no channel_dtype returned "
-                "and custom false colour settings applied",
+                id="Partial record: only TS-202-TSM-P2-CAM-1 and no channel_dtype"
+                " returned and custom false colour settings applied",
             ),
         ],
     )

@@ -1,5 +1,3 @@
-import json
-
 import numpy as np
 
 from operationsgateway_api.src.models import WaveformModel
@@ -21,8 +19,8 @@ class WaveformVariable:
             self.x = x.astype(float)
             self.y = y.astype(float)
         elif waveform_model is not None:
-            self.y = WaveformVariable.string_to_array(waveform_model.y)
-            self.x = WaveformVariable.string_to_array(waveform_model.x)
+            self.y = np.array(waveform_model.y)
+            self.x = np.array(waveform_model.x)
         else:
             raise ValueError("No arguments provided to __init__")
 
@@ -80,7 +78,3 @@ class WaveformVariable:
 
     def to_waveform_model(self) -> Waveform:
         return WaveformModel(_id="_", x=self.x, y=self.y)
-
-    @staticmethod
-    def string_to_array(string: str) -> np.ndarray:
-        return np.array(json.loads(string))

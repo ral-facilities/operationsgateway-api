@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from pprint import pprint
 import socket
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
 import sys
 import threading
 from time import sleep, time
@@ -126,13 +126,16 @@ if DELETE_IMAGES:
     print(f"Remove all files from the '{BUCKET_NAME}' bucket")
 
 if JSON_USERS is not None:
-    client = AsyncIOMotorClient(DATABASE_CONNECTION_URL)
-    db = client[DATABASE_NAME]
-    with open(JSON_USERS) as f:
-        users = [json.loads(line) for line in f.readlines()]
-
-    records_drop = db.users.insert_many(users)
-    print(f"Imported {len(users)} users")
+    Popen(
+        [
+            "mongoimport",
+            f"--db={DATABASE_NAME}",
+            "--collection=users",
+            "--mode=upsert",
+            f"--file={JSON_USERS}",
+        ],
+    )
+    print("Imported test users into database")
 
 
 def is_api_alive(host, port):
@@ -238,12 +241,12 @@ for entry in sorted(os.scandir(BASE_DIR), key=lambda e: e.name):
                     if response.status_code == 201:
                         print(
                             f"Ingested {file.name}, time taken: {duration:0.2f}"
-                            " seconds"
+                            " seconds",
                         )
                     elif response.status_code == 200:
                         print(
                             f"Updated {file.name}, time taken: {duration:0.2f}"
-                            " seconds"
+                            " seconds",
                         )
                     else:
                         print(f"{response.status_code} returned")
