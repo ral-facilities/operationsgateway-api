@@ -1,6 +1,7 @@
 import logging
+from typing import List
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Path, Query
 from lark import LarkError, UnexpectedCharacters, UnexpectedEOF
 from pydantic import Json
 from typing_extensions import Annotated
@@ -38,7 +39,7 @@ async def get_function_tokens(
 
 
 @router.get(
-    "/functions",
+    "/functions/validate/{function_name}",
     summary="Validate function",
     response_description=(
         "Checks the syntax, variable names and typing of the provided "
@@ -53,26 +54,35 @@ async def get_function_tokens(
 @endpoint_error_handling
 async def validate_function(
     access_token: AuthoriseToken,
-    function: Json = Query(
-        description="Functions to evaluate on the record data being returned",
-    ),
-    function_types: Json = Query(
-        default={},
-        description=(
-            "Return types of other functions upon which the expression depends"
+    function_name: Annotated[
+        str,
+        Path(
+            ...,
+            description="Name identifying the function to validate",
         ),
+    ],
+    functions: List[Json] = Query(
+        description="All functions upon which the named function might depend",
     ),
 ):
     """
-    Checks `expression` for Syntax and undefined variable errors.
+    Checks the named function for Syntax and undefined variable errors.
     """
     log.info("Validating function")
 
     error = None
+    expression = None
+    function_types = {}
+    for function_dict in functions:
+        if "return_type" in function_dict:
+            function_types[function_dict["name"]] = function_dict["return_type"]
+
+        if function_dict["name"] == function_name:
+            expression = function_dict["expression"]
+
     transformer = TypeTransformer(function_types=function_types)
-    expression = function["expression"]
     try:
-        return_type = await transformer.evaluate(function["name"], expression)
+        return_type = await transformer.evaluate(function_name, expression)
 
     except ValueError as e:
         error = e.args[0]

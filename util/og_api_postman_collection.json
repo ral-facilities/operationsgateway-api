@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "d1e1b6a7-9aef-4d9d-82cb-3042fd13272e",
+		"_postman_id": "3fbc0c8a-1cb3-4452-a1aa-1e86496fa080",
 		"name": "OperationsGateway API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "30192495"
+		"_exporter_id": "33242392"
 	},
 	"item": [
 		{
@@ -311,6 +311,89 @@
 			]
 		},
 		{
+			"name": "Functions",
+			"item": [
+				{
+					"name": "Get Tokens",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/functions/tokens",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"functions",
+								"tokens"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Return Type",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/functions/validate/a?functions={\"name\": \"scalar_operation\", \"expression\": \"TS-202-TSM-P1-CAM-2-CENX / 10\", \"return_type\": \"scalar\"}&functions={\"name\": \"waveform_operation\", \"expression\": \"CM-202-CVC-SP - 737\", \"return_type\": \"waveform\"}&functions={\"name\": \"image_operation\", \"expression\": \"FE-204-NSO-P1-CAM-1 - 1\", \"return_type\": \"image\"}&functions={\"name\": \"a\", \"expression\": \"mean(image_operation - scalar_operation) %2B waveform_operation\"}",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"functions",
+								"validate",
+								"a"
+							],
+							"query": [
+								{
+									"key": "functions",
+									"value": "{\"name\": \"scalar_operation\", \"expression\": \"TS-202-TSM-P1-CAM-2-CENX / 10\", \"return_type\": \"scalar\"}",
+									"description": "Scalar operation"
+								},
+								{
+									"key": "functions",
+									"value": "{\"name\": \"waveform_operation\", \"expression\": \"CM-202-CVC-SP - 737\", \"return_type\": \"waveform\"}",
+									"description": "Waveform operation"
+								},
+								{
+									"key": "functions",
+									"value": "{\"name\": \"image_operation\", \"expression\": \"FE-204-NSO-P1-CAM-1 - 1\", \"return_type\": \"image\"}",
+									"description": "Image operation"
+								},
+								{
+									"key": "functions",
+									"value": "{\"name\": \"a\", \"expression\": \"mean(image_operation - scalar_operation) %2B waveform_operation\"}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Ingestion",
 			"item": [
 				{
@@ -486,8 +569,20 @@
 								},
 								{
 									"key": "conditions",
-									"value": "{\"channels.N_COMP_SPEC_TRACE\": {\"$exists\": true}}",
-									"description": "Return records where N_COMP_SPEC_TRACE channel exists",
+									"value": "{\"channels.TS-202-TSM-P1-CAM-2-CENX\": {\"$exists\": true}}",
+									"description": "Return records where TS-202-TSM-P1-CAM-2-CENX channel exists",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"channels.CM-202-CVC-SP\": {\"$exists\": true}}",
+									"description": "Return records where CM-202-CVC-SP channel exists",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"channels.FE-204-NSO-P1-CAM-1\": {\"$exists\": true}}",
+									"description": "Return records where FE-204-NSO-P1-CAM-1 channel exists",
 									"disabled": true
 								},
 								{
@@ -549,6 +644,60 @@
 								{
 									"key": "colourmap_name",
 									"value": "jet_r",
+									"disabled": true
+								},
+								{
+									"key": "functions",
+									"value": "{\"name\": \"a\", \"expression\": \"36 / 6 * 3 %2B 2**2 - (3 %2B 5)\"}",
+									"description": "Record independent operation order example, 14 expected",
+									"disabled": true
+								},
+								{
+									"key": "functions",
+									"value": "{\"name\": \"b\", \"expression\": \"log(a)\"}",
+									"description": "Dependent on other function output, ~2.64 expected",
+									"disabled": true
+								},
+								{
+									"key": "functions",
+									"value": "{\"name\": \"scalar_operation\", \"expression\": \"TS-202-TSM-P1-CAM-2-CENX / 10\"}",
+									"description": "Operator on a scalar channel",
+									"disabled": true
+								},
+								{
+									"key": "functions",
+									"value": "{\"name\": \"waveform_operation\", \"expression\": \"CM-202-CVC-SP - 737\"}",
+									"description": "Operator on a waveform channel",
+									"disabled": true
+								},
+								{
+									"key": "functions",
+									"value": "{\"name\": \"waveform_element_wise\", \"expression\": \"log(CM-202-CVC-SP)\"}",
+									"description": "Element-wise on a waveform channel",
+									"disabled": true
+								},
+								{
+									"key": "functions",
+									"value": "{\"name\": \"waveform_reductive\", \"expression\": \"mean(CM-202-CVC-SP)\"}",
+									"description": "Reductive function on a waveform channel",
+									"disabled": true
+								},
+								{
+									"key": "functions",
+									"value": "{\"name\": \"image_operation\", \"expression\": \"FE-204-NSO-P1-CAM-1 - 1\"}",
+									"description": "Operator on an image channel",
+									"disabled": true
+								},
+								{
+									"key": "functions",
+									"value": "{\"name\": \"image_element_wise\", \"expression\": \"log(FE-204-NSO-P1-CAM-1)\"}",
+									"description": "Element-wise on an image channel",
+									"disabled": true
+								},
+								{
+									"key": "functions",
+									"value": "{\"name\": \"image_reductive\", \"expression\": \"mean(FE-204-NSO-P1-CAM-1)\"}",
+									"description": "Reductive function on an image channel",
 									"disabled": true
 								}
 							]
@@ -702,35 +851,6 @@
 					"response": []
 				},
 				{
-					"name": "Get Waveform By ID",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{og-access-token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{og-api}}/waveforms/20220408140310/N_COMP_SPEC_TRACE",
-							"host": [
-								"{{og-api}}"
-							],
-							"path": [
-								"waveforms",
-								"20220408140310",
-								"N_COMP_SPEC_TRACE"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Convert Date Range & Shot Number Range",
 					"request": {
 						"auth": {
@@ -830,6 +950,62 @@
 									"key": "colourmap_name",
 									"value": "jet_r",
 									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Image from Function",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/images/function/20230605100000/a?functions={\"name\": \"a\", \"expression\": \"FE-204-NSO-P1-CAM-1 - 1\"}",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"images",
+								"function",
+								"20230605100000",
+								"a"
+							],
+							"query": [
+								{
+									"key": "original_image",
+									"value": "true",
+									"disabled": true
+								},
+								{
+									"key": "lower_level",
+									"value": "50",
+									"disabled": true
+								},
+								{
+									"key": "upper_level",
+									"value": "200",
+									"disabled": true
+								},
+								{
+									"key": "colourmap_name",
+									"value": "jet_r",
+									"disabled": true
+								},
+								{
+									"key": "functions",
+									"value": "{\"name\": \"a\", \"expression\": \"FE-204-NSO-P1-CAM-1 - 1\"}"
 								}
 							]
 						}
@@ -1400,6 +1576,76 @@
 								"users",
 								"preferences",
 								"my_pref"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Waveforms",
+			"item": [
+				{
+					"name": "Get Waveform By ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/waveforms/20220408140310/N_COMP_SPEC_TRACE",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"waveforms",
+								"20220408140310",
+								"N_COMP_SPEC_TRACE"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Waveform from Function",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/waveforms/function/20230605100000/a?functions={\"name\": \"a\", \"expression\": \"CM-202-CVC-SP - 737\"}",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"waveforms",
+								"function",
+								"20230605100000",
+								"a"
+							],
+							"query": [
+								{
+									"key": "functions",
+									"value": "{\"name\": \"a\", \"expression\": \"CM-202-CVC-SP - 737\"}"
+								}
 							]
 						}
 					},
