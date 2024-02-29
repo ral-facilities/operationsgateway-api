@@ -79,7 +79,7 @@ class TestValidateFunction:
         self,
         test_app: TestClient,
         login_and_get_token,
-        functions: "list[dict]",
+        functions: "list[dict[str, str]]",
         return_type: str,
     ):
         url = "/functions/validate/a?"

@@ -26,7 +26,7 @@ AuthoriseToken = Annotated[str, Depends(authorise_token)]
 @endpoint_error_handling
 async def get_function_tokens(
     access_token: AuthoriseToken,
-):
+) -> list:
     """
     Returns all tokens that are understood by the function parser. This includes
     operators (+, -, etc.) and functions (max, min, etc.) but not symbols for
@@ -64,7 +64,7 @@ async def validate_function(
     functions: List[Json] = Query(
         description="All functions upon which the named function might depend",
     ),
-):
+) -> str:
     """
     Checks the named function for Syntax and undefined variable errors.
     """

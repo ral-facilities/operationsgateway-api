@@ -193,8 +193,8 @@ class TestRecord:
     async def test_apply_functions(
         self,
         record: dict,
-        functions: list,
-        values: dict,
+        functions: "list[dict[str, str]]",
+        values: "dict[str, dict]",
     ):
         await Record.apply_functions(
             record,
@@ -239,7 +239,7 @@ class TestRecord:
     )
     async def test_apply_functions_failure(
         self,
-        functions,
+        functions: "list[dict[str, str]]",
     ):
         record = {"_id": "20230605100000"}
         with pytest.raises(FunctionParseError) as e:

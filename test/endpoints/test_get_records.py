@@ -166,7 +166,7 @@ class TestGetRecords:
         order,
         projection,
         truncate,
-        functions,
+        functions: "list[dict[str, str]]",
         expected_channels_count,
         expected_channels_data,
     ):

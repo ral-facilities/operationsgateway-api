@@ -21,7 +21,7 @@ class TestCentroid:
     )
     def test_centroid(
         self,
-        argument: "list[int]",
+        argument: np.ndarray,
         expected_results: "tuple[int, int]",
     ):
         x_result = CentroidX.evaluate(argument)

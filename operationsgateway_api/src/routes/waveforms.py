@@ -8,6 +8,7 @@ from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.error_handling import endpoint_error_handling
+from operationsgateway_api.src.models import WaveformModel
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.waveform import Waveform
@@ -83,7 +84,7 @@ async def get_waveform_from_function(
         None,
         description="Functions to evaluate on the record data being returned",
     ),
-):
+) -> WaveformModel:
     """
     This endpoint returns a single waveform object by specifying a
     `function_name` corresponding to an entry in `functions` and the record ID.

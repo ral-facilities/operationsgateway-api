@@ -128,7 +128,7 @@ async def get_image_from_function(
         None,
         description="Functions to evaluate on the record data being returned",
     ),
-):
+) -> StreamingResponse:
     """
     This endpoint can be used to retrieve a full-size image by specifying the
     shot number and a `function_name` corresponding to an entry in `functions`.

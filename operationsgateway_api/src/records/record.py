@@ -415,7 +415,7 @@ class Record:
     @staticmethod
     async def apply_functions(
         record: "dict[str, dict]",
-        functions: list,
+        functions: "list[dict[str, str]]",
         lower_level: int,
         upper_level: int,
         colourmap_name: str,
@@ -457,7 +457,7 @@ class Record:
         variable_data: dict,
         variable_transformer: VariableTransformer,
         expression_transformer: ExpressionTransformer,
-        function: dict,
+        function: "dict[str, str]",
         truncate_response: bool = True,
     ) -> None:
         """

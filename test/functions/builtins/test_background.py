@@ -33,7 +33,7 @@ class TestBackground:
     def test_background(
         self,
         argument: "WaveformVariable | np.ndarray",
-        expected_result: int,
+        expected_result: float,
     ):
         result = Background.evaluate(argument)
 

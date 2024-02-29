@@ -24,7 +24,7 @@ class TestGetWaveformFromFunction:
         login_and_get_token,
         record_id: str,
         function_name: str,
-        functions: dict,
+        functions: "dict[str, str]",
         expected_first_x: float,
         expected_first_y: float,
     ):

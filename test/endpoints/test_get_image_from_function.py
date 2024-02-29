@@ -36,7 +36,7 @@ class TestGetImageFromFunction:
         login_and_get_token,
         record_id: str,
         function_name: str,
-        functions: dict,
+        functions: "dict[str, str]",
         colourmap_name: str,
         expected_image_phash: str,
     ):

@@ -21,7 +21,7 @@ class TestFWHMXY:
     )
     def test_fwhm_xy(
         self,
-        argument: "list[int]",
+        argument: np.ndarray,
         expected_results: "tuple[int, int]",
     ):
         x_result = FWHMX.evaluate(argument)

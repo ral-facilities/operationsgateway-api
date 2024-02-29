@@ -46,6 +46,6 @@ class VariableTransformer(Transformer):
         self.transform(tree)
 
     # Transformer callback functions
-    def variable(self, channel_name: list) -> list:
-        self.variables.add("".join(channel_name))
-        return channel_name
+    def variable(self, tokens: list) -> list:
+        self.variables.add("".join(tokens))
+        return tokens

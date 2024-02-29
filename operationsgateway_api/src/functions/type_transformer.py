@@ -32,7 +32,7 @@ class TypeTransformer(Transformer):
         'image'
     """
 
-    def __init__(self, function_types: dict) -> None:
+    def __init__(self, function_types: "dict[str, str]") -> None:
         """Initialises the Transformer and stores `function_types`.
 
         Args:
@@ -75,8 +75,8 @@ class TypeTransformer(Transformer):
     def constant(self, _) -> Literal["scalar"]:
         return "scalar"
 
-    def variable(self, channel_name: list) -> str:
-        name = "".join(channel_name)
+    def variable(self, tokens: list) -> str:
+        name = "".join(tokens)
         if name in self.channel_manifest:
             return self.channel_manifest[name]["type"]
         elif name in self.function_types:
@@ -85,15 +85,16 @@ class TypeTransformer(Transformer):
             raise KeyError(f"'{name}' is not a recognised channel")
 
     # Operations
-    def operation(self, operands) -> str:
-        if operands[0] == operands[1] == "scalar":
+    def operation(self, tokens: list) -> str:
+        left_operand, right_operand = tokens
+        if left_operand == right_operand == "scalar":
             return "scalar"
-        elif "image" in operands and "scalar" in operands:
+        elif "image" in tokens and "scalar" in tokens:
             return "image"
-        elif "waveform" in operands and "scalar" in operands:
+        elif "waveform" in tokens and "scalar" in tokens:
             return "waveform"
         else:
-            raise TypeError(f"Operation between types {operands} not supported")
+            raise TypeError(f"Operation between types {tokens} not supported")
 
     subtraction = operation
     addition = operation
@@ -112,8 +113,9 @@ class TypeTransformer(Transformer):
     min = scalar_function  # noqa: A003
     max = scalar_function  # noqa: A003
 
-    def element_wise_function(self, arguments: list) -> str:
-        return arguments[0]
+    def element_wise_function(self, tokens: list) -> str:
+        (return_type,) = tokens
+        return return_type
 
     log = element_wise_function
     exp = element_wise_function

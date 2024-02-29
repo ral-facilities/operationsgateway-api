@@ -32,7 +32,10 @@ class ExpressionTransformer(Transformer):
                [5.5, 5.5]])
     """
 
-    def __init__(self, channels: dict) -> None:
+    def __init__(
+        self,
+        channels: "dict[str, float | WaveformVariable | np.ndarray]",
+    ) -> None:
         """Initialises the Transformer and stores `channels`.
 
         Args:
@@ -60,44 +63,54 @@ class ExpressionTransformer(Transformer):
     # Transformer callback functions
 
     # Values
-    def constant(self, number) -> float:
-        (number,) = number
+    def constant(self, tokens: list) -> float:
+        (number,) = tokens
         return float(number)
 
-    def variable(self, channel_name) -> "np.ndarray | WaveformVariable | float":
-        return self.channels["".join(channel_name)]
+    def variable(self, tokens: list) -> "np.ndarray | WaveformVariable | float":
+        return self.channels["".join(tokens)]
 
     # Operations
-    def subtraction(self, operands) -> "np.ndarray | WaveformVariable | float":
-        return operands[0] - operands[1]
+    def subtraction(self, tokens: list) -> "np.ndarray | WaveformVariable | float":
+        left_operand, right_operand = tokens
+        return left_operand - right_operand
 
-    def addition(self, operands) -> "np.ndarray | WaveformVariable | float":
-        return operands[0] + operands[1]
+    def addition(self, tokens: list) -> "np.ndarray | WaveformVariable | float":
+        left_operand, right_operand = tokens
+        return left_operand + right_operand
 
-    def multiplication(self, operands) -> "np.ndarray | WaveformVariable | float":
-        return operands[0] * operands[1]
+    def multiplication(self, tokens: list) -> "np.ndarray | WaveformVariable | float":
+        left_operand, right_operand = tokens
+        return left_operand * right_operand
 
-    def division(self, operands) -> "np.ndarray | WaveformVariable | float":
-        return operands[0] / operands[1]
+    def division(self, tokens: list) -> "np.ndarray | WaveformVariable | float":
+        left_operand, right_operand = tokens
+        return left_operand / right_operand
 
-    def exponentiation(self, operands) -> "np.ndarray | WaveformVariable | float":
-        return operands[0] ** operands[1]
+    def exponentiation(self, tokens: list) -> "np.ndarray | WaveformVariable | float":
+        left_operand, right_operand = tokens
+        return left_operand ** right_operand
 
     # Functions
-    def builtin(self, tokens) -> "np.ndarray | WaveformVariable | float":
+    def builtin(self, tokens: list) -> "np.ndarray | WaveformVariable | float":
         return Builtins.evaluate(tokens)
 
-    def mean(self, arguments) -> float:
-        return np.mean(arguments[0])
+    def mean(self, tokens: list) -> float:
+        (argument,) = tokens
+        return np.mean(argument)
 
-    def min(self, arguments) -> float:  # noqa: A003
-        return np.min(arguments[0])
+    def min(self, tokens: list) -> float:  # noqa: A003
+        (argument,) = tokens
+        return np.min(argument)
 
-    def max(self, arguments) -> float:  # noqa: A003
-        return np.max(arguments[0])
+    def max(self, tokens: list) -> float:  # noqa: A003
+        (argument,) = tokens
+        return np.max(argument)
 
-    def log(self, arguments) -> "np.ndarray | WaveformVariable | float":
-        return np.log(arguments[0])
+    def log(self, tokens: list) -> "np.ndarray | WaveformVariable | float":
+        (argument,) = tokens
+        return np.log(argument)
 
-    def exp(self, arguments: list) -> "np.ndarray | WaveformVariable | float":
-        return np.exp(arguments[0])
+    def exp(self, tokens: list) -> "np.ndarray | WaveformVariable | float":
+        (argument,) = tokens
+        return np.exp(argument)

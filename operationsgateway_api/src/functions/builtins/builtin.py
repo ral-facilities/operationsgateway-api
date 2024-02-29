@@ -34,7 +34,7 @@ class Builtin(ABC):
         """Actually evaluate the builtin on a single numeric argument"""
 
     @staticmethod
-    def centroid(image: np.ndarray, axis: int):
+    def centroid(image: np.ndarray, axis: int) -> int:
         """
         Calculates the centre of mass
         """
@@ -44,7 +44,7 @@ class Builtin(ABC):
         return int(centre_of_mass)
 
     @staticmethod
-    def calculate_fwhm(waveform: WaveformVariable):
+    def calculate_fwhm(waveform: WaveformVariable) -> "tuple[float, float]":
         """
         First, applies smoothing by taking weighted nearest and next-nearest
         neighbour contributions to  y values whose difference from their neighbours

@@ -50,8 +50,8 @@ class TestIntegrate:
     )
     def test_integrate(
         self,
-        argument: "list[int]",
-        expected_result: int,
+        argument: "WaveformVariable | np.ndarray",
+        expected_result: float,
     ):
         result = Integrate.evaluate(argument)
 

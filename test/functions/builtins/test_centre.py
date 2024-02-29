@@ -22,7 +22,7 @@ class TestCentre:
     def test_centre(
         self,
         y: "list[int]",
-        expected_result: int,
+        expected_result: float,
     ):
         waveform_variable = WaveformVariable(x=np.array([0, 1, 2, 3, 4]), y=np.array(y))
         result = Centre.evaluate(waveform_variable)

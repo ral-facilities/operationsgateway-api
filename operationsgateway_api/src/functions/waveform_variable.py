@@ -76,5 +76,5 @@ class WaveformVariable:
     def to_waveform(self) -> Waveform:
         return Waveform(self.to_waveform_model())
 
-    def to_waveform_model(self) -> Waveform:
+    def to_waveform_model(self) -> WaveformModel:
         return WaveformModel(_id="_", x=self.x, y=self.y)
