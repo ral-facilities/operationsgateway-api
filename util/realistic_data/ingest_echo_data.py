@@ -1,4 +1,5 @@
 from multiprocessing.pool import ThreadPool
+import os
 from time import sleep, time
 from typing import List
 
@@ -84,6 +85,7 @@ def main():
     if Config.config.script_options.launch_api:
         starter.kill()
 
+    os._exit(0)
 
 if __name__ == "__main__":
     main()

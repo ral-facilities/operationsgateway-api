@@ -60,31 +60,45 @@ jobs:
       - name: Install dependencies
         run: poetry install --without simulated-data
 
+      # Setup minio and create bucket
+      - name: Setup minio
+        run: |
+          docker run -d -p 9000:9000 --name minio \
+                     -e "MINIO_ACCESS_KEY=minioadmin" \
+                     -e "MINIO_SECRET_KEY=minioadmin" \
+                     -v /tmp/data:/data \
+                     -v /tmp/config:/root/.minio \
+                     minio/minio server /data
+          export AWS_ACCESS_KEY_ID=minioadmin
+          export AWS_SECRET_ACCESS_KEY=minioadmin
+          export AWS_EC2_METADATA_DISABLED=true
+          aws --endpoint-url http://127.0.0.1:9000/ s3 mb s3://og-actions-test
+
       # Configure s4cmd
-      - name: Add keys to s4cmd config
-        run: sed -i -e "s/replace_with_access_key/$ECHO_S3_ACCESS_KEY/" -e "s/replace_with_secret_key/$ECHO_S3_SECRET_KEY/" .github/ci_s3cfg
-        env:
-          ECHO_S3_ACCESS_KEY: ${{secrets.ECHO_S3_ACCESS_KEY}}
-          ECHO_S3_SECRET_KEY: ${{secrets.ECHO_S3_SECRET_KEY}}
-      - name: Move s3cfg to correct place
-        run: cp .github/ci_s3cfg /home/runner/.s3cfg
+      #- name: Add keys to s4cmd config
+      #  run: sed -i -e "s/replace_with_access_key/$ECHO_S3_ACCESS_KEY/" -e "s/replace_with_secret_key/$ECHO_S3_SECRET_KEY/" .github/ci_s3cfg
+      #  env:
+      #    ECHO_S3_ACCESS_KEY: ${{secrets.ECHO_S3_ACCESS_KEY}}
+      #    ECHO_S3_SECRET_KEY: ${{secrets.ECHO_S3_SECRET_KEY}}
+      #- name: Move s3cfg to correct place
+      #  run: cp .github/ci_s3cfg /home/runner/.s3cfg
 
       # Create a bucket for image storage
-      - name: Create bucket for current job
-        run: poetry run s4cmd --endpoint-url https://s3.echo.stfc.ac.uk mb s3://og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}
-        id: create_bucket
+      #- name: Create bucket for current job
+      #  run: poetry run s4cmd --endpoint-url https://s3.echo.stfc.ac.uk mb s3://og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}
+      #  id: create_bucket
 
       # Configuration for API
-      - name: Configure echo access key
-        run: yq -i ".echo.access_key = \"$ECHO_S3_ACCESS_KEY\"" .github/ci_config.yml
-        env:
-          ECHO_S3_ACCESS_KEY: ${{secrets.ECHO_S3_ACCESS_KEY}}
-      - name: Configure echo secret key
-        run: yq -i ".echo.secret_key = \"$ECHO_S3_SECRET_KEY\"" .github/ci_config.yml
-        env:
-          ECHO_S3_SECRET_KEY: ${{secrets.ECHO_S3_SECRET_KEY}}
-      - name: Configure bucket name for current run
-        run: yq -i '.echo.bucket_name = "og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}"' .github/ci_config.yml
+      #- name: Configure echo access key
+      #  run: yq -i ".echo.access_key = \"$ECHO_S3_ACCESS_KEY\"" .github/ci_config.yml
+      #  env:
+      #    ECHO_S3_ACCESS_KEY: ${{secrets.ECHO_S3_ACCESS_KEY}}
+      #- name: Configure echo secret key
+      #  run: yq -i ".echo.secret_key = \"$ECHO_S3_SECRET_KEY\"" .github/ci_config.yml
+      #  env:
+      #    ECHO_S3_SECRET_KEY: ${{secrets.ECHO_S3_SECRET_KEY}}
+      #- name: Configure bucket name for current run
+      #  run: yq -i '.echo.bucket_name = "og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}"' .github/ci_config.yml
       - name: Move CI config.yml to correct place
         run: cp .github/ci_config.yml operationsgateway_api/config.yml
       - name: Setup logging configuration
@@ -116,23 +130,23 @@ jobs:
         run: yq -i ".echo.secret_key = \"$ECHO_S3_SECRET_KEY\"" .github/ci_ingest_echo_config.yml
         env:
           ECHO_S3_SECRET_KEY: ${{secrets.ECHO_S3_SECRET_KEY}}
-      - name: Configure bucket name for current run
-        run: yq -i '.echo.storage_bucket = "og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}"' .github/ci_ingest_echo_config.yml
+      #- name: Configure bucket name for current run
+      #  run: yq -i '.echo.storage_bucket = "og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}"' .github/ci_ingest_echo_config.yml
       - name: Copy config for Echo Ingest script to correct place
         run: cp .github/ci_ingest_echo_config.yml util/realistic_data/config.yml
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+      #- name: Setup tmate session
+      #  uses: mxschmitt/action-tmate@v3
       #  with:
       #    detached: true
 
-      - name: Run test script to launch and kill API
-        run: poetry run python util/realistic_data/kill_api.py
+      #- name: Run test script to launch and kill API
+      #  run: poetry run python util/realistic_data/kill_api.py
 
       - name: Run Echo Ingest script
         run: poetry run python util/realistic_data/ingest_echo_data.py
-        timeout-minutes: 70
-        continue-on-error: true
+        #timeout-minutes: 70
+        #continue-on-error: true
 
       - name: Load Poetry cache for Nox tests session
         uses: actions/cache@v3
@@ -154,13 +168,13 @@ jobs:
       # https://github.com/bloomreach/s4cmd/issues/316
       # s3cmd is easy to install and uses the same config file as s4cmd so is workaround
       # until the feature is implemented
-      - name: Install s3cmd
-        run: sudo apt-get install -y s3cmd
-        if: steps.create_bucket.outcome == 'success' || failure()
-      # --recursive & --force used so non-empty buckets can be deleted
-      - name: Remove bucket for current job
-        run: s3cmd rb --recursive --force s3://og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}
-        if: steps.create_bucket.outcome == 'success' || failure()
+      #- name: Install s3cmd
+      #  run: sudo apt-get install -y s3cmd
+      #  if: steps.create_bucket.outcome == 'success' || failure()
+      ## --recursive & --force used so non-empty buckets can be deleted
+      #- name: Remove bucket for current job
+      #  run: s3cmd rb --recursive --force s3://og-actions-${{ github.sha }}-${{ github.run_id }}-${{ matrix.python-version }}
+      #  if: steps.create_bucket.outcome == 'success' || failure()
 
 
   linting:
