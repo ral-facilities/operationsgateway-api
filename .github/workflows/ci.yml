@@ -135,8 +135,8 @@ jobs:
       - name: Copy config for Echo Ingest script to correct place
         run: cp .github/ci_ingest_echo_config.yml util/realistic_data/config.yml
 
-      #- name: Setup tmate session
-      #  uses: mxschmitt/action-tmate@v3
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
       #  with:
       #    detached: true
 
