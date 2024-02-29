@@ -11,11 +11,11 @@ images:
   upload_image_threads: 4
   preferred_colour_map_pref_name: PREFERRED_COLOUR_MAP
 echo:
-  url: https://s3.echo.stfc.ac.uk
+  url: http://127.0.0.1:9000
   username: operationsgateway
-  access_key: access_key
-  secret_key: secret_key
-  bucket_name: test-bucket
+  access_key: minioadmin
+  secret_key: minioadmin
+  bucket_name: og-actions-test
 mongodb:
   mongodb_url: mongodb://localhost:27017
   database_name: opsgateway

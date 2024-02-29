@@ -16,7 +16,7 @@ echo:
   secret_key: secret_key
   simulated_data_bucket: og-ci-simulated-data
   storage_bucket: og-bucket
-  page_size: 1
+  page_size: 400
 api:
   host: 127.0.0.1
   port: 8000

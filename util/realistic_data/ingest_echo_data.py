@@ -1,6 +1,4 @@
-from multiprocessing.pool import ThreadPool
 from time import sleep, time
-from typing import List
 
 from util.realistic_data.ingest.api_client import APIClient
 from util.realistic_data.ingest.api_starter import APIStarter
@@ -8,18 +6,6 @@ from util.realistic_data.ingest.config import Config
 from util.realistic_data.ingest.local_command_runner import LocalCommandRunner
 from util.realistic_data.ingest.s3_interface import S3Interface
 from util.realistic_data.ingest.ssh_handler import SSHHandler
-
-
-def download_and_ingest(
-    object_names: List[str],
-    s3_interface: S3Interface,
-    api: APIClient,
-):
-    download_pool = ThreadPool(int(Config.config.echo.page_size))
-    files = download_pool.map(s3_interface.download_hdf_file, object_names)
-
-    ingest_pool = ThreadPool(int(Config.config.api.gunicorn_num_workers))
-    ingest_pool.map(api.submit_hdf, files)
 
 
 def main():
@@ -67,7 +53,9 @@ def main():
         object_names = [hdf_file["Key"] for hdf_file in page["Contents"]]
         page_start_time = time()
 
-        download_and_ingest(object_names, echo, og_api)
+        for name in object_names:
+            hdf_file_dict = echo.download_hdf_file(name)
+            og_api.submit_hdf(hdf_file_dict)
 
         page_end_time = time()
         page_duration = page_end_time - page_start_time
