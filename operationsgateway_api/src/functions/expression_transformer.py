@@ -89,7 +89,7 @@ class ExpressionTransformer(Transformer):
 
     def exponentiation(self, tokens: list) -> "np.ndarray | WaveformVariable | float":
         left_operand, right_operand = tokens
-        return left_operand ** right_operand
+        return left_operand**right_operand
 
     # Functions
     def builtin(self, tokens: list) -> "np.ndarray | WaveformVariable | float":
