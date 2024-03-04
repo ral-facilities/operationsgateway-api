@@ -1,6 +1,8 @@
+import json
 import os
 from time import sleep, time
 
+from motor.motor_asyncio import AsyncIOMotorClient
 from util.realistic_data.ingest.api_client import APIClient
 from util.realistic_data.ingest.api_starter import APIStarter
 from util.realistic_data.ingest.config import Config
@@ -29,6 +31,20 @@ def main():
             f"Wiping data stored in Echo, bucket: {Config.config.echo.storage_bucket}",
         )
         echo.delete_all()
+
+    if Config.config.script_options.import_users:
+        print("Importing test users to the database")
+
+        client = AsyncIOMotorClient(
+            f"mongodb://{Config.config.database.hostname}"
+            f":{Config.config.database.port}",
+        )
+        db = client[Config.config.database.name]
+        with open(Config.config.database.test_users_file_path) as f:
+            users = [json.loads(line) for line in f.readlines()]
+
+        db.users.insert_many(users)
+        print(f"Imported {len(users)} users")
 
     starter = APIStarter()
     api_url = f"http://{Config.config.api.host}:{Config.config.api.port}"

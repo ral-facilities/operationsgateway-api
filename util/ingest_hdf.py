@@ -76,6 +76,13 @@ parser.add_argument(
     action="store_true",
     default=False,
 )
+parser.add_argument(
+    "-j",
+    "--json-users",
+    help="Path to JSON file containing additional users to import",
+    type=str,
+    default=None,
+)
 
 # Put command line options into variables
 args = parser.parse_args()
@@ -89,6 +96,7 @@ DATABASE_NAME = args.database_name
 WIPE_ECHO = args.wipe_echo
 BUCKET_NAME = Config.config.echo.bucket_name
 REINGEST_EXPERIMENTS = args.experiments
+JSON_USERS = args.json_users
 
 
 # Wipe collections in the database
@@ -117,6 +125,18 @@ if WIPE_ECHO:
     print(f"Retrieved '{BUCKET_NAME}' bucket, going to delete all files in the bucket")
     bucket.objects.all().delete()
     print(f"Remove all files from the '{BUCKET_NAME}' bucket")
+
+if JSON_USERS is not None:
+    Popen(
+        [
+            "mongoimport",
+            f"--db={DATABASE_NAME}",
+            "--collection=users",
+            "--mode=upsert",
+            f"--file={JSON_USERS}",
+        ],
+    )
+    print("Imported test users into database")
 
 
 def is_api_alive(host, port):
