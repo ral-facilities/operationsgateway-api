@@ -35,6 +35,7 @@ class Echo(BaseModel):
 
 
 class API(BaseModel):
+    https: bool
     host: str
     port: int
     username: str

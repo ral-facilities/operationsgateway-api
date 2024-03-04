@@ -20,6 +20,7 @@ echo:
   images_bucket: og-bucket
   page_size: 1
 api:
+  https: false
   host: 127.0.0.1
   port: 8000
   username: backend

@@ -59,7 +59,8 @@ def main():
         print(f"Imported {len(users)} users")
 
     starter = APIStarter()
-    api_url = f"http://{Config.config.api.host}:{Config.config.api.port}"
+    protocol = "https" if Config.config.api.https else "http"
+    api_url = f"{protocol}://{Config.config.api.host}:{Config.config.api.port}"
     print(f"API started on {api_url}")
 
     channel_manifest = echo.download_manifest_file()
