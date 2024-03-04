@@ -1,3 +1,4 @@
+import os
 from time import sleep, time
 
 from util.realistic_data.ingest.api_client import APIClient
@@ -72,3 +73,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # Script doesn't always exit once it's finished, this ensures it does
+    os._exit(0)
