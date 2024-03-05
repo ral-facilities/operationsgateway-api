@@ -17,7 +17,7 @@ class TestGetImageFromFunction:
                 "a",
                 {"name": "a", "expression": "FE-204-NSO-P1-CAM-1 - 1"},
                 None,
-                "c8b624a4275637bd",
+                "c4263b6f3870c71b",
                 id="Colormap undefined",
             ),
             pytest.param(
@@ -25,7 +25,7 @@ class TestGetImageFromFunction:
                 "a",
                 {"name": "a", "expression": "FE-204-NSO-P1-CAM-1 - 1"},
                 "jet_r",
-                "b6b5db52d8b2c8a0",
+                "c4123f673f810f1b",
                 id="Colormap defined",
             ),
         ],
@@ -56,4 +56,4 @@ class TestGetImageFromFunction:
         bytes_image = test_response.content
         img = Image.open(io.BytesIO(bytes_image))
         image_checksum = str(imagehash.phash(img))
-        assert expected_image_phash == image_checksum
+        assert image_checksum == expected_image_phash

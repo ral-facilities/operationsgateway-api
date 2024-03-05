@@ -129,7 +129,7 @@ class TestRecord:
                 ],
                 {
                     "a": {
-                        "thumbnail": "b694dbc8d849cca9",
+                        "thumbnail": "bac4c41eecc9cc69",
                         "metadata": {
                             "channel_dtype": "image",
                             "x_pixel_size": 1936,
@@ -148,7 +148,8 @@ class TestRecord:
                 ],
                 {
                     "a": {
-                        "thumbnail": "bf84c94ad84bc7a8",
+                        # Small pixel values appears as a "blank" image
+                        "thumbnail": "8000000000000000",
                         "metadata": {
                             "channel_dtype": "image",
                             "x_pixel_size": 1936,

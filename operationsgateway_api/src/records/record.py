@@ -538,9 +538,6 @@ class Record:
             )
             img_src = PILImage.open(image_bytes)
             img_array = np.array(img_src)
-            # TODO Simulated test data seems to have a random max value, and 11 equally
-            # spaced, non-integer possible pixel values. This does not make the nature
-            # of real data and the potential need to bitshift any clearer.
             return img_array
         elif channel_dtype == "waveform":
             waveform_id = channel_value["waveform_id"]
@@ -566,6 +563,9 @@ class Record:
         Record._ensure_channels(record)
 
         if isinstance(result, np.ndarray):
+            # We do not track the bit depth of inputs, so keep maximum depth to
+            # avoid losing information
+            bits_per_pixel = 16
             if truncate_response:
                 metadata = {
                     "channel_dtype": "image",
@@ -576,7 +576,7 @@ class Record:
                 image_array = result[::step_size, ::step_size]
                 image_bytes = FalseColourHandler.apply_false_colour(
                     image_array,
-                    8,
+                    bits_per_pixel,
                     lower_level,
                     upper_level,
                     colourmap_name,
@@ -590,7 +590,7 @@ class Record:
             else:
                 image_bytes = FalseColourHandler.apply_false_colour(
                     result,
-                    8,
+                    bits_per_pixel,
                     lower_level,
                     upper_level,
                     colourmap_name,
