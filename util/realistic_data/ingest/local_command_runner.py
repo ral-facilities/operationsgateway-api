@@ -54,6 +54,6 @@ class LocalCommandRunner:
                     str(Config.config.database.port),
                     Config.config.database.name,
                     "--eval",
-                    f'"db.{collection_name}.drop()"',
+                    f"db.{collection_name}.drop()",
                 ],
             )

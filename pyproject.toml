@@ -24,7 +24,7 @@ h5py = "^3.7.0"
 Pillow = "^10.2.0"
 matplotlib = "^3.5.2"
 gunicorn = "^20.1.0"
-orjson = "3.9.10"
+orjson = "3.9.15"
 python-dateutil = "^2.8.2"
 PyJWT = "2.4.0"
 cryptography = "^42.0.2"
@@ -32,6 +32,8 @@ python-ldap = "3.4.2"
 boto3 = "^1.26.97"
 cron-converter = "^1.0.1"
 zeep = "^4.2.1"
+# Indirect dependency lxml 5.1.0 causes symbol not found in flat namespace '_exsltDateXpathCtxtRegister' error
+lxml = "5.0.1"
 httpx = "^0.23.3"
 # Workaround for: https://github.com/python-poetry/poetry-plugin-export/issues/183
 # urllib3 isn't a dependency of this project, remove once the issue has been resolved

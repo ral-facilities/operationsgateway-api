@@ -9,6 +9,7 @@ class ScriptOptions(BaseModel):
     wipe_database: bool
     delete_images: bool
     launch_api: bool
+    import_users: bool
 
 
 class SSH(BaseModel):
@@ -21,6 +22,7 @@ class Database(BaseModel):
     port: int
     name: str
     remote_experiments_file_path: str
+    test_users_file_path: str
 
 
 class Echo(BaseModel):

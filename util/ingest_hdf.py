@@ -126,13 +126,16 @@ if DELETE_IMAGES:
     print(f"Remove all files from the '{BUCKET_NAME}' bucket")
 
 if JSON_USERS is not None:
-    client = AsyncIOMotorClient(DATABASE_CONNECTION_URL)
-    db = client[DATABASE_NAME]
-    with open(JSON_USERS) as f:
-        users = [json.loads(line) for line in f.readlines()]
-
-    records_drop = db.users.insert_many(users)
-    print(f"Imported {len(users)} users")
+    Popen(
+        [
+            "mongoimport",
+            f"--db={DATABASE_NAME}",
+            "--collection=users",
+            "--mode=upsert",
+            f"--file={JSON_USERS}",
+        ],
+    )
+    print("Imported test users into database")
 
 
 def is_api_alive(host, port):
