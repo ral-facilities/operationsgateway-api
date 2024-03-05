@@ -1,5 +1,6 @@
 import pytest
 
+from operationsgateway_api.src.exceptions import ImageError
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 
 
@@ -69,3 +70,13 @@ class TestFalseColourHandler:
             )
             assert vmin == vmin_expected[bits_per_pixel]
             assert vmax == vmax_expected[bits_per_pixel]
+
+    def test_pixel_limits_error(self):
+        with pytest.raises(ImageError) as e:
+            FalseColourHandler.pixel_limits(12, None, None)
+
+        message = (
+            "operationsgateway_api.src.exceptions.ImageError: "
+            "12 bits per pixel is not supported"
+        )
+        assert e.exconly() == message
