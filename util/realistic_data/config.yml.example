@@ -21,6 +21,7 @@ echo:
   # Number of HDF files downloaded & ingested in one go
   page_size: 2
 api:
+  https: false
   host: 127.0.0.1
   port: 8000
   username: backend
