@@ -46,4 +46,4 @@ async def get_waveform_by_id(
 
     waveform_path = Waveform.get_relative_path(record_id, channel_name)
     log.info("Getting waveform by path: %s", waveform_path)
-    return await Waveform.get_waveform(waveform_path)
+    return Waveform.get_waveform(waveform_path)

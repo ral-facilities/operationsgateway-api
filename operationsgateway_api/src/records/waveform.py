@@ -31,7 +31,7 @@ class Waveform:
         b.seek(0)
         return b
 
-    async def insert_waveform(self) -> None:
+    def insert_waveform(self) -> None:
         """
         Store the waveform from this object in Echo
         """
@@ -100,7 +100,7 @@ class Waveform:
         return f"{Waveform.echo_prefix}/{relative_path}"
 
     @staticmethod
-    async def get_waveform(waveform_path: str) -> WaveformModel:
+    def get_waveform(waveform_path: str) -> WaveformModel:
         """
         Given a waveform path, find the waveform from Echo. This function assumes that
         the waveform should exist; if no waveform can be found, a `WaveformError` will
