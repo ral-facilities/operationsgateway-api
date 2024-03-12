@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 from pymongo.collection import Collection
 from pymongo.cursor import Cursor
@@ -49,7 +49,7 @@ class MongoDBInterface:
         skip: int = 0,
         limit: int = 0,
         sort: Union[str, List[Tuple[str, int]]] = "",
-        projection: Union[None, List[str]] = None,
+        projection: Optional[Union[Mapping[str, Any], Iterable[str]]] = None,
     ) -> Cursor:
         """
         Creates a query to find documents in a given collection, based on filters
@@ -102,7 +102,7 @@ class MongoDBInterface:
         collection_name: str,
         filter_: Dict[str, Any] = None,
         sort: List[Tuple[str, int]] = None,
-        projection: List[str] = None,
+        projection: Optional[Union[Mapping[str, Any], Iterable[str]]] = None,
     ) -> Dict[str, Any]:
         """
         Based on a filter, find a single document in the record collection of MongoDB
