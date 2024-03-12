@@ -241,3 +241,9 @@ class UserSessionListModel(UserSessionModel):
     # displaying on output
     username: Optional[str] = Field(None, exclude=True)
     session: Optional[Dict[str, Any]] = Field(None, exclude=True)
+
+
+class FavouriteFilterModel(BaseModel):
+    id_: Optional[Annotated[ObjectId, PyObjectId]] = Field(None, alias="_id")
+    name: str
+    filter: str  # noqa: A003
