@@ -377,6 +377,9 @@ class ExportHandler:
         """
         Helper function for writing values to CSV files
         """
+        if value is None or value == "":
+            # leave cell empty in these cases
+            return line + ","
         if type(value) == str:
             # put quotes round string values in case they contain a comma
             # which would upset the formatting
