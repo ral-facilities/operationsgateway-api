@@ -38,7 +38,8 @@ async def export_records(
     access_token: AuthoriseToken,
     conditions: Json = Query(
         {},
-        description="Conditions to apply to the query",
+        description="Conditions to apply to the query. Use an _id $in query to export "
+        "specific records.",
     ),
     skip: int = Query(
         0,
@@ -99,8 +100,9 @@ async def export_records(
       (skip and limit might be used to limit the results to just those currently
       displayed)
     - the specified columns for the specified records only
-      (if this option is being used then the '_id's of the specified records will be
-      passed and the parameters for conditions, skip, limit and order will be ignored)
+      (to achieve this a "conditions" parameter of the following format can be used:
+      {"_id": {"$in": ["20230605080000","20230605090000","20230605100000"]}}
+      )
     """
 
     log.info("Exporting records")
