@@ -34,6 +34,10 @@ class ParameterHandler:
 
     @staticmethod
     def encode_date_for_conditions(value):
+        """
+        Convert any string values in the conditions that match the pattern
+        "%Y-%m-%dT%H:%M:%S" into datetime values for use in the database query
+        """
         new_date = None
 
         if isinstance(value, dict):
