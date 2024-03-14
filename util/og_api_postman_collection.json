@@ -1294,6 +1294,184 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Data Export",
+			"item": [
+				{
+					"name": "Export",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/export?conditions={\"_id\": {\"$in\": [\"20230605080000\",\"20230605090000\",\"20230605100000\",\"20230605110000\",\"20230605120000\"]}}&projection=metadata.shotnum&projection=metadata.timestamp&projection=metadata.epac_ops_data_version&projection=channels.FE-204-PSO-EM.data",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"export"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Limit 2 records",
+									"disabled": true
+								},
+								{
+									"key": "skip",
+									"value": "0",
+									"description": "Skip 35 records",
+									"disabled": true
+								},
+								{
+									"key": "order",
+									"value": "metadata.shotnum asc",
+									"description": "Order by shot number, ascending",
+									"disabled": true
+								},
+								{
+									"key": "order",
+									"value": "_id desc",
+									"description": "Order by id, descending",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"_id\": {\"$in\": [\"20230605080000\",\"20230605090000\",\"20230605100000\",\"20230605110000\",\"20230605120000\"]}}",
+									"description": "Specific record IDs"
+								},
+								{
+									"key": "conditions",
+									"value": "{\"$and\": [{\"metadata.timestamp\": {\"$gt\": \"2023-06-05T07:00:00\", \"$lt\": \"2023-06-05T13:00:00\"}}]}",
+									"description": "Search by date",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"_id\": {\"$eq\": \"20230605080000\"}}",
+									"description": "Return records matching the given ID",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"metadata.shotnum\": 423648000000}",
+									"description": "Look for records WHERE shot number is 423648144000",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"metadata.shotnum\": {\"$lt\": 423648144000}}",
+									"description": "Return records with a shot number < 423648144000",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"channels.FE-204-PSO-EM.data\": {\"$lt\": 9.5}}",
+									"description": "WHERE N_COMP_FF_XPOS's data < 310",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"$or\": [{\"metadata.shotnum\": {\"$eq\": 423648000000}}, {\"metadata.shotnum\": {\"$gt\": 423648108000}}]}",
+									"description": "Condition using OR and equality operators",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"channels.FE-204-PSO-EM\": {\"$exists\": true}}",
+									"description": "Return records where FE-204-PSO-EM channel exists",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"channels.FE-204-PSO-EM.data\": {\"$exists\": false}}",
+									"description": "Return records that do not have data for the FE-204-PSO-EM channel",
+									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"metadata.shotnum\": {\"$exists\": false}}",
+									"description": "Return only environmental data",
+									"disabled": true
+								},
+								{
+									"key": "lower_level",
+									"value": "5",
+									"disabled": true
+								},
+								{
+									"key": "upper_level",
+									"value": "15",
+									"disabled": true
+								},
+								{
+									"key": "colourmap_name",
+									"value": "jet_r",
+									"disabled": true
+								},
+								{
+									"key": "export_waveform_images",
+									"value": "True",
+									"disabled": true
+								},
+								{
+									"key": "export_waveform_csvs",
+									"value": "False",
+									"disabled": true
+								},
+								{
+									"key": "export_images",
+									"value": "False",
+									"disabled": true
+								},
+								{
+									"key": "export_scalars",
+									"value": "False",
+									"disabled": true
+								},
+								{
+									"key": "projection",
+									"value": "metadata.shotnum"
+								},
+								{
+									"key": "projection",
+									"value": "metadata.timestamp"
+								},
+								{
+									"key": "projection",
+									"value": "metadata.epac_ops_data_version"
+								},
+								{
+									"key": "projection",
+									"value": "channels.FE-204-PSO-EM.data"
+								},
+								{
+									"key": "projection",
+									"value": "channels.FE-204-PSO-CAM-1",
+									"disabled": true
+								},
+								{
+									"key": "projection",
+									"value": "channels.FE-204-PSO-P1-SP",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"event": [
