@@ -93,8 +93,8 @@ class Waveform:
         """
         plt.rcParams["figure.figsize"] = [8, 6]
         plt.plot(
-            json.loads(self.waveform.x),
-            json.loads(self.waveform.y),
+            self.waveform.x,
+            self.waveform.y,
         )
         plt.xlabel(x_label)
         plt.ylabel(y_label)

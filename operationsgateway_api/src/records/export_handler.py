@@ -1,4 +1,3 @@
-from ast import literal_eval
 import io
 import logging
 from typing import Dict, List, Tuple, Union
@@ -269,19 +268,14 @@ class ExportHandler:
                 return
 
             if self.export_waveform_csvs:
-                # TODO: this is taking the x and y values from the Waveform that
-                # are currently strings that look like arrays and converting them
-                # to actual arrays
-                # There is a currently unmerged PR which will change these strings
-                # to arrays of floats, at which point the string to array
-                # conversion being done here can be removed
-                x_array = literal_eval(waveform_model.x)
-                y_array = literal_eval(waveform_model.y)
-                num_points = len(x_array)
+                num_points = len(waveform_model.x)
                 waveform_csv_in_memory = io.StringIO()
                 for point_num in range(num_points):
                     waveform_csv_in_memory.write(
-                        str(x_array[point_num]) + "," + str(y_array[point_num]) + "\n",
+                        str(waveform_model.x[point_num])
+                        + ","
+                        + str(waveform_model.y[point_num])
+                        + "\n",
                     )
                 self.zip_file.writestr(
                     f"{record_id}_{channel_name}.csv",
