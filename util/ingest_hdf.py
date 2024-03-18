@@ -63,8 +63,9 @@ parser.add_argument(
 )
 parser.add_argument(
     "-d",
-    "--delete-images",
-    help="Flag to determine whether to delete stored images before ingestion",
+    "--wipe-echo",
+    help="Flag to determine whether to wipe Echo (using API config for credentials and"
+    " bucket) before ingestion",
     action="store_true",
     default=False,
 )
@@ -92,8 +93,8 @@ API_URL = args.url
 WIPE_DATABASE = args.wipe_database
 DATABASE_CONNECTION_URL = "mongodb://localhost:27017"
 DATABASE_NAME = args.database_name
-DELETE_IMAGES = args.delete_images
-BUCKET_NAME = Config.config.images.image_bucket_name
+WIPE_ECHO = args.wipe_echo
+BUCKET_NAME = Config.config.echo.bucket_name
 REINGEST_EXPERIMENTS = args.experiments
 JSON_USERS = args.json_users
 
@@ -114,12 +115,12 @@ if WIPE_DATABASE:
         print("Experiments collection dropped")
 
 # Delete images from S3 object storage
-if DELETE_IMAGES:
+if WIPE_ECHO:
     s3_resource = boto3.resource(
         "s3",
-        endpoint_url=Config.config.images.echo_url,
-        aws_access_key_id=Config.config.images.echo_access_key,
-        aws_secret_access_key=Config.config.images.echo_secret_key,
+        endpoint_url=Config.config.echo.url,
+        aws_access_key_id=Config.config.echo.access_key,
+        aws_secret_access_key=Config.config.echo.secret_key,
     )
 
     bucket = s3_resource.Bucket(BUCKET_NAME)
