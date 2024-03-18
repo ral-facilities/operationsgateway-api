@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "00028cc5-d38e-48fa-ae7a-8fe8347dd574",
+		"_postman_id": "28dd0246-c384-4402-a74c-19993baa9a1f",
 		"name": "OperationsGateway API",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "5024263"
 	},
 	"item": [
 		{
@@ -187,13 +188,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{og-api}}/channels/N_FLUOR_INTEGRATION",
+							"raw": "{{og-api}}/channels/PM-201-TJ-CAM-2-FWHMX",
 							"host": [
 								"{{og-api}}"
 							],
 							"path": [
 								"channels",
-								"N_FLUOR_INTEGRATION"
+								"PM-201-TJ-CAM-2-FWHMX"
 							]
 						}
 					},
@@ -215,14 +216,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{og-api}}/channels/summary/N_COMP_FF_E",
+							"raw": "{{og-api}}/channels/summary/PM-201-HJ-CAM-2",
 							"host": [
 								"{{og-api}}"
 							],
 							"path": [
 								"channels",
 								"summary",
-								"N_COMP_FF_E"
+								"PM-201-HJ-CAM-2"
 							]
 						}
 					},
@@ -425,7 +426,7 @@
 								},
 								{
 									"key": "skip",
-									"value": "35",
+									"value": "5",
 									"description": "Skip 35 records",
 									"disabled": true
 								},
@@ -443,56 +444,56 @@
 								},
 								{
 									"key": "conditions",
-									"value": "{\"_id\": {\"$eq\": \"20220408132830\"}}",
+									"value": "{\"_id\": {\"$eq\": \"20230604000000\"}}",
 									"description": "Return records matching the given ID",
 									"disabled": true
 								},
 								{
 									"key": "conditions",
-									"value": "{\"metadata.shotnum\": 366372}",
-									"description": "Look for records WHERE shot number is 366372",
+									"value": "{\"metadata.shotnum\": 423648000000}",
+									"description": "Look for records WHERE shot number is 423648000000",
 									"disabled": true
 								},
 								{
 									"key": "conditions",
-									"value": "{\"metadata.shotnum\": {\"$lt\": 366280}}",
-									"description": "Return records with a shot number < 366285",
+									"value": "{\"metadata.shotnum\": {\"$lt\": 423648180000}}",
+									"description": "Return records with a shot number < 423648180000",
 									"disabled": true
 								},
 								{
 									"key": "conditions",
-									"value": "{\"channels.N_COMP_FF_XPOS.data\": {\"$lt\": 310}}",
-									"description": "WHERE N_COMP_FF_XPOS's data < 310",
+									"value": "{\"channels.CM-202-CVC-CAM-2-FWHMX.data\": {\"$lt\": 50}}",
+									"description": "WHERE CM-202-CVC-CAM-2-FWHMX's data < 50",
 									"disabled": true
 								},
 								{
 									"key": "conditions",
-									"value": "{\"channels.N_COMP_SPEC_TRACE.waveform_id\": {\"$eq\": \"20220408132830_N_COMP_SPEC_TRACE\"}}",
+									"value": "{\"channels.CM-202-CVC-SP.waveform_id\": {\"$eq\": \"20230605080000_CM-202-CVC-SP\"}}",
 									"description": "Return record that matches the waveform ID",
 									"disabled": true
 								},
 								{
 									"key": "conditions",
-									"value": "{\"$or\": [{\"metadata.shotnum\": {\"$eq\": 366371}}, {\"metadata.shotnum\": {\"$gt\": 366374}}]}",
+									"value": "{\"$or\": [{\"metadata.shotnum\": {\"$eq\": 423648000000}}, {\"metadata.shotnum\": {\"$gt\": 423648038000}}]}",
 									"description": "Condition using OR and equality operators",
 									"disabled": true
 								},
 								{
 									"key": "conditions",
-									"value": "{\"$and\": [{\"metadata.timestamp\": {\"$gt\": \"2022-04-07 14:00:00\", \"$lt\": \"2022-04-08 08:00:00\"}}]}",
+									"value": "{\"$and\": [{\"metadata.timestamp\": {\"$gt\": \"2023-06-04T00:00:00\", \"$lt\": \"2023-06-04T00:30:00\"}}]}",
 									"description": "Search by date",
 									"disabled": true
 								},
 								{
 									"key": "conditions",
-									"value": "{\"channels.N_COMP_SPEC_TRACE\": {\"$exists\": true}}",
-									"description": "Return records where N_COMP_SPEC_TRACE channel exists",
+									"value": "{\"channels.CM-202-CVC-SP\": {\"$exists\": true}}",
+									"description": "Return records where CM-202-CVC-SP channel exists",
 									"disabled": true
 								},
 								{
 									"key": "conditions",
-									"value": "{\"channels.N_LEG1_GREEN_NF_YPOS.data\": {\"$exists\": false}}",
-									"description": "Return records that do not have data for the N_LEG1_GREEN_NF_YPOS channel",
+									"value": "{\"channels.FE-204-NSO-P2-CAM-2.data\": {\"$exists\": false}}",
+									"description": "Return records that do not have data for the FE-204-NSO-P2-CAM-2 channel",
 									"disabled": true
 								},
 								{
@@ -515,8 +516,8 @@
 								},
 								{
 									"key": "projection",
-									"value": "channels.N_COMP_FF_E",
-									"description": "Return N_COMP_FF_E only",
+									"value": "channels.PM-201-HJ-CRY-FAN",
+									"description": "Return PM-201-HJ-CRY-FAN only",
 									"disabled": true
 								},
 								{
@@ -527,12 +528,12 @@
 								},
 								{
 									"key": "projection",
-									"value": "channels.N_COMP_NF_IMAGE.thumbnail",
+									"value": "channels.CM-202-CVC-CAM-1.thumbnail",
 									"disabled": true
 								},
 								{
 									"key": "projection",
-									"value": "channels.N_COMP_FF_IMAGE.metadata.channel_dtype",
+									"value": "channels.CM-202-CVC-CAM-1.metadata.channel_dtype",
 									"disabled": true
 								},
 								{
@@ -582,37 +583,37 @@
 							"query": [
 								{
 									"key": "conditions",
-									"value": "{\"metadata.shotnum\": 366372}",
-									"description": "WHERE shot number = 366372",
+									"value": "{\"metadata.shotnum\": 423648180000}",
+									"description": "WHERE shot number = 423648180000",
 									"disabled": true
 								},
 								{
 									"key": "conditions",
-									"value": "{\"metadata.shotnum\": {\"$lt\": 366280}}",
-									"description": "WHERE shot number < 366280",
+									"value": "{\"metadata.shotnum\": {\"$lt\": 423648180000}}",
+									"description": "WHERE shot number < 423648180000",
 									"disabled": true
 								},
 								{
 									"key": "conditions",
-									"value": "{\"$or\": [{\"metadata.shotnum\": {\"$eq\": 366371}}, {\"metadata.shotnum\": {\"$gt\": 366372}}]}",
-									"description": "WHERE shot number = 366371 OR shot number >366372",
+									"value": "{\"$or\": [{\"metadata.shotnum\": {\"$eq\": 423648000000}}, {\"metadata.shotnum\": {\"$gt\": 423648038000}}]}",
+									"description": "WHERE shot number = 423648000000 OR shot number > 423648038000",
 									"disabled": true
 								},
 								{
 									"key": "conditions",
-									"value": "{\"channels.N_COMP_FF_XPOS.data\": {\"$lt\": 310}}",
-									"description": "WHERE N_COMP_FF_XPOS's data < 310",
+									"value": "{\"channels.CM-202-CVC-CAM-2-FWHMX.data\": {\"$lt\": 50}}",
+									"description": "WHERE N_COMP_FF_XPOS's data < 50",
 									"disabled": true
 								},
 								{
 									"key": "conditions",
-									"value": "{\"$and\": [{\"metadata.timestamp\": {\"$gt\": \"2022-04-07 14:00:00\", \"$lt\": \"2022-04-08 08:00:00\"}}]}",
+									"value": "{\"$and\": [{\"metadata.timestamp\": {\"$gt\": \"2023-06-04T00:00:00\", \"$lt\": \"2023-06-04T00:30:00\"}}]}",
 									"description": "WHERE timestamp > _ AND < _",
 									"disabled": true
 								},
 								{
 									"key": "conditions",
-									"value": "{\"channels.N_COMP_SPEC_TRACE\": {\"$exists\": true}}",
+									"value": "{\"channels.CM-202-CVC-SP\": {\"$exists\": true}}",
 									"description": "WHERE the N_COMP_SPEC_TRACE channel exists",
 									"disabled": true
 								},
@@ -643,13 +644,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{og-api}}/records/20220408132830",
+							"raw": "{{og-api}}/records/20230604000000",
 							"host": [
 								"{{og-api}}"
 							],
 							"path": [
 								"records",
-								"20220408132830"
+								"20230604000000"
 							],
 							"query": [
 								{
@@ -688,13 +689,13 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{og-api}}/records/20220408142911",
+							"raw": "{{og-api}}/records/20230604000000",
 							"host": [
 								"{{og-api}}"
 							],
 							"path": [
 								"records",
-								"20220408142911"
+								"20230604000000"
 							]
 						}
 					},
@@ -716,14 +717,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{og-api}}/waveforms/20220408140310/N_COMP_SPEC_TRACE",
+							"raw": "{{og-api}}/waveforms/20230605080000/CM-202-CVC-SP",
 							"host": [
 								"{{og-api}}"
 							],
 							"path": [
 								"waveforms",
-								"20220408140310",
-								"N_COMP_SPEC_TRACE"
+								"20230605080000",
+								"CM-202-CVC-SP"
 							]
 						}
 					},
@@ -800,21 +801,16 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{og-api}}/images/20220408002114/N_LEG1_GREEN_NF_IMAGE",
+							"raw": "{{og-api}}/images/20230605080000/CM-202-CVC-CAM-1",
 							"host": [
 								"{{og-api}}"
 							],
 							"path": [
 								"images",
-								"20220408002114",
-								"N_LEG1_GREEN_NF_IMAGE"
+								"20230605080000",
+								"CM-202-CVC-CAM-1"
 							],
 							"query": [
-								{
-									"key": "original_image",
-									"value": "true",
-									"disabled": true
-								},
 								{
 									"key": "lower_level",
 									"value": "50",
@@ -1091,6 +1087,111 @@
 			}
 		},
 		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Add user",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"_id\": \"username\",\n  \"auth_type\": \"local\",\n  \"authorised_routes\": [\"/submit/hdf POST\", \"/experiments POST\"],\n  \"sha256_password\": \"password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{og-api}}/users",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update user",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"_id\": \"username\",\n  \"updated_password\": \"password\",\n  \"add_authorised_routes\": [\"/submit/hdf POST\", \"/experiments POST\"],\n  \"remove_authorised_routes\": [\"/submit/hdf POST\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{og-api}}/users",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete user",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/users/username",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"users",
+								"username"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "User Preferences",
 			"item": [
 				{
@@ -1109,12 +1210,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{og-api}}/user_preferences/my_pref",
+							"raw": "{{og-api}}/users/preferences/my_pref",
 							"host": [
 								"{{og-api}}"
 							],
 							"path": [
-								"user_preferences",
+								"users",
+								"preferences",
 								"my_pref"
 							]
 						}
@@ -1146,12 +1248,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{og-api}}/user_preferences",
+							"raw": "{{og-api}}/users/preferences",
 							"host": [
 								"{{og-api}}"
 							],
 							"path": [
-								"user_preferences"
+								"users",
+								"preferences"
 							]
 						}
 					},
@@ -1182,12 +1285,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{og-api}}/user_preferences",
+							"raw": "{{og-api}}/users/preferences",
 							"host": [
 								"{{og-api}}"
 							],
 							"path": [
-								"user_preferences"
+								"users",
+								"preferences"
 							]
 						}
 					},
@@ -1218,12 +1322,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{og-api}}/user_preferences",
+							"raw": "{{og-api}}/users/preferences",
 							"host": [
 								"{{og-api}}"
 							],
 							"path": [
-								"user_preferences"
+								"users",
+								"preferences"
 							]
 						}
 					},
@@ -1254,12 +1359,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{og-api}}/user_preferences",
+							"raw": "{{og-api}}/users/preferences",
 							"host": [
 								"{{og-api}}"
 							],
 							"path": [
-								"user_preferences"
+								"users",
+								"preferences"
 							]
 						}
 					},
@@ -1281,12 +1387,13 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{og-api}}/user_preferences/my_pref",
+							"raw": "{{og-api}}/users/preferences/my_pref",
 							"host": [
 								"{{og-api}}"
 							],
 							"path": [
-								"user_preferences",
+								"users",
+								"preferences",
 								"my_pref"
 							]
 						}
@@ -1497,12 +1604,12 @@
 	"variable": [
 		{
 			"key": "og-api",
-			"value": "http://localhost:8000",
-			"disabled": true
+			"value": "http://localhost:8000"
 		},
 		{
 			"key": "og-api",
-			"value": "opsgateway-epac-dev.clf.stfc.ac.uk:8000"
+			"value": "https://opsgateway-epac-dev.clf.stfc.ac.uk",
+			"disabled": true
 		},
 		{
 			"key": "og-api",

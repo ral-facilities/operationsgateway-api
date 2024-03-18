@@ -21,6 +21,7 @@ from operationsgateway_api.src.models import (
     WaveformModel,
 )
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.waveform import Waveform
 
 
 log = logging.getLogger()
@@ -92,7 +93,7 @@ class HDFDataHandler:
             channel_metadata = dict(value.attrs)
 
             if value.attrs["channel_dtype"] == "image":
-                image_path = Image.get_image_path(self.record_id, channel_name)
+                image_path = Image.get_relative_path(self.record_id, channel_name)
 
                 try:
                     self.images.append(
@@ -108,7 +109,7 @@ class HDFDataHandler:
             elif value.attrs["channel_dtype"] == "rgb-image":
                 # TODO - implement colour image ingestion. Currently waiting on the
                 # OG-HDF5 converter to support conversion of colour images.
-                # Implementation will be as per greyscale image (`get_image_path()`
+                # Implementation will be as per greyscale image (`get_relative_path()`
                 # then append to `self.images`) but might require extracting a different
                 # part of the value
                 raise HDFDataExtractionError("Colour images cannot be ingested")
@@ -122,17 +123,18 @@ class HDFDataHandler:
                     raise ModelError(str(exc)) from exc
             elif value.attrs["channel_dtype"] == "waveform":
                 waveform_id = f"{self.record_id}_{channel_name}"
+                waveform_path = Waveform.get_relative_path(self.record_id, channel_name)
                 log.debug("Waveform ID: %s", waveform_id)
 
                 try:
                     channel = WaveformChannelModel(
                         metadata=WaveformChannelMetadataModel(**channel_metadata),
-                        waveform_id=waveform_id,
+                        waveform_path=waveform_path,
                     )
 
                     self.waveforms.append(
                         WaveformModel(
-                            _id=waveform_id,
+                            path=waveform_path,
                             x=value["x"][()],
                             y=value["y"][()],
                         ),

@@ -32,13 +32,16 @@ class ImagesConfig(BaseModel):
     # the system default colour map (used if no user preference is set)
     default_colour_map: StrictStr
     colourbar_height_pixels: StrictInt
-    echo_url: StrictStr
-    echo_username: StrictStr
-    echo_access_key: StrictStr
-    echo_secret_key: StrictStr
-    image_bucket_name: StrictStr
     upload_image_threads: StrictInt
     preferred_colour_map_pref_name: StrictStr
+
+
+class EchoConfig(BaseModel):
+    url: StrictStr
+    username: StrictStr
+    access_key: StrictStr
+    secret_key: StrictStr
+    bucket_name: StrictStr
 
 
 class MongoDB(BaseModel):
@@ -104,6 +107,7 @@ class APIConfig(BaseModel):
     auth: AuthConfig
     experiments: ExperimentsConfig
     images: ImagesConfig
+    echo: EchoConfig
     export: ExportConfig
 
     @classmethod

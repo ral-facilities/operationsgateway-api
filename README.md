@@ -8,9 +8,14 @@ This is an API built using [FastAPI](https://fastapi.tiangolo.com/) to work with
 
 
 ## Environment Setup
+If not already present, you may need to install development tools for the desired Python version using the appropriate package manager for your OS. For example, for Python3.8 on Fedora or RHEL:
+```bash
+sudo dnf install "@Development Tools" python38 python38-pip python38-setuptools python38-devel openldap-devel git
+```
+
 [Poetry](https://python-poetry.org/) is used to manage the dependencies of this API. To install Poetry, follow [the instructions](https://python-poetry.org/docs/master/#installing-with-the-official-installer) from their documentation.
 
-To install the project's dependencies, execute `poetry install`. The dependencies and the code in this repo are compatible with Python 3.6+.
+To install the project's dependencies, execute `poetry install`. The dependencies and the code in this repo are compatible with Python >=3.8, <3.12.
 
 ## Nox Sessions
 Like [DataGateway API](https://github.com/ral-facilities/datagateway-api), this repository contains a [Nox](https://nox.thea.codes) file (`noxfile.py`) which exists in the root level of this repository. There are a handful of sessions which help with repetitive tasks during development To install Nox, use the following command:
@@ -62,12 +67,10 @@ mongoimport --db='opsgateway' --collection='users' --mode='upsert' --file='util/
 
 Using the `upsert` mode allows you to update existing users with any changes that are made (e.g. added an authorised route to their entry) and any new users are inserted as normal. The command's output states the number of documents that have been added and how many have been updated.
 
-## Image Storage
-Configuration for image storage is stored in the `images` section of the config file. Images are stored using S3 object storage, currently the STFC Echo instance. Lots of documentation online references the AWS offering, but as S3 is the underlying storage technique, we can interact with Echo in the same way that a user would interact with AWS S3.
+## Echo Object Storage
+Waveforms and images are stored using S3 object storage (using the same bucket), currently the STFC Echo instance. Lots of documentation online references the AWS offering, but as S3 is the underlying storage technique, we can interact with Echo in the same way that a user would interact with AWS S3.
 
-Credentials to connect to Echo are provided in `config.yml`, as well as a bucket name, which is the location on S3 storage where images will be stored.
-
-For the API, we have multiple buckets, used for different purposes. For example, there's a bucket used for the dev server, a bucket per developer for their development environment, as well as buckets that are created for a short period of time for specific testing. This ensures that we're not overwriting each other's data and causing issues. For GitHub Actions, each run will create a new bucket, ingest data for testing and delete the bucket at the end of the run.
+Configuration to connect with Echo is stored in the `echo` section of the config file - credentials are stored in Keeper. This section includes a bucket name, which is the location on S3 storage where images & waveforms will be stored. For the API, we have multiple buckets, used for different purposes. For example, there's a bucket used for the dev server, a bucket per developer for their development environment, as well as buckets that are created for a short period of time for specific testing. This ensures that we're not overwriting each other's data and causing issues. For GitHub Actions, each run will create a new bucket, ingest data for testing and delete the bucket at the end of the run.
 
 To manage buckets, [s4cmd](https://github.com/bloomreach/s4cmd) is a good command line utility. It provides an Unix-like interface to S3 storage, based off of `s3cmd` but has higher performance when interacting with large files. It is a development dependency for this repository but can also be installed using `pip`. There's an example configuration file in `.github/ci_s3cfg` which can be placed in `~/.s3cfg` and used for your own development environment.
 

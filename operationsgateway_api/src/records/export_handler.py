@@ -257,8 +257,8 @@ class ExportHandler:
                 channel_name,
             )
             try:
-                waveform_model = await Waveform.get_waveform(
-                    f"{record_id}_{channel_name}",
+                waveform_model = Waveform.get_waveform(
+                    Waveform.get_relative_path(record_id, channel_name),
                 )
             except Exception:
                 self.errors_file_in_memory.write(

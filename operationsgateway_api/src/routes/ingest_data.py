@@ -55,7 +55,7 @@ async def submit_hdf(
     log.debug("Processing waveforms")
     for w in waveforms:
         waveform = Waveform(w)
-        await waveform.insert_waveform()
+        waveform.insert_waveform()
         waveform.create_thumbnail()
         record.store_thumbnail(waveform)
 
