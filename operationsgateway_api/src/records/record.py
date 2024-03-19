@@ -3,6 +3,8 @@ from datetime import datetime
 import logging
 from typing import Any, Dict, List, Tuple, Union
 
+import numpy as np
+from PIL import Image as PILImage
 from pydantic import ValidationError
 import pymongo
 from pymongo.results import DeleteResult
@@ -10,9 +12,15 @@ from pymongo.results import DeleteResult
 from operationsgateway_api.src.exceptions import (
     ChannelSummaryError,
     DatabaseError,
+    FunctionParseError,
     MissingDocumentError,
     ModelError,
     RecordError,
+)
+from operationsgateway_api.src.functions import (
+    ExpressionTransformer,
+    VariableTransformer,
+    WaveformVariable,
 )
 from operationsgateway_api.src.models import (
     DateConverterRange,
@@ -286,20 +294,11 @@ class Record:
         """
         record_id = record["_id"]
         for channel_name, value in record["channels"].items():
-            try:
-                channel_dtype = value["metadata"]["channel_dtype"]
-            except KeyError:
-                # if a projection has been applied then the record will only contain
-                # the requested fields and probably not the channel_dtype
-                # so it needs to be looked up separately
-                record_dict = await Record.find_record_by_id(
-                    record_id,
-                    {},
-                    [f"channels.{channel_name}.metadata.channel_dtype"],
-                )
-                channel_dtype = record_dict["channels"][channel_name]["metadata"][
-                    "channel_dtype"
-                ]
+            channel_dtype = await Record.get_channel_dtype(
+                record_id,
+                channel_name,
+                value,
+            )
             try:
                 if channel_dtype == "image":
                     b64_thumbnail_str = value["thumbnail"]
@@ -316,6 +315,32 @@ class Record:
                 # then a KeyError will be raised. This is normal behaviour, so
                 # acceptable to pass
                 pass
+
+    @staticmethod
+    async def get_channel_dtype(
+        record_id: str,
+        channel_name: str,
+        channel_value: dict,
+    ) -> str:
+        """
+        Extract "channel_dtype" from `channel_value`, or if not present, retrieve with a
+        separate lookup.
+        """
+        try:
+            channel_dtype = channel_value["metadata"]["channel_dtype"]
+        except KeyError:
+            # if a projection has been applied then the record will only contain
+            # the requested fields and probably not the channel_dtype
+            # so it needs to be looked up separately
+            record_dict = await Record.find_record_by_id(
+                record_id,
+                {},
+                [f"channels.{channel_name}.metadata.channel_dtype"],
+            )
+            new_channel_value = record_dict["channels"][channel_name]
+            channel_dtype = new_channel_value["metadata"]["channel_dtype"]
+
+        return channel_dtype
 
     @staticmethod
     async def convert_search_ranges(date_range, shotnum_range):
@@ -386,3 +411,210 @@ class Record:
                 return ShotnumConverterRange(**converted_range[0])
         except ValidationError as exc:
             raise ModelError(str(exc)) from exc
+
+    @staticmethod
+    async def apply_functions(
+        record: "dict[str, dict]",
+        functions: "list[dict[str, str]]",
+        lower_level: int,
+        upper_level: int,
+        colourmap_name: str,
+        truncate_response: bool = True,
+    ) -> None:
+        """
+        Evaluates all functions and stores the results on `record` as though
+        they were normal channels.
+        """
+        variable_data = {}
+        Record._ensure_channels(record)
+
+        variable_transformer = VariableTransformer()
+        expression_transformer = ExpressionTransformer(variable_data)
+        for function in functions:
+            await Record._apply_function(
+                record,
+                lower_level,
+                upper_level,
+                colourmap_name,
+                variable_data,
+                variable_transformer,
+                expression_transformer,
+                function,
+                truncate_response,
+            )
+
+    @staticmethod
+    def _ensure_channels(record):
+        if "channels" not in record:
+            record["channels"] = {}
+
+    @staticmethod
+    async def _apply_function(
+        record: "dict[str, dict]",
+        lower_level: int,
+        upper_level: int,
+        colourmap_name: str,
+        variable_data: dict,
+        variable_transformer: VariableTransformer,
+        expression_transformer: ExpressionTransformer,
+        function: "dict[str, str]",
+        truncate_response: bool = True,
+    ) -> None:
+        """
+        Evaluates a single function and stores the result on `record` as though
+        it were a normal channel.
+        """
+        variable_transformer.evaluate(function["expression"])
+        variables = variable_transformer.variables
+        channels_to_fetch = set()
+
+        for variable in variables:
+            if variable in record["channels"]:
+                variable_data[variable] = await Record._extract_variable(
+                    record["_id"],
+                    variable,
+                    record["channels"][variable],
+                )
+            else:
+                channels_to_fetch.add(variable)
+
+        if channels_to_fetch:
+            log.debug("Fetching channels: %s", channels_to_fetch)
+            record_extra = await Record.find_record_by_id(
+                record["_id"],
+                {},
+                [f"channels.{v}" for v in channels_to_fetch],
+            )
+
+            fetched_channels: dict = record_extra["channels"]
+            missing_channels = channels_to_fetch.difference(fetched_channels)
+            if missing_channels:
+                message = f"Unable to parse variables: {missing_channels}"
+                raise FunctionParseError(message)
+
+            for name, channel_value in fetched_channels.items():
+                variable_data[name] = await Record._extract_variable(
+                    record["_id"],
+                    name,
+                    channel_value,
+                )
+
+        result = expression_transformer.evaluate(function["expression"])
+        Record._parse_function_results(
+            record,
+            lower_level,
+            upper_level,
+            colourmap_name,
+            function["name"],
+            result,
+            truncate_response,
+        )
+        variable_data[function["name"]] = result
+
+    @staticmethod
+    async def _extract_variable(
+        record_id: str,
+        name: str,
+        channel_value: dict,
+    ) -> "np.ndarray | WaveformVariable | float":
+        """
+        Extracts and returns the relevant data from `channel_value`, handling
+        extra calls needed for "image" and "waveform" types.
+        """
+        channel_dtype = await Record.get_channel_dtype(
+            record_id=record_id,
+            channel_name=name,
+            channel_value=channel_value,
+        )
+        if channel_dtype == "image":
+            # Loading from echo takes ~ 0.2 s per image
+            image_bytes = await Image.get_image(
+                record_id,
+                name,
+                True,
+                0,
+                255,
+                None,
+            )
+            img_src = PILImage.open(image_bytes)
+            img_array = np.array(img_src)
+            return img_array
+        elif channel_dtype == "waveform":
+            waveform_path = channel_value["waveform_path"]
+            waveform = Waveform.get_waveform(waveform_path)
+            return WaveformVariable(waveform)
+        else:
+            return channel_value["data"]
+
+    @staticmethod
+    def _parse_function_results(
+        record: dict,
+        lower_level: int,
+        upper_level: int,
+        colourmap_name: str,
+        function_name: str,
+        result: "np.ndarray | WaveformVariable | np.float64",
+        truncate_response: bool = True,
+    ) -> None:
+        """
+        Parses the numerical `result` and modifies `record` in place to contain
+        the data in the expected format for the type of the `result`.
+        """
+        Record._ensure_channels(record)
+
+        if isinstance(result, np.ndarray):
+            # We do not track the bit depth of inputs, so keep maximum depth to
+            # avoid losing information
+            bits_per_pixel = 16
+            if truncate_response:
+                metadata = {
+                    "channel_dtype": "image",
+                    "x_pixel_size": result.shape[1],
+                    "y_pixel_size": result.shape[0],
+                }
+                step_size = max(*result.shape) // 50
+                image_array = result[::step_size, ::step_size]
+                image_bytes = FalseColourHandler.apply_false_colour(
+                    image_array,
+                    bits_per_pixel,
+                    lower_level,
+                    upper_level,
+                    colourmap_name,
+                )
+                image_bytes.seek(0)
+                image_b64 = base64.b64encode(image_bytes.getvalue())
+                channel = {
+                    "thumbnail": image_b64,
+                    "metadata": metadata,
+                }
+            else:
+                image_bytes = FalseColourHandler.apply_false_colour(
+                    result,
+                    bits_per_pixel,
+                    lower_level,
+                    upper_level,
+                    colourmap_name,
+                )
+                image_bytes.seek(0)
+                channel = {"data": image_bytes}
+
+        elif isinstance(result, WaveformVariable):
+            if truncate_response:
+                waveform = result.to_waveform()
+                # Creating thumbnail takes ~ 0.05 s per waveform
+                waveform.create_thumbnail()
+                metadata = {"channel_dtype": "waveform"}
+                channel = {
+                    "thumbnail": waveform.thumbnail,
+                    "metadata": metadata,
+                }
+            else:
+                waveform_model = result.to_waveform_model()
+                channel = {"data": waveform_model}
+
+        else:
+            metadata = {"channel_dtype": "scalar"}
+            # Cannot return np.float64 as it can't be cast to JSON
+            channel = {"data": float(result), "metadata": metadata}
+
+        record["channels"][function_name] = channel
