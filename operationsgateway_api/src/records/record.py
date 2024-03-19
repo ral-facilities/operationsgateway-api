@@ -540,8 +540,8 @@ class Record:
             img_array = np.array(img_src)
             return img_array
         elif channel_dtype == "waveform":
-            waveform_id = channel_value["waveform_id"]
-            waveform = await Waveform.get_waveform(waveform_id)
+            waveform_path = channel_value["waveform_path"]
+            waveform = Waveform.get_waveform(waveform_path)
             return WaveformVariable(waveform)
         else:
             return channel_value["data"]

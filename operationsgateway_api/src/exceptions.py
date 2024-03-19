@@ -103,3 +103,9 @@ class FunctionParseError(ApiError):
     def __init__(self, msg="Problem with function syntax", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)
         self.status_code = 400
+
+
+class WaveformError(ApiError):
+    def __init__(self, msg="Waveform error", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 500

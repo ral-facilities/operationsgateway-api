@@ -8,13 +8,14 @@ images:
   waveform_thumbnail_size: [100, 100]
   default_colour_map: viridis
   colourbar_height_pixels: 16
-  echo_url: https://s3.echo.stfc.ac.uk
-  echo_username: operationsgateway
-  echo_access_key: access_key
-  echo_secret_key: secret_key
-  image_bucket_name: test-bucket
   upload_image_threads: 4
   preferred_colour_map_pref_name: PREFERRED_COLOUR_MAP
+echo:
+  url: http://127.0.0.1:9000
+  username: operationsgateway
+  access_key: minioadmin
+  secret_key: minioadmin
+  bucket_name: og-actions-test
 mongodb:
   mongodb_url: mongodb://localhost:27017
   database_name: opsgateway
@@ -24,7 +25,7 @@ auth:
   private_key_path: /home/runner/work/operationsgateway-api/id_rsa
   public_key_path: /home/runner/work/operationsgateway-api/id_rsa.pub
   jwt_algorithm: RS256
-  access_token_validity_mins: 120
+  access_token_validity_mins: 180
   refresh_token_validity_days: 7
   fedid_server_url: ldap://fed.cclrc.ac.uk:389
   fedid_server_ldap_realm: FED.CCLRC.AC.UK

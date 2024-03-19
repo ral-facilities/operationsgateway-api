@@ -21,7 +21,7 @@ class TestRecord:
                     "channels": {
                         "TS-202-TSM-P1-CAM-2-CENX": {"data": 4.145480878063205},
                         "CM-202-CVC-SP": {
-                            "waveform_id": "20230605100000_CM-202-CVC-SP",
+                            "waveform_path": "20230605100000/CM-202-CVC-SP.json",
                         },
                         "FE-204-NSO-P1-CAM-1": {
                             "image_path": "20230605100000/FE-204-NSO-P1-CAM-1.png",
