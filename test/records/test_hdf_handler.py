@@ -2,7 +2,7 @@ import h5py
 import numpy as np
 import pytest
 
-from operationsgateway_api.src.exceptions import HDFDataExtractionError, ModelError
+from operationsgateway_api.src.exceptions import HDFDataExtractionError
 from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
 
 

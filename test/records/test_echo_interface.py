@@ -1,6 +1,10 @@
 from io import BytesIO
 from unittest.mock import patch
 
+from botocore.exceptions import ClientError
+import pytest
+
+from operationsgateway_api.src.exceptions import EchoS3Error
 from operationsgateway_api.src.records.echo_interface import EchoInterface
 
 
@@ -45,6 +49,29 @@ class TestEchoInterface:
         expected_bucket_args = (self.config_image_bucket_name,)
         assert test_echo.resource.Bucket.call_args.args == expected_bucket_args
 
+        with patch("boto3.resource") as mock_resource:
+            mock_resource.side_effect = ClientError(
+                {"Error": {"Code": "AccessDenied", "Message": "Access Denied"}},
+                "resource",
+            )
+
+            with pytest.raises(
+                EchoS3Error,
+                match="Error retrieving object storage bucket:",
+            ):
+                test_echo = EchoInterface()
+
+        with patch("boto3.resource") as mock_resource:
+            mock_bucket_instance = mock_resource.return_value.Bucket.return_value
+
+            mock_bucket_instance.creation_date = None
+
+            with pytest.raises(
+                EchoS3Error,
+                match="Bucket for image storage cannot be found",
+            ):
+                test_echo = EchoInterface()
+
     @patch(
         "operationsgateway_api.src.config.Config.config.images.echo_url",
         config_echo_url,
@@ -81,6 +108,19 @@ class TestEchoInterface:
             == self.test_image_path
         )
 
+        with patch("boto3.resource") as mock_resource:
+            mock_bucket = mock_resource.return_value.Bucket.return_value
+
+            mock_bucket.download_fileobj.side_effect = ClientError(
+                {"Error": {"Code": "AccessDenied", "Message": "Access Denied"}},
+                "download_fileobj",
+            )
+
+            test_echo = EchoInterface()
+
+            with pytest.raises(EchoS3Error, match="when downloading file at"):
+                test_echo.download_file_object(self.test_image_path)
+
     @patch(
         "operationsgateway_api.src.config.Config.config.images.echo_url",
         config_echo_url,
@@ -103,3 +143,80 @@ class TestEchoInterface:
 
         test_echo.upload_file_object(BytesIO(), self.test_image_path)
         assert test_echo.bucket.upload_fileobj.call_count == 1
+
+        with patch("boto3.resource") as mock_resource:
+            mock_bucket = mock_resource.return_value.Bucket.return_value
+
+            mock_bucket.upload_fileobj.side_effect = ClientError(
+                {"Error": {"Code": "AccessDenied", "Message": "Access Denied"}},
+                "upload_fileobj",
+            )
+
+            test_echo = EchoInterface()
+
+            with pytest.raises(EchoS3Error, match="when uploading file at"):
+                test_echo.upload_file_object(BytesIO(), self.test_image_path)
+
+    @patch(
+        "operationsgateway_api.src.config.Config.config.images.echo_url",
+        config_echo_url,
+    )
+    @patch(
+        "operationsgateway_api.src.config.Config.config.images.echo_access_key",
+        config_echo_access_key,
+    )
+    @patch(
+        "operationsgateway_api.src.config.Config.config.images.echo_secret_key",
+        config_echo_secret_key,
+    )
+    @patch(
+        "operationsgateway_api.src.config.Config.config.images.image_bucket_name",
+        config_image_bucket_name,
+    )
+    @patch("boto3.resource")
+    def test_delete_file_object(self, _):
+        test_echo = EchoInterface()
+
+        test_echo.delete_file_object(self.test_image_path)
+        assert test_echo.bucket.Object.return_value.delete.call_count == 1
+
+        with patch(
+            "operationsgateway_api.src.records.echo_interface.log.error",
+        ) as mock_log_error:
+            test_echo = EchoInterface()
+            test_echo.delete_file_object(self.test_image_path)
+
+            mock_log_error.assert_called_once_with(
+                "The object with key %s still exists. Deletion might not "
+                "have been successful.",
+                self.test_image_path,
+            )
+
+        with patch("boto3.resource") as mock_resource:
+            mock_bucket = mock_resource.return_value.Bucket.return_value
+
+            mock_bucket.Object.return_value.delete.side_effect = ClientError(
+                {"Error": {"Code": "AccessDenied", "Message": "Access Denied"}},
+                "delete",
+            )
+
+            test_echo = EchoInterface()
+
+            with pytest.raises(EchoS3Error, match="when deleting file at"):
+                test_echo.delete_file_object(self.test_image_path)
+
+        with patch("boto3.resource") as mock_resource:
+            mock_bucket = mock_resource.return_value.Bucket.return_value
+
+            mock_bucket.Object.return_value.load.side_effect = ClientError(
+                {"Error": {"Code": "AccessDenied", "Message": "Access Denied"}},
+                "delete",
+            )
+
+            test_echo = EchoInterface()
+            with patch(
+                "operationsgateway_api.src.records.echo_interface.log.info",
+            ) as mock_log_info:
+                test_echo.delete_file_object(self.test_image_path)
+
+                assert mock_log_info.call_count == 1
