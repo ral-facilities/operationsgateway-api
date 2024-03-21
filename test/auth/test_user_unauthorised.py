@@ -43,7 +43,7 @@ class TestUnauthorisedUser:
 
                 with pytest.raises(
                     HTTPException,
-                    match="(403, \"User 'test_user' is not "
-                    "authorised to use endpoint 'value'\")",
+                    match="403: User 'test_user' is not "
+                    "authorised to use endpoint 'value'",
                 ):
                     await authorise_route(mock_request, credentials_mock)

@@ -11,6 +11,7 @@ async def remove_record_entry():
         filter_={"_id": "19520605070023"},
     )
 
+
 @pytest_asyncio.fixture(scope="function")
 async def remove_waveform_entry():
     yield
