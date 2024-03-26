@@ -72,7 +72,7 @@ def assert_thumbnails(record: dict, expected_thumbnails_hashes: dict):
     assert num_channels_found == len(expected_thumbnails_hashes.keys())
 
 
-def assert_text_file_contents(filepath: str, file_contents: str):
+def assert_text_file_contents(filepath: str, file_contents: str) -> None:
     """
     Check that the text file at the given filepath contains the contents specified
     """
