@@ -163,14 +163,14 @@ class ExportHandler:
         # process a waveform channel
         elif self.channel_manifest_dict["channels"][channel_name]["type"] == "waveform":
             log.info("Channel %s is a waveform", channel_name)
-            try:
-                x_units = record_data["channels"][channel_name]["metadata"]["x_units"]
-            except KeyError:
-                x_units = ""
-            try:
-                y_units = record_data["channels"][channel_name]["metadata"]["y_units"]
-            except KeyError:
-                y_units = ""
+            x_units = record_data["channels"][channel_name]["metadata"].setdefault(
+                "x_units",
+                "",
+            )
+            y_units = record_data["channels"][channel_name]["metadata"].setdefault(
+                "y_units",
+                "",
+            )
             await self._add_waveform_to_zip(
                 record_data,
                 record_id,
