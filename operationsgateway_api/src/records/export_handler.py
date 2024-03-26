@@ -116,9 +116,8 @@ class ExportHandler:
         """
         line = ""
         for proj in self.projection:
-            projection_parts = proj.split(".")
-            channel_name = projection_parts[1]
-            if projection_parts[0] == "channels":
+            channel_name = self._get_channel_name(proj)
+            if proj.split(".")[0] == "channels":
                 # image and waveform data will be exported to separate files so will not
                 # have values put in the main csv file
                 if (
@@ -131,6 +130,17 @@ class ExportHandler:
         # don't put empty lines in the CSV file
         if line != "":
             self.main_csv_file_in_memory.write(line + "\n")
+
+    def _get_channel_name(self, projection) -> str:
+        """
+        Get the name of the channel from the search projection
+        """
+        if projection == "_id":
+            # this is a special case
+            return "ID"
+        else:
+            projection_parts = projection.split(".")
+            return projection_parts[1]
 
     async def _process_data_channel(
         self,
@@ -348,7 +358,7 @@ class ExportHandler:
         if last is not None:
             filename += "_to_" + last
         if len(self.projection) == 1:
-            channel_name = self.projection[0].split(".")[1]
+            channel_name = self._get_channel_name(self.projection[0])
             filename += "_" + channel_name
         return filename
 
