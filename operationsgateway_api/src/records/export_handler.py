@@ -233,7 +233,7 @@ class ExportHandler:
                 f"{record_id}_{channel_name}.png",
                 image_bytes.getvalue(),
             )
-            ExportHandler.check_zip_file_size(self.zip_file_in_memory)
+            self._check_zip_file_size()
         except Exception:
             self.errors_file_in_memory.write(
                 f"Could not find image for {record_id} {channel_name}\n",
@@ -291,7 +291,7 @@ class ExportHandler:
                     f"{record_id}_{channel_name}.csv",
                     waveform_csv_in_memory.getvalue(),
                 )
-                ExportHandler.check_zip_file_size(self.zip_file_in_memory)
+                self._check_zip_file_size()
 
             if self.export_waveform_images:
                 # if rendered trace images have been requested then add those
@@ -301,7 +301,7 @@ class ExportHandler:
                     f"{record_id}_{channel_name}.png",
                     waveform_png_bytes,
                 )
-                ExportHandler.check_zip_file_size(self.zip_file_in_memory)
+                self._check_zip_file_size()
 
     def _add_main_csv_file_to_zip(self):
         """
@@ -317,7 +317,7 @@ class ExportHandler:
                     f"{self.get_filename_stem()}.csv",
                     self.main_csv_file_in_memory.getvalue(),
                 )
-                ExportHandler.check_zip_file_size(self.zip_file_in_memory)
+                self._check_zip_file_size()
 
     def _add_messages_file_to_zip(self):
         """
@@ -421,13 +421,12 @@ class ExportHandler:
             new_projection = projection.split(".", 1)[1]
             return ExportHandler.get_value_from_dict(dict_or_value, new_projection)
 
-    @staticmethod
-    def check_zip_file_size(zip_file_in_memory: io.BytesIO) -> None:
+    def _check_zip_file_size(self) -> None:
         """
         Check that the zip file being created in memory is under a maximum size
         specified by a config parameter, otherwise raise an exception
         """
-        nbytes = zip_file_in_memory.getbuffer().nbytes
+        nbytes = self.zip_file_in_memory.getbuffer().nbytes
         log.info("Zip file size: %d", nbytes)
         if nbytes > ExportHandler.max_filesize_bytes:
             raise ExportError(
