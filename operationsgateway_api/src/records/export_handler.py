@@ -72,10 +72,9 @@ class ExportHandler:
             line = ""
             for proj in self.projection:
                 projection_parts = proj.split(".")
-                channel_name = projection_parts[1]
-                log.info("channel_name: %s", channel_name)
-                if projection_parts[0] == "metadata":
-                    # process one of the main "metadata" channels
+                if projection_parts[0] in ["_id", "metadata"]:
+                    # process either the top level "_id" channel
+                    # or one of the main "metadata" channels
                     value = ExportHandler.get_value_from_dict(record_data, proj)
                     log.debug("value: %s of type %s", value, type(value))
                     line = self._add_value_to_csv_line(line, value)
@@ -84,7 +83,7 @@ class ExportHandler:
                     line = await self._process_data_channel(
                         record_data,
                         record_id,
-                        channel_name,
+                        projection_parts[1],
                         line,
                         proj,
                     )
