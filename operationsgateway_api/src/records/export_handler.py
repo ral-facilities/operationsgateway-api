@@ -353,7 +353,7 @@ class ExportHandler:
         If only a single channel is being exported the filename should include that.
         Note that this does not include the file extension.
         """
-        first, last = ExportHandler.get_first_last_record_ids(self.record_ids)
+        first, last = self._get_first_last_record_ids()
         filename = first
         if last is not None:
             filename += "_to_" + last
@@ -362,13 +362,12 @@ class ExportHandler:
             filename += "_" + channel_name
         return filename
 
-    @staticmethod
-    def get_first_last_record_ids(record_ids: List) -> Tuple[str, str]:
+    def _get_first_last_record_ids(self) -> Tuple[str, str]:
         """
         Get the first and last record IDs by ordering the list of record IDs and then
         returning the first and last items.
         """
-        record_ids_sorted = sorted(record_ids)
+        record_ids_sorted = sorted(self.record_ids)
         first = record_ids_sorted[0]
         if len(record_ids_sorted) == 1:
             last = None
