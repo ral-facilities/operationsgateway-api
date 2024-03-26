@@ -71,6 +71,7 @@ class ExportHandler:
 
             line = ""
             for proj in self.projection:
+                log.debug("projection: %s", proj)
                 projection_parts = proj.split(".")
                 if projection_parts[0] in ["_id", "metadata"]:
                     # process either the top level "_id" channel
