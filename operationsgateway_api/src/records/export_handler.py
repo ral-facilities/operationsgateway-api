@@ -324,11 +324,13 @@ class ExportHandler:
         Add a file listing any errors that might be useful to the user to the zip such
         as any files or waveforms that were not found.
         """
-        if len(self.errors_file_in_memory.getvalue()) > 0:
+        errors_str = self.errors_file_in_memory.getvalue()
+        if len(errors_str) > 0:
             self.zip_file.writestr(
                 "EXPORT_ERRORS.txt",
-                self.errors_file_in_memory.getvalue(),
+                errors_str,
             )
+            log.error("Returning export errors file containing: \n%s", errors_str)
 
     def get_export_file_bytes(self) -> Union[io.BytesIO, io.StringIO]:
         """
