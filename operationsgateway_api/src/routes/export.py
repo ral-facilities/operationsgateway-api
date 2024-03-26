@@ -95,7 +95,7 @@ async def export_records(
     Export the specified data to a file for download.
     The request follows the same format as the /records endpoint which returns the data
     primarily for display purposes.
-    The data requested can be can be:
+    The data requested can be:
     - the specified columns for all data matching the search query
       (skip and limit might be used to limit the results to just those currently
       displayed)
