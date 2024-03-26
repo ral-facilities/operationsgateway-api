@@ -64,10 +64,10 @@ class ExportHandler:
         """
         self._create_main_csv_headers()
         for record_data in self.records_data:
-            log.info("record_data: %s", record_data)
+            log.debug("record_data: %s", record_data)
             record_id = record_data["_id"]
             self.record_ids.append(record_id)
-            log.info("record_id: %s", record_id)
+            log.debug("record_id: %s", record_id)
 
             line = ""
             for proj in self.projection:
