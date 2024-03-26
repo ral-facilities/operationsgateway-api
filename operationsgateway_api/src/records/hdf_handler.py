@@ -87,6 +87,11 @@ class HDFDataHandler:
         return record, self.waveforms, self.images, self.internal_failed_channel
 
     def _unexpected_attribute(self, channel_type, value):
+        """
+        tells the location it is called whether to stop. Stops if the value for data
+        is not the same what it is meant to be for the channel type
+        using the self.acceptable_datasets dictionary
+        """
         stop = False
         for val in value:
             if val != self.acceptable_datasets[channel_type][0]:
@@ -101,6 +106,10 @@ class HDFDataHandler:
         channel_metadata,
         value,
     ):
+        """
+        Extract data for images in the HDF file and place the data into
+        relevant Pydantic models as well as performing on image specific checks
+        """
         image_path = Image.get_image_path(self.record_id, channel_name)
 
         if self._unexpected_attribute("image", value):
@@ -134,6 +143,10 @@ class HDFDataHandler:
         channel_metadata,
         value,
     ):
+        """
+        Extract data for scalars in the HDF file and place the data into
+        relevant Pydantic models as well as performing on scalar specific checks
+        """
         if self._unexpected_attribute("scalar", value):
             internal_failed_channel.append(
                 {channel_name: "unexpected group or dataset in channel group"},
@@ -173,6 +186,10 @@ class HDFDataHandler:
         channel_metadata,
         value,
     ):
+        """
+        Extract data for waveforms in the HDF file and place the data into
+        relevant Pydantic models as well as performing on waveform specific checks
+        """
         waveform_id = f"{self.record_id}_{channel_name}"
         log.debug("Waveform ID: %s", waveform_id)
 

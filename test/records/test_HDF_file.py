@@ -17,6 +17,10 @@ from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
 
 
 def generate_channel_check_block(record, test_type):
+    """
+    Is ran inside the create_test_hdf_file to generate one of four tests
+    depending on if that test was specified in any of the test functions
+    """
     if test_type == "test1":
         false_scalar = record.create_group("FALSE_SCALAR")
         false_scalar.attrs.create("channel_dtype", "thing")
@@ -72,6 +76,11 @@ async def create_test_hdf_file(  # noqa: C901
     channels_check=False,
     test_type=None,
 ):
+    """
+    Generates an HDF file and returns the output of hdf_handler.py
+    the file can be changed depending on which values have been selected from the
+    test functions
+    """
 
     data_version = data_version if data_version is not None else ["1.0", "exists"]
     timestamp = (
@@ -416,6 +425,11 @@ async def create_test_hdf_file(  # noqa: C901
 
 
 def create_channel_response(responses, extra=None, channels=False):
+    """
+    uses expected rejected channels from the test functions to generate a channel
+    response to assert that the real channel response is what was expected
+    (used so the expected response code doesn't need to be duplicated)
+    """
     model_response = {
         "accepted_channels": [
             "PM-201-FE-CAM-1",
@@ -2022,6 +2036,11 @@ class TestPartialImport:
 
 
 def create_integration_test_hdf(fails=None, generic_fail=None):
+    """
+    Creates a smaller HDF file similar to the other function but much smaller this
+    function also doesn't run hdf_handler.py to allow better use of the integration
+    tests
+    """
     if not fails:
         fails = []
     if not generic_fail:
