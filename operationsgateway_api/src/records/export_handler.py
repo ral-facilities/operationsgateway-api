@@ -159,8 +159,7 @@ class ExportHandler:
         # process an image channel
         if self.channel_manifest_dict["channels"][channel_name]["type"] == "image":
             log.info("Channel %s is an image", channel_name)
-            if self.export_images:
-                await self._add_image_to_zip(record_data, record_id, channel_name)
+            await self._add_image_to_zip(record_data, record_id, channel_name)
         # process a waveform channel
         elif self.channel_manifest_dict["channels"][channel_name]["type"] == "waveform":
             log.info("Channel %s is a waveform", channel_name)
@@ -202,6 +201,9 @@ class ExportHandler:
         supports this so it is easy to pass the false colour parameters on if they are
         specified. If none of them are specified the original image is used.
         """
+        if not self.export_images:
+            return
+
         try:
             # first check that there should be an image to process
             _ = record_data["channels"][channel_name]
