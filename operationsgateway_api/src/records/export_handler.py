@@ -77,8 +77,8 @@ class ExportHandler:
                 if projection_parts[0] == "metadata":
                     # process one of the main "metadata" channels
                     value = ExportHandler.get_value_from_dict(record_data, proj)
-                    log.info("value: %s of type %s", value, type(value))
-                    line = ExportHandler.add_value_to_csv_line(line, value)
+                    log.debug("value: %s of type %s", value, type(value))
+                    line = self._add_value_to_csv_line(line, value)
                 elif projection_parts[0] == "channels":
                     # process one of the data channels
                     line = await self._process_data_channel(
@@ -123,10 +123,10 @@ class ExportHandler:
                 if (
                     self.channel_manifest_dict["channels"][channel_name]["type"]
                 ) not in ["image", "waveform"]:
-                    line = ExportHandler.add_value_to_csv_line(line, channel_name)
+                    line = self._add_value_to_csv_line(line, channel_name)
             else:
                 # this must be a "metadata" channel
-                line = ExportHandler.add_value_to_csv_line(line, channel_name)
+                line = self._add_value_to_csv_line(line, channel_name)
         # don't put empty lines in the CSV file
         if line != "":
             self.main_csv_file_in_memory.write(line + "\n")
@@ -184,7 +184,7 @@ class ExportHandler:
             log.info("Channel %s is a scalar", channel_name)
             value = ExportHandler.get_value_from_dict(record_data, projection)
             log.info("value: %s of type %s", value, type(value))
-            line = ExportHandler.add_value_to_csv_line(line, value)
+            line = self._add_value_to_csv_line(line, value)
         return line
 
     async def _add_image_to_zip(
@@ -376,8 +376,7 @@ class ExportHandler:
             last = record_ids_sorted[-1]
         return first, last
 
-    @staticmethod
-    def add_value_to_csv_line(line, value) -> str:
+    def _add_value_to_csv_line(self, line, value) -> str:
         """
         Helper function for writing values to CSV files
         """
