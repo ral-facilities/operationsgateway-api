@@ -219,8 +219,6 @@ class ExportHandler:
             and self.colourmap_name is None
         )
         try:
-            if record_id == "20220407142816":
-                raise ExportError("Couldn't find this file!")
             image_bytes = await Image.get_image(
                 record_id,
                 channel_name,
