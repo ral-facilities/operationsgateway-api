@@ -58,3 +58,7 @@ experiments:
   instrument_names:
     - Gemini
   worker_file_path: /dev/shm/og-experiment-background
+export:
+  # 1048576 = 1 MB
+  # 1073741824 = 1 GB
+  max_filesize_bytes: 1073741824

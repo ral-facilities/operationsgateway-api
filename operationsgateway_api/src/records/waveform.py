@@ -48,8 +48,16 @@ class Waveform:
         Create a thumbnail of the waveform data and store it in this object
         """
         with BytesIO() as waveform_image_buffer:
-            self._create_plot(waveform_image_buffer)
+            self._create_thumbnail_plot(waveform_image_buffer)
             self.thumbnail = base64.b64encode(waveform_image_buffer.getvalue())
+
+    def get_fullsize_png(self, x_label, y_label) -> bytes:
+        """
+        Create a full size of the waveform data and return it
+        """
+        with BytesIO() as waveform_image_buffer:
+            self._create_fullsize_plot(waveform_image_buffer, x_label, y_label)
+            return waveform_image_buffer.getvalue()
 
     def get_channel_name_from_id(self) -> str:
         """
@@ -61,10 +69,10 @@ class Waveform:
         channel_name = filename.split(".json")[0]
         return channel_name
 
-    def _create_plot(self, buffer) -> None:
+    def _create_thumbnail_plot(self, buffer) -> None:
         """
-        Using Matplotlib, create a plot of the waveform data and save it to a bytes IO
-        object provided as a parameter to this function
+        Using Matplotlib, create a thumbnail sized plot of the waveform data and save
+        it to a bytes IO object provided as a parameter to this function
         """
         # Making changes to plot so figure size and line width is correct and axes are
         # disabled
@@ -80,6 +88,23 @@ class Waveform:
         plt.box(False)
 
         plt.savefig(buffer, format="PNG", bbox_inches="tight", pad_inches=0, dpi=130)
+        # Flushes the plot to remove data from previously ingested waveforms
+        plt.clf()
+
+    def _create_fullsize_plot(self, buffer, x_label, y_label) -> None:
+        """
+        Using Matplotlib, create a full sized plot of the waveform data and save it to
+        a bytes IO object provided as a parameter to this function
+        """
+        plt.rcParams["figure.figsize"] = [8, 6]
+        plt.plot(
+            self.waveform.x,
+            self.waveform.y,
+        )
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
+
+        plt.savefig(buffer, format="PNG", bbox_inches="tight", pad_inches=0.1, dpi=130)
         # Flushes the plot to remove data from previously ingested waveforms
         plt.clf()
 
