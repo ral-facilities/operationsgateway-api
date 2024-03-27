@@ -37,7 +37,11 @@ class ImageModel(BaseModel):
 
 
 class WaveformModel(BaseModel):
-    id_: Optional[Union[str, Any]] = Field(alias="_id")
+    # Path is optional as we need it when ingesting waveforms (so we know where to
+    # Optional[Union[store it) but don't want to display it when a user, Any]] is
+    # retrieving a waveform. Setting `exclude=True` inside `Field()` ensure it's not
+    # displayed when returned as a response
+    path: Optional[str] = Field(None, exclude=True)
     x: Optional[Union[List[float], Any]]
     y: Optional[Union[List[float], Any]]
 
@@ -65,7 +69,7 @@ class ImageChannelMetadataModel(BaseModel):
 class ImageChannelModel(BaseModel):
     metadata: ImageChannelMetadataModel
     image_path: Optional[Union[str, Any]]
-    thumbnail: Optional[Union[str, Any]] = None
+    thumbnail: Optional[Union[bytes, Any]] = None
 
 
 class ScalarChannelMetadataModel(BaseModel):
@@ -86,8 +90,8 @@ class WaveformChannelMetadataModel(BaseModel):
 
 class WaveformChannelModel(BaseModel):
     metadata: WaveformChannelMetadataModel
-    thumbnail: Optional[Union[str, Any]] = None
-    waveform_id: Optional[Union[str, Any]]
+    thumbnail: Optional[Union[bytes, Any]] = None
+    waveform_path: Optional[Union[str, Any]]
 
 
 class RecordMetadataModel(BaseModel):

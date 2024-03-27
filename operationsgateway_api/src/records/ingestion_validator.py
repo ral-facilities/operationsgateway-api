@@ -236,7 +236,7 @@ class ChannelChecks:
             if value.metadata.channel_dtype == "waveform":
                 matching_waveform = None
                 for waveform in ingested_waveform:
-                    if waveform.id_ == value.waveform_id:
+                    if waveform.path == value.waveform_path:
                         matching_waveform = waveform
                         continue
 
@@ -447,7 +447,7 @@ class ChannelChecks:
                 matching_waveform = None
 
                 for waveform in ingested_waveform:
-                    if waveform.id_ == value.waveform_id:
+                    if waveform.path == value.waveform_path:
                         matching_waveform = waveform
                         continue
 

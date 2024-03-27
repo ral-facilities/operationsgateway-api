@@ -994,8 +994,8 @@ class TestChannel:
             "scalar": {"data": "missing"},
             "image": {"image_path": "missing", "path": "missing", "data": "missing"},
             "waveform": {
-                "waveform_id": "missing",
-                "id_": "missing",
+                "waveform_path": "missing",
+                "path": "missing",
                 "x": "missing",
                 "y": "missing"
             },
@@ -1565,8 +1565,8 @@ class TestChannel:
                         "data": "missing",
                     },
                     "waveform": {
-                        "waveform_id": "missing",
-                        "id_": "missing",
+                        "waveform_path": "missing",
+                        "path": "missing",
                         "x": "missing",
                         "y": "missing",
                     },
@@ -1680,8 +1680,8 @@ class TestChannel:
                 "scalar": {"data": "missing"},
                 "image": {"image_path": "missing", "path": "missing", "data": "missing"}
                 "waveform": {
-                    "waveform_id": "missing",
-                    "id_": "missing",
+                    "waveform_path": "missing",
+                    "path": "missing",
                     "x": "missing",
                     "y": "missing"
                 },

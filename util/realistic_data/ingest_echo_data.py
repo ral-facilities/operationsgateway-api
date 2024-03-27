@@ -1,7 +1,6 @@
 import json
-from multiprocessing.pool import ThreadPool
+import os
 from time import sleep, time
-from typing import List
 
 from motor.motor_asyncio import AsyncIOMotorClient
 from util.realistic_data.ingest.api_client import APIClient
@@ -12,18 +11,6 @@ from util.realistic_data.ingest.s3_interface import S3Interface
 from util.realistic_data.ingest.ssh_handler import SSHHandler
 
 
-def download_and_ingest(
-    object_names: List[str],
-    s3_interface: S3Interface,
-    api: APIClient,
-):
-    download_pool = ThreadPool(int(Config.config.echo.page_size))
-    files = download_pool.map(s3_interface.download_hdf_file, object_names)
-
-    ingest_pool = ThreadPool(int(Config.config.api.gunicorn_num_workers))
-    ingest_pool.map(api.submit_hdf, files)
-
-
 def main():
     if Config.config.ssh.enabled:
         ssh = SSHHandler()
@@ -32,17 +19,18 @@ def main():
 
     if Config.config.script_options.wipe_database:
         print("Wiping database")
-        collection_names = ["channels", "experiments", "records", "waveforms"]
+        collection_names = ["channels", "experiments", "records"]
         if Config.config.ssh.enabled:
             ssh.drop_database_collections(collection_names)
         else:
             local_commands.drop_database_collections(collection_names)
 
     echo = S3Interface()
-
-    if Config.config.script_options.delete_images:
-        print(f"Deleting images from Echo, bucket: {Config.config.echo.images_bucket}")
-        echo.delete_images()
+    if Config.config.script_options.wipe_echo:
+        print(
+            f"Wiping data stored in Echo, bucket: {Config.config.echo.storage_bucket}",
+        )
+        echo.delete_all()
 
     if Config.config.script_options.import_users:
         print("Importing test users to the database")
@@ -59,7 +47,8 @@ def main():
         print(f"Imported {len(users)} users")
 
     starter = APIStarter()
-    api_url = f"http://{Config.config.api.host}:{Config.config.api.port}"
+    protocol = "https" if Config.config.api.https else "http"
+    api_url = f"{protocol}://{Config.config.api.host}:{Config.config.api.port}"
     print(f"API started on {api_url}")
 
     channel_manifest = echo.download_manifest_file()
@@ -82,7 +71,9 @@ def main():
         object_names = [hdf_file["Key"] for hdf_file in page["Contents"]]
         page_start_time = time()
 
-        download_and_ingest(object_names, echo, og_api)
+        for name in object_names:
+            hdf_file_dict = echo.download_hdf_file(name)
+            og_api.submit_hdf(hdf_file_dict)
 
         page_end_time = time()
         page_duration = page_end_time - page_start_time
@@ -99,3 +90,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # Script doesn't always exit once it's finished, this ensures it does
+    os._exit(0)
