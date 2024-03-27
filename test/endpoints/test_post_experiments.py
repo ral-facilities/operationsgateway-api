@@ -4,15 +4,14 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 import pytest
 
-from test.experiments.scheduler_mocking.experiments_mocks import get_experiments_mock
+from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from test.experiments.scheduler_mocking.get_exp_dates_mocks import general_mock
+from test.experiments.scheduler_mocking.models import ExperimentDTO, ExperimentPartDTO
 
 
 class TestPostExperiments:
     config_instrument_names = ["Test Instrument", "Test Instrument #2"]
     config_scheduler_contact_date = datetime(2023, 3, 2, 10, 0)
-    experiment_search_start_date = "2020-01-01T00:00:00Z"
-    experiment_search_end_date = "2020-05-01T00:00:00Z"
 
     @patch(
         "operationsgateway_api.src.experiments.scheduler_interface.SchedulerInterface"
@@ -42,10 +41,19 @@ class TestPostExperiments:
     @patch(
         "operationsgateway_api.src.experiments.scheduler_interface"
         ".SchedulerInterface.get_experiments",
-        return_value=get_experiments_mock(
-            {20310001: [1, 2, 3], 18325019: [4], 20310002: [1]},
-            return_duplicate_parts=True,
-        ),
+        return_value=[
+            ExperimentDTO(
+                experimentPartList=[
+                    ExperimentPartDTO(
+                        experimentEndDate=datetime(1920, 4, 30, 18, 0),
+                        experimentStartDate=datetime(1920, 4, 30, 10, 0),
+                        partNumber=1,
+                        referenceNumber="20310001",
+                        status="Delivered",
+                    ),
+                ],
+            ),
+        ],
     )
     @patch(
         "operationsgateway_api.src.config.Config.config.experiments.instrument_names",
@@ -61,6 +69,7 @@ class TestPostExperiments:
         _____,
         test_app: TestClient,
         login_and_get_token,
+        remove_experiment_fixture,
     ):
 
         test_response = test_app.post(
@@ -69,9 +78,18 @@ class TestPostExperiments:
         )
 
         assert test_response.status_code == 200
-        assert (
-            test_response.text
-            == '["Updated 65fbf893a4aa1ab48a5f381f","Updated 65fbf893a4aa1ab48a5f3821"'
-            ',"Updated 65fbf893a4aa1ab48a5f3823","Updated 65fbf893a4aa1ab48a5f3815",'
-            '"Updated 65fd555b437c051568c731db"]'
+
+        experiment = await MongoDBInterface.find_one(
+            "experiments",
+            filter_={
+                "experiment_id": "20310001",
+                "start_date": datetime(1920, 4, 30, 10, 0),
+            },
         )
+
+        assert experiment is not None
+
+
+# TODO the fixture does not currently work
+# for now use this command in mongosh
+# db.experiments.deleteOne({ experiment_id: "20310001", start_date: ISODate("1920-04-30T10:00:00.000Z") })  # noqa B950
