@@ -138,6 +138,10 @@ jobs:
       # Run Nox tests session, saves and uploads a coverage report to codecov
       - name: Run Nox tests session
         run: nox -p ${{ matrix.python-version }} -s tests -- --cov=operationsgateway_api --cov-report=xml
+
+      - name: tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ always() }}
       - name: Upload code coverage report
         if: matrix.python-version == '3.8'
         uses: codecov/codecov-action@v3
