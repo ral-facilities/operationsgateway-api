@@ -19,7 +19,7 @@ jobs:
           - os: ubuntu-22.04
             python-version: "3.9"
           - os: ubuntu-20.04
-            python-version: "3.10"
+            python-version: "3.10.13"
           - os: ubuntu-20.04
             python-version: "3.11"
     runs-on: ${{ matrix.os }}
@@ -33,7 +33,7 @@ jobs:
       - name: Install python-ldap dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libsasl2-dev python${{ matrix.python-version }}-dev libldap2-dev libssl-dev
+          sudo apt-get install -y libsasl2-dev python3.10-dev libldap2-dev libssl-dev
 
       # Setup Python and environment dependencies (via cache)
       - name: Setup Python
