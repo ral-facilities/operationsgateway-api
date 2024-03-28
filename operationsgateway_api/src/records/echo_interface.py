@@ -106,13 +106,13 @@ class EchoInterface:
             ) from exc
         log.debug("Uploaded file successfully to %s", object_path)
 
-    def delete_file_object(self, image_path: str) -> None:
+    def delete_file_object(self, object_path: str) -> None:
         """
         Delete an image
         """
-        log.info("Deleting image from %s", image_path)
+        log.info("Deleting image from %s", object_path)
         try:
-            self.bucket.Object(image_path).delete()
+            self.bucket.Object(object_path).delete()
         except ClientError as exc:
             log.error(
                 "%s: %s",
@@ -121,25 +121,19 @@ class EchoInterface:
             )
             raise EchoS3Error(
                 f"{exc.response['Error']['Code']} when deleting file at"
-                f" '{image_path}'",
+                f" '{object_path}'",
             ) from exc
 
-        obj = self.bucket.Object(image_path)
+        obj = self.bucket.Object(object_path)
         try:
             obj.load()
-        except ClientError as e:
-            if e.response["Error"]["Code"] != "404":
+        except ClientError as exc:
+            if exc.response["Error"]["Code"] != "404":
                 log.error(
                     "The object with key %s still exists. Deletion might not "
                     "have been successful.",
-                    image_path,
+                    object_path,
                 )
-                raise EchoS3Error(f"Deletion of {image_path} was unsuccessful")
-        """
-        else:
-            log.error(
-                "The object with key %s still exists. Deletion might not "
-                "have been successful.",
-                image_path,
-            )
-        """
+                raise EchoS3Error(
+                    f"Deletion of {object_path} was unsuccessful",
+                ) from exc

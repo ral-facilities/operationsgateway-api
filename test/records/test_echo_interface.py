@@ -273,6 +273,6 @@ class TestEchoInterface:
                 "delete",
             )
 
-            test_echo = EchoInterface() 
+            test_echo = EchoInterface()
             with pytest.raises(EchoS3Error):
                 test_echo.delete_file_object(self.test_image_path)
