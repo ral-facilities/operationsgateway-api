@@ -7,8 +7,9 @@ import yaml
 
 class ScriptOptions(BaseModel):
     wipe_database: bool
-    delete_images: bool
+    wipe_echo: bool
     launch_api: bool
+    import_users: bool
 
 
 class SSH(BaseModel):
@@ -21,6 +22,7 @@ class Database(BaseModel):
     port: int
     name: str
     remote_experiments_file_path: str
+    test_users_file_path: str
 
 
 class Echo(BaseModel):
@@ -28,11 +30,12 @@ class Echo(BaseModel):
     access_key: str
     secret_key: str
     simulated_data_bucket: str
-    images_bucket: str
+    storage_bucket: str
     page_size: int
 
 
 class API(BaseModel):
+    https: bool
     host: str
     port: int
     username: str

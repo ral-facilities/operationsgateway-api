@@ -1,6 +1,7 @@
 import base64
 import io
 import json
+import os
 
 from fastapi.testclient import TestClient
 import imagehash
@@ -69,6 +70,15 @@ def assert_thumbnails(record: dict, expected_thumbnails_hashes: dict):
             thumbnail_phash = str(imagehash.phash(img))
             assert thumbnail_phash == expected_thumbnails_hashes[channel_name]
     assert num_channels_found == len(expected_thumbnails_hashes.keys())
+
+
+def assert_text_file_contents(filepath: str, file_contents: str) -> None:
+    """
+    Check that the text file at the given filepath contains the contents specified
+    """
+    with open(f"{os.path.dirname(os.path.realpath(__file__))}/{filepath}") as f:
+        test_file_contents = f.read()
+    assert test_file_contents == file_contents
 
 
 def set_preferred_colourmap(test_app: TestClient, auth_token: str, do_it: bool):

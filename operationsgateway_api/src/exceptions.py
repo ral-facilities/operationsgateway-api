@@ -97,3 +97,15 @@ class ExperimentDetailsError(ApiError):
     def __init__(self, msg="Error during handling of experiments", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)
         self.status_code = 500
+
+
+class ExportError(ApiError):
+    def __init__(self, msg="Error during creation of export file", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 400
+
+
+class WaveformError(ApiError):
+    def __init__(self, msg="Waveform error", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 500

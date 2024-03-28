@@ -27,6 +27,7 @@ log = logging.getLogger()
 
 class Image:
     lookup_table_16_to_8_bit = [i / 256 for i in range(65536)]
+    echo_prefix = "images"
 
     def __init__(self, image: ImageModel) -> None:
         self.image = image
@@ -81,8 +82,9 @@ class Image:
             raise ImageError("Image data is not in correct format to be read") from exc
 
         echo = EchoInterface()
-        log.info("Storing image on S3: %s", input_image.image.path)
-        echo.upload_file_object(image_bytes, input_image.image.path)
+        storage_path = Image.get_full_path(input_image.image.path)
+        log.info("Storing image on S3: %s", storage_path)
+        echo.upload_file_object(image_bytes, storage_path)
 
     @staticmethod
     async def get_image(
@@ -110,8 +112,10 @@ class Image:
         echo = EchoInterface()
 
         try:
-            original_image_path = Image.get_image_path(record_id, channel_name)
-            image_bytes = echo.download_file_object(original_image_path)
+            original_image_path = Image.get_relative_path(record_id, channel_name)
+            image_bytes = echo.download_file_object(
+                Image.get_full_path(original_image_path),
+            )
 
             if original_image:
                 log.debug(
@@ -175,12 +179,21 @@ class Image:
                 ) from exc
 
     @staticmethod
-    def get_image_path(record_id: str, channel_name: str) -> str:
+    def get_relative_path(record_id: str, channel_name: str) -> str:
         """
-        Returns an image path given a record ID and channel name
+        Returns a relative image path given a record ID and channel name. The path is
+        relative to the base directory of where images are stored in Echo
         """
 
         return f"{record_id}/{channel_name}.png"
+
+    @staticmethod
+    def get_full_path(relative_path: str) -> str:
+        """
+        Converts a relative image path to a full path by adding the 'prefix' onto a
+        relative path of an image. The full path doesn't include the bucket name
+        """
+        return f"{Image.echo_prefix}/{relative_path}"
 
     @staticmethod
     async def get_preferred_colourmap(access_token: str) -> str:
