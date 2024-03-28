@@ -11,14 +11,27 @@ log = logging.getLogger()
 
 
 async def get_manifest():
+    """
+    Returns the most recent channel manifest
+    """
     return await ChannelManifest.get_most_recent_manifest()
 
 
 class FileChecks:
     def __init__(self, ingested_record: RecordModel):
+        """
+        This class is instantiated using the RecordModel from running hdf_handler
+        """
         self.ingested_record = ingested_record
 
     def epac_data_version_checks(self):
+        """
+        Checks that the epac_data_version on the file is "1.0"
+        if:
+            it is not a string = a file error is raised
+            the first number is not "1" = a file error is raised
+            the second number is not "0" = a warning is given
+        """
         ingested_metadata = (self.ingested_record).metadata
         if (
             hasattr(ingested_metadata, "epac_ops_data_version")
@@ -45,9 +58,16 @@ class FileChecks:
 
 class RecordChecks:
     def __init__(self, ingested_record: RecordModel):
+        """
+        This class is instantiated using the RecordModel from running hdf_handler
+        """
         self.ingested_record = ingested_record
 
     def active_area_checks(self):
+        """
+        Checks if active area is missing or if its not a string
+        it will reject the record if so
+        """
         ingested_metadata = (self.ingested_record).metadata
         if (
             hasattr(ingested_metadata, "active_area")
@@ -61,6 +81,11 @@ class RecordChecks:
             raise RejectRecordError("active_area is missing")
 
     def optional_metadata_checks(self):
+        """
+        Checks if active_experiment and shotnum have incorrect datatypes
+        if they do the record is rejected (no need to reject if they don't exist
+        because they are optional)
+        """
         ingested_metadata = (self.ingested_record).metadata
         if (
             hasattr(ingested_metadata, "active_experiment")
@@ -86,6 +111,11 @@ class ChannelChecks:
         ingested_image=None,
         internal_failed_channel=None,
     ):
+        """
+        This class is instantiated using everything from hdf_handler
+        internal_failed_channel is a list of channels that have failed inside
+        hdf_handler already
+        """
         self.ingested_record = ingested_record or []
         self.ingested_waveform = ingested_waveform or []
         self.ingested_image = ingested_image or []
@@ -97,6 +127,13 @@ class ChannelChecks:
         internal_failed_channel,
         accept_list,
     ):
+        """
+        Merges internal_failed_channel with rejected_channels from the main code
+        it merges them based on the reason for failing so if there is a duplicate
+        reason then it is ignored in the merge
+
+        only merges reasons that are in the accept_list to separate between checks
+        """
         if internal_failed_channel != []:
             for response in internal_failed_channel:
                 for _key, reason in response.items():
@@ -106,6 +143,13 @@ class ChannelChecks:
         return rejected_channels
 
     async def channel_dtype_checks(self):
+        """
+        Checks if the channel_dtype of each channel exists and has the correct datatype
+        and is one of the supported values
+
+        if they aren't they are added to the rejected_channels list as a dict along with
+        the reason they failed to return to the used as an output dict
+        """
         ingested_channels = self.ingested_record
         dump = False
         if type(ingested_channels) != dict:
@@ -164,6 +208,13 @@ class ChannelChecks:
         return rejected_channels
 
     def required_attribute_checks(self):
+        """
+        Checks if the required attributes of each channel exists and has the
+        correct datatype
+
+        if they don't they are added to the rejected_channels list as a dict along with
+        the reason they failed to return to the used as an output dict
+        """
         ingested_channels = (self.ingested_record).channels
         ingested_waveform = self.ingested_waveform
         ingested_image = self.ingested_image
@@ -185,7 +236,7 @@ class ChannelChecks:
             if value.metadata.channel_dtype == "waveform":
                 matching_waveform = None
                 for waveform in ingested_waveform:
-                    if waveform.id_ == value.waveform_id:
+                    if waveform.path == value.waveform_path:
                         matching_waveform = waveform
                         continue
 
@@ -221,6 +272,11 @@ class ChannelChecks:
 
     @classmethod
     def scalar_metadata_checks(cls, key, value_dict, rejected_channels):
+        """
+        Various checks brought out of the main function to simplify it
+
+        when called it returns a list of rejected_channels (if any) from the checks ran
+        """
 
         if type(value_dict) != dict:
             value_dict = value_dict.model_dump()
@@ -235,6 +291,11 @@ class ChannelChecks:
 
     @classmethod
     def image_metadata_checks(cls, key, value_dict, rejected_channels):
+        """
+        Various checks brought out of the main function to simplify it
+
+        when called it returns a list of rejected_channels (if any) from the checks ran
+        """
 
         if type(value_dict) != dict:
             value_dict = value_dict.model_dump()
@@ -282,6 +343,14 @@ class ChannelChecks:
         return rejected_channels
 
     def optional_dtype_checks(self):
+        """
+        Checks if the optional attributes of each channel has the correct datatype
+        calls two other functions that return any failed channels. done to simplify
+        this function
+
+        if they don't they are added to the rejected_channels list as a dict along with
+        the reason they failed to return to the used as an output dict
+        """
         ingested_channels = (self.ingested_record).channels
         rejected_channels = []
 
@@ -320,6 +389,12 @@ class ChannelChecks:
         return rejected_channels
 
     def _waveform_dataset_check(self, rejected_channels, value, key, letter):
+        """
+        Is ran to differentiate between the datasets "x" and "y" for waveforms
+
+        this generates a rejected channel message depending on what was fed to this
+        function (which dataset and why it failed)
+        """
         if type(value) != list:
             rejected_channels.append({key: letter + " attribute has wrong shape"})
         else:
@@ -333,6 +408,12 @@ class ChannelChecks:
         return rejected_channels
 
     def dataset_checks(self):
+        """
+        Checks if the datasets of each channel exists and have the correct datatype
+
+        if they don't they are added to the rejected_channels list as a dict along with
+        the reason they failed to return to the used as an output dict
+        """
         ingested_channels = (self.ingested_record).channels
         ingested_waveform = self.ingested_waveform
         ingested_image = self.ingested_image
@@ -366,7 +447,7 @@ class ChannelChecks:
                 matching_waveform = None
 
                 for waveform in ingested_waveform:
-                    if waveform.id_ == value.waveform_id:
+                    if waveform.path == value.waveform_path:
                         matching_waveform = waveform
                         continue
 
@@ -403,6 +484,13 @@ class ChannelChecks:
         return rejected_channels
 
     def unrecognised_attribute_checks(self):
+        """
+        All this does is merges the failed channels from hdf_handler into
+        rejected_channels as this check is ran inside hdf_handler
+
+        only merging any channel with "unexpected group or dataset in channel group"
+        as a fail message
+        """
 
         rejected_channels = []
 
@@ -417,6 +505,11 @@ class ChannelChecks:
         return rejected_channels
 
     def _check_name(self, rejected_channels, manifest, key):
+        """
+        Checks if the channel name appears in the most recent channel manifest
+
+        if it doesn't it is added to rejected_channels
+        """
         if key not in manifest:
             rejected_channels.append(
                 {
@@ -427,6 +520,15 @@ class ChannelChecks:
         return rejected_channels
 
     async def channel_name_check(self, mode="direct"):
+        """
+        This is ran inside the hdf_handler because otherwise non-existant channels cause
+        it to fail
+
+        it can also be ran directly from anywhere else (hence the mode)
+
+        Checks if the channel name appears in the most recent channel manifest
+        if it doesn't it is added to rejected_channels
+        """
         manifest = (await get_manifest())["channels"]
 
         rejected_channels = []
@@ -451,6 +553,13 @@ class ChannelChecks:
         return rejected_channels
 
     def _organise_dict(self, list_of_dicts):
+        """
+        Gets list_of_dicts
+
+        gets each key and separates them
+        if any key was duplicated originally, the reasons are merged into a list under
+        one key
+        """
         organised_dict = {}
 
         for d in list_of_dicts:
@@ -462,6 +571,13 @@ class ChannelChecks:
         return organised_dict
 
     async def channel_checks(self):
+        """
+        Runs each channel check
+        merges all failed channels into one list of dicts with no duplicated keys
+
+        returns a dictionary of a list of accepted channels and a dictionary of rejected
+        channels (with no duplicate keys and a list of fail reasons for each key)
+        """
         ingested_channels = (self.ingested_record).channels
 
         dtype_response = self._organise_dict(await self.channel_dtype_checks())
@@ -511,10 +627,22 @@ class ChannelChecks:
 
 class PartialImportChecks:
     def __init__(self, ingested_record: RecordModel, stored_record: RecordModel):
+        """
+        This class is instantiated using the record_data form a current stored record
+        and from an incoming record using hdf_handler
+        """
         self.ingested_record = ingested_record
         self.stored_record = stored_record
 
     def metadata_checks(self):
+        """
+        Compares the metadata of both files and decides what to do from there
+
+        it can:
+            accept as a new record
+            merge the record
+            reject the record
+        """
         ingested_metadata = (self.ingested_record).metadata
         stored_metadata = (self.stored_record).metadata
 
@@ -564,6 +692,12 @@ class PartialImportChecks:
             raise RejectRecordError("inconsistent metadata")
 
     def channel_checks(self):
+        """
+        Checks if any of the incoming channels exist in the stored record
+
+        if they do they are rejected and a channel response similar to the main channel
+        checks is returned
+        """
         ingested_channels = (self.ingested_record).channels
         stored_channels = (self.stored_record).channels
 

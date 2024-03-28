@@ -22,6 +22,7 @@ from operationsgateway_api.src.models import (
 )
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.ingestion_validator import ChannelChecks
+from operationsgateway_api.src.records.waveform import Waveform
 
 
 log = logging.getLogger()
@@ -87,6 +88,11 @@ class HDFDataHandler:
         return record, self.waveforms, self.images, self.internal_failed_channel
 
     def _unexpected_attribute(self, channel_type, value):
+        """
+        tells the location it is called whether to stop. Stops if the value for data
+        is not the same what it is meant to be for the channel type
+        using the self.acceptable_datasets dictionary
+        """
         stop = False
         for val in value:
             if val != self.acceptable_datasets[channel_type][0]:
@@ -101,7 +107,11 @@ class HDFDataHandler:
         channel_metadata,
         value,
     ):
-        image_path = Image.get_image_path(self.record_id, channel_name)
+        """
+        Extract data for images in the HDF file and place the data into
+        relevant Pydantic models as well as performing on image specific checks
+        """
+        image_path = Image.get_relative_path(self.record_id, channel_name)
 
         if self._unexpected_attribute("image", value):
             internal_failed_channel.append(
@@ -134,6 +144,10 @@ class HDFDataHandler:
         channel_metadata,
         value,
     ):
+        """
+        Extract data for scalars in the HDF file and place the data into
+        relevant Pydantic models as well as performing on scalar specific checks
+        """
         if self._unexpected_attribute("scalar", value):
             internal_failed_channel.append(
                 {channel_name: "unexpected group or dataset in channel group"},
@@ -173,7 +187,12 @@ class HDFDataHandler:
         channel_metadata,
         value,
     ):
+        """
+        Extract data for waveforms in the HDF file and place the data into
+        relevant Pydantic models as well as performing on waveform specific checks
+        """
         waveform_id = f"{self.record_id}_{channel_name}"
+        waveform_path = Waveform.get_relative_path(self.record_id, channel_name)
         log.debug("Waveform ID: %s", waveform_id)
 
         value_list = []
@@ -188,12 +207,12 @@ class HDFDataHandler:
         try:
             channel = WaveformChannelModel(
                 metadata=WaveformChannelMetadataModel(**channel_metadata),
-                waveform_id=waveform_id,
+                waveform_path=waveform_path,
             )
 
             self.waveforms.append(
                 WaveformModel(
-                    _id=waveform_id,
+                    path=waveform_path,
                     x=value["x"][()],
                     y=value["y"][()],
                 ),
@@ -250,7 +269,7 @@ class HDFDataHandler:
             elif value.attrs["channel_dtype"] == "rgb-image":
                 # TODO - implement colour image ingestion. Currently waiting on the
                 # OG-HDF5 converter to support conversion of colour images.
-                # Implementation will be as per greyscale image (`get_image_path()`
+                # Implementation will be as per greyscale image (`get_relative_path()`
                 # then append to `self.images`) but might require extracting a different
                 # part of the value
                 raise HDFDataExtractionError("Colour images cannot be ingested")

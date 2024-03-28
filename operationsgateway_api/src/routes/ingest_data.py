@@ -36,9 +36,9 @@ def _update_data(checker_response, record_data, images, waveforms):
             del record_data.channels[key]
 
         elif channel.metadata.channel_dtype == "waveform":
-            waveform_id = channel.waveform_id
+            waveform_path = channel.waveform_path
             for waveform in waveforms:
-                if waveform.id_ == waveform_id:
+                if waveform.path == waveform_path:
                     waveforms.remove(waveform)
             del record_data.channels[key]
 
@@ -138,7 +138,7 @@ async def submit_hdf(
     log.debug("Processing waveforms")
     for w in waveforms:
         waveform = Waveform(w)
-        await waveform.insert_waveform()
+        waveform.insert_waveform()
         waveform.create_thumbnail()
         record.store_thumbnail(waveform)
 

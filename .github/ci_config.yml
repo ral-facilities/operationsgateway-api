@@ -8,13 +8,14 @@ images:
   waveform_thumbnail_size: [100, 100]
   default_colour_map: viridis
   colourbar_height_pixels: 16
-  echo_url: https://s3.echo.stfc.ac.uk
-  echo_username: operationsgateway
-  echo_access_key: access_key
-  echo_secret_key: secret_key
-  image_bucket_name: test-bucket
   upload_image_threads: 4
   preferred_colour_map_pref_name: PREFERRED_COLOUR_MAP
+echo:
+  url: http://127.0.0.1:9000
+  username: operationsgateway
+  access_key: minioadmin
+  secret_key: minioadmin
+  bucket_name: og-actions-test
 mongodb:
   mongodb_url: mongodb://localhost:27017
   database_name: opsgateway
@@ -51,3 +52,7 @@ experiments:
   instrument_names:
     - Gemini
   worker_file_path: /dev/shm/og-experiment-background
+export:
+  # 1048576 = 1 MB
+  # 1073741824 = 1 GB
+  max_filesize_bytes: 1073741824

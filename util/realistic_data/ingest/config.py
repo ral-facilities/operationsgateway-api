@@ -7,7 +7,7 @@ import yaml
 
 class ScriptOptions(BaseModel):
     wipe_database: bool
-    delete_images: bool
+    wipe_echo: bool
     launch_api: bool
     import_users: bool
 
@@ -30,11 +30,12 @@ class Echo(BaseModel):
     access_key: str
     secret_key: str
     simulated_data_bucket: str
-    images_bucket: str
+    storage_bucket: str
     page_size: int
 
 
 class API(BaseModel):
+    https: bool
     host: str
     port: int
     username: str
