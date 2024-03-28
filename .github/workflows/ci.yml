@@ -40,11 +40,11 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      #- name: Load Pip cache
-      #  uses: actions/cache@v3
-      #  with:
-      #    path: ~/.cache/pip
-      #    key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('.github/ci_requirements.txt') }}
+      - name: Load Pip cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
       - name: Install Poetry & Nox
         run: pip install -r .github/ci_requirements.txt
 
@@ -70,11 +70,11 @@ jobs:
         run: echo "DATABASE_NAME=$(grep database_name .github/ci_config.yml | cut -d ':' -f 2 | tr -d '[:space:]')" >> $GITHUB_ENV
 
       # Load Poetry virtual environment dependencies and install API dependencies
-      #- name: Load Poetry cache
-      #  uses: actions/cache@v3
-      #  with:
-      #    path: ~/.cache/pypoetry/virtualenvs
-      #    key: ${{ runner.os }}-poetry-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+      - name: Load Poetry cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-poetry-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
       - name: Install dependencies
         run: poetry install --without simulated-data
 
@@ -129,11 +129,11 @@ jobs:
       - name: Run Echo Ingest script
         run: poetry run python util/realistic_data/ingest_echo_data.py
 
-      #- name: Load Poetry cache for Nox tests session
-      #  uses: actions/cache@v3
-      #  with:
-      #    path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/tests*
-      #    key: ${{ runner.os }}-poetry-nox-tests-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+      - name: Load Poetry cache for Nox tests session
+        uses: actions/cache@v3
+        with:
+          path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/tests*
+          key: ${{ runner.os }}-poetry-nox-tests-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
 
       # Run Nox tests session, saves and uploads a coverage report to codecov
       - name: Run Nox tests session
@@ -141,7 +141,7 @@ jobs:
 
       - name: tmate session
         uses: mxschmitt/action-tmate@v3
-        if: ${{ always() }}
+        if: ${{ failure() }}
       - name: Upload code coverage report
         if: matrix.python-version == '3.8'
         uses: codecov/codecov-action@v3
@@ -164,7 +164,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('.github/ci_requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
       - name: Install Poetry & Nox
         run: pip install -r .github/ci_requirements.txt
 
@@ -172,7 +172,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/lint*
-          key: ${{ runner.os }}-poetry-nox-lint-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+          key: ${{ runner.os }}-poetry-nox-lint-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
 
       - name: Run Nox lint session
         run: nox -s lint
@@ -193,7 +193,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('.github/ci_requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
       - name: Install Poetry & Nox
         run: pip install -r .github/ci_requirements.txt
 
@@ -201,7 +201,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/black*
-          key: ${{ runner.os }}-poetry-nox-black-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+          key: ${{ runner.os }}-poetry-nox-black-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
 
       - name: Run Nox black session
         run: nox -s black
@@ -222,7 +222,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('.github/ci_requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
       - name: Install Poetry & Nox
         run: pip install -r .github/ci_requirements.txt
 
@@ -230,7 +230,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/safety*
-          key: ${{ runner.os }}-poetry-nox-safety-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+          key: ${{ runner.os }}-poetry-nox-safety-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
 
       - name: Run Nox safety session
         run: nox -s safety
