@@ -22,7 +22,7 @@ class S3Interface:
         self.simulated_data_bucket = self.resource.Bucket(
             Config.config.echo.simulated_data_bucket,
         )
-        self.images_bucket = self.resource.Bucket(Config.config.echo.images_bucket)
+        self.bucket = self.resource.Bucket(Config.config.echo.storage_bucket)
 
     def download_manifest_file(self) -> BytesIO:
         channel_manifest = BytesIO()
@@ -66,6 +66,6 @@ class S3Interface:
 
         return {object_key: hdf_file}
 
-    def delete_images(self):
-        self.images_bucket.objects.all().delete()
-        print("Removed all images from bucket")
+    def delete_all(self):
+        self.bucket.objects.all().delete()
+        print("Removed all objects from bucket")

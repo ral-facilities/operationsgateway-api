@@ -14,7 +14,8 @@ log = logging.getLogger()
 class EchoInterface:
     """
     A class containing the functionality needed to contact Echo S3 object storage. In
-    OperationsGateway API, this is used to store and retrieve full-size images.
+    OperationsGateway API, this is used to store and retrieve full-size images and
+    waveform data.
 
     In boto3, the same exception class is used for all exceptions, `ClientError`. This
     object has a `response` attribute storing a dictionary containing information of the
@@ -27,19 +28,19 @@ class EchoInterface:
         try:
             self.resource = boto3.resource(
                 "s3",
-                endpoint_url=Config.config.images.echo_url,
-                aws_access_key_id=Config.config.images.echo_access_key,
-                aws_secret_access_key=Config.config.images.echo_secret_key,
+                endpoint_url=Config.config.echo.url,
+                aws_access_key_id=Config.config.echo.access_key,
+                aws_secret_access_key=Config.config.echo.secret_key,
             )
 
-            log.debug("Retrieving bucket '%s'", Config.config.images.image_bucket_name)
-            self.bucket = self.resource.Bucket(Config.config.images.image_bucket_name)
+            log.debug("Retrieving bucket '%s'", Config.config.echo.bucket_name)
+            self.bucket = self.resource.Bucket(Config.config.echo.bucket_name)
         except ClientError as exc:
             log.error(
                 "%s: %s. This error happened with bucket '%s'",
                 exc.response["Error"]["Code"],
                 exc.response["Error"].get("Message"),
-                Config.config.images.image_bucket_name,
+                Config.config.echo.bucket_name,
             )
             raise EchoS3Error(
                 "Error retrieving object storage bucket:"
@@ -53,19 +54,19 @@ class EchoInterface:
         if not self.bucket.creation_date:
             log.error(
                 "Bucket cannot be found: %s",
-                Config.config.images.image_bucket_name,
+                Config.config.echo.bucket_name,
             )
             raise EchoS3Error("Bucket for image storage cannot be found")
 
-    def download_file_object(self, image_path: str) -> BytesIO:
+    def download_file_object(self, object_path: str) -> BytesIO:
         """
-        Download an image from S3 using `download_fileobj()`. An image stored in a bytes
-        object is returned
+        Download an object from S3 using `download_fileobj()` and return a BytesIO
+        object
         """
-        log.info("Download image from Echo: %s", image_path)
-        image = BytesIO()
+        log.info("Download file from Echo: %s", object_path)
+        file = BytesIO()
         try:
-            self.bucket.download_fileobj(Fileobj=image, Key=image_path)
+            self.bucket.download_fileobj(Fileobj=file, Key=object_path)
         except ClientError as exc:
             log.error(
                 "%s: %s",
@@ -74,24 +75,25 @@ class EchoInterface:
             )
             raise EchoS3Error(
                 f"{exc.response['Error']['Code']} when downloading file at"
-                f" '{image_path}'",
+                f" '{object_path}'",
             ) from exc
-        if len(image.getvalue()) == 0:
+        if len(file.getvalue()) == 0:
             log.warning(
-                "Image bytes array is empty, image download from S3 might have been"
-                " unsuccessful: %s",
-                image_path,
+                "Bytes array from downloaded object is empty, file download from S3"
+                " might have been unsuccessful: %s",
+                object_path,
             )
-        return image
+        return file
 
-    def upload_file_object(self, image_object: BytesIO, image_path: str) -> None:
+    def upload_file_object(self, file_object: BytesIO, object_path: str) -> None:
         """
-        Upload an image from a bytes object
+        Upload a file to S3 (using `upload_fileobj()`) to a given path using a BytesIO
+        object
         """
-        log.info("Uploading image to %s", image_path)
-        image_object.seek(0)
+        log.info("Uploading file to %s", object_path)
+        file_object.seek(0)
         try:
-            self.bucket.upload_fileobj(image_object, image_path)
+            self.bucket.upload_fileobj(file_object, object_path)
         except ClientError as exc:
             log.error(
                 "%s: %s",
@@ -100,9 +102,9 @@ class EchoInterface:
             )
             raise EchoS3Error(
                 f"{exc.response['Error']['Code']} when uploading file at"
-                f" '{image_path}'",
+                f" '{object_path}'",
             ) from exc
-        log.debug("Uploaded image successfully to %s", image_path)
+        log.debug("Uploaded file successfully to %s", object_path)
 
     def delete_file_object(self) -> None:
         # TODO - this will be implemented when DELETE /records is implemented
