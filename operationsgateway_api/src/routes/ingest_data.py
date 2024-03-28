@@ -9,9 +9,9 @@ from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.error_handling import endpoint_error_handling
+from operationsgateway_api.src.records import ingestion_validator
 from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
 from operationsgateway_api.src.records.image import Image
-from operationsgateway_api.src.records.ingestion_validator import IngestionValidator
 from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.waveform import Waveform
 
@@ -19,6 +19,32 @@ from operationsgateway_api.src.records.waveform import Waveform
 log = logging.getLogger()
 router = APIRouter()
 AuthoriseRoute = Annotated[str, Depends(authorise_route)]
+
+
+def _update_data(checker_response, record_data, images, waveforms):
+    for key in checker_response["rejected_channels"].keys():
+        try:
+            channel = record_data.channels[key]
+        except KeyError:
+            continue
+
+        if channel.metadata.channel_dtype == "image":
+            image_path = channel.image_path
+            for image in images:
+                if image.path == image_path:
+                    images.remove(image)
+            del record_data.channels[key]
+
+        elif channel.metadata.channel_dtype == "waveform":
+            waveform_path = channel.waveform_path
+            for waveform in waveforms:
+                if waveform.path == waveform_path:
+                    waveforms.remove(waveform)
+            del record_data.channels[key]
+
+        else:
+            del record_data.channels[key]
+    return record_data, images, waveforms
 
 
 @router.post(
@@ -44,13 +70,70 @@ async def submit_hdf(
     log.debug("Filename: %s, Content: %s", file.filename, file.content_type)
 
     hdf_handler = HDFDataHandler(file.file)
-    record_data, waveforms, images = hdf_handler.extract_data()
-    record = Record(record_data)
+    (
+        record_data,
+        waveforms,
+        images,
+        internal_failed_channel,
+    ) = await hdf_handler.extract_data()
 
-    stored_record = await record.find_existing_record()
-    # TODO - when I implement the validation, it should only run if `stored_record`
-    # actually contains something (i.e. isn't None)
-    ingest_checker = IngestionValidator(record_data, stored_record)  # noqa: F841
+    record_original = Record(record_data)
+
+    stored_record = await record_original.find_existing_record()
+
+    accept_type = None
+    if stored_record:
+        partial_import_checker = ingestion_validator.PartialImportChecks(
+            record_data,
+            stored_record,
+        )
+        accept_type = partial_import_checker.metadata_checks()
+        partial_channel_dict = partial_import_checker.channel_checks()
+
+    file_checker = ingestion_validator.FileChecks(record_data)
+    warning = file_checker.epac_data_version_checks()
+
+    record_checker = ingestion_validator.RecordChecks(record_data)
+    record_checker.active_area_checks()
+    record_checker.optional_metadata_checks()
+
+    channel_checker = ingestion_validator.ChannelChecks(
+        record_data,
+        waveforms,
+        images,
+        internal_failed_channel,
+    )
+    channel_dict = await channel_checker.channel_checks()
+
+    if stored_record:
+        log.info("existent record found")
+        for key in channel_dict["rejected_channels"].keys():
+            if key in partial_channel_dict["accepted_channels"]:
+                partial_channel_dict["accepted_channels"].remove(key)
+                (partial_channel_dict["rejected_channels"])[key] = channel_dict[
+                    "rejected_channels"
+                ][key]
+            else:
+                (partial_channel_dict["rejected_channels"])[key] = channel_dict[
+                    "rejected_channels"
+                ][key]
+        checker_response = partial_channel_dict
+    else:
+        checker_response = channel_dict
+
+    if warning:
+        checker_response["warnings"] = list(warning)
+    else:
+        checker_response["warnings"] = []
+
+    record_data, images, waveforms = _update_data(
+        checker_response,
+        record_data,
+        images,
+        waveforms,
+    )
+
+    record = Record(record_data)
 
     log.debug("Processing waveforms")
     for w in waveforms:
@@ -69,19 +152,27 @@ async def submit_hdf(
         pool = ThreadPool(processes=Config.config.images.upload_image_threads)
         pool.map(Image.upload_image, image_instances)
 
-    if stored_record:
+    if stored_record and accept_type == "accept_merge":
         log.debug(
             "Record matching ID %s already exists in the database, updating existing"
             " document",
             record.record.id_,
         )
         await record.update()
-        return f"Updated {stored_record.id_}"
+        content = {
+            "message": f"Updated {stored_record.id_}",
+            "response": checker_response,
+        }
+        return content
     else:
         log.debug("Inserting new record into MongoDB")
         await record.insert()
+        content = {
+            "message": f"Added as {record.record.id_}",
+            "response": checker_response,
+        }
         return JSONResponse(
-            record.record.id_,
+            content,
             status_code=status.HTTP_201_CREATED,
             headers={"Location": f"/records/{record.record.id_}"},
         )
