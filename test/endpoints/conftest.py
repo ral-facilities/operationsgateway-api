@@ -1,3 +1,5 @@
+import datetime
+
 import pytest_asyncio
 
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
@@ -55,3 +57,20 @@ async def delete_fed_fixture():
 async def delete_local_fixture():
     yield
     await remove_user("local")
+
+
+@pytest_asyncio.fixture(scope="function")
+async def remove_experiment_fixture():
+    yield
+    await MongoDBInterface.delete_one(
+        "experiments",
+        filter_={
+            "experiment_id": "20310001",
+            "start_date": datetime(1920, 4, 30, 10, 0),
+        },
+    )
+
+
+# TODO this delete fixture does not work
+# TypeError: 'module' object is not callable
+# (filter_={"experiment_id": "20310001", "start_date": datetime(1920, 4, 30, 10, 0)},)
