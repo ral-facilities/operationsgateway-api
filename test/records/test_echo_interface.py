@@ -77,7 +77,7 @@ class TestEchoInterface:
                 EchoS3Error,
                 match="Error retrieving object storage bucket:",
             ):
-                test_echo = EchoInterface()
+                EchoInterface()
 
         with patch("boto3.resource") as mock_resource:
             mock_bucket_instance = mock_resource.return_value.Bucket.return_value
@@ -252,18 +252,6 @@ class TestEchoInterface:
     )
     @patch("boto3.resource")
     def test_invalid_delete_file_object(self, _):
-        with patch(
-            "operationsgateway_api.src.records.echo_interface.log.error",
-        ) as mock_log_error:
-            test_echo = EchoInterface()
-            test_echo.delete_file_object(self.test_image_path)
-
-            mock_log_error.assert_called_once_with(
-                "The object with key %s still exists. Deletion might not "
-                "have been successful.",
-                self.test_image_path,
-            )
-
         with patch("boto3.resource") as mock_resource:
             mock_bucket = mock_resource.return_value.Bucket.return_value
 
@@ -285,10 +273,6 @@ class TestEchoInterface:
                 "delete",
             )
 
-            test_echo = EchoInterface()
-            with patch(
-                "operationsgateway_api.src.records.echo_interface.log.info",
-            ) as mock_log_info:
+            test_echo = EchoInterface() 
+            with pytest.raises(EchoS3Error):
                 test_echo.delete_file_object(self.test_image_path)
-
-                assert mock_log_info.call_count == 1

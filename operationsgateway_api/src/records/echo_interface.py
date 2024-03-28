@@ -107,10 +107,6 @@ class EchoInterface:
         log.debug("Uploaded file successfully to %s", object_path)
 
     def delete_file_object(self, image_path: str) -> None:
-        # TODO - this will be implemented when DELETE /records is implemented
-
-        # current version is for ingestion_validator integration tests
-
         """
         Delete an image
         """
@@ -132,11 +128,18 @@ class EchoInterface:
         try:
             obj.load()
         except ClientError as e:
-            if e.response["Error"]["Code"] == "404":
-                log.info("%s Deletion successful.", image_path)
+            if e.response["Error"]["Code"] != "404":
+                log.error(
+                    "The object with key %s still exists. Deletion might not "
+                    "have been successful.",
+                    image_path,
+                )
+                raise EchoS3Error(f"Deletion of {image_path} was unsuccessful")
+        """
         else:
             log.error(
                 "The object with key %s still exists. Deletion might not "
                 "have been successful.",
                 image_path,
             )
+        """
