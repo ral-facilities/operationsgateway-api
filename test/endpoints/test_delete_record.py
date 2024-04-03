@@ -20,7 +20,7 @@ class TestDeleteRecordById:
                 "timestamp": "2023-06-05T08:00:00",
             },
             "channels": {
-                "test_scalar_id": {
+                "test-scalar-channel-id": {
                     "metadata": {"channel_dtype": "scalar", "units": "µm"},
                     "data": 5.126920467610521,
                 },
@@ -28,7 +28,7 @@ class TestDeleteRecordById:
         }
 
         record_instance = Record(test_record)
-        record_instance.insert()
+        await record_instance.insert()
 
         delete_response = test_app.delete(
             f"/records/{record_id}",
@@ -37,6 +37,3 @@ class TestDeleteRecordById:
 
         assert delete_response.status_code == 204
         assert (await record_instance.find_existing_record()) is None
-
-
-# 339 starting records

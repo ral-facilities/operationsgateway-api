@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 
 import pytest_asyncio
 
@@ -64,7 +64,7 @@ async def remove_experiment_fixture():
     yield
     await MongoDBInterface.delete_one(
         "experiments",
-        filter_={
+        {
             "experiment_id": "20310001",
             "start_date": datetime(1920, 4, 30, 10, 0),
         },

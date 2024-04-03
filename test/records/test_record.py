@@ -38,90 +38,95 @@ class TestRecord:
             "timestamp": "2023-06-05T08:00:00",
         },
         "channels": {
-            "test_image_id": {
+            "test-image-channel": {
                 "metadata": {
                     "channel_dtype": "image",
                     "exposure_time_s": 0.0012,
                     "gain": 4.826012758558324,
                 },
-                "image_path": "19520605070023/test_image_id.png",
-                "thumbnail": "0000000000000000",
+                "image_path": "19520605070023/test-image-channel.png",
+                "thumbnail": b"iVBORw0KGgoAAAANSUhEUgAAAAMAAAADCAAAAABzQ+pjAAAAC0lEQVR4nGNgQAAAAAwAAXxMRMIAAAAASUVORK5CYII=",
             },
-            "test_scalar_id": {
+            "test-scalar-channel": {
                 "metadata": {"channel_dtype": "scalar", "units": "µm"},
                 "data": 5.126920467610521,
             },
-            "test_waveform_id": {
+            "test-waveform-channel": {
                 "metadata": {"channel_dtype": "waveform", "x_units": "nm"},
-                "thumbnail": "9291c43eb16b96ec",
-                "waveform_id": "19520605070023_test_waveform_id",
+                "thumbnail": b"iVBORw0KGgoAAAANSUhEUgAAAGQAAABLCAYAAACGGCK3AAAAOXRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjcuNSwgaHR0cHM6Ly9tYXRwbG90bGliLm9yZy/xnp5ZAAAACXBIWXMAABP+AAAT/gEHlDmEAAAAx0lEQVR4nO3RQQ0AIBDAMMC/5+ONAvZoFSzZnplZZJzfAbwMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMibkKGwSSalT8vgAAAABJRU5ErkJggg==",
+                #"thumbnail": b"9291c43eb16b96ec",
+                "waveform_path": "19520605070023/test-waveform-channel.json",
             },
         },
     }
 
     test_image = ImageModel(
-        path="19520605070023/test_image_id.png",
+        path="19520605070023/test-image-channel.png",
         data=np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.uint16),
     )
 
     test_waveform = WaveformModel(
-        _id="19520605070023_test_waveform_id",
-        x=[1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
-        y=[8.0, 3.0, 6.0, 2.0, 3.0, 8.0],
+        path="19520605070023/test-waveform-channel.json",
+        x=[1.0],
+        y=[8.0],
     )
 
-    def test_init_record_error(self):
-        record_model = "test string"
-
-        with pytest.raises(
-            RecordError,
-            match="RecordModel or dictionary not passed to Record init",
-        ):
+    @pytest.mark.parametrize(
+        "record_model, expected_exception, expected_raise_match",
+        [
+            pytest.param(
+                "test string",
+                RecordError,
+                "RecordModel or dictionary not passed to Record init",
+                id="RecordError"
+            ),
+            pytest.param(
+                {"test": "validation error"},
+                ModelError,
+                "",
+                id="ModelError",
+            ),
+        ]
+    )
+    def test_invalid_init(self, record_model, expected_exception, expected_raise_match):
+        with pytest.raises(expected_exception, match=expected_raise_match):
             Record(record_model)
 
-    def test_init_validation_error(self):
-        record_model = {"test": "validation error"}
-
-        with pytest.raises(ModelError, match=""):
-            Record(record_model)
-
-    def test_store_image_thumbnail(self):
+    @pytest.mark.parametrize(
+        "waveform, channel_name",
+        [
+            pytest.param(
+                True, "test-waveform-channel", id="Waveform thumbnail",
+            ),
+            pytest.param(
+                False, "test-image-channel", id="Image thumbnail",
+            ),
+        ]
+    )
+    def test_store_thumbnail(self, waveform, channel_name):
         record_model = RecordModel(**TestRecord.test_record)
         record_instance = Record(record_model)
 
-        data = Image(TestRecord.test_image)
+        if waveform:
+            data = Waveform(TestRecord.test_waveform)
+        else:
+            data = Image(TestRecord.test_image)
+
+        test_bytes_thumbnail = base64.b64decode(
+            TestRecord.test_record["channels"][channel_name]["thumbnail"],
+        )
+        test_img = PILImage.open(BytesIO(test_bytes_thumbnail))
+        test_record_thumbnail_hash = str(imagehash.phash(test_img))
+
         data.create_thumbnail()
         record_instance.store_thumbnail(data)
 
-        thumbnail = record_instance.record.channels["test_image_id"].thumbnail
-
+        thumbnail = record_instance.record.channels[channel_name].thumbnail
         bytes_thumbnail = base64.b64decode(thumbnail)
         img = PILImage.open(BytesIO(bytes_thumbnail))
-        thumbnail_checksum = str(imagehash.phash(img))
+        thumbnail_hash = str(imagehash.phash(img))
 
-        assert (
-            thumbnail_checksum
-            == TestRecord.test_record["channels"]["test_image_id"]["thumbnail"]
-        )
-
-    def test_store_waveform_thumbnail(self):
-        record_model = RecordModel(**TestRecord.test_record)
-        record_instance = Record(record_model)
-
-        data = Waveform(TestRecord.test_waveform)
-        data.create_thumbnail()
-        record_instance.store_thumbnail(data)
-
-        thumbnail = record_instance.record.channels["test_waveform_id"].thumbnail
-
-        bytes_thumbnail = base64.b64decode(thumbnail)
-        img = PILImage.open(BytesIO(bytes_thumbnail))
-        thumbnail_checksum = str(imagehash.phash(img))
-
-        assert (
-            thumbnail_checksum
-            == TestRecord.test_record["channels"]["test_waveform_id"]["thumbnail"]
-        )
+        assert thumbnail_hash == test_record_thumbnail_hash
 
     def test_store_thumbnail_fail(self):
         record_model = RecordModel(**TestRecord.test_record)
@@ -156,10 +161,9 @@ class TestRecord:
 
         duplicate_record = copy.deepcopy(TestRecord.test_record)
 
-        duplicate_record["metadata"]["shotnum"] = 123456789
-        duplicate_record["channels"]["test_scalar_id"] = {
-            "metadata": {"channel_dtype": "scalar", "units": "edty"},
-            "data": 5.126920467610521,
+        duplicate_record["channels"]["test-scalar-channel"] = {
+            "metadata": {"channel_dtype": "scalar", "units": "mV"},
+            "data": 12.62848562,
         }
 
         new_record_model = RecordModel(**duplicate_record)
@@ -205,13 +209,13 @@ class TestRecord:
     @pytest.mark.asyncio
     async def test_incorrect_channel_dtype(self):
         record = TestRecord.test_record
-        record["channels"]["test_scalar_id"]["metadata"]["channel_dtype"] = "test_type"
+        record["channels"]["test-scalar-channel"]["metadata"]["channel_dtype"] = "test_type"
         with patch(
             "operationsgateway_api.src.mongo.interface.MongoDBInterface.query_to_list",
             return_value=[record],
         ):
             recent_data = await Record.get_recent_channel_values(
-                "test_scalar_id",
+                "test-scalar-channel",
                 "colourmap_name",
             )
             assert recent_data == []
@@ -235,9 +239,9 @@ class TestRecord:
         record_instance = Record(record_model)
 
         record = TestRecord.test_record
-        del record["channels"]["test_scalar_id"]
-        del record["channels"]["test_waveform_id"]
-        del record["channels"]["test_image_id"]["thumbnail"]
+        del record["channels"]["test-scalar-channel"]
+        del record["channels"]["test-waveform-channel"]
+        del record["channels"]["test-image-channel"]["thumbnail"]
 
         await record_instance.apply_false_colour_to_thumbnails(
             record=record,
