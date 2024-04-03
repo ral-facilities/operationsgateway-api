@@ -2,7 +2,6 @@ import pytest
 
 from operationsgateway_api.src.exceptions import WaveformError
 from operationsgateway_api.src.models import WaveformModel
-from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.waveform import Waveform
 
 

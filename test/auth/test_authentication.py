@@ -16,7 +16,6 @@ class TestAuthentication:
             authentication_local_instance.authenticate()
 
     def test_ldap_server_fail(self, monkeypatch, authentication_fed_instance):
-        # this test should pass if you are on the site network or home network
         monkeypatch.setattr(
             Config.config.auth,
             "fedid_server_ldap_realm",

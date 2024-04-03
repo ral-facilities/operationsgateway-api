@@ -88,8 +88,3 @@ class TestPostExperiments:
         )
 
         assert experiment is not None
-
-
-# TODO the fixture does not currently work
-# for now use this command in mongosh
-# db.experiments.deleteOne({ experiment_id: "20310001", start_date: ISODate("1920-04-30T10:00:00.000Z") })  # noqa B950

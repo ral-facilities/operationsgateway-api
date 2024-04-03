@@ -42,9 +42,6 @@ class TestJwtHandler:
         jwt_handler_instance,
         create_temp_blacklisted_token_file,
     ):
-        # create a test file in the parent.x3 and rename the filename then delete it
-        # (info on slack)
-
         with patch(
             "operationsgateway_api.src.auth.jwt_handler.JwtHandler.blacklisted_tokens_filename",
             new="temp_blacklisted_test_tokens.txt",
@@ -52,7 +49,3 @@ class TestJwtHandler:
             return_value = jwt_handler_instance.get_blacklisted_tokens()
 
         assert return_value == ["test_token1", "test_token2", "test_token3"]
-
-
-# perhaps move the file opening into a seperate function that can easily be mocked?
-# or is it that changing any original file is bad

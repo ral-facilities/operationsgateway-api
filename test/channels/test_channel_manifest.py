@@ -1,3 +1,4 @@
+import json
 from tempfile import SpooledTemporaryFile
 from unittest.mock import patch
 
@@ -5,6 +6,15 @@ import pytest
 
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.exceptions import ChannelManifestError, ModelError
+from operationsgateway_api.src.mongo.interface import MongoDBInterface
+
+
+success_manifest_content = (
+    '{"_id": "19830222132431", "channels": {"PM-201-FE-CAM-1": '
+    '{"name": "D100 front-end NF", "path": "/PM-201/FE", "type": "image"}, '
+    '"PM-201-FE-CAM-2": {"name": "D100 front-end FF", "path": "/PM-201/FE",'
+    ' "type": "image"}}}'
+)
 
 
 def get_spooled_file(fail_type=0):
@@ -20,12 +30,7 @@ def get_spooled_file(fail_type=0):
     elif fail_type == 2:
         content = "{}"
     else:
-        content = (
-            '{"_id": "19830222132431", "channels": {"PM-201-FE-CAM-1": '
-            '{"name": "D100 front-end NF", "path": "/PM-201/FE", "type": "image"}, '
-            '"PM-201-FE-CAM-2": {"name": "D100 front-end FF", "path": "/PM-201/FE",'
-            ' "type": "image"}}}'
-        )
+        content = success_manifest_content
     spooled_file.write(content.encode())
     spooled_file.seek(0)
 
@@ -76,7 +81,13 @@ class TestChannelManifest:
             "operationsgateway_api.src.channels.channel_manifest.ChannelManifest._add_id",
             return_value="19830222132431",
         ):
-
             instance = get_spooled_file()
 
             await instance.insert()
+
+            channel_manifest = await MongoDBInterface.find_one(
+                "channels",
+                {"_id": "19830222132431"},
+            )
+            expected_manifest = json.loads(success_manifest_content)
+            assert channel_manifest == expected_manifest

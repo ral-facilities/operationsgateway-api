@@ -12,6 +12,7 @@ class TestSubmitManifest:
         self,
         test_app: TestClient,
         login_and_get_token,
+        remove_manifest_fixture,
     ):
         with SpooledTemporaryFile(mode="w+b") as spooled_file:
             content = (
@@ -55,9 +56,7 @@ class TestSubmitManifest:
             filter_={"_id": response_data},
         )
         test_dict["_id"] = response_data
-        assert new_manifest == (test_dict)
-
-        await MongoDBInterface.delete_one("channels", {"_id": response_data})
+        assert new_manifest == test_dict
 
     @pytest.mark.asyncio
     async def test_submit_manifest_missing_file(

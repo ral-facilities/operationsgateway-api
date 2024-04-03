@@ -45,7 +45,7 @@ class TestRecord:
                     "gain": 4.826012758558324,
                 },
                 "image_path": "19520605070023/test-image-channel.png",
-                "thumbnail": b"iVBORw0KGgoAAAANSUhEUgAAAAMAAAADCAAAAABzQ+pjAAAAC0lEQVR4nGNgQAAAAAwAAXxMRMIAAAAASUVORK5CYII=",
+                "thumbnail": b"iVBORw0KGgoAAAANSUhEUgAAAAMAAAADCAAAAABzQ+pjAAAAC0lEQVR4nGNgQAAAAAwAAXxMRMIAAAAASUVORK5CYII=",  # noqa: B950
             },
             "test-scalar-channel": {
                 "metadata": {"channel_dtype": "scalar", "units": "µm"},
@@ -53,8 +53,7 @@ class TestRecord:
             },
             "test-waveform-channel": {
                 "metadata": {"channel_dtype": "waveform", "x_units": "nm"},
-                "thumbnail": b"iVBORw0KGgoAAAANSUhEUgAAAGQAAABLCAYAAACGGCK3AAAAOXRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjcuNSwgaHR0cHM6Ly9tYXRwbG90bGliLm9yZy/xnp5ZAAAACXBIWXMAABP+AAAT/gEHlDmEAAAAx0lEQVR4nO3RQQ0AIBDAMMC/5+ONAvZoFSzZnplZZJzfAbwMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMibkKGwSSalT8vgAAAABJRU5ErkJggg==",
-                #"thumbnail": b"9291c43eb16b96ec",
+                "thumbnail": b"iVBORw0KGgoAAAANSUhEUgAAAGQAAABLCAYAAACGGCK3AAAAOXRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjcuNSwgaHR0cHM6Ly9tYXRwbG90bGliLm9yZy/xnp5ZAAAACXBIWXMAABP+AAAT/gEHlDmEAAAAx0lEQVR4nO3RQQ0AIBDAMMC/5+ONAvZoFSzZnplZZJzfAbwMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMiTEkxpAYQ2IMibkKGwSSalT8vgAAAABJRU5ErkJggg==",  # noqa: B950
                 "waveform_path": "19520605070023/test-waveform-channel.json",
             },
         },
@@ -78,7 +77,7 @@ class TestRecord:
                 "test string",
                 RecordError,
                 "RecordModel or dictionary not passed to Record init",
-                id="RecordError"
+                id="RecordError",
             ),
             pytest.param(
                 {"test": "validation error"},
@@ -86,7 +85,7 @@ class TestRecord:
                 "",
                 id="ModelError",
             ),
-        ]
+        ],
     )
     def test_invalid_init(self, record_model, expected_exception, expected_raise_match):
         with pytest.raises(expected_exception, match=expected_raise_match):
@@ -96,12 +95,16 @@ class TestRecord:
         "waveform, channel_name",
         [
             pytest.param(
-                True, "test-waveform-channel", id="Waveform thumbnail",
+                True,
+                "test-waveform-channel",
+                id="Waveform thumbnail",
             ),
             pytest.param(
-                False, "test-image-channel", id="Image thumbnail",
+                False,
+                "test-image-channel",
+                id="Image thumbnail",
             ),
-        ]
+        ],
     )
     def test_store_thumbnail(self, waveform, channel_name):
         record_model = RecordModel(**TestRecord.test_record)
@@ -209,7 +212,9 @@ class TestRecord:
     @pytest.mark.asyncio
     async def test_incorrect_channel_dtype(self):
         record = TestRecord.test_record
-        record["channels"]["test-scalar-channel"]["metadata"]["channel_dtype"] = "test_type"
+        record["channels"]["test-scalar-channel"]["metadata"][
+            "channel_dtype"
+        ] = "test_type"
         with patch(
             "operationsgateway_api.src.mongo.interface.MongoDBInterface.query_to_list",
             return_value=[record],
