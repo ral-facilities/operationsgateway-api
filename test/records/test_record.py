@@ -200,6 +200,7 @@ class TestRecord:
         await Record.apply_functions(
             record,
             functions,
+            False,
             0,
             255,
             "binary",
@@ -244,6 +245,6 @@ class TestRecord:
     ):
         record = {"_id": "20230605100000"}
         with pytest.raises(FunctionParseError) as e:
-            await Record.apply_functions(record, functions, 0, 255, "binary")
+            await Record.apply_functions(record, functions, False, 0, 255, "binary")
 
         assert str(e.value) == "Unable to parse variables: {'b'}"

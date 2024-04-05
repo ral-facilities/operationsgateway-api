@@ -117,6 +117,7 @@ async def get_records(
             await Record.apply_functions(
                 record_data,
                 functions,
+                False,
                 lower_level,
                 upper_level,
                 colourmap_name,

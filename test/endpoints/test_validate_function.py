@@ -12,8 +12,8 @@ class TestValidateFunction:
             pytest.param([{"name": "a", "expression": "1"}], "scalar", id="Constant"),
             pytest.param(
                 [
+                    {"name": "b", "expression": "1"},
                     {"name": "a", "expression": "b + 1"},
-                    {"name": "b", "expression": "1", "return_type": "scalar"},
                 ],
                 "scalar",
                 id="Function types",
@@ -130,20 +130,18 @@ class TestValidateFunction:
             ),
             pytest.param(
                 [
-                    {"name": "c", "expression": "a + b"},
-                    {
-                        "name": "a",
-                        "expression": "FE-204-NSO-P1-CAM-1",
-                        "return_type": "image",
-                    },
                     {
                         "name": "b",
-                        "expression": "CM-202-CVC-SP",
-                        "return_type": "waveform",
+                        "expression": "FE-204-NSO-P1-CAM-1",
                     },
+                    {
+                        "name": "c",
+                        "expression": "CM-202-CVC-SP",
+                    },
+                    {"name": "a", "expression": "b + c"},
                 ],
                 (
-                    "Unsupported type in 'a + b': Operation between types "
+                    "Unsupported type in 'b + c': Operation between types "
                     "['image', 'waveform'] not supported"
                 ),
                 id="Unsupported operands",
@@ -162,7 +160,7 @@ class TestValidateFunction:
         functions: "list[dict]",
         message,
     ):
-        url = f"/functions/validate/{functions[0]['name']}?"
+        url = "/functions/validate/a?"
         for function_dict in functions:
             url += f"&functions={quote(json.dumps(function_dict))}"
 

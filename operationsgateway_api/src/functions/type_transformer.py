@@ -32,15 +32,9 @@ class TypeTransformer(Transformer):
         'image'
     """
 
-    def __init__(self, function_types: "dict[str, str]") -> None:
-        """Initialises the Transformer and stores `function_types`.
-
-        Args:
-            function_types (dict):
-                Map from name to return type for other functions that the
-                expression being evaluated may depend on.
-        """
-        self.function_types = function_types
+    def __init__(self) -> None:
+        """Initialises the Transformer and stores `function_types`."""
+        self.function_types = {}
         super().__init__()
 
     async def evaluate(self, name: str, expression: str) -> str:
@@ -48,7 +42,8 @@ class TypeTransformer(Transformer):
         expression returns.
 
         Also fetches the most recent channel manifest asynchronously for
-        lookups.
+        lookups. The resulting data type will also be stored in the
+        `chanel_types` attribute for future evaluations.
 
         Args:
             name (str): Name used to label the output of the `expression`.
@@ -67,7 +62,9 @@ class TypeTransformer(Transformer):
             raise ValueError(f"Function name '{name}' is already a channel name")
 
         tree = parser.parse(expression)
-        return self.transform(tree)
+        function_type = self.transform(tree)
+        self.function_types[name] = function_type
+        return function_type
 
     # Transformer callback functions
 

@@ -71,44 +71,42 @@ async def validate_function(
     log.info("Validating function")
 
     error = None
-    expression = None
-    function_types = {}
+    transformer = TypeTransformer()
     for function_dict in functions:
-        if "return_type" in function_dict:
-            function_types[function_dict["name"]] = function_dict["return_type"]
+        expression = function_dict["expression"]
 
-        if function_dict["name"] == function_name:
-            expression = function_dict["expression"]
+        try:
+            return_type = await transformer.evaluate(function_dict["name"], expression)
+            if function_dict["name"] == function_name:
+                return return_type
 
-    transformer = TypeTransformer(function_types=function_types)
-    try:
-        return_type = await transformer.evaluate(function_name, expression)
+        except ValueError as e:
+            error = e.args[0]
 
-    except ValueError as e:
-        error = e.args[0]
+        except UnexpectedEOF:
+            error = (
+                f"Unexpected end-of-input in '{expression}', check all brackets "
+                "are closed"
+            )
 
-    except UnexpectedEOF:
-        error = (
-            f"Unexpected end-of-input in '{expression}', check all brackets "
-            "are closed"
-        )
+        except UnexpectedCharacters:
+            error = (
+                f"Unexpected character in '{expression}', check all brackets are opened"
+            )
 
-    except UnexpectedCharacters:
-        error = f"Unexpected character in '{expression}', check all brackets are opened"
+        except LarkError as e:
+            message: str = e.args[0]
+            root_message = message.split("\n\n")[1].strip('"')
+            if 'Error trying to process rule "variable"' in message:
+                error = f"Unexpected variable in '{expression}': {root_message}"
+            elif "is not a recognised builtin function name" in message:
+                error = f"Unsupported function in '{expression}': {root_message}"
+            else:
+                error = f"Unsupported type in '{expression}': {root_message}"
 
-    except LarkError as e:
-        message: str = e.args[0]
-        root_message = message.split("\n\n")[1].strip('"')
-        if 'Error trying to process rule "variable"' in message:
-            error = f"Unexpected variable in '{expression}': {root_message}"
-        elif "is not a recognised builtin function name" in message:
-            error = f"Unsupported function in '{expression}': {root_message}"
-        else:
-            error = f"Unsupported type in '{expression}': {root_message}"
+        finally:
+            if error is not None:
+                log.error(error)
+                raise FunctionParseError(error)
 
-    finally:
-        if error is not None:
-            log.error(error)
-            raise FunctionParseError(error)
-
-    return return_type
+    raise FunctionParseError(f"No function defined with name {function_name}")

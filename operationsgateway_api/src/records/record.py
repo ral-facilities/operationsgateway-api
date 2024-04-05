@@ -1,5 +1,6 @@
 import base64
 from datetime import datetime
+from io import BytesIO
 import logging
 from typing import Any, Dict, List, Tuple, Union
 
@@ -416,6 +417,7 @@ class Record:
     async def apply_functions(
         record: "dict[str, dict]",
         functions: "list[dict[str, str]]",
+        original_image: bool,
         lower_level: int,
         upper_level: int,
         colourmap_name: str,
@@ -433,6 +435,7 @@ class Record:
         for function in functions:
             await Record._apply_function(
                 record,
+                original_image,
                 lower_level,
                 upper_level,
                 colourmap_name,
@@ -451,6 +454,7 @@ class Record:
     @staticmethod
     async def _apply_function(
         record: "dict[str, dict]",
+        original_image: bool,
         lower_level: int,
         upper_level: int,
         colourmap_name: str,
@@ -502,6 +506,7 @@ class Record:
         result = expression_transformer.evaluate(function["expression"])
         Record._parse_function_results(
             record,
+            original_image,
             lower_level,
             upper_level,
             colourmap_name,
@@ -549,6 +554,7 @@ class Record:
     @staticmethod
     def _parse_function_results(
         record: dict,
+        original_image: bool,
         lower_level: int,
         upper_level: int,
         colourmap_name: str,
@@ -588,13 +594,19 @@ class Record:
                     "metadata": metadata,
                 }
             else:
-                image_bytes = FalseColourHandler.apply_false_colour(
-                    result,
-                    bits_per_pixel,
-                    lower_level,
-                    upper_level,
-                    colourmap_name,
-                )
+                if original_image:
+                    image_bytes = BytesIO()
+                    img_temp = PILImage.fromarray(result.astype(np.int32))
+                    img_temp.save(image_bytes, format="PNG")
+                else:
+                    image_bytes = FalseColourHandler.apply_false_colour(
+                        result,
+                        bits_per_pixel,
+                        lower_level,
+                        upper_level,
+                        colourmap_name,
+                    )
+
                 image_bytes.seek(0)
                 channel = {"data": image_bytes}
 
