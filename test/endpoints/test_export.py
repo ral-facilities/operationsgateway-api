@@ -230,11 +230,11 @@ class TestExport:
                 {
                     "20230605080000_to_20230605120000.csv": "export/"
                     "20230605080000_to_20230605120000_asc.csv",
-                    "20230605080000_FE-204-PSO-CAM-1.png": "c73838c7c437c738",
+                    "20230605080000_FE-204-PSO-CAM-1.png": "c73838c6c637c738",
                     "20230605090000_FE-204-PSO-CAM-1.png": "c73838c7c73838c7",
                     "20230605100000_FE-204-PSO-CAM-1.png": "c73838c7c73838c7",
-                    "20230605110000_FE-204-PSO-CAM-1.png": "c73938c6c0e7c738",
-                    "20230605120000_FE-204-PSO-CAM-1.png": "c4c437673839c6f8",
+                    "20230605110000_FE-204-PSO-CAM-1.png": "c73938c7c427c738",
+                    "20230605120000_FE-204-PSO-CAM-1.png": "c4c43f273838c6fc",
                 },
                 id="Zip export of main CSV with images in false colour",
             ),
@@ -785,7 +785,8 @@ class TestExport:
                     # this is an image so it needs a perceptual hash generating and
                     # comparing with what is expected
                     image = Image.open(zip_file.open(filename_in_zip))
-                    assert filepath_or_hash == str(imagehash.phash(image))
+                    hash = str(imagehash.phash(image))
+                    assert filepath_or_hash == hash, f"Difference in {filename_in_zip}"
             # diff the expected file list with that found in the zip
             # to check that all expected files were present
             files_diff = [
