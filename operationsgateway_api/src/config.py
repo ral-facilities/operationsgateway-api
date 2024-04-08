@@ -88,6 +88,12 @@ class ExperimentsConfig(BaseModel):
             return value
 
 
+class ExportConfig(BaseModel):
+    """Configuration model class to store export configuration details"""
+
+    max_filesize_bytes: StrictInt
+
+
 class APIConfig(BaseModel):
     """
     Class to store the API's configuration settings
@@ -102,6 +108,7 @@ class APIConfig(BaseModel):
     experiments: ExperimentsConfig
     images: ImagesConfig
     echo: EchoConfig
+    export: ExportConfig
 
     @classmethod
     def load(cls, path=Path(__file__).parent.parent / "config.yml"):
