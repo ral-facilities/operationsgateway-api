@@ -785,8 +785,8 @@ class TestExport:
                     # this is an image so it needs a perceptual hash generating and
                     # comparing with what is expected
                     image = Image.open(zip_file.open(filename_in_zip))
-                    hash = str(imagehash.phash(image))
-                    assert filepath_or_hash == hash, f"Difference in {filename_in_zip}"
+                    phash = str(imagehash.phash(image))
+                    assert filepath_or_hash == phash, f"Difference in {filename_in_zip}"
             # diff the expected file list with that found in the zip
             # to check that all expected files were present
             files_diff = [
