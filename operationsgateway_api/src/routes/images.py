@@ -90,7 +90,7 @@ async def get_full_image(
                     lower_level,
                     upper_level,
                     colourmap_name,
-                    truncate_response=False,
+                    return_thumbnails=False,
                 )
 
                 image_bytes = record["channels"][channel_name]["data"]

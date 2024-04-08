@@ -69,7 +69,7 @@ async def get_waveform_by_id(
                     0,
                     255,
                     colourmap_name,
-                    truncate_response=False,
+                    return_thumbnails=False,
                 )
 
                 return record["channels"][channel_name]["data"]

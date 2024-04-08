@@ -198,12 +198,13 @@ class TestRecord:
         values: "dict[str, dict]",
     ):
         await Record.apply_functions(
-            record,
-            functions,
-            False,
-            0,
-            255,
-            "binary",
+            record=record,
+            functions=functions,
+            original_image=False,
+            lower_level=0,
+            upper_level=255,
+            colourmap_name="binary",
+            return_thumbnails=True,
         )
 
         assert "channels" in record

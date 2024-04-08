@@ -421,7 +421,7 @@ class Record:
         lower_level: int,
         upper_level: int,
         colourmap_name: str,
-        truncate_response: bool = True,
+        return_thumbnails: bool = True,
     ) -> None:
         """
         Evaluates all functions and stores the results on `record` as though
@@ -434,16 +434,16 @@ class Record:
         expression_transformer = ExpressionTransformer(variable_data)
         for function in functions:
             await Record._apply_function(
-                record,
-                original_image,
-                lower_level,
-                upper_level,
-                colourmap_name,
-                variable_data,
-                variable_transformer,
-                expression_transformer,
-                function,
-                truncate_response,
+                record=record,
+                original_image=original_image,
+                lower_level=lower_level,
+                upper_level=upper_level,
+                colourmap_name=colourmap_name,
+                variable_data=variable_data,
+                variable_transformer=variable_transformer,
+                expression_transformer=expression_transformer,
+                function=function,
+                return_thumbnails=return_thumbnails,
             )
 
     @staticmethod
@@ -462,7 +462,7 @@ class Record:
         variable_transformer: VariableTransformer,
         expression_transformer: ExpressionTransformer,
         function: "dict[str, str]",
-        truncate_response: bool = True,
+        return_thumbnails: bool = True,
     ) -> None:
         """
         Evaluates a single function and stores the result on `record` as though
@@ -505,14 +505,14 @@ class Record:
 
         result = expression_transformer.evaluate(function["expression"])
         Record._parse_function_results(
-            record,
-            original_image,
-            lower_level,
-            upper_level,
-            colourmap_name,
-            function["name"],
-            result,
-            truncate_response,
+            record=record,
+            original_image=original_image,
+            lower_level=lower_level,
+            upper_level=upper_level,
+            colourmap_name=colourmap_name,
+            function_name=function["name"],
+            result=result,
+            return_thumbnails=return_thumbnails,
         )
         variable_data[function["name"]] = result
 
@@ -560,7 +560,7 @@ class Record:
         colourmap_name: str,
         function_name: str,
         result: "np.ndarray | WaveformVariable | np.float64",
-        truncate_response: bool = True,
+        return_thumbnails: bool = True,
     ) -> None:
         """
         Parses the numerical `result` and modifies `record` in place to contain
@@ -572,7 +572,7 @@ class Record:
             # We do not track the bit depth of inputs, so keep maximum depth to
             # avoid losing information
             bits_per_pixel = 16
-            if truncate_response:
+            if return_thumbnails:
                 metadata = {
                     "channel_dtype": "image",
                     "x_pixel_size": result.shape[1],
@@ -611,7 +611,8 @@ class Record:
                 channel = {"data": image_bytes}
 
         elif isinstance(result, WaveformVariable):
-            if truncate_response:
+            print(return_thumbnails, result)
+            if return_thumbnails:
                 waveform = result.to_waveform()
                 # Creating thumbnail takes ~ 0.05 s per waveform
                 waveform.create_thumbnail()
