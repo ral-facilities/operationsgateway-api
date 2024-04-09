@@ -484,8 +484,10 @@ class Record:
                 channels_to_fetch.add(variable)
 
         if channels_to_fetch:
-            missing_channels =  await Record._fetch_channels(
-                record, variable_data, channels_to_fetch,
+            missing_channels = await Record._fetch_channels(
+                record,
+                variable_data,
+                channels_to_fetch,
             )
             if missing_channels:
                 return
@@ -507,7 +509,7 @@ class Record:
     async def _fetch_channels(
         record: "dict[str, dict]",
         variable_data: dict,
-        channels_to_fetch: "set[str]"
+        channels_to_fetch: "set[str]",
     ) -> "set[str]":
         """Fetches `channels_to_fetch`, returning known channels missing for this
         record and raising an exception if the channel is not known at all."""

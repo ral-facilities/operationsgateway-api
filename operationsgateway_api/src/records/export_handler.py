@@ -183,8 +183,7 @@ class ExportHandler:
             return projection_parts[1]
 
     def _get_channel_type(self, channel_name: str) -> str:
-        """Extracts the "type" for either a function or channel.
-        """
+        """Extracts the "type" for either a function or channel."""
         if channel_name in self.function_types:
             return self.function_types[channel_name]
         else:
