@@ -11,6 +11,7 @@ from operationsgateway_api.src.exceptions import (
     DatabaseError,
     MissingDocumentError,
     ModelError,
+    UserError,
 )
 from operationsgateway_api.src.models import FavouriteFilterModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
@@ -40,7 +41,10 @@ class FavouriteFilter:
         filter_: str,
         id_: Optional[str] = None,
     ) -> None:
-        self.filter_id = ObjectId(id_) if id_ else ObjectId()
+        try:
+            self.filter_id = ObjectId(id_) if id_ else ObjectId()
+        except InvalidId as exc:
+            raise UserError(f"Invalid Object ID entered: {id_}") from exc
         self.filter = {"_id": self.filter_id, "name": name, "filter": filter_}
         self.username = username
 
@@ -198,6 +202,7 @@ class FavouriteFilter:
                 operation.name.lower(),
                 id_,
                 username,
+                update_result,
             )
             raise MissingDocumentError(
                 f"Favourite filter cannot be found for user '{username}'",
@@ -209,6 +214,7 @@ class FavouriteFilter:
                 operation.name.lower(),
                 id_,
                 username,
+                update_result,
             )
             raise DatabaseError(
                 f"Change to favourite filter {id_} has been unsuccessful",
