@@ -1,6 +1,8 @@
 from unittest.mock import patch
+
 from bson import ObjectId
 import pytest
+
 from operationsgateway_api.src.exceptions import (
     DatabaseError,
     MissingDocumentError,
@@ -57,7 +59,7 @@ class TestFavouriteFilter:
                     "name": "Test Filter 2",
                     "filter": "channel 2 > channel 3",
                 },
-            ]
+            ],
         }
         filter_list = await FavouriteFilter.get_list("test_user")
 
@@ -94,7 +96,7 @@ class TestFavouriteFilter:
                     "name": "Test Filter 2",
                     "filter": "channel 2 > channel 3",
                 },
-            ]
+            ],
         }
 
         test_filter = await FavouriteFilter.get_by_id(
@@ -149,7 +151,7 @@ class TestFavouriteFilter:
                 ),
                 id="No modification",
             ),
-        ]
+        ],
     )
     @pytest.mark.asyncio
     async def test_invalid_create(self, update_result):
@@ -188,7 +190,7 @@ class TestFavouriteFilter:
                 DatabaseError,
                 id="No modification",
             ),
-        ]
+        ],
     )
     def test_process_update_result(self, update_result, expected_exception):
         with pytest.raises(expected_exception):

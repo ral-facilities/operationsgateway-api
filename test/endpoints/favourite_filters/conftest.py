@@ -3,7 +3,6 @@ from pymongo import MongoClient
 import pytest
 
 from operationsgateway_api.src.config import Config
-from operationsgateway_api.src.exceptions import DatabaseError
 
 
 @pytest.fixture()
@@ -48,7 +47,12 @@ class FavouriteFilter:
         ]
 
     def count(self):
-        count_result = self.users.aggregate([{"$match": {"_id": "backend"}}, {"$project": {"count": {"$size": "$filters"}}}])
+        count_result = self.users.aggregate(
+            [
+                {"$match": {"_id": "backend"}},
+                {"$project": {"count": {"$size": "$filters"}}},
+            ],
+        )
         for c in count_result:
             return c["count"]
 
@@ -61,38 +65,44 @@ class FavouriteFilter:
 
         if not result:
             return None
-        
+
         result["_id"] = str(result["_id"])
         return result
 
     def create_one(self):
-        filter = self.test_filters[0]
-        self.users.update_one({"_id": "backend"}, {"$push": {"filters": filter}})
-
-        
+        single_filter = self.test_filters[0]
+        self.users.update_one({"_id": "backend"}, {"$push": {"filters": single_filter}})
 
         result = self.users.find_one(
             {"_id": "backend"},
-            projection={"filters": {"$elemMatch": {"name": self.test_filters[0]["name"]}}},
+            projection={
+                "filters": {"$elemMatch": {"name": self.test_filters[0]["name"]}},
+            },
         )
         print(f"Result: {result}")
 
-        filter["_id"] = str(filter["_id"])
+        single_filter["_id"] = str(single_filter["_id"])
 
-        return filter
+        return single_filter
 
     def create_multiple(self):
         filters = self.test_filters
-        self.users.update_one({"_id": "backend"}, {"$push": {"filters": {"$each": filters}}})
+        self.users.update_one(
+            {"_id": "backend"},
+            {"$push": {"filters": {"$each": filters}}},
+        )
 
-        for filter in filters:
-            filter["_id"] = str(filter["_id"])
+        for single_filter in filters:
+            single_filter["_id"] = str(single_filter["_id"])
 
         return filters
 
     def delete(self, filter_id):
         if self.find_one(filter_id):
-            self.users.update_one({"_id": "backend"}, {"$pull": {"filters": {"_id": ObjectId(filter_id)}}})
+            self.users.update_one(
+                {"_id": "backend"},
+                {"$pull": {"filters": {"_id": ObjectId(filter_id)}}},
+            )
 
     def delete_all(self):
         self.users.update_one({"_id": "backend"}, {"$set": {"filters": []}})

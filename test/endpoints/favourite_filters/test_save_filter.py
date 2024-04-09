@@ -11,10 +11,10 @@ class TestSaveFilter:
         login_and_get_token,
     ):
         name = "Test Create Filter"
-        filter = "PM-201-HJ-CRY-FLOW > 10"
+        filter_content = "PM-201-HJ-CRY-FLOW > 10"
 
         test_response = test_app.post(
-            f"/users/filters?name={name}&filter={filter}",
+            f"/users/filters?name={name}&filter={filter_content}",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
 

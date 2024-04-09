@@ -4,7 +4,6 @@ from fastapi.testclient import TestClient
 from test.endpoints.favourite_filters.conftest import FavouriteFilter
 
 
-
 class TestUpdateFilter:
     def test_update_filter(
         self,
