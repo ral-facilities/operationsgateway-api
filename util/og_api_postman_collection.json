@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "390e666b-d7fb-4934-b3f2-82752f720498",
-		"name": "OperationsGateway API Copy 2",
+		"_postman_id": "71c66833-ba71-47be-9f41-eaca496d06d5",
+		"name": "OperationsGateway API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "33242392"
 	},
@@ -1774,6 +1774,42 @@
 								{
 									"key": "projection",
 									"value": "channels.FE-204-PSO-P1-SP",
+									"disabled": true
+								},
+								{
+									"key": "functions",
+									"value": "{\"name\": \"scalar\", \"expression\": \"FE-204-PSO-EM %2B 1\"}",
+									"description": "Function returning scalar",
+									"disabled": true
+								},
+								{
+									"key": "functions",
+									"value": "{\"name\": \"waveform\", \"expression\": \"FE-204-PSO-P1-SP %2B (1 - 1)\"}",
+									"description": "Function returning waveform",
+									"disabled": true
+								},
+								{
+									"key": "functions",
+									"value": "{\"name\": \"image\", \"expression\": \"FE-204-PSO-CAM-1 %2B (1 - 1)\"}",
+									"description": "Function returning image",
+									"disabled": true
+								},
+								{
+									"key": "projection",
+									"value": "channels.scalar.data",
+									"description": "Include scalar function",
+									"disabled": true
+								},
+								{
+									"key": "projection",
+									"value": "channels.waveform",
+									"description": "Include waveform function",
+									"disabled": true
+								},
+								{
+									"key": "projection",
+									"value": "channels.image",
+									"description": "Include image function",
 									"disabled": true
 								}
 							]

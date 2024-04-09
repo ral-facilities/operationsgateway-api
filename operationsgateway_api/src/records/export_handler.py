@@ -5,7 +5,9 @@ import zipfile
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import ExportError
+from operationsgateway_api.src.functions.type_transformer import TypeTransformer
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.waveform import Waveform
 
 
@@ -23,6 +25,7 @@ class ExportHandler:
         lower_level: int,
         upper_level: int,
         colourmap_name: str,
+        functions: "list[dict[str, str]]",
         export_scalars: bool,
         export_images: bool,
         export_waveform_csvs: bool,
@@ -53,6 +56,20 @@ class ExportHandler:
             False,
         )
 
+        self.functions = functions
+        self.function_types = {}
+
+    @property
+    def original_image(self) -> bool:
+        """If none of the false colour parameters are set then the original
+        image is required.
+        """
+        return (
+            self.lower_level == 0
+            and self.upper_level == 255
+            and self.colourmap_name is None
+        )
+
     # NOTE: needs to be async as it is calling async methods to get image and waveform
     # files from disk
     async def process_records(self) -> None:
@@ -62,12 +79,26 @@ class ExportHandler:
         or waveform channels are requested then just the main CSV file will be returned
         otherwise all files will be put into a zip file.
         """
+        if self.functions:
+            await self._init_function_types()
+
         self._create_main_csv_headers()
         for record_data in self.records_data:
             log.debug("record_data: %s", record_data)
             record_id = record_data["_id"]
             self.record_ids.append(record_id)
             log.debug("record_id: %s", record_id)
+
+            if self.functions:
+                await Record.apply_functions(
+                    record_data,
+                    self.functions,
+                    self.original_image,
+                    self.lower_level,
+                    self.upper_level,
+                    self.colourmap_name,
+                    return_thumbnails=False,
+                )
 
             line = ""
             for proj in self.projection:
@@ -105,6 +136,16 @@ class ExportHandler:
         # close the file to finish writing the directory entry etc.
         self.zip_file.close()
 
+    async def _init_function_types(self):
+        """Before writing the CSV header, need to determine function return types so
+        that any scalar functions can be included as columns.
+        """
+        transformer = TypeTransformer()
+        for function_dict in self.functions:
+            name = function_dict["name"]
+            expression = function_dict["expression"]
+            self.function_types[name] = await transformer.evaluate(name, expression)
+
     def _create_main_csv_headers(self) -> None:
         """
         Process the "projection" (data table columns requested) to add the necessary
@@ -120,9 +161,8 @@ class ExportHandler:
             if proj.split(".")[0] == "channels":
                 # image and waveform data will be exported to separate files so will not
                 # have values put in the main csv file
-                if (
-                    self.channel_manifest_dict["channels"][channel_name]["type"]
-                ) not in ["image", "waveform"]:
+                channel_type = self._get_channel_type(channel_name)
+                if channel_type not in ["image", "waveform"]:
                     line = self._add_value_to_csv_line(line, channel_name)
             else:
                 # this must be a "metadata" channel
@@ -142,6 +182,14 @@ class ExportHandler:
             projection_parts = projection.split(".")
             return projection_parts[1]
 
+    def _get_channel_type(self, channel_name: str) -> str:
+        """Extracts the "type" for either a function or channel.
+        """
+        if channel_name in self.function_types:
+            return self.function_types[channel_name]
+        else:
+            return self.channel_manifest_dict["channels"][channel_name]["type"]
+
     async def _process_data_channel(
         self,
         record_data: Dict,
@@ -157,20 +205,18 @@ class ExportHandler:
         that will be added to the main CSV file.
         """
         # process an image channel
-        if self.channel_manifest_dict["channels"][channel_name]["type"] == "image":
+        channel_type = self._get_channel_type(channel_name)
+        if channel_type == "image":
             log.info("Channel %s is an image", channel_name)
             await self._add_image_to_zip(record_data, record_id, channel_name)
         # process a waveform channel
-        elif self.channel_manifest_dict["channels"][channel_name]["type"] == "waveform":
+        elif channel_type == "waveform":
             log.info("Channel %s is a waveform", channel_name)
-            x_units = record_data["channels"][channel_name]["metadata"].setdefault(
-                "x_units",
-                "",
-            )
-            y_units = record_data["channels"][channel_name]["metadata"].setdefault(
-                "y_units",
-                "",
-            )
+            channel = record_data["channels"][channel_name]
+            if "metadata" not in channel:
+                channel["metadata"] = {}
+            x_units = channel["metadata"].setdefault("x_units", "")
+            y_units = channel["metadata"].setdefault("y_units", "")
             await self._add_waveform_to_zip(
                 record_data,
                 record_id,
@@ -206,29 +252,25 @@ class ExportHandler:
 
         try:
             # first check that there should be an image to process
-            _ = record_data["channels"][channel_name]
+            channel = record_data["channels"][channel_name]
         except KeyError:
             # there is no entry for this channel in the record
             # so there is no image to process
             return
 
         log.info("Getting image to add to zip: %s %s", record_id, channel_name)
-        # if none of the false colour parameters are set then the original
-        # image is required
-        original_image = (
-            self.lower_level == 0
-            and self.upper_level == 255
-            and self.colourmap_name is None
-        )
         try:
-            image_bytes = await Image.get_image(
-                record_id,
-                channel_name,
-                original_image,
-                self.lower_level,
-                self.upper_level,
-                self.colourmap_name,
-            )
+            if channel_name in self.function_types:
+                image_bytes = channel["data"]
+            else:
+                image_bytes = await Image.get_image(
+                    record_id,
+                    channel_name,
+                    self.original_image,
+                    self.lower_level,
+                    self.upper_level,
+                    self.colourmap_name,
+                )
             self.zip_file.writestr(
                 f"{record_id}_{channel_name}.png",
                 image_bytes.getvalue(),
@@ -254,7 +296,7 @@ class ExportHandler:
         """
         try:
             # first check that there should be a waveform to process
-            _ = record_data["channels"][channel_name]
+            channel = record_data["channels"][channel_name]
         except KeyError:
             # there is no entry for this channel in the record
             # so there is no waveform to process
@@ -267,9 +309,12 @@ class ExportHandler:
                 channel_name,
             )
             try:
-                waveform_model = Waveform.get_waveform(
-                    Waveform.get_relative_path(record_id, channel_name),
-                )
+                if channel_name in self.function_types:
+                    waveform_model = channel["data"]
+                else:
+                    waveform_model = Waveform.get_waveform(
+                        Waveform.get_relative_path(record_id, channel_name),
+                    )
             except Exception:
                 self.errors_file_in_memory.write(
                     f"Could not find waveform for {record_id} {channel_name}\n",

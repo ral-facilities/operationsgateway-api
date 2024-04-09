@@ -22,6 +22,7 @@ class TestRecord:
                         "TS-202-TSM-P1-CAM-2-CENX": {"data": 4.145480878063205},
                         "CM-202-CVC-SP": {
                             "waveform_path": "20230605100000/CM-202-CVC-SP.json",
+                            "metadata": {"x_units": "nm"}
                         },
                         "FE-204-NSO-P1-CAM-1": {
                             "image_path": "20230605100000/FE-204-NSO-P1-CAM-1.png",
@@ -84,7 +85,7 @@ class TestRecord:
                 {
                     "a": {
                         "thumbnail": "bbb14eb0c14eb14e",
-                        "metadata": {"channel_dtype": "waveform"},
+                        "metadata": {"channel_dtype": "waveform", "x_units": "nm"},
                     },
                 },
                 id="Trace operation",
@@ -99,7 +100,7 @@ class TestRecord:
                 {
                     "a": {
                         "thumbnail": "ce39b1474e6c91a9",
-                        "metadata": {"channel_dtype": "waveform"},
+                        "metadata": {"channel_dtype": "waveform", "x_units": "nm"},
                     },
                 },
                 id="Trace element-wise function",
@@ -248,4 +249,4 @@ class TestRecord:
         with pytest.raises(FunctionParseError) as e:
             await Record.apply_functions(record, functions, False, 0, 255, "binary")
 
-        assert str(e.value) == "Unable to parse variables: {'b'}"
+        assert str(e.value) == "b is not known as a channel or function name"

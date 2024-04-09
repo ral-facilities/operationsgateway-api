@@ -10,6 +10,7 @@ from pydantic import ValidationError
 import pymongo
 from pymongo.results import DeleteResult
 
+from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.exceptions import (
     ChannelSummaryError,
     DatabaseError,
@@ -483,25 +484,11 @@ class Record:
                 channels_to_fetch.add(variable)
 
         if channels_to_fetch:
-            log.debug("Fetching channels: %s", channels_to_fetch)
-            record_extra = await Record.find_record_by_id(
-                record["_id"],
-                {},
-                [f"channels.{v}" for v in channels_to_fetch],
+            missing_channels =  await Record._fetch_channels(
+                record, variable_data, channels_to_fetch,
             )
-
-            fetched_channels: dict = record_extra["channels"]
-            missing_channels = channels_to_fetch.difference(fetched_channels)
             if missing_channels:
-                message = f"Unable to parse variables: {missing_channels}"
-                raise FunctionParseError(message)
-
-            for name, channel_value in fetched_channels.items():
-                variable_data[name] = await Record._extract_variable(
-                    record["_id"],
-                    name,
-                    channel_value,
-                )
+                return
 
         result = expression_transformer.evaluate(function["expression"])
         Record._parse_function_results(
@@ -515,6 +502,38 @@ class Record:
             return_thumbnails=return_thumbnails,
         )
         variable_data[function["name"]] = result
+
+    @staticmethod
+    async def _fetch_channels(
+        record: "dict[str, dict]",
+        variable_data: dict,
+        channels_to_fetch: "set[str]"
+    ) -> "set[str]":
+        """Fetches `channels_to_fetch`, returning known channels missing for this
+        record and raising an exception if the channel is not known at all."""
+        log.debug("Fetching channels: %s", channels_to_fetch)
+        projection = [f"channels.{v}" for v in channels_to_fetch]
+        record_extra = await Record.find_record_by_id(record["_id"], {}, projection)
+        fetched_channels: dict = record_extra["channels"]
+        missing_channels = channels_to_fetch.difference(fetched_channels)
+        if missing_channels:
+            manifest = await ChannelManifest.get_most_recent_manifest()
+            for missing_channel in missing_channels:
+                if missing_channel not in manifest["channels"]:
+                    message = "%s is not known as a channel or function name"
+                    log.error(message, missing_channel)
+                    raise FunctionParseError(message % missing_channel)
+
+            message = "Channels %s exist but not defined for %s"
+            log.warning(message, missing_channels, record["_id"])
+            return missing_channels
+
+        for name, channel_value in fetched_channels.items():
+            variable_data[name] = await Record._extract_variable(
+                record["_id"],
+                name,
+                channel_value,
+            )
 
     @staticmethod
     async def _extract_variable(
@@ -546,8 +565,13 @@ class Record:
             return img_array
         elif channel_dtype == "waveform":
             waveform_path = channel_value["waveform_path"]
+            if "metadata" in channel_value and "x_units" in channel_value["metadata"]:
+                x_units = channel_value["metadata"]["x_units"]
+            else:
+                x_units = None
+
             waveform = Waveform.get_waveform(waveform_path)
-            return WaveformVariable(waveform)
+            return WaveformVariable(waveform, x_units=x_units)
         else:
             return channel_value["data"]
 
@@ -569,61 +593,28 @@ class Record:
         Record._ensure_channels(record)
 
         if isinstance(result, np.ndarray):
-            # We do not track the bit depth of inputs, so keep maximum depth to
-            # avoid losing information
-            bits_per_pixel = 16
-            if return_thumbnails:
-                metadata = {
-                    "channel_dtype": "image",
-                    "x_pixel_size": result.shape[1],
-                    "y_pixel_size": result.shape[0],
-                }
-                step_size = max(*result.shape) // 50
-                image_array = result[::step_size, ::step_size]
-                image_bytes = FalseColourHandler.apply_false_colour(
-                    image_array,
-                    bits_per_pixel,
-                    lower_level,
-                    upper_level,
-                    colourmap_name,
-                )
-                image_bytes.seek(0)
-                image_b64 = base64.b64encode(image_bytes.getvalue())
-                channel = {
-                    "thumbnail": image_b64,
-                    "metadata": metadata,
-                }
-            else:
-                if original_image:
-                    image_bytes = BytesIO()
-                    img_temp = PILImage.fromarray(result.astype(np.int32))
-                    img_temp.save(image_bytes, format="PNG")
-                else:
-                    image_bytes = FalseColourHandler.apply_false_colour(
-                        result,
-                        bits_per_pixel,
-                        lower_level,
-                        upper_level,
-                        colourmap_name,
-                    )
-
-                image_bytes.seek(0)
-                channel = {"data": image_bytes}
+            channel = Record._parse_image_result(
+                result=result,
+                original_image=original_image,
+                lower_level=lower_level,
+                upper_level=upper_level,
+                colourmap_name=colourmap_name,
+                return_thumbnails=return_thumbnails,
+            )
 
         elif isinstance(result, WaveformVariable):
-            print(return_thumbnails, result)
+            metadata = {"channel_dtype": "waveform"}
+            if result.x_units is not None:
+                metadata["x_units"] = result.x_units
+
             if return_thumbnails:
                 waveform = result.to_waveform()
                 # Creating thumbnail takes ~ 0.05 s per waveform
                 waveform.create_thumbnail()
-                metadata = {"channel_dtype": "waveform"}
-                channel = {
-                    "thumbnail": waveform.thumbnail,
-                    "metadata": metadata,
-                }
+                channel = {"thumbnail": waveform.thumbnail, "metadata": metadata}
             else:
                 waveform_model = result.to_waveform_model()
-                channel = {"data": waveform_model}
+                channel = {"data": waveform_model, "metadata": metadata}
 
         else:
             metadata = {"channel_dtype": "scalar"}
@@ -631,3 +622,53 @@ class Record:
             channel = {"data": float(result), "metadata": metadata}
 
         record["channels"][function_name] = channel
+
+    @staticmethod
+    def _parse_image_result(
+        result: np.ndarray,
+        original_image: bool,
+        lower_level: int,
+        upper_level: int,
+        colourmap_name: str,
+        return_thumbnails: bool,
+    ) -> dict:
+        """Parses a numpy ndarray and returns image bytes, either for a thumbnail or
+        full image.
+        """
+        # We do not track the bit depth of inputs, so keep maximum depth to
+        # avoid losing information
+        bits_per_pixel = 16
+        if return_thumbnails:
+            metadata = {
+                "channel_dtype": "image",
+                "x_pixel_size": result.shape[1],
+                "y_pixel_size": result.shape[0],
+            }
+            step_size = max(*result.shape) // 50
+            image_array = result[::step_size, ::step_size]
+            image_bytes = FalseColourHandler.apply_false_colour(
+                image_array,
+                bits_per_pixel,
+                lower_level,
+                upper_level,
+                colourmap_name,
+            )
+            image_bytes.seek(0)
+            image_b64 = base64.b64encode(image_bytes.getvalue())
+            return {"thumbnail": image_b64, "metadata": metadata}
+        else:
+            if original_image:
+                image_bytes = BytesIO()
+                img_temp = PILImage.fromarray(result.astype(np.int32))
+                img_temp.save(image_bytes, format="PNG")
+            else:
+                image_bytes = FalseColourHandler.apply_false_colour(
+                    result,
+                    bits_per_pixel,
+                    lower_level,
+                    upper_level,
+                    colourmap_name,
+                )
+
+            image_bytes.seek(0)
+            return {"data": image_bytes}
