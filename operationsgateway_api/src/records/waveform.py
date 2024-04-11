@@ -76,7 +76,7 @@ class Waveform:
         """
         # Making changes to plot so figure size and line width is correct and axes are
         # disabled
-        plt.rcParams["figure.figsize"] = [1, 0.75]
+        plt.figure(figsize=(1, 0.75))
         plt.xticks([])
         plt.yticks([])
         plt.plot(
@@ -96,7 +96,7 @@ class Waveform:
         Using Matplotlib, create a full sized plot of the waveform data and save it to
         a bytes IO object provided as a parameter to this function
         """
-        plt.rcParams["figure.figsize"] = [8, 6]
+        plt.figure(figsize=(8, 6))
         plt.plot(
             self.waveform.x,
             self.waveform.y,
