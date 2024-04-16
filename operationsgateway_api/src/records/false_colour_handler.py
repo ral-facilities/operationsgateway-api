@@ -101,23 +101,11 @@ class FalseColourHandler:
         converted regardless of the whether the original image was created in memory,
         retrieved as base 64 from the database, or from an image stored on disk.
         """
-        if bits_per_pixel != 8 and bits_per_pixel != 16:
-            raise ImageError(f"{bits_per_pixel} bits per pixel is not supported")
-        else:
-            pixel_multiplier = int((2**bits_per_pixel - 1) / 255)
-        if lower_level is None:
-            lower_level = 0
-        if upper_level is None:
-            upper_level = 255
-        if upper_level < lower_level:
-            raise QueryParameterError(
-                "lower_level must be less than or equal to upperlevel",
-            )
-        # 8 bit images need the levels to be between 0 and 255
-        # 16 bit images need the levels to be between 0 and 65525
-        # the pixel multiplier adjusts for this
-        lower_level = lower_level * pixel_multiplier
-        upper_level = upper_level * pixel_multiplier
+        vmin, vmax = FalseColourHandler.pixel_limits(
+            bits_per_pixel,
+            lower_level,
+            upper_level,
+        )
         if colourmap_name is None:
             colourmap_name = FalseColourHandler.default_colour_map_name
         if not ColourmapMapping.is_colourmap_available(
@@ -132,11 +120,50 @@ class FalseColourHandler:
         plt.imsave(
             converted_image_bytes,
             image_array,
-            vmin=lower_level,
-            vmax=upper_level,
+            vmin=vmin,
+            vmax=vmax,
             cmap=colourmap_name,
         )
         return converted_image_bytes
+
+    @staticmethod
+    def pixel_limits(
+        bits_per_pixel: int,
+        lower_level: int,
+        upper_level: int,
+    ) -> "tuple[int, int]":
+        """Adjusts pixel limits to account for the number of `bits_per_pixel`.
+
+        Args:
+            bits_per_pixel (int):
+                Bits of depth to each pixel, such that the max value is
+                `2**bits_per_pixel - 1`
+            lower_level (int): Low pixel value in 8 bit depth
+            upper_level (int): High pixel value in 8 bit depth
+
+        Raises:
+            ImageError: If `bits_per_pixel` is neither `8` nor `16`
+            QueryParameterError: If `lower_level` is greater than `upper_level`
+
+        Returns:
+            tuple[int, int]: The scaled limits
+        """
+        if bits_per_pixel != 8 and bits_per_pixel != 16:
+            raise ImageError(f"{bits_per_pixel} bits per pixel is not supported")
+
+        if lower_level is None:
+            lower_level = 0
+        if upper_level is None:
+            upper_level = 255
+        if upper_level < lower_level:
+            raise QueryParameterError(
+                "lower_level must be less than or equal to upperlevel",
+            )
+
+        pixel_multiplier = 2 ** (bits_per_pixel - 8)
+        vmin = lower_level * pixel_multiplier
+        vmax = (upper_level + 1) * pixel_multiplier - 1
+        return vmin, vmax
 
     @staticmethod
     def get_pixel_depth(image: PILImage) -> int:
