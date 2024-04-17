@@ -100,7 +100,6 @@ class TestChannelSummary:
         expected_summary,
         use_preferred_colourmap,
     ):
-
         """
         Compare the response with the expected result, but convert the returned base64
         thumbnails to a perceptual hash beforehand (to prevent bloating this file with
