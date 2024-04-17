@@ -47,6 +47,3 @@ async def reset_databases():
     )
     await remove_waveform()
     delete_hdf_file()
-
-
-# we remove everything (try except) instead of splitting it

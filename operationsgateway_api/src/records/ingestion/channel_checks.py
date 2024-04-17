@@ -3,104 +3,6 @@ import logging
 import numpy as np
 
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
-from operationsgateway_api.src.exceptions import RejectFileError, RejectRecordError
-from operationsgateway_api.src.models import RecordModel
-
-
-log = logging.getLogger()
-
-
-async def get_manifest():
-    """
-    Returns the most recent channel manifest
-    """
-    return await ChannelManifest.get_most_recent_manifest()
-
-
-class FileChecks:
-    def __init__(self, ingested_record: RecordModel):
-        """
-        This class is instantiated using the RecordModel from running hdf_handler
-        """
-        self.ingested_record = ingested_record
-
-    def epac_data_version_checks(self):
-        """
-        Checks that the epac_data_version on the file is "1.0"
-        if:
-            it is not a string = a file error is raised
-            the first number is not "1" = a file error is raised
-            the second number is not "0" = a warning is given
-        """
-        ingested_metadata = (self.ingested_record).metadata
-        if (
-            hasattr(ingested_metadata, "epac_ops_data_version")
-            and ingested_metadata.epac_ops_data_version is not None
-        ):
-            epac_number = ingested_metadata.epac_ops_data_version
-            if type(ingested_metadata.epac_ops_data_version) != str:
-                raise RejectFileError(
-                    "epac_ops_data_version has wrong datatype. Should be string",
-                )
-            else:
-                epac_numbers = epac_number.split(".")
-                if epac_numbers[0] != "1":
-                    raise RejectFileError(
-                        "epac_ops_data_version major version was not 1",
-                    )
-                if int(epac_numbers[1]) > 0:
-                    return "File minor version number too high (expected 0)"
-        else:
-            raise RejectFileError("epac_ops_data_version does not exist")
-        # a RecordMetadataModel is already returned when
-        # epac_ops_data_version does not exist
-
-
-class RecordChecks:
-    def __init__(self, ingested_record: RecordModel):
-        """
-        This class is instantiated using the RecordModel from running hdf_handler
-        """
-        self.ingested_record = ingested_record
-
-    def active_area_checks(self):
-        """
-        Checks if active area is missing or if its not a string
-        it will reject the record if so
-        """
-        ingested_metadata = (self.ingested_record).metadata
-        if (
-            hasattr(ingested_metadata, "active_area")
-            and ingested_metadata.active_area is not None
-        ):
-            if type(ingested_metadata.active_area) != str:
-                raise RejectRecordError(
-                    "active_area has wrong datatype. Expected string",
-                )
-        else:
-            raise RejectRecordError("active_area is missing")
-
-    def optional_metadata_checks(self):
-        """
-        Checks if active_experiment and shotnum have incorrect datatypes
-        if they do the record is rejected (no need to reject if they don't exist
-        because they are optional)
-        """
-        ingested_metadata = (self.ingested_record).metadata
-        if (
-            hasattr(ingested_metadata, "active_experiment")
-            and ingested_metadata.active_experiment is not None
-        ):
-            if type(ingested_metadata.active_experiment) != str:
-                raise RejectRecordError(
-                    "active_experiment has wrong datatype. Expected string",
-                )
-        if (
-            hasattr(ingested_metadata, "shotnum")
-            and ingested_metadata.shotnum is not None
-        ):
-            if type(ingested_metadata.shotnum) != int:
-                raise RejectRecordError("shotnum has wrong datatype. Expected integer")
 
 
 class ChannelChecks:
@@ -121,6 +23,18 @@ class ChannelChecks:
         self.ingested_image = ingested_image or []
         self.internal_failed_channel = internal_failed_channel or []
 
+        self.supported_channel_types = [
+            "scalar",
+            "image",
+            "rgb-image",
+            "waveform",
+        ]
+
+    async def set_manifest_channels(self) -> None:
+        # TODO - this is called in a couple of places, can we reduce number of calls?
+        manifest = await ChannelManifest.get_most_recent_manifest()
+        self.manifest_channels = manifest["channels"]
+
     def _merge_internal_failed(
         self,
         rejected_channels,
@@ -136,7 +50,7 @@ class ChannelChecks:
         """
         if internal_failed_channel != []:
             for response in internal_failed_channel:
-                for _key, reason in response.items():
+                for reason in response.values():
                     for accepted_reason in accept_list:
                         if reason == accepted_reason:
                             rejected_channels.append(response)
@@ -156,15 +70,6 @@ class ChannelChecks:
             ingested_channels = ingested_channels.channels
             dump = True
 
-        manifest_channels = (await get_manifest())["channels"]
-
-        supported_values = [
-            "scalar",
-            "image",
-            "rgb-image",
-            "waveform",
-        ]
-
         rejected_channels = []
 
         for key, value in ingested_channels.items():
@@ -178,8 +83,8 @@ class ChannelChecks:
 
             if "channel_dtype" in value:
                 if (
-                    manifest_channels[key]["type"] != value["channel_dtype"]
-                    or value["channel_dtype"] not in supported_values
+                    self.manifest_channels[key]["type"] != value["channel_dtype"]
+                    or value["channel_dtype"] not in self.supported_channel_types
                 ):
                     rejected_channels.append(
                         {
@@ -190,8 +95,7 @@ class ChannelChecks:
             else:
                 rejected_channels.append(
                     {
-                        key: "channel_dtype attribute is missing"
-                        " (cannot perform other checks without)",
+                        key: "channel_dtype attribute is missing",
                     },
                 )
 
@@ -199,8 +103,7 @@ class ChannelChecks:
             rejected_channels,
             self.internal_failed_channel,
             [
-                "channel_dtype attribute is missing (cannot perform "
-                "other checks without)",
+                "channel_dtype attribute is missing",
                 "channel_dtype has wrong data type or its value is unsupported",
             ],
         )
@@ -215,7 +118,7 @@ class ChannelChecks:
         if they don't they are added to the rejected_channels list as a dict along with
         the reason they failed to return to the used as an output dict
         """
-        ingested_channels = (self.ingested_record).channels
+        ingested_channels = self.ingested_record.channels
         ingested_waveform = self.ingested_waveform
         ingested_image = self.ingested_image
 
@@ -262,8 +165,7 @@ class ChannelChecks:
                 "data has wrong datatype",
                 "x attribute is missing",
                 "y attribute is missing",
-                "channel_dtype attribute is missing (cannot perform "
-                "other checks without)",
+                "channel_dtype attribute is missing",
                 "channel_dtype has wrong data type or its value is unsupported",
             ],
         )
@@ -351,7 +253,7 @@ class ChannelChecks:
         if they don't they are added to the rejected_channels list as a dict along with
         the reason they failed to return to the used as an output dict
         """
-        ingested_channels = (self.ingested_record).channels
+        ingested_channels = self.ingested_record.channels
         rejected_channels = []
 
         for key, value in ingested_channels.items():
@@ -475,8 +377,7 @@ class ChannelChecks:
                 "data has wrong datatype",
                 "x attribute is missing",
                 "y attribute is missing",
-                "channel_dtype attribute is missing (cannot perform "
-                "other checks without)",
+                "channel_dtype attribute is missing",
                 "channel_dtype has wrong data type or its value is unsupported",
             ],
         )
@@ -529,18 +430,25 @@ class ChannelChecks:
         Checks if the channel name appears in the most recent channel manifest
         if it doesn't it is added to rejected_channels
         """
-        manifest = (await get_manifest())["channels"]
 
         rejected_channels = []
 
         if mode != "direct":
-            rejected_channels = self._check_name(rejected_channels, manifest, mode)
+            rejected_channels = self._check_name(
+                rejected_channels,
+                self.manifest_channels,
+                mode,
+            )
             return rejected_channels
 
         ingested_channels = (self.ingested_record).channels
 
         for key in list(ingested_channels.keys()):
-            rejected_channels = self._check_name(rejected_channels, manifest, key)
+            rejected_channels = self._check_name(
+                rejected_channels,
+                self.manifest_channels,
+                key,
+            )
 
         rejected_channels = self._merge_internal_failed(
             rejected_channels,
@@ -580,6 +488,7 @@ class ChannelChecks:
         """
         ingested_channels = (self.ingested_record).channels
 
+        # TODO - have these checks already been ran elsewhere?
         dtype_response = self._organise_dict(await self.channel_dtype_checks())
         attribute_response = self._organise_dict(self.required_attribute_checks())
         optional_response = self._organise_dict(self.optional_dtype_checks())
@@ -616,99 +525,6 @@ class ChannelChecks:
         accepted_channels = [
             channel for channel in channel_list if channel not in keys_to_remove
         ]
-
-        channel_response = {
-            "accepted_channels": accepted_channels,
-            "rejected_channels": rejected_channels,
-        }
-
-        return channel_response
-
-
-class PartialImportChecks:
-    def __init__(self, ingested_record: RecordModel, stored_record: RecordModel):
-        """
-        This class is instantiated using the record_data form a current stored record
-        and from an incoming record using hdf_handler
-        """
-        self.ingested_record = ingested_record
-        self.stored_record = stored_record
-
-    def metadata_checks(self):
-        """
-        Compares the metadata of both files and decides what to do from there
-
-        it can:
-            accept as a new record
-            merge the record
-            reject the record
-        """
-        ingested_metadata = (self.ingested_record).metadata
-        stored_metadata = (self.stored_record).metadata
-
-        try:
-            time_match = (ingested_metadata.timestamp).replace(
-                tzinfo=None,
-            ) == stored_metadata.timestamp
-        except Exception:
-            time_match = (ingested_metadata.timestamp) == stored_metadata.timestamp
-
-        epac_match = (
-            ingested_metadata.epac_ops_data_version
-            == stored_metadata.epac_ops_data_version
-        )
-        shot_match = ingested_metadata.shotnum == stored_metadata.shotnum
-        area_match = ingested_metadata.active_area == stored_metadata.active_area
-        experiment_match = (
-            ingested_metadata.active_experiment == stored_metadata.active_experiment
-        )
-
-        if time_match and epac_match and shot_match and area_match and experiment_match:
-            log.info("record metadata matches existing record perfectly")
-            return "accept_merge"
-
-        elif (
-            time_match
-            and not epac_match
-            and not shot_match
-            and not area_match
-            and not experiment_match
-        ):
-            raise RejectRecordError("timestamp matches, other metadata does not")
-
-        elif (
-            shot_match
-            and not time_match
-            and not epac_match
-            and not area_match
-            and not experiment_match
-        ):
-            raise RejectRecordError("shotnum matches, other metadata does not")
-
-        elif not time_match and not shot_match:
-            return "accept_new"
-
-        else:
-            raise RejectRecordError("inconsistent metadata")
-
-    def channel_checks(self):
-        """
-        Checks if any of the incoming channels exist in the stored record
-
-        if they do they are rejected and a channel response similar to the main channel
-        checks is returned
-        """
-        ingested_channels = (self.ingested_record).channels
-        stored_channels = (self.stored_record).channels
-
-        accepted_channels = []
-        rejected_channels = {}
-
-        for key in list(ingested_channels.keys()):
-            if key in stored_channels:
-                rejected_channels[key] = "Channel is already present in existing record"
-            else:
-                accepted_channels.append(key)
 
         channel_response = {
             "accepted_channels": accepted_channels,

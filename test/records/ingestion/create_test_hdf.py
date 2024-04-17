@@ -1,7 +1,7 @@
 import h5py
 import numpy as np
 
-from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
+from operationsgateway_api.src.records.ingestion.hdf_handler import HDFDataHandler
 
 
 def generate_channel_check_block(record, test_type):

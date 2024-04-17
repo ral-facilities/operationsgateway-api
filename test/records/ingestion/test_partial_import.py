@@ -3,7 +3,9 @@ import copy
 import pytest
 
 from operationsgateway_api.src.exceptions import RejectRecordError
-from operationsgateway_api.src.records import ingestion_validator
+from operationsgateway_api.src.records.ingestion.partial_import_checks import (
+    PartialImportChecks,
+)
 from test.records.ingestion.create_test_hdf import create_test_hdf_file
 
 
@@ -65,7 +67,7 @@ class TestPartialImport:
             # alter so only shotnum is wrong
             stored_record.metadata.shotnum = 234
 
-        partial_import_checker = ingestion_validator.PartialImportChecks(
+        partial_import_checker = PartialImportChecks(
             record_data,
             stored_record,
         )
@@ -212,7 +214,7 @@ class TestPartialImport:
             channels["n"] = channels.pop("PM-201-TJ-CAM-2-CENY")
             channels["o"] = channels.pop("PM-201-TJ-CAM-2-FWHMY")
 
-        partial_import_checker = ingestion_validator.PartialImportChecks(
+        partial_import_checker = PartialImportChecks(
             record_data,
             stored_record,
         )

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from operationsgateway_api.src.records import ingestion_validator
+from operationsgateway_api.src.records.ingestion.channel_checks import ChannelChecks
 from test.records.ingestion.create_test_hdf import create_test_hdf_file
 
 
@@ -62,12 +62,13 @@ class TestChannel:
             internal_failed_channel,
         ) = await create_test_hdf_file()
 
-        channel_checker = ingestion_validator.ChannelChecks(
+        channel_checker = ChannelChecks(
             record_data,
             waveforms,
             images,
             internal_failed_channel,
         )
+        await channel_checker.set_manifest_channels()
         async_functions = [
             channel_checker.channel_dtype_checks,
             channel_checker.channel_name_check,
@@ -112,30 +113,21 @@ class TestChannel:
             pytest.param(
                 ["scalar", "missing", "scalar"],
                 [
-                    {
-                        "PM-201-FE-CAM-2-CENX": "channel_dtype attribute is "
-                        "missing (cannot perform other checks without)",
-                    },
+                    {"PM-201-FE-CAM-2-CENX": "channel_dtype attribute is missing"},
                 ],
                 id="Scalar channel_dtype missing",
             ),
             pytest.param(
                 ["image", "missing", "image"],
                 [
-                    {
-                        "PM-201-FE-CAM-1": "channel_dtype attribute is missing "
-                        "(cannot perform other checks without)",
-                    },
+                    { "PM-201-FE-CAM-1": "channel_dtype attribute is missing"},
                 ],
                 id="Image channel_dtype missing",
             ),
             pytest.param(
                 ["waveform", "missing", "waveform"],
                 [
-                    {
-                        "PM-201-HJ-PD": "channel_dtype attribute is missing "
-                        "(cannot perform other checks without)",
-                    },
+                    {"PM-201-HJ-PD": "channel_dtype attribute is missing"},
                 ],
                 id="Waveform channel_dtype missing",
             ),
@@ -177,10 +169,7 @@ class TestChannel:
                     [487, "exists"],
                 ],
                 [
-                    {
-                        "PM-201-FE-CAM-1": "channel_dtype attribute is missing "
-                        "(cannot perform other checks without)",
-                    },
+                    {"PM-201-FE-CAM-1": "channel_dtype attribute is missing"},
                     {
                         "PM-201-FE-CAM-2-CENX": "channel_dtype has wrong data "
                         "type or its value is unsupported",
@@ -207,12 +196,13 @@ class TestChannel:
             internal_failed_channel,
         ) = await create_test_hdf_file(channel_dtype=altered_channel)
 
-        channel_checker = ingestion_validator.ChannelChecks(
+        channel_checker = ChannelChecks(
             record_data,
             waveforms,
             images,
             internal_failed_channel,
         )
+        await channel_checker.set_manifest_channels()
 
         channel_response = create_channel_response(response)
         assert await channel_checker.channel_checks() == channel_response
@@ -387,12 +377,13 @@ class TestChannel:
                 internal_failed_channel,
             ) = await create_test_hdf_file(required_attributes=required_attributes)
 
-        channel_checker = ingestion_validator.ChannelChecks(
+        channel_checker = ChannelChecks(
             record_data,
             waveforms,
             images,
             internal_failed_channel,
         )
+        await channel_checker.set_manifest_channels()
 
         channel_response = create_channel_response(response, extra)
         assert await channel_checker.channel_checks() == channel_response
@@ -519,12 +510,13 @@ class TestChannel:
             internal_failed_channel,
         ) = await create_test_hdf_file(optional_attributes=optional_attributes)
 
-        channel_checker = ingestion_validator.ChannelChecks(
+        channel_checker = ChannelChecks(
             record_data,
             waveforms,
             images,
             internal_failed_channel,
         )
+        await channel_checker.set_manifest_channels()
 
         channel_response = create_channel_response(response)
         assert await channel_checker.channel_checks() == channel_response
@@ -665,12 +657,13 @@ class TestChannel:
             internal_failed_channel,
         ) = await create_test_hdf_file(required_attributes=required_attributes)
 
-        channel_checker = ingestion_validator.ChannelChecks(
+        channel_checker = ChannelChecks(
             record_data,
             waveforms,
             images,
             internal_failed_channel,
         )
+        await channel_checker.set_manifest_channels()
 
         channel_response = create_channel_response(response, extra)
         assert await channel_checker.channel_checks() == channel_response
@@ -807,12 +800,13 @@ class TestChannel:
             internal_failed_channel,
         ) = await create_test_hdf_file(unrecognised_attribute=unrecognised_attribute)
 
-        channel_checker = ingestion_validator.ChannelChecks(
+        channel_checker = ChannelChecks(
             record_data,
             waveforms,
             images,
             internal_failed_channel,
         )
+        await channel_checker.set_manifest_channels()
 
         channel_response = create_channel_response(response)
         assert await channel_checker.channel_checks() == channel_response
@@ -867,7 +861,7 @@ class TestChannel:
                         "(does not appear in manifest)",
                     },
                 ],
-                id="Unknown waveform name",
+                id="Unknown image, scalar and waveform names",
             ),
         ],
     )
@@ -885,12 +879,13 @@ class TestChannel:
             internal_failed_channel,
         ) = await create_test_hdf_file(channel_name=channel_name)
 
-        channel_checker = ingestion_validator.ChannelChecks(
+        channel_checker = ChannelChecks(
             record_data,
             waveforms,
             images,
             internal_failed_channel,
         )
+        await channel_checker.set_manifest_channels()
 
         channel_response = create_channel_response(response)
         assert await channel_checker.channel_checks() == channel_response
@@ -939,10 +934,7 @@ class TestChannel:
                 ["scalar", "image", "waveform"],
                 True,
                 [
-                    {
-                        "PM-201-FE-CAM-2-CENX": "channel_dtype attribute is missing "
-                        "(cannot perform other checks without)",
-                    },
+                    {"PM-201-FE-CAM-2-CENX": "channel_dtype attribute is missing"},
                     {"PM-201-FE-EM": "data attribute is missing"},
                     {"PM-201-PA2-EM": "units attribute has wrong datatype"},
                     {
@@ -1011,12 +1003,13 @@ class TestChannel:
             channels_check=channels_check,
         )
 
-        channel_checker = ingestion_validator.ChannelChecks(
+        channel_checker = ChannelChecks(
             record_data,
             waveforms,
             images,
             internal_failed_channel,
         )
+        await channel_checker.set_manifest_channels()
 
         channel_response = create_channel_response(response, channels=channels_check)
         assert await channel_checker.channel_checks() == channel_response
@@ -1087,12 +1080,13 @@ class TestChannel:
             internal_failed_channel,
         ) = await create_test_hdf_file(test_type=test_type)
 
-        channel_checker = ingestion_validator.ChannelChecks(
+        channel_checker = ChannelChecks(
             record_data,
             waveforms,
             images,
             internal_failed_channel,
         )
+        await channel_checker.set_manifest_channels()
 
         channel_response = create_channel_response(response)
         assert await channel_checker.channel_checks() == channel_response

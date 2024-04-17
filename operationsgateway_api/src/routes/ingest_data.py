@@ -9,9 +9,14 @@ from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.error_handling import endpoint_error_handling
-from operationsgateway_api.src.records import ingestion_validator
-from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.ingestion.channel_checks import ChannelChecks
+from operationsgateway_api.src.records.ingestion.file_checks import FileChecks
+from operationsgateway_api.src.records.ingestion.hdf_handler import HDFDataHandler
+from operationsgateway_api.src.records.ingestion.partial_import_checks import (
+    PartialImportChecks,
+)
+from operationsgateway_api.src.records.ingestion.record_checks import RecordChecks
 from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.waveform import Waveform
 
@@ -21,6 +26,9 @@ router = APIRouter()
 AuthoriseRoute = Annotated[str, Depends(authorise_route)]
 
 
+# TODO - add docstring and move it out of this file
+# Looks like where channels have been rejected, it removes them from the variables
+# storing the data so they don't get ingested
 def _update_data(checker_response, record_data, images, waveforms):
     for key in checker_response["rejected_channels"].keys():
         try:
@@ -29,16 +37,16 @@ def _update_data(checker_response, record_data, images, waveforms):
             continue
 
         if channel.metadata.channel_dtype == "image":
-            image_path = channel.image_path
+            channel_image_path = channel.image_path
             for image in images:
-                if image.path == image_path:
+                if image.path == channel_image_path:
                     images.remove(image)
             del record_data.channels[key]
 
         elif channel.metadata.channel_dtype == "waveform":
-            waveform_path = channel.waveform_path
+            channel_waveform_path = channel.waveform_path
             for waveform in waveforms:
-                if waveform.path == waveform_path:
+                if waveform.path == channel_waveform_path:
                     waveforms.remove(waveform)
             del record_data.channels[key]
 
@@ -78,53 +86,53 @@ async def submit_hdf(
     ) = await hdf_handler.extract_data()
 
     record_original = Record(record_data)
-
     stored_record = await record_original.find_existing_record()
 
     accept_type = None
     if stored_record:
-        partial_import_checker = ingestion_validator.PartialImportChecks(
+        partial_import_checker = PartialImportChecks(
             record_data,
             stored_record,
         )
         accept_type = partial_import_checker.metadata_checks()
         partial_channel_dict = partial_import_checker.channel_checks()
 
-    file_checker = ingestion_validator.FileChecks(record_data)
+    file_checker = FileChecks(record_data)
     warning = file_checker.epac_data_version_checks()
 
-    record_checker = ingestion_validator.RecordChecks(record_data)
+    record_checker = RecordChecks(record_data)
     record_checker.active_area_checks()
     record_checker.optional_metadata_checks()
 
-    channel_checker = ingestion_validator.ChannelChecks(
+    # TODO - ChannelChecks seem to be ran twice somewhere (one in extraction), once
+    # further along in the process. Is this true, does this have to be the case?
+    channel_checker = ChannelChecks(
         record_data,
         waveforms,
         images,
         internal_failed_channel,
     )
+    await channel_checker.set_manifest_channels()
     channel_dict = await channel_checker.channel_checks()
 
+    # TODO - what's going on here? Can this be added to _update_data()?
     if stored_record:
         log.info("existent record found")
         for key in channel_dict["rejected_channels"].keys():
             if key in partial_channel_dict["accepted_channels"]:
                 partial_channel_dict["accepted_channels"].remove(key)
-                (partial_channel_dict["rejected_channels"])[key] = channel_dict[
+                partial_channel_dict["rejected_channels"][key] = channel_dict[
                     "rejected_channels"
                 ][key]
             else:
-                (partial_channel_dict["rejected_channels"])[key] = channel_dict[
+                partial_channel_dict["rejected_channels"][key] = channel_dict[
                     "rejected_channels"
                 ][key]
         checker_response = partial_channel_dict
     else:
         checker_response = channel_dict
 
-    if warning:
-        checker_response["warnings"] = list(warning)
-    else:
-        checker_response["warnings"] = []
+    checker_response["warnings"] = list(warning) if warning else []
 
     record_data, images, waveforms = _update_data(
         checker_response,

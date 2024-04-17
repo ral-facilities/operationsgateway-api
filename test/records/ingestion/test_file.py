@@ -1,7 +1,7 @@
 import pytest
 
 from operationsgateway_api.src.exceptions import RejectFileError
-from operationsgateway_api.src.records import ingestion_validator
+from operationsgateway_api.src.records.ingestion.file_checks import FileChecks
 from test.records.ingestion.create_test_hdf import create_test_hdf_file
 
 
@@ -9,7 +9,7 @@ class TestFile:
     @pytest.mark.asyncio
     async def test_file_checks_pass(self, remove_hdf_file):
         record_data, _, _, _ = await create_test_hdf_file()
-        file_checker = ingestion_validator.FileChecks(record_data)
+        file_checker = FileChecks(record_data)
 
         file_checker.epac_data_version_checks()
 
@@ -18,7 +18,7 @@ class TestFile:
         record_data, _, _, _ = await create_test_hdf_file(
             data_version=["1.4", "exists"],
         )
-        file_checker = ingestion_validator.FileChecks(record_data)
+        file_checker = FileChecks(record_data)
 
         assert (
             file_checker.epac_data_version_checks()
@@ -53,7 +53,7 @@ class TestFile:
         remove_hdf_file,
     ):
         record_data, _, _, _ = await create_test_hdf_file(data_version=data_version)
-        file_checker = ingestion_validator.FileChecks(record_data)
+        file_checker = FileChecks(record_data)
 
         with pytest.raises(RejectFileError, match=match):
             file_checker.epac_data_version_checks()

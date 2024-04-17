@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+import logging
 from tempfile import SpooledTemporaryFile
 
 from pydantic import ValidationError
@@ -10,6 +11,9 @@ from operationsgateway_api.src.constants import ID_DATETIME_FORMAT
 from operationsgateway_api.src.exceptions import ChannelManifestError, ModelError
 from operationsgateway_api.src.models import ChannelManifestModel, ChannelModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
+
+
+log = logging.getLogger()
 
 
 class ChannelManifest:
@@ -76,6 +80,7 @@ class ChannelManifest:
         """
         Get the most up to date manifest file from MongoDB and return it to the user
         """
+        log.info("Getting most recent channel manifest file")
         manifest_data = await MongoDBInterface.find_one(
             "channels",
             sort=[("_id", pymongo.DESCENDING)],

@@ -4,7 +4,7 @@ from operationsgateway_api.src.exceptions import (
     ModelError,
     RejectRecordError,
 )
-from operationsgateway_api.src.records import ingestion_validator
+from operationsgateway_api.src.records.ingestion.record_checks import RecordChecks
 from test.records.ingestion.create_test_hdf import create_test_hdf_file
 
 
@@ -40,7 +40,7 @@ class TestRecord:
             shotnum=shotnum,
             active_experiment=active_experiment,
         )
-        record_checker = ingestion_validator.RecordChecks(record_data)
+        record_checker = RecordChecks(record_data)
 
         record_checker.active_area_checks()
         record_checker.optional_metadata_checks()
@@ -113,7 +113,7 @@ class TestRecord:
                 shotnum=shotnum,
                 active_experiment=active_experiment,
             )
-            record_checker = ingestion_validator.RecordChecks(record_data)
+            record_checker = RecordChecks(record_data)
 
             with pytest.raises(RejectRecordError, match=match):
                 if test == "timestamp":

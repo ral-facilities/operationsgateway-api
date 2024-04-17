@@ -21,7 +21,7 @@ from operationsgateway_api.src.models import (
     WaveformModel,
 )
 from operationsgateway_api.src.records.image import Image
-from operationsgateway_api.src.records.ingestion_validator import ChannelChecks
+from operationsgateway_api.src.records.ingestion.channel_checks import ChannelChecks
 from operationsgateway_api.src.records.waveform import Waveform
 
 
@@ -93,12 +93,7 @@ class HDFDataHandler:
         is not the same what it is meant to be for the channel type
         using the self.acceptable_datasets dictionary
         """
-        stop = False
-        for val in value:
-            if val != self.acceptable_datasets[channel_type][0]:
-                stop = True
-                break
-        return stop
+        return any(val != self.acceptable_datasets[channel_type][0] for val in value)
 
     def _extract_image(
         self,
@@ -238,6 +233,7 @@ class HDFDataHandler:
         """
 
         internal_failed_channel = []
+        # TODO - move this into a ClassVar on the models? or move into init at least
         self.acceptable_datasets = {
             "scalar": ["data"],
             "image": ["data"],
@@ -250,9 +246,12 @@ class HDFDataHandler:
             channel_checks = ChannelChecks(
                 ingested_record={channel_name: channel_metadata},
             )
+            log.debug("Pre channel find")
+            await channel_checks.set_manifest_channels()
+            log.debug("Post channel find")
             response = await channel_checks.channel_dtype_checks()
             if response != []:
-                internal_failed_channel.append((response[0]))
+                internal_failed_channel.extend(response)
                 continue
 
             if value.attrs["channel_dtype"] == "image":

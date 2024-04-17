@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 from operationsgateway_api.src.exceptions import HDFDataExtractionError
-from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
+from operationsgateway_api.src.records.ingestion.hdf_handler import HDFDataHandler
 
 
 def create_test_hdf_file(timestamp_test=False, data_test=False):

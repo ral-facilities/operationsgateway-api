@@ -86,7 +86,7 @@ class TestEchoInterface:
 
             with pytest.raises(
                 EchoS3Error,
-                match="Bucket for image storage cannot be found",
+                match="Bucket for object storage cannot be found",
             ):
                 EchoInterface()
 

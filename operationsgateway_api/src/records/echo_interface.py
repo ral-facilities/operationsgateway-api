@@ -56,7 +56,7 @@ class EchoInterface:
                 "Bucket cannot be found: %s",
                 Config.config.echo.bucket_name,
             )
-            raise EchoS3Error("Bucket for image storage cannot be found")
+            raise EchoS3Error("Bucket for object storage cannot be found")
 
     def download_file_object(self, object_path: str) -> BytesIO:
         """
@@ -108,9 +108,9 @@ class EchoInterface:
 
     def delete_file_object(self, object_path: str) -> None:
         """
-        Delete an image
+        Delete a file from Echo
         """
-        log.info("Deleting image from %s", object_path)
+        log.info("Deleting file from %s", object_path)
         try:
             self.bucket.Object(object_path).delete()
         except ClientError as exc:
