@@ -175,7 +175,7 @@ class FalseColourHandler:
         if image.mode == "L":
             # 8-bit black and white
             return 8
-        elif image.mode == "I":
+        elif image.mode == "I" or image.mode == "I;16":
             # as per the pillow docs these are 32-bit signed integer pixels
             # but for our usage these are 16 bit black and white images
             return 16
