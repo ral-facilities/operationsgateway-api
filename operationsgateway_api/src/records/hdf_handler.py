@@ -122,9 +122,8 @@ class HDFDataHandler:
                 except ValidationError as exc:
                     raise ModelError(str(exc)) from exc
             elif value.attrs["channel_dtype"] == "waveform":
-                waveform_id = f"{self.record_id}_{channel_name}"
                 waveform_path = Waveform.get_relative_path(self.record_id, channel_name)
-                log.debug("Waveform ID: %s", waveform_id)
+                log.debug("Waveform Path: %s", waveform_path)
 
                 try:
                     channel = WaveformChannelModel(

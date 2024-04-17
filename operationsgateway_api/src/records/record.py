@@ -188,10 +188,10 @@ class Record:
         piece of data that exists for a particular channel. If no data can be found, a
         `ChannelSummaryError` will be raised
         """
-        channel_exist_condiion = {f"channels.{channel_name}": {"$exists": True}}
+        channel_exist_condition = {f"channels.{channel_name}": {"$exists": True}}
         data = await MongoDBInterface.find_one(
             "records",
-            filter_=channel_exist_condiion,
+            filter_=channel_exist_condition,
             sort=direction,
             projection=["metadata.timestamp"],
         )
@@ -217,11 +217,11 @@ class Record:
         """
 
         channel_path = f"channels.{channel_name}"
-        channel_exist_condiion = {channel_path: {"$exists": True}}
+        channel_exist_condition = {channel_path: {"$exists": True}}
 
         recent_channel_query = MongoDBInterface.find(
             "records",
-            filter_=channel_exist_condiion,
+            filter_=channel_exist_condition,
             limit=3,
             sort=[("_id", pymongo.DESCENDING)],
             projection=[f"channels.{channel_name}", "metadata"],

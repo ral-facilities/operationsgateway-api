@@ -17,6 +17,15 @@ from operationsgateway_api.src.models import ImageModel
 from operationsgateway_api.src.records.image import Image
 
 
+class MockImage:
+    def __init__(self, mode, size):
+        self.mode = mode
+        self.size = size
+
+    def thumbnail(self, size, resample=PILImage.BICUBIC):
+        pass
+
+
 class TestImage:
     config_echo_url = "https://mytesturl.com"
     config_echo_access_key = "TestAccessKey"
@@ -53,6 +62,24 @@ class TestImage:
         assert thumbnail_checksum == "0000000000000000"
         # the reason only 0s are being asserted is because this is checking the hash of
         # a purely black 300x300 square created in the test_image above
+
+    def test_alternative_mode_thumbnail(self):
+        test_image = Image(
+            ImageModel(
+                path="test/path/photo.png",
+                data=np.ones(shape=(300, 300), dtype=np.int8),
+            ),
+        )
+
+        with patch("PIL.Image.open", autospec=True) as mock_image_open:
+            mock_img = MockImage(mode="RGB", size=(200, 150))
+            mock_image_open.return_value = mock_img
+
+            with pytest.raises(
+                AttributeError,
+                match="'MockImage' object has no attribute 'save'",
+            ):
+                test_image.create_thumbnail()
 
     @pytest.mark.parametrize(
         "image_path, expected_record_id, expected_channel_name",
