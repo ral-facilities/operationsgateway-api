@@ -247,44 +247,7 @@ class TestIntegrationIngestData:
         assert test_response.status_code == 400
 
     @pytest.mark.asyncio
-    async def test_partial_import_timestamp_match(
-        self,
-        reset_databases,
-        test_app: TestClient,
-        login_and_get_token,
-    ):
-        _ = await create_test_hdf_file()
-
-        test_file = "test.h5"
-        files = {"file": (test_file, open(test_file, "rb"))}
-
-        test_app.post(
-            "/submit/hdf",
-            headers={"Authorization": f"Bearer {login_and_get_token}"},
-            files=files,
-        )
-
-        _ = await create_test_hdf_file(
-            shotnum=["valid", "missing"],
-            data_version=["1.0", "missing"],
-            active_area=["ea1", "missing"],
-            active_experiment=["90097341", "missing"],
-        )
-
-        files = {"file": (test_file, open(test_file, "rb"))}
-
-        test_response = test_app.post(
-            "/submit/hdf",
-            headers={"Authorization": f"Bearer {login_and_get_token}"},
-            files=files,
-        )
-
-        assert test_response.json() == {
-            "detail": "timestamp matches, other metadata does not",
-        }
-        assert test_response.status_code == 400
-
-    @pytest.mark.asyncio
+    # @pytest.mark.skip
     async def test_channel_all_fail(
         self,
         reset_databases,

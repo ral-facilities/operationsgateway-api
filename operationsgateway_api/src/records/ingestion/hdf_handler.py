@@ -30,6 +30,12 @@ log = logging.getLogger()
 
 
 class HDFDataHandler:
+    acceptable_datasets = {
+        "scalar": ["data"],
+        "image": ["data"],
+        "waveform": ["x", "y"],
+    }
+
     def __init__(self, hdf_temp_file: SpooledTemporaryFile) -> None:
         """
         Convert a HDF file that comes attached in a HTTP request (not in HDF format)
@@ -234,13 +240,6 @@ class HDFDataHandler:
         """
 
         internal_failed_channel = []
-        # TODO - move this into a ClassVar on the models? or move into init at least
-        self.acceptable_datasets = {
-            "scalar": ["data"],
-            "image": ["data"],
-            "waveform": ["x", "y"],
-        }
-
         manifest = await ChannelManifest.get_most_recent_manifest()
 
         for channel_name, value in self.hdf_file.items():
@@ -299,3 +298,28 @@ class HDFDataHandler:
             # the database
             self.channels[channel_name] = channel
         self.internal_failed_channel = internal_failed_channel
+
+    def _update_data(self, checker_response, record_data, images, waveforms):
+        for key in checker_response["rejected_channels"].keys():
+            try:
+                channel = record_data.channels[key]
+            except KeyError:
+                continue
+
+            if channel.metadata.channel_dtype == "image":
+                channel_image_path = channel.image_path
+                for image in images:
+                    if image.path == channel_image_path:
+                        images.remove(image)
+                del record_data.channels[key]
+
+            elif channel.metadata.channel_dtype == "waveform":
+                channel_waveform_path = channel.waveform_path
+                for waveform in waveforms:
+                    if waveform.path == channel_waveform_path:
+                        waveforms.remove(waveform)
+                del record_data.channels[key]
+
+            else:
+                del record_data.channels[key]
+        return record_data, images, waveforms

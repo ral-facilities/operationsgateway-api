@@ -26,35 +26,6 @@ router = APIRouter()
 AuthoriseRoute = Annotated[str, Depends(authorise_route)]
 
 
-# TODO - add docstring and move it out of this file
-# Looks like where channels have been rejected, it removes them from the variables
-# storing the data so they don't get ingested
-def _update_data(checker_response, record_data, images, waveforms):
-    for key in checker_response["rejected_channels"].keys():
-        try:
-            channel = record_data.channels[key]
-        except KeyError:
-            continue
-
-        if channel.metadata.channel_dtype == "image":
-            channel_image_path = channel.image_path
-            for image in images:
-                if image.path == channel_image_path:
-                    images.remove(image)
-            del record_data.channels[key]
-
-        elif channel.metadata.channel_dtype == "waveform":
-            channel_waveform_path = channel.waveform_path
-            for waveform in waveforms:
-                if waveform.path == channel_waveform_path:
-                    waveforms.remove(waveform)
-            del record_data.channels[key]
-
-        else:
-            del record_data.channels[key]
-    return record_data, images, waveforms
-
-
 @router.post(
     "/submit/hdf",
     summary="Submit a HDF file for ingestion into MongoDB",
@@ -88,18 +59,8 @@ async def submit_hdf(
     record_original = Record(record_data)
     stored_record = await record_original.find_existing_record()
 
-    accept_type = None
-    if stored_record:
-        partial_import_checker = PartialImportChecks(
-            record_data,
-            stored_record,
-        )
-        accept_type = partial_import_checker.metadata_checks()
-        partial_channel_dict = partial_import_checker.channel_checks()
-
     file_checker = FileChecks(record_data)
     warning = file_checker.epac_data_version_checks()
-
     record_checker = RecordChecks(record_data)
     record_checker.active_area_checks()
     record_checker.optional_metadata_checks()
@@ -116,8 +77,14 @@ async def submit_hdf(
     channel_checker.set_channels(manifest)
     channel_dict = await channel_checker.channel_checks()
 
-    # TODO - what's going on here? Can this be added to _update_data()?
     if stored_record:
+        partial_import_checker = PartialImportChecks(
+            record_data,
+            stored_record,
+        )
+        accept_type = partial_import_checker.metadata_checks()
+        partial_channel_dict = partial_import_checker.channel_checks()
+
         log.info("existent record found")
         for key in channel_dict["rejected_channels"].keys():
             if key in partial_channel_dict["accepted_channels"]:
@@ -135,7 +102,7 @@ async def submit_hdf(
 
     checker_response["warnings"] = list(warning) if warning else []
 
-    record_data, images, waveforms = _update_data(
+    record_data, images, waveforms = hdf_handler._update_data(
         checker_response,
         record_data,
         images,

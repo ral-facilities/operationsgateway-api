@@ -39,5 +39,3 @@ class FileChecks:
                     return "File minor version number too high (expected 0)"
         else:
             raise RejectFileError("epac_ops_data_version does not exist")
-        # a RecordMetadataModel is already returned when
-        # epac_ops_data_version does not exist
