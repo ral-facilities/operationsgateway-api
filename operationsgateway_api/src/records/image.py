@@ -7,6 +7,7 @@ from typing import Tuple
 from botocore.exceptions import ClientError
 import numpy as np
 from PIL import Image as PILImage
+from pydantic import Json
 
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.config import Config
@@ -15,6 +16,10 @@ from operationsgateway_api.src.exceptions import (
     ImageError,
     ImageNotFoundError,
 )
+from operationsgateway_api.src.functions.builtins.centroid_x import CentroidX
+from operationsgateway_api.src.functions.builtins.centroid_y import CentroidY
+from operationsgateway_api.src.functions.builtins.fwhm import FWHM
+from operationsgateway_api.src.functions.waveform_variable import WaveformVariable
 from operationsgateway_api.src.models import ImageModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.echo_interface import EchoInterface
@@ -209,3 +214,25 @@ class Image:
         colourmap_name = await FalseColourHandler.get_preferred_colourmap(username)
         log.debug("Preferred colour map for %s is %s", username, colourmap_name)
         return colourmap_name
+
+    @staticmethod
+    def validate_position(position: Json, orig_img_array: np.ndarray) -> "tuple[int]":
+        """If position is undefined, then the centroid of the `orig_img_array`
+        will be calculated and returned.
+        """
+        if position is None:
+            position_x = CentroidX.evaluate(orig_img_array)
+            position_y = CentroidY.evaluate(orig_img_array)
+            position = int(position_x), int(position_y)
+
+        return position
+
+    @staticmethod
+    def extract_image_intensity(position: int, array: np.ndarray) -> dict:
+        """Converts a row or column from an image (at `position`) into a
+        Waveform and calculates the FWHM for display in the UI.
+        """
+        waveform = WaveformVariable(x=np.arange(len(array)), y=array)
+        waveform_model = waveform.to_waveform_model()
+        fwhm = float(FWHM.evaluate(waveform=waveform))
+        return {"position": position, "intensity": waveform_model, "fwhm": fwhm}
