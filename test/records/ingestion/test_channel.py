@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.records.ingestion.channel_checks import ChannelChecks
 from test.records.ingestion.create_test_hdf import create_test_hdf_file
 
@@ -68,7 +69,9 @@ class TestChannel:
             images,
             internal_failed_channel,
         )
-        await channel_checker.set_manifest_channels()
+
+        manifest = await ChannelManifest.get_most_recent_manifest()
+        channel_checker.set_channels(manifest)
         async_functions = [
             channel_checker.channel_dtype_checks,
             channel_checker.channel_name_check,
@@ -120,7 +123,7 @@ class TestChannel:
             pytest.param(
                 ["image", "missing", "image"],
                 [
-                    { "PM-201-FE-CAM-1": "channel_dtype attribute is missing"},
+                    {"PM-201-FE-CAM-1": "channel_dtype attribute is missing"},
                 ],
                 id="Image channel_dtype missing",
             ),
@@ -202,7 +205,8 @@ class TestChannel:
             images,
             internal_failed_channel,
         )
-        await channel_checker.set_manifest_channels()
+        manifest = await ChannelManifest.get_most_recent_manifest()
+        channel_checker.set_channels(manifest)
 
         channel_response = create_channel_response(response)
         assert await channel_checker.channel_checks() == channel_response
@@ -383,7 +387,8 @@ class TestChannel:
             images,
             internal_failed_channel,
         )
-        await channel_checker.set_manifest_channels()
+        manifest = await ChannelManifest.get_most_recent_manifest()
+        channel_checker.set_channels(manifest)
 
         channel_response = create_channel_response(response, extra)
         assert await channel_checker.channel_checks() == channel_response
@@ -516,7 +521,8 @@ class TestChannel:
             images,
             internal_failed_channel,
         )
-        await channel_checker.set_manifest_channels()
+        manifest = await ChannelManifest.get_most_recent_manifest()
+        channel_checker.set_channels(manifest)
 
         channel_response = create_channel_response(response)
         assert await channel_checker.channel_checks() == channel_response
@@ -663,7 +669,8 @@ class TestChannel:
             images,
             internal_failed_channel,
         )
-        await channel_checker.set_manifest_channels()
+        manifest = await ChannelManifest.get_most_recent_manifest()
+        channel_checker.set_channels(manifest)
 
         channel_response = create_channel_response(response, extra)
         assert await channel_checker.channel_checks() == channel_response
@@ -806,7 +813,8 @@ class TestChannel:
             images,
             internal_failed_channel,
         )
-        await channel_checker.set_manifest_channels()
+        manifest = await ChannelManifest.get_most_recent_manifest()
+        channel_checker.set_channels(manifest)
 
         channel_response = create_channel_response(response)
         assert await channel_checker.channel_checks() == channel_response
@@ -885,7 +893,8 @@ class TestChannel:
             images,
             internal_failed_channel,
         )
-        await channel_checker.set_manifest_channels()
+        manifest = await ChannelManifest.get_most_recent_manifest()
+        channel_checker.set_channels(manifest)
 
         channel_response = create_channel_response(response)
         assert await channel_checker.channel_checks() == channel_response
@@ -1009,7 +1018,8 @@ class TestChannel:
             images,
             internal_failed_channel,
         )
-        await channel_checker.set_manifest_channels()
+        manifest = await ChannelManifest.get_most_recent_manifest()
+        channel_checker.set_channels(manifest)
 
         channel_response = create_channel_response(response, channels=channels_check)
         assert await channel_checker.channel_checks() == channel_response
@@ -1086,7 +1096,8 @@ class TestChannel:
             images,
             internal_failed_channel,
         )
-        await channel_checker.set_manifest_channels()
+        manifest = await ChannelManifest.get_most_recent_manifest()
+        channel_checker.set_channels(manifest)
 
         channel_response = create_channel_response(response)
         assert await channel_checker.channel_checks() == channel_response

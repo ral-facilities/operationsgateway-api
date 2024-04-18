@@ -6,6 +6,7 @@ from typing import List, Tuple
 import h5py
 from pydantic import ValidationError
 
+from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.constants import DATA_DATETIME_FORMAT, ID_DATETIME_FORMAT
 from operationsgateway_api.src.exceptions import HDFDataExtractionError, ModelError
 from operationsgateway_api.src.models import (
@@ -240,15 +241,15 @@ class HDFDataHandler:
             "waveform": ["x", "y"],
         }
 
+        manifest = await ChannelManifest.get_most_recent_manifest()
+
         for channel_name, value in self.hdf_file.items():
             channel_metadata = dict(value.attrs)
 
             channel_checks = ChannelChecks(
                 ingested_record={channel_name: channel_metadata},
             )
-            log.debug("Pre channel find")
-            await channel_checks.set_manifest_channels()
-            log.debug("Post channel find")
+            channel_checks.set_channels(manifest)
             response = await channel_checks.channel_dtype_checks()
             if response != []:
                 internal_failed_channel.extend(response)

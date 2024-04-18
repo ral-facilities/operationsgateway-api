@@ -112,7 +112,8 @@ async def submit_hdf(
         images,
         internal_failed_channel,
     )
-    await channel_checker.set_manifest_channels()
+    manifest = await ChannelManifest.get_most_recent_manifest()
+    channel_checker.set_channels(manifest)
     channel_dict = await channel_checker.channel_checks()
 
     # TODO - what's going on here? Can this be added to _update_data()?

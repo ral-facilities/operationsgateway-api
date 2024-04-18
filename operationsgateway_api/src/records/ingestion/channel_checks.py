@@ -2,7 +2,8 @@ import logging
 
 import numpy as np
 
-from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
+
+log = logging.getLogger()
 
 
 class ChannelChecks:
@@ -30,9 +31,7 @@ class ChannelChecks:
             "waveform",
         ]
 
-    async def set_manifest_channels(self) -> None:
-        # TODO - this is called in a couple of places, can we reduce number of calls?
-        manifest = await ChannelManifest.get_most_recent_manifest()
+    def set_channels(self, manifest) -> None:
         self.manifest_channels = manifest["channels"]
 
     def _merge_internal_failed(
@@ -412,6 +411,7 @@ class ChannelChecks:
         if it doesn't it is added to rejected_channels
         """
         if key not in manifest:
+            log.debug("Channel '%s' is not in manifest", key)
             rejected_channels.append(
                 {
                     key: "Channel name is not recognised (does not appear "
