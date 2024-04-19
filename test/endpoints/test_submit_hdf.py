@@ -72,7 +72,7 @@ def create_integration_test_hdf(fails=None, generic_fail=None):
             pm_201_hj_pd.create_dataset("y", data=y)
 
 
-class TestIntegrationIngestData:
+class TestSubmitHDF:
     @pytest.mark.asyncio
     async def test_ingest_data_success(
         self,
@@ -189,6 +189,7 @@ class TestIntegrationIngestData:
         ],
     )
     @pytest.mark.asyncio
+    # @pytest.mark.skip
     async def test_hdf_rejects(
         self,
         data_version,
@@ -216,6 +217,7 @@ class TestIntegrationIngestData:
         assert test_response.status_code == 400
 
     @pytest.mark.asyncio
+    # @pytest.mark.skip
     async def test_partial_import_record_reject(
         self,
         reset_databases,
@@ -288,6 +290,7 @@ class TestIntegrationIngestData:
         assert test_response.status_code == 201
 
     @pytest.mark.asyncio
+    # @pytest.mark.skip
     async def test_channel_multiple_reject_types(
         self,
         reset_databases,

@@ -488,7 +488,6 @@ class ChannelChecks:
         """
         ingested_channels = (self.ingested_record).channels
 
-        # TODO - have these checks already been ran elsewhere?
         dtype_response = self._organise_dict(await self.channel_dtype_checks())
         attribute_response = self._organise_dict(self.required_attribute_checks())
         optional_response = self._organise_dict(self.optional_dtype_checks())

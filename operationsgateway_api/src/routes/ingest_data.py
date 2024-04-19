@@ -65,8 +65,6 @@ async def submit_hdf(
     record_checker.active_area_checks()
     record_checker.optional_metadata_checks()
 
-    # TODO - ChannelChecks seem to be ran twice somewhere (one in extraction), once
-    # further along in the process. Is this true, does this have to be the case?
     channel_checker = ChannelChecks(
         record_data,
         waveforms,
