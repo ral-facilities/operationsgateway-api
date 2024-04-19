@@ -193,9 +193,8 @@ class HDFDataHandler:
         Extract data for waveforms in the HDF file and place the data into
         relevant Pydantic models as well as performing on waveform specific checks
         """
-        waveform_id = f"{self.record_id}_{channel_name}"
         waveform_path = Waveform.get_relative_path(self.record_id, channel_name)
-        log.debug("Waveform ID: %s", waveform_id)
+        log.debug("Waveform Path: %s", waveform_path)
 
         value_list = []
         for val in value:

@@ -48,6 +48,11 @@ class Image:
         img_temp.save(image_bytes, format="PNG")
 
         img = PILImage.open(image_bytes)
+        # Images of a certain mode must be converted to mode I to avoid a ValueError
+        # where PIL complains the image is in the wrong mode
+        if img.mode == "I;16":
+            img = img.convert("I")
+
         img.thumbnail(Config.config.images.image_thumbnail_size)
         # convert 16 bit greyscale thumbnails to 8 bit to save space
         if img.mode == "I":

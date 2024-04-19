@@ -8,7 +8,7 @@ from operationsgateway_api.src.records.ingestion.record_checks import RecordChec
 from test.records.ingestion.create_test_hdf import create_test_hdf_file
 
 
-class TestRecord:
+class TestRecordChecks:
     @pytest.mark.parametrize(
         "shotnum, active_experiment",
         [

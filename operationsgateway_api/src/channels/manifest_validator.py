@@ -20,7 +20,7 @@ class ManifestValidator:
 
     def perform_validation(self) -> None:
         """
-        Function to run each step of the validation proces
+        Function to run each step of the validation process
         """
 
         if not self.bypass_channel_check:
