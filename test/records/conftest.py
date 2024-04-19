@@ -1,8 +1,17 @@
+import os
+
 import pytest
 import pytest_asyncio
 
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.echo_interface import EchoInterface
+
+
+@pytest.fixture(scope="function")
+def remove_hdf_file():
+    yield
+    if os.path.exists("test.h5"):
+        os.remove("test.h5")
 
 
 @pytest_asyncio.fixture(scope="function")

@@ -56,7 +56,7 @@ class EchoInterface:
                 "Bucket cannot be found: %s",
                 Config.config.echo.bucket_name,
             )
-            raise EchoS3Error("Bucket for image storage cannot be found")
+            raise EchoS3Error("Bucket for object storage cannot be found")
 
     def download_file_object(self, object_path: str) -> BytesIO:
         """

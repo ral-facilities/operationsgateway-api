@@ -1,9 +1,11 @@
 from datetime import datetime
+import os
 
 import pymongo
 import pytest_asyncio
 
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
+from operationsgateway_api.src.records.echo_interface import EchoInterface
 
 
 async def add_user(auth_type):
@@ -60,16 +62,36 @@ async def delete_local_fixture():
     await remove_user("local")
 
 
-@pytest_asyncio.fixture(scope="function")
-async def remove_experiment_fixture():
-    yield
+async def remove_record(timestamp_id):
     await MongoDBInterface.delete_one(
-        "experiments",
-        {
-            "experiment_id": "20310001",
-            "start_date": datetime(1920, 4, 30, 10, 0),
-        },
+        "records",
+        filter_={"_id": f"{timestamp_id}"},
     )
+
+
+async def remove_image(images):
+    echo = EchoInterface()
+    for image_path in images:
+        echo.delete_file_object(image_path)
+
+
+async def remove_waveform():
+    await MongoDBInterface.delete_one(
+        "waveforms",
+        filter_={"_id": "20200407142816_PM-201-HJ-PD"},
+    )
+
+
+@pytest_asyncio.fixture(scope="function")
+async def reset_databases():
+    yield
+    await remove_record("20200407142816")
+    await remove_image(
+        ["20200407142816/PM-201-FE-CAM-1.png", "20200407142816/PM-201-FE-CAM-2.png"],
+    )
+    await remove_waveform()
+    if os.path.exists("test.h5"):
+        os.remove("test.h5")
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -81,5 +103,16 @@ async def remove_manifest_fixture():
         [("_id", pymongo.DESCENDING)],
         projection=["_id"],
     )
-    print(f"filter_to_delete: {filter_to_delete}")
     await MongoDBInterface.delete_one("channels", filter_to_delete)
+
+
+@pytest_asyncio.fixture(scope="function")
+async def remove_experiment_fixture():
+    yield
+    await MongoDBInterface.delete_one(
+        "experiments",
+        {
+            "experiment_id": "20310001",
+            "start_date": datetime(1920, 4, 30, 10, 0),
+        },
+    )
