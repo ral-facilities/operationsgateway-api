@@ -78,6 +78,10 @@ class ChannelChecks:
             response = await self.channel_name_check(key)
             if response != []:
                 rejected_channels.extend(response)
+                log.debug(
+                    "Channel name not recognised, further checks on '%s' won't be run",
+                    key,
+                )
                 continue
 
             if "channel_dtype" in value:

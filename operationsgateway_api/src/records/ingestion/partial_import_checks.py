@@ -25,8 +25,8 @@ class PartialImportChecks:
             merge the record
             reject the record
         """
-        ingested_metadata = (self.ingested_record).metadata
-        stored_metadata = (self.stored_record).metadata
+        ingested_metadata = self.ingested_record.metadata
+        stored_metadata = self.stored_record.metadata
 
         try:
             time_match = (ingested_metadata.timestamp).replace(
@@ -71,6 +71,12 @@ class PartialImportChecks:
             return "accept_new"
 
         else:
+            log.error(
+                "Metadata for file being ingested: %s, metadata for file stored in"
+                " database: %s",
+                ingested_metadata,
+                stored_metadata,
+            )
             raise RejectRecordError("inconsistent metadata")
 
     def channel_checks(self):
@@ -80,8 +86,8 @@ class PartialImportChecks:
         if they do they are rejected and a channel response similar to the main channel
         checks is returned
         """
-        ingested_channels = (self.ingested_record).channels
-        stored_channels = (self.stored_record).channels
+        ingested_channels = self.ingested_record.channels
+        stored_channels = self.stored_record.channels
 
         accepted_channels = []
         rejected_channels = {}

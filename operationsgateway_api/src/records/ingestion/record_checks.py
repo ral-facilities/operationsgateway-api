@@ -3,6 +3,8 @@ import logging
 from operationsgateway_api.src.exceptions import RejectRecordError
 from operationsgateway_api.src.models import RecordModel
 
+log = logging.getLogger()
+
 
 class RecordChecks:
     def __init__(self, ingested_record: RecordModel):
@@ -21,7 +23,12 @@ class RecordChecks:
             hasattr(ingested_metadata, "active_area")
             and ingested_metadata.active_area is not None
         ):
-            if type(ingested_metadata.active_area) != str:
+            active_area_type = type(ingested_metadata.active_area)
+            if active_area_type != str:
+                log.error(
+                    "Datatype of active_area is '%s', expected string",
+                    active_area_type,
+                )
                 raise RejectRecordError(
                     "active_area has wrong datatype. Expected string",
                 )
@@ -39,7 +46,12 @@ class RecordChecks:
             hasattr(ingested_metadata, "active_experiment")
             and ingested_metadata.active_experiment is not None
         ):
-            if type(ingested_metadata.active_experiment) != str:
+            active_experiment_type = type(ingested_metadata.active_experiment)
+            if active_experiment_type != str:
+                log.error(
+                    "Datatype of active_experiment is '%s', expected string",
+                    active_experiment_type,
+                )
                 raise RejectRecordError(
                     "active_experiment has wrong datatype. Expected string",
                 )
@@ -47,5 +59,10 @@ class RecordChecks:
             hasattr(ingested_metadata, "shotnum")
             and ingested_metadata.shotnum is not None
         ):
-            if type(ingested_metadata.shotnum) != int:
+            shotnum_type = type(ingested_metadata.shotnum)
+            if shotnum_type != int:
+                log.error(
+                    "Datatype of shotnum is '%s', expected integer",
+                    shotnum_type,
+                )
                 raise RejectRecordError("shotnum has wrong datatype. Expected integer")
