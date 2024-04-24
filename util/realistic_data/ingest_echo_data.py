@@ -35,10 +35,7 @@ def main():
     if Config.config.script_options.import_users:
         print("Importing test users to the database")
 
-        client = AsyncIOMotorClient(
-            f"mongodb://{Config.config.database.hostname}"
-            f":{Config.config.database.port}",
-        )
+        client = AsyncIOMotorClient(Config.config.database.connection_uri)
         db = client[Config.config.database.name]
         with open(Config.config.database.test_users_file_path) as f:
             users = [json.loads(line) for line in f.readlines()]

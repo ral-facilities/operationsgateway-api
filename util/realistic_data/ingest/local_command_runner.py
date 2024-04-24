@@ -32,10 +32,10 @@ class LocalCommandRunner:
         Popen(
             [
                 "mongoimport",
-                f"--db={Config.config.database.name}",
                 "--collection=experiments",
                 "--mode=upsert",
                 f"--file={Config.config.database.remote_experiments_file_path}",
+                Config.config.database.connection_uri,
             ],
         )
 
@@ -48,11 +48,7 @@ class LocalCommandRunner:
             Popen(
                 [
                     "mongo",
-                    "--host",
-                    Config.config.database.hostname,
-                    "--port",
-                    str(Config.config.database.port),
-                    Config.config.database.name,
+                    Config.config.database.connection_uri,
                     "--eval",
                     f"db.{collection_name}.drop()",
                 ],

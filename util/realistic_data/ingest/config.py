@@ -18,8 +18,7 @@ class SSH(BaseModel):
 
 
 class Database(BaseModel):
-    hostname: str
-    port: int
+    connection_uri: str
     name: str
     remote_experiments_file_path: str
     test_users_file_path: str
