@@ -42,9 +42,13 @@ The API is hooked up to a MongoDB database provided by Database Services contain
 ### Simulated Data
 The dev server contains 12 months worth of simulated data (October 2022-October 2023) which is reproducible using HDF files stored in the `s3://OG-YEAR-OF-SIMULATED-DATA` bucket in Echo. There are cron jobs which control data generated each day, a test to mimic incoming load from EPAC in production. More detail about the inner workings of this mechanism can be found in `docs/epac_simulated_data.md`.
 
-Due to storage constraints, the daily data mechanism is currently disabled (the cron jobs have been commented out) and a large number of waveforms have been removed from the database (March 2023 to December 2023 inclusive). The records data is still available for this period (including waveform thumbnails) but it's probably best not to click on the waveform thumbnails in the frontend for data in that timeframe as there's no longer any waveforms for them. Waveforms still exist for data in January 2024 (January 1st to January 4th). Images are unaffected as they're not stored in the database.
+This ingestion was done using a separate cloud VM. It has its own instance of the API but is connected to the same database and Echo bucket as the dev server. To replicate this environment, run OperationsGateway Ansible using the `simulated-data-ingestion-vm` host. The `ingest_echo_data.py` script was run on that machine using the following command:
+```bash
+# As root, run this in /var/opt/operationsgateway-api/simulated_data/og_api_dev
+# Double check script config in util/realistic_data/config.yml and how the API is configured just to make sure its pointing to databases and buckets you expect
+nohup $HOME/.local/bin/poetry run python -u util/realistic_data/ingest_echo_data.py >> /var/log/operationsgateway-api/echo_ingestion_script.log 2>&1 &
+```
 
-The period March 2023-October 2023 is data from the year of HDF files that were generated and stored on Echo. Once I've done the work to move waveforms out of the database, I'll re-ingest data from March 2023 - October 2023 to restore the waveforms for that period (and re-enable the cron jobs for daily data).
 
 ### Local Database for Gemini Data
 Before using simulated EPAC data, we used a small amount of Gemini data, stored in a local database; it is equivalent to the databases used in our development environments - local DBs, no auth, named `opsgateway`. There may be cases where in the future, we need to switch back to the Gemini data as this may allow us to test something that isn't so easy to test with the simulated data. To do this, the following things will need to be done:
