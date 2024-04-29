@@ -19,7 +19,7 @@ class SSHHandler:
         self.connection.run(
             f"mongoimport --collection='experiments' --mode='upsert'"
             f" --file='{Config.config.database.remote_experiments_file_path}'"
-            f'"{Config.config.database.connection_uri}"'
+            f'"{Config.config.database.connection_uri}"',
         )
         self.connection.run(
             f"rm -f {Config.config.database.remote_experiments_file_path}",
