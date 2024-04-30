@@ -3,6 +3,7 @@ script_options:
   wipe_echo: false
   launch_api: true
   import_users: true
+  ingest_mode: sequential
 ssh:
   enabled: false
   ssh_connection_url: 127.0.0.1
