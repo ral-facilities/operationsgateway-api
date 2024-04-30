@@ -32,6 +32,6 @@ class SSHHandler:
                 f" {Config.config.database.name}",
             )
             self.connection.run(
-                f'mongo "{Config.config.database.connection_uri}"'
+                f'mongosh "{Config.config.database.connection_uri}"'
                 f' --eval "db.{collection_name}.drop()"',
             )

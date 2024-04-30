@@ -47,7 +47,7 @@ class LocalCommandRunner:
             )
             Popen(
                 [
-                    "mongo",
+                    "mongosh",
                     Config.config.database.connection_uri,
                     "--eval",
                     f"db.{collection_name}.drop()",
