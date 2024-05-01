@@ -38,6 +38,8 @@ def main():
             ssh.drop_database_collections(collection_names)
         else:
             local_commands.drop_database_collections(collection_names)
+        # Give the drops a chance to complete before adding data
+        sleep(5)
 
     echo = S3Interface()
     if Config.config.script_options.wipe_echo:
