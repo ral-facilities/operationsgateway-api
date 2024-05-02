@@ -1,6 +1,7 @@
 import json
 from multiprocessing.pool import ThreadPool
 import os
+import threading
 from time import sleep, time
 from typing import List
 
@@ -25,7 +26,7 @@ def download_and_ingest(
     ingest_pool.map(api.submit_hdf, files)
 
 
-def main():
+def main():  # noqa: C901
     if Config.config.ssh.enabled:
         ssh = SSHHandler()
     else:
@@ -80,16 +81,34 @@ def main():
     hdf_page_iterator = echo.paginate_hdf_data()
     total_ingestion_start_time = time()
 
+    last_successful_file = Config.config.script_options.file_to_restart_ingestion
+    ingestion_restarted = False if last_successful_file else True
+
     for page in hdf_page_iterator:
         object_names = [hdf_file["Key"] for hdf_file in page["Contents"]]
         page_start_time = time()
 
-        if Config.config.script_options.ingest_mode == "sequential":
-            for name in object_names:
-                hdf_file_dict = echo.download_hdf_file(name)
-                og_api.submit_hdf(hdf_file_dict)
-        elif Config.config.script_options.ingest_mode == "parallel":
-            download_and_ingest(object_names, echo, og_api)
+        if last_successful_file in object_names:
+            print(f"Last successful file found: {last_successful_file}")
+            ingestion_restarted = True
+
+        if ingestion_restarted:
+            if Config.config.script_options.ingest_mode == "sequential":
+                for name in object_names:
+                    hdf_file_dict = echo.download_hdf_file(name)
+                    og_api.submit_hdf(hdf_file_dict)
+            elif Config.config.script_options.ingest_mode == "parallel":
+                download_and_ingest(object_names, echo, og_api)
+        else:
+            print(
+                f"Last successful file not found in page, skipping: {object_names}",
+            )
+            if og_api.process:
+                t = threading.Thread(
+                    target=APIStarter.clear_buffers,
+                    args=(og_api.process,),
+                )
+                t.start()
 
         page_end_time = time()
         page_duration = page_end_time - page_start_time

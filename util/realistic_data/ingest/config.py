@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+from typing import Optional
 
 from pydantic import BaseModel, field_validator, ValidationError
 import yaml
@@ -11,6 +12,7 @@ class ScriptOptions(BaseModel):
     launch_api: bool
     import_users: bool
     ingest_mode: str
+    file_to_restart_ingestion: Optional[str]
 
     @field_validator("ingest_mode")
     @classmethod
