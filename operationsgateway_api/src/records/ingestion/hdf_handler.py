@@ -193,8 +193,9 @@ class HDFDataHandler:
         Extract data for waveforms in the HDF file and place the data into
         relevant Pydantic models as well as performing on waveform specific checks
         """
-        waveform_path = Waveform.get_relative_path(self.record_id, channel_name)
-        log.debug("Waveform Path: %s", waveform_path)
+        waveform_id = f"{self.record_id}_{channel_name}"
+        # waveform_path = Waveform.get_relative_path(self.record_id, channel_name)
+        log.debug("Waveform Path: %s", waveform_id)
 
         value_list = []
         for val in value:
@@ -208,12 +209,12 @@ class HDFDataHandler:
         try:
             channel = WaveformChannelModel(
                 metadata=WaveformChannelMetadataModel(**channel_metadata),
-                waveform_path=waveform_path,
+                waveform_id=waveform_id,
             )
 
             self.waveforms.append(
                 WaveformModel(
-                    path=waveform_path,
+                    _id=waveform_id,
                     x=value["x"][()],
                     y=value["y"][()],
                 ),

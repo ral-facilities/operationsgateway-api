@@ -41,7 +41,8 @@ class WaveformModel(BaseModel):
     # it) but don't want to display it when a user is retrieving a waveform. Setting
     # `exclude=True` inside `Field()` ensures it's not displayed when returned as a
     # response
-    path: Optional[str] = Field(None, exclude=True)
+    # path: Optional[str] = Field(None, exclude=True)
+    id_: str = Field(alias="_id")
     x: Optional[Union[List[float], Any]]
     y: Optional[Union[List[float], Any]]
 
@@ -69,7 +70,7 @@ class ImageChannelMetadataModel(BaseModel):
 class ImageChannelModel(BaseModel):
     metadata: ImageChannelMetadataModel
     image_path: Optional[Union[str, Any]]
-    thumbnail: Optional[Union[bytes, Any]] = None
+    thumbnail: Optional[Union[str, Any]] = None
 
 
 class ScalarChannelMetadataModel(BaseModel):
@@ -90,8 +91,8 @@ class WaveformChannelMetadataModel(BaseModel):
 
 class WaveformChannelModel(BaseModel):
     metadata: WaveformChannelMetadataModel
-    thumbnail: Optional[Union[bytes, Any]] = None
-    waveform_path: Optional[Union[str, Any]]
+    thumbnail: Optional[Union[str, Any]] = None
+    waveform_id: Optional[Union[str, Any]]
 
 
 class RecordMetadataModel(BaseModel):

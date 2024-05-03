@@ -198,7 +198,7 @@ class Image:
         Converts a relative image path to a full path by adding the 'prefix' onto a
         relative path of an image. The full path doesn't include the bucket name
         """
-        return f"{Image.echo_prefix}/{relative_path}"
+        return f"{relative_path}"
 
     @staticmethod
     async def get_preferred_colourmap(access_token: str) -> str:

@@ -6,10 +6,16 @@ import logging
 from botocore.exceptions import ClientError
 import matplotlib
 
+from operationsgateway_api.src.mongo.interface import MongoDBInterface
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: I202
 
-from operationsgateway_api.src.exceptions import EchoS3Error, WaveformError
+from operationsgateway_api.src.exceptions import (
+    EchoS3Error,
+    MissingDocumentError,
+    WaveformError,
+)
 from operationsgateway_api.src.models import WaveformModel
 from operationsgateway_api.src.records.echo_interface import EchoInterface
 
@@ -68,9 +74,7 @@ class Waveform:
         waveform.
         For example, 20220408140310/N_COMP_SPEC_TRACE.json -> N_COMP_SPEC_TRACE
         """
-        filename = self.waveform.path.split("/")[1:][0]
-        channel_name = filename.split(".json")[0]
-        return channel_name
+        return "_".join(self.waveform.id_.split("_")[1:])
 
     def _create_thumbnail_plot(self, buffer) -> None:
         """
@@ -128,22 +132,19 @@ class Waveform:
         return f"{Waveform.echo_prefix}/{relative_path}"
 
     @staticmethod
-    def get_waveform(waveform_path: str) -> WaveformModel:
+    async def get_waveform(waveform_id: str) -> WaveformModel:
         """
         Given a waveform path, find the waveform from Echo. This function assumes that
         the waveform should exist; if no waveform can be found, a `WaveformError` will
         be raised
         """
-        echo = EchoInterface()
+        waveform_data = await MongoDBInterface.find_one(
+            "waveforms",
+            {"_id": waveform_id},
+        )
 
-        try:
-            waveform_file = echo.download_file_object(
-                Waveform.get_full_path(waveform_path),
-            )
-            waveform_data = json.loads(waveform_file.getvalue().decode())
+        if waveform_data:
             return WaveformModel(**waveform_data)
-        except (ClientError, EchoS3Error) as exc:
-            log.error("Waveform could not be found: %s", waveform_path)
-            raise WaveformError(
-                f"Waveform could not be found on object storage: {waveform_path}",
-            ) from exc
+        else:
+            log.error("Waveform cannot be found, ID: %s", waveform_id)
+            raise MissingDocumentError("Waveform cannot be found")
