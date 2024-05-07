@@ -1,6 +1,5 @@
 import base64
 import copy
-import datetime
 from io import BytesIO
 from unittest.mock import patch
 
@@ -25,10 +24,6 @@ from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.waveform import Waveform
-
-
-def convert_datetime(date_string):
-    return datetime.datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S")
 
 
 class TestRecord:
@@ -173,12 +168,7 @@ class TestRecord:
 
         new_record_model = RecordModel(**duplicate_record)
         new_record_instance = Record(new_record_model)
-
         await new_record_instance.update()
-
-        duplicate_record["metadata"]["timestamp"] = convert_datetime(
-            duplicate_record["metadata"]["timestamp"],
-        )
 
         record_result = await MongoDBInterface.find_one(
             "records",
