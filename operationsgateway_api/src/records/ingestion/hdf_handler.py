@@ -298,7 +298,8 @@ class HDFDataHandler:
             self.channels[channel_name] = channel
         self.internal_failed_channel = internal_failed_channel
 
-    def _update_data(self, checker_response, record_data, images, waveforms):
+    @staticmethod
+    def _update_data(checker_response, record_data, images, waveforms):
         for key in checker_response["rejected_channels"].keys():
             try:
                 channel = record_data.channels[key]
