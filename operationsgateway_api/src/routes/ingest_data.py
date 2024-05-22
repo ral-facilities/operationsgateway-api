@@ -157,7 +157,7 @@ async def submit_hdf(
         hdf_handler = None
         channel_checker = None
         waveforms = None
-        ctypes.CDLL("libc.so.6").malloc_trim(0)   
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
         return JSONResponse(
             content,
             status_code=status.HTTP_201_CREATED,
