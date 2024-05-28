@@ -1,4 +1,6 @@
+import os
 from pathlib import Path
+import signal
 import socket
 from subprocess import PIPE, Popen
 import sys
@@ -72,5 +74,25 @@ class APIStarter:
             print(err.decode("utf-8"))
 
     def kill(self) -> None:
-        self.process.kill()
+        lsof_output = Popen(
+            ["lsof", "-ti", f":{Config.config.api.port}"],
+            stdout=PIPE,
+            stderr=PIPE,
+        )
+
+        output, _ = lsof_output.communicate()
+        pids = output.decode("utf-8").split("\n")
+
+        for pid in pids:
+            # When there are multiple pids, the final element in the list is an empty
+            # string due to splitting on '\n'. Trying to convert the pid to an integer
+            # allows us to prevent an uncaught exception when calling os.kill()
+            try:
+                int(pid)
+            except ValueError:
+                continue
+
+            print(f"Killing pid {pid}")
+            os.kill(int(pid), signal.SIGKILL)
+
         print(f"API stopped on {Config.config.api.host}:{Config.config.api.port}")
