@@ -102,14 +102,14 @@ class PartialImportChecks:
 
         for channel_name, channel_model in ingested_channels.items():
             if channel_name in stored_channels:
-                if isinstance(channel_model, (ImageChannelModel, WaveformChannelModel)):
-                    if isinstance(channel_model, ImageChannelModel):
-                        path = Image.get_full_path(channel_model.image_path)
-                    elif isinstance(channel_model, WaveformChannelModel):
-                        path = Waveform.get_full_path(channel_model.waveform_path)
-
+                if isinstance(channel_model, ImageChannelModel):
+                    path = Image.get_full_path(channel_model.image_path)
                     object_stored = self._is_image_or_waveform_stored(path)
-
+                elif isinstance(channel_model, WaveformChannelModel):
+                    path = Waveform.get_full_path(channel_model.waveform_path)
+                    object_stored = self._is_image_or_waveform_stored(path)
+                else:
+                    object_stored = True
                 if object_stored:
                     rejected_channels[channel_name] = (
                         "Channel is already present in existing record"
