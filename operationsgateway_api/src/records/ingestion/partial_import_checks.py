@@ -1,7 +1,14 @@
 import logging
 
-from operationsgateway_api.src.exceptions import RejectRecordError
-from operationsgateway_api.src.models import RecordModel
+from operationsgateway_api.src.exceptions import EchoS3Error, RejectRecordError
+from operationsgateway_api.src.models import (
+    ImageChannelModel,
+    RecordModel,
+    WaveformChannelModel,
+)
+from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.waveform import Waveform
 
 
 log = logging.getLogger()
@@ -15,6 +22,7 @@ class PartialImportChecks:
         """
         self.ingested_record = ingested_record
         self.stored_record = stored_record
+        self.echo = EchoInterface()
 
     def metadata_checks(self):
         """
@@ -92,11 +100,24 @@ class PartialImportChecks:
         accepted_channels = []
         rejected_channels = {}
 
-        for key in list(ingested_channels.keys()):
-            if key in stored_channels:
-                rejected_channels[key] = "Channel is already present in existing record"
+        for channel_name, channel_model in ingested_channels.items():
+            if channel_name in stored_channels:
+                if isinstance(channel_model, ImageChannelModel):
+                    path = Image.get_full_path(channel_model.image_path)
+                    object_stored = self._is_image_or_waveform_stored(path)
+                elif isinstance(channel_model, WaveformChannelModel):
+                    path = Waveform.get_full_path(channel_model.waveform_path)
+                    object_stored = self._is_image_or_waveform_stored(path)
+                else:
+                    object_stored = True
+                if object_stored:
+                    rejected_channels[channel_name] = (
+                        "Channel is already present in existing record"
+                    )
+                else:
+                    accepted_channels.append(channel_name)
             else:
-                accepted_channels.append(key)
+                accepted_channels.append(channel_name)
 
         channel_response = {
             "accepted_channels": accepted_channels,
@@ -104,3 +125,16 @@ class PartialImportChecks:
         }
 
         return channel_response
+
+    def _is_image_or_waveform_stored(self, path: str) -> bool:
+        """
+        Searches for an image or waveform on Echo and returns whether the file is
+        present or not
+        """
+
+        try:
+            self.echo.download_file_object(path)
+        except EchoS3Error:
+            return False
+
+        return True
