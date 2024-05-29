@@ -5,21 +5,21 @@ These instructions allow developers to move from MongoDB 5.0 to 7.0 to match the
 
 ```bash
 # Stop MongoDB process
-systemctl stop mongod
+sudo systemctl stop mongod
 # Uninstall packages using yum
-yum erase mongodb-*
+sudo yum erase mongodb-*
 # Check that everything's been uninstalled
 yum list installed | grep -i mongod
 # Remove data directories, databases, logs
-rm -rf /var/log/mongodb /var/lib/mongo*
+sudo rm -rf /var/log/mongodb /var/lib/mongo*
 # Disable yum repo for MongoDB 5.0
-yum-config-manager --disable mongodb-org-5.0
+sudo yum-config-manager --disable mongodb-org-5.0
 
 # Add yum repo for MongoDB 7.0
-touch /etc/yum.repos.d/mongodb-org-7.0.repo
+sudo touch /etc/yum.repos.d/mongodb-org-7.0.repo
 
-# Paste the following into /etc/yum.repos.d/mongodb-org-7.0.repo
-# Edit the /8/ to /9/ if you're using Rocky 9
+Paste the following into /etc/yum.repos.d/mongodb-org-7.0.repo (edit the /8/ to /9/ if you're using Rocky 9):
+```ini
 [mongodb-org-7.0]
 name=MongoDB Repository
 baseurl=https://repo.mongodb.org/yum/redhat/8/mongodb-org/7.0/x86_64/
@@ -28,9 +28,9 @@ enabled=1
 gpgkey=https://pgp.mongodb.com/server-7.0.asc
 
 # Install the latest stable version of MongoDB
-yum install mongodb-org
+sudo yum install mongodb-org
 # Start MongoDB, enter the shell and check the "Using MongoDB:" line lists a version 7.x.x
-systemctl start mongod
+sudo systemctl start mongod
 mongosh
 ```
 
