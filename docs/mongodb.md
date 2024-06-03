@@ -28,7 +28,7 @@ gpgcheck=1
 enabled=1
 gpgkey=https://pgp.mongodb.com/server-7.0.asc
 ```
-```
+```bash
 # Install the latest stable version of MongoDB
 sudo yum install mongodb-org
 # Start MongoDB, enter the shell and check the "Using MongoDB:" line lists a version 7.x.x
