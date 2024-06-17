@@ -104,6 +104,8 @@ def main():  # noqa: C901
                 f"Last successful file not found in page, skipping: {object_names}",
             )
             if og_api.process:
+                # Flushing stdout buffer so it doesn't become full, causing the script
+                # to hang
                 t = threading.Thread(
                     target=APIStarter.clear_buffers,
                     args=(og_api.process,),
