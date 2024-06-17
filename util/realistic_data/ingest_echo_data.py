@@ -82,7 +82,7 @@ def main():  # noqa: C901
     total_ingestion_start_time = time()
 
     last_successful_file = Config.config.script_options.file_to_restart_ingestion
-    ingestion_restarted = False if last_successful_file else True
+    ingestion_started = False if last_successful_file else True
 
     for page in hdf_page_iterator:
         object_names = [hdf_file["Key"] for hdf_file in page["Contents"]]
@@ -90,9 +90,9 @@ def main():  # noqa: C901
 
         if last_successful_file in object_names:
             print(f"Last successful file found: {last_successful_file}")
-            ingestion_restarted = True
+            ingestion_started = True
 
-        if ingestion_restarted:
+        if ingestion_started:
             if Config.config.script_options.ingest_mode == "sequential":
                 for name in object_names:
                     hdf_file_dict = echo.download_hdf_file(name)
