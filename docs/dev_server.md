@@ -24,7 +24,7 @@ To view that commit, you can go to GitHub and insert the commit hash into the fo
 To control the API on the dev server, a `systemd` service is added to the machine by Ansible. This allows you to do all the typical things you'd be able to do with a systemd service (i.e. start/stop/restart) and you can check on the logs using `journalctl -u og-api`.
 
 ## Apache/Certificates
-The API is exposed to the outside world using a reverse proxy; the API lives on port 8000 but port 443 is used to access it. If a user accesses the API using port 80, it'll forward on their request to port 443. This works fine for GET requests but unusual things can happen for other request types (e.g. POST), particularly requests which contain a request body (see https://stackoverflow.com/a/21859641 for further information).
+The API is exposed to the outside world using a reverse proxy; the API lives on port 8000 but port 443 is used to access it. If a user accesses the API using port 80, it'll forward on their request to port 443. This works fine for GET requests but unusual things can happen for other request types (e.g. POST), particularly requests which contain a request body (see https://stackoverflow.com/a/21859641 for further information). The reverse proxy places the API on `/api`. This reserves `/` for the frontend, when it is deployed.
 
 Certificates are requested through the DI Service Desk, where the normal process applies - generate a CSR, submit a ticket containing the CSR asking for the certificate to be generated and download the files once they've been generated. Alan's [certificate cheatsheet](https://github.com/ral-facilities/dseg-docs/blob/master/certs-cheat-sheet.md) is a great resource to easily generate a CSR if you're not familiar with that process.
 
