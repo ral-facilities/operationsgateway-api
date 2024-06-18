@@ -2,7 +2,8 @@ import json
 import os
 from time import sleep, time
 
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import MongoClient
+from pymongo.uri_parser import parse_uri
 from util.realistic_data.ingest.api_client import APIClient
 from util.realistic_data.ingest.api_starter import APIStarter
 from util.realistic_data.ingest.config import Config
@@ -35,8 +36,8 @@ def main():
     if Config.config.script_options.import_users:
         print("Importing test users to the database")
 
-        client = AsyncIOMotorClient(Config.config.database.connection_uri)
-        db = client[Config.config.database.name]
+        client = MongoClient(Config.config.database.connection_uri)
+        db = client[parse_uri(Config.config.database.connection_uri)["database"]]
         with open(Config.config.database.test_users_file_path) as f:
             users = [json.loads(line) for line in f.readlines()]
 

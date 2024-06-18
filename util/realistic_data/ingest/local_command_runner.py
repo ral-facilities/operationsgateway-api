@@ -4,6 +4,8 @@ from subprocess import Popen
 from time import sleep
 from typing import List
 
+from pymongo.uri_parser import parse_uri
+
 from util.realistic_data.ingest.config import Config
 
 
@@ -43,7 +45,7 @@ class LocalCommandRunner:
         for collection_name in collection_names:
             print(
                 f"Dropping collection '{collection_name}' in"
-                f" {Config.config.database.name}",
+                f" {parse_uri(Config.config.database.connection_uri)["database"]}",
             )
             Popen(
                 [
