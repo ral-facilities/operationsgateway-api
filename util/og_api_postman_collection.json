@@ -991,7 +991,7 @@
 					"response": []
 				},
 				{
-					"name": "Get Crosshair Inensity",
+					"name": "Get Crosshair Intensity",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -1019,7 +1019,7 @@
 							"query": [
 								{
 									"key": "position",
-									"value": "[600, 600]",
+									"value": "[550, 650]",
 									"description": "Optional position of the crosshairs, otherwise centroid is used.",
 									"disabled": true
 								},

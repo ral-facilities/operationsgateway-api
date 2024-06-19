@@ -98,8 +98,15 @@ async def get_full_image(
 
 @router.get(
     "/images/{record_id}/{channel_name}/crosshair",
-    summary="Get row and column intensities for a given position, or centroid",
-    response_description="Row and column intensities/FWHM",
+    summary=(
+        "Get row (varying x, fixed y co-ordinates) and column (fixed x, "
+        "varying y co-ordinates) intensities for a given position, or by "
+        "default for the centroid"
+    ),
+    response_description=(
+        "Row (varying x, fixed y co-ordinates) and column (fixed x, varying y "
+        "co-ordinates) intensities/FWHM"
+    ),
     tags=["Images"],
 )
 @endpoint_error_handling
@@ -129,8 +136,9 @@ async def get_crosshair_intensity(
     ),
 ):
     """
-    This endpoint can be used to obtain the row and column intensity and full
-    width half maxima of an image by specifying the shot number and channel
+    This endpoint can be used to obtain the row (varying x, fixed y
+    co-ordinates) and column (fixed x, varying y co-ordinates) intensity and
+    full width half maxima of an image by specifying the shot number and channel
     name. If no position is provided, the centroid will be calculated for the
     image and that position used.
 
