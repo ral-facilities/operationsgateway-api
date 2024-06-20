@@ -7,18 +7,18 @@ from pymongo.uri_parser import parse_uri
 from util.realistic_data.ingest.api_client import APIClient
 from util.realistic_data.ingest.api_starter import APIStarter
 from util.realistic_data.ingest.config import Config
-from util.realistic_data.ingest.local_command_runner import LocalCommandRunner
 from util.realistic_data.ingest.s3_interface import S3Interface
 
 
 def main():
-    # TODO - will need to do something with this
-    local_commands = LocalCommandRunner()
+    client = MongoClient(Config.config.database.connection_uri)
+    db = client[parse_uri(Config.config.database.connection_uri)["database"]]
 
     if Config.config.script_options.wipe_database:
         print("Wiping database")
         collection_names = ["channels", "experiments", "records"]
-        local_commands.drop_database_collections(collection_names)
+        for collection_name in collection_names:
+            db.drop_collection(collection_name)
 
     echo = S3Interface()
     if Config.config.script_options.wipe_echo:
@@ -29,9 +29,6 @@ def main():
 
     if Config.config.script_options.import_users:
         print("Importing test users to the database")
-
-        client = MongoClient(Config.config.database.connection_uri)
-        db = client[parse_uri(Config.config.database.connection_uri)["database"]]
         with open(Config.config.database.test_users_file_path) as f:
             users = [json.loads(line) for line in f.readlines()]
 
@@ -47,9 +44,12 @@ def main():
     og_api = APIClient(api_url, starter.process)
     og_api.submit_manifest(channel_manifest)
 
-    experiments_import = echo.download_experiments()
-    local_commands.store_experiments_file(experiments_import)
-    local_commands.import_experiments()
+    echo.download_experiments()
+    with open(Config.config.database.remote_experiments_file_path) as f:
+        experiments = [json.loads(line) for line in f.readlines()]
+
+    db.experiments.insert_many(experiments)
+    print(f"Imported {len(experiments)} experiments")
     sleep(2)
 
     hdf_page_iterator = echo.paginate_hdf_data()

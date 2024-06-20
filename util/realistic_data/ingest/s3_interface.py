@@ -1,5 +1,6 @@
 from io import BytesIO
-from time import time
+from os import path
+from time import sleep, time
 
 import boto3
 from util.realistic_data.ingest.config import Config
@@ -34,7 +35,7 @@ class S3Interface:
         print("Downloaded channel manifest file from S3")
         return channel_manifest
 
-    def download_experiments(self) -> BytesIO:
+    def download_experiments(self) -> None:
         experiments_import = BytesIO()
         self.simulated_data_bucket.download_fileobj(
             Fileobj=experiments_import,
@@ -42,7 +43,25 @@ class S3Interface:
         )
         experiments_import.seek(0)
         print("Downloaded experiments (in format for mongoimport) from S3")
-        return experiments_import
+
+        binary_file = open(Config.config.database.remote_experiments_file_path, "wb")
+        binary_file.write(experiments_import.getvalue())
+        binary_file.close()
+
+        file_exists = False
+        while not file_exists:
+            file_exists = path.isfile(
+                Config.config.database.remote_experiments_file_path,
+            )
+            print(
+                f"{Config.config.database.remote_experiments_file_path} hasn't been"
+                " created yet..",
+            )
+            sleep(1)
+
+        print(
+            f"Written '{Config.config.database.remote_experiments_file_path}' to file",
+        )
 
     def paginate_hdf_data(self):
         paginator = self.client.get_paginator("list_objects_v2")
