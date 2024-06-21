@@ -1,4 +1,3 @@
-from datetime import datetime
 import json
 from typing import List
 
@@ -37,8 +36,3 @@ class DatabaseOperations:
         collection = getattr(self.db, collection_name)
         collection.insert_many(data)
         print(f"Imported {len(data)} documents to {collection_name} collection")
-
-    def is_collection_empty(self, collection_name: str):
-        collection = getattr(self.db, collection_name)
-        count = collection.count_documents()
-        print(f"count: {count}, type: {type(count)}")
