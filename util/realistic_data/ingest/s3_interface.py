@@ -48,17 +48,6 @@ class S3Interface:
         binary_file.write(experiments_import.getvalue())
         binary_file.close()
 
-        file_exists = False
-        while not file_exists:
-            file_exists = path.isfile(
-                Config.config.database.remote_experiments_file_path,
-            )
-            print(
-                f"{Config.config.database.remote_experiments_file_path} hasn't been"
-                " created yet..",
-            )
-            sleep(1)
-
         print(
             f"Written '{Config.config.database.remote_experiments_file_path}' to file",
         )
