@@ -49,6 +49,8 @@ class APIStarter:
             # Check for the return code to see if the API started successfully
             self.process.poll()
             if self.process.returncode is not None and self.process.returncode != 0:
+                # Flushing stdout buffer so it doesn't become full, causing the script
+                # to hang
                 t = threading.Thread(
                     target=APIStarter.clear_buffers,
                     args=(self.process, True),
