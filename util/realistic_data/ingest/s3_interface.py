@@ -1,6 +1,5 @@
 from io import BytesIO
-from os import path
-from time import sleep, time
+from time import time
 
 import boto3
 from util.realistic_data.ingest.config import Config
