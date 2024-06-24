@@ -1,11 +1,26 @@
+from multiprocessing.pool import ThreadPool
 import os
+import threading
 from time import time
+from typing import List
 
 from util.realistic_data.ingest.api_client import APIClient
 from util.realistic_data.ingest.api_starter import APIStarter
 from util.realistic_data.ingest.config import Config
 from util.realistic_data.ingest.database_operations import DatabaseOperations
 from util.realistic_data.ingest.s3_interface import S3Interface
+
+
+def download_and_ingest(
+    object_names: List[str],
+    s3_interface: S3Interface,
+    api: APIClient,
+):
+    download_pool = ThreadPool(int(Config.config.echo.page_size))
+    files = download_pool.map(s3_interface.download_hdf_file, object_names)
+
+    ingest_pool = ThreadPool(int(Config.config.api.gunicorn_num_workers))
+    ingest_pool.map(api.submit_hdf, files)
 
 
 def main():
@@ -41,13 +56,36 @@ def main():
     hdf_page_iterator = echo.paginate_hdf_data()
     total_ingestion_start_time = time()
 
+    last_successful_file = Config.config.script_options.file_to_restart_ingestion
+    ingestion_started = False if last_successful_file else True
+
     for page in hdf_page_iterator:
         object_names = [hdf_file["Key"] for hdf_file in page["Contents"]]
         page_start_time = time()
 
-        for name in object_names:
-            hdf_file_dict = echo.download_hdf_file(name)
-            og_api.submit_hdf(hdf_file_dict)
+        if last_successful_file in object_names:
+            print(f"Last successful file found: {last_successful_file}")
+            ingestion_started = True
+
+        if ingestion_started:
+            if Config.config.script_options.ingest_mode == "sequential":
+                for name in object_names:
+                    hdf_file_dict = echo.download_hdf_file(name)
+                    og_api.submit_hdf(hdf_file_dict)
+            elif Config.config.script_options.ingest_mode == "parallel":
+                download_and_ingest(object_names, echo, og_api)
+        else:
+            print(
+                f"Last successful file not found in page, skipping: {object_names}",
+            )
+            if og_api.process:
+                # Flushing stdout buffer so it doesn't become full, causing the script
+                # to hang
+                t = threading.Thread(
+                    target=APIStarter.clear_buffers,
+                    args=(og_api.process,),
+                )
+                t.start()
 
         page_end_time = time()
         page_duration = page_end_time - page_start_time
