@@ -38,8 +38,8 @@ async def get_favourite_filters(access_token: AuthoriseToken):
 
 @router.get(
     "/users/filters/{_id}",
-    summary="Get a list of the user's favourite filters",
-    response_description="List of favourite filters",
+    summary="Get a specific favourite filter",
+    response_description="Specific favourite filter",
     tags=["Filters"],
 )
 @endpoint_error_handling
@@ -48,7 +48,7 @@ async def get_favourite_filter_by_id(
         str,
         Path(
             ...,
-            description="`_id` of the filter to remove from the database",
+            description="`_id` of the filter to get",
         ),
     ],
     access_token: AuthoriseToken,
@@ -66,7 +66,7 @@ async def get_favourite_filter_by_id(
 @router.post(
     "/users/filters",
     summary="Store a favourite filter into the user's document in the database",
-    response_description="List of favourite filters",
+    response_description="The favourite filter id",
     tags=["Filters"],
 )
 @endpoint_error_handling

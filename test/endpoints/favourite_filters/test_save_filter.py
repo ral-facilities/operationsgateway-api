@@ -27,6 +27,9 @@ class TestSaveFilter:
         test_filter = FavouriteFilter()
         result = test_filter.find_one(filter_id)
         print(f"Result 123: {result}")
-        assert result.get("filters") is not None
+    assert len(result.get("filters")) == 1
+    assert "_id" in result.get("filters")[0]
+    assert result.get("filters")[0]["name"] == "Test Create Filter"
+    assert result.get("filters")[0]["filter"] == "PM-201-HJ-CRY-FLOW > 10"
 
         test_filter.delete(filter_id)
