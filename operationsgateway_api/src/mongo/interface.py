@@ -16,6 +16,7 @@ from operationsgateway_api.src.exceptions import DatabaseError
 from operationsgateway_api.src.mongo.connection import ConnectionInstance
 
 log = logging.getLogger()
+ProjectionAlias = Optional[Union[Mapping[str, Any], Iterable[str]]]
 
 
 class MongoDBInterface:
@@ -49,7 +50,7 @@ class MongoDBInterface:
         skip: int = 0,
         limit: int = 0,
         sort: Union[str, List[Tuple[str, int]]] = "",
-        projection: Optional[Union[Mapping[str, Any], Iterable[str]]] = None,
+        projection: ProjectionAlias = None,
     ) -> Cursor:
         """
         Creates a query to find documents in a given collection, based on filters
@@ -102,7 +103,7 @@ class MongoDBInterface:
         collection_name: str,
         filter_: Dict[str, Any] = None,
         sort: List[Tuple[str, int]] = None,
-        projection: Optional[Union[Mapping[str, Any], Iterable[str]]] = None,
+        projection: ProjectionAlias = None,
     ) -> Dict[str, Any]:
         """
         Based on a filter, find a single document in the record collection of MongoDB

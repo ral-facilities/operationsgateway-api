@@ -30,6 +30,11 @@ class PyObjectId(ObjectId):
         )
 
 
+Id = Optional[Annotated[ObjectId, PyObjectId]]
+default_id = Field(None, alias="_id")
+default_exclude_field = Field(None, exclude=True)
+
+
 class ImageModel(BaseModel):
     path: str
     data: np.ndarray
@@ -41,7 +46,7 @@ class WaveformModel(BaseModel):
     # store it) but don't want to display it when a user is retrieving a waveform.
     # Setting `exclude=True` inside `Field()` ensure it's not displayed when returned as
     # a response
-    path: Optional[str] = Field(None, exclude=True)
+    path: Optional[str] = default_exclude_field
     x: List[float]
     y: List[float]
 
@@ -179,7 +184,7 @@ class ChannelSummaryModel(BaseModel):
 
 
 class ExperimentModel(BaseModel):
-    id_: Optional[Annotated[ObjectId, PyObjectId]] = Field(None, alias="_id")
+    id_: Id = default_id
     experiment_id: str
     part: int
     start_date: datetime
@@ -230,7 +235,7 @@ class DateConverterRange(BaseModel):
 
 
 class UserSessionModel(BaseModel):
-    id_: Optional[Annotated[ObjectId, PyObjectId]] = Field(None, alias="_id")
+    id_: Id = default_id
     username: str
     name: str
     summary: str
@@ -243,11 +248,11 @@ class UserSessionModel(BaseModel):
 class UserSessionListModel(UserSessionModel):
     # Make fields optional that aren't needed in the session list and exclude them from
     # displaying on output
-    username: Optional[str] = Field(None, exclude=True)
-    session: Optional[Dict[str, Any]] = Field(None, exclude=True)
+    username: Optional[str] = default_exclude_field
+    session: Optional[Dict[str, Any]] = default_exclude_field
 
 
 class FavouriteFilterModel(BaseModel):
-    id_: Optional[Annotated[ObjectId, PyObjectId]] = Field(None, alias="_id")
+    id_: Id = default_id
     name: str
     filter: str  # noqa: A003
