@@ -8,6 +8,7 @@ from typing_extensions import Annotated
 from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.error_handling import endpoint_error_handling
+from operationsgateway_api.src.exceptions import QueryParameterError
 from operationsgateway_api.src.users.favourite_filter import FavouriteFilter
 
 
@@ -72,19 +73,16 @@ async def get_favourite_filter_by_id(
 @endpoint_error_handling
 async def create_favourite_filter(
     access_token: AuthoriseToken,
-    name: str = Query(
-        "",
-        description="Name of the favourite filter",
-    ),
-    filter: str = Query(  # noqa: A002
-        "",
-        description="Contents of the favourite filter",
-    ),
+    name: str = Query(description="Name of the favourite filter"),
+    filter: str = Query(description="Contents of the favourite filter"),  # noqa: A002
 ):
     """
     Create a favourite filter for the user sending the request and save it in the user's
     document in the database
     """
+
+    if not name or not filter:
+        raise QueryParameterError("Filter and its name are required")
 
     token_payload = JwtHandler.get_payload(access_token)
     username = token_payload["username"]
