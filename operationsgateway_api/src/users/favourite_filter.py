@@ -65,7 +65,7 @@ class FavouriteFilter:
             filter_={"_id": username},
             projection=["filters"],
         )
-        filters = results["filters"]
+        filters = results.get("filters", [])
         log.debug(
             "Number of favourite filters found for user '%s': %d",
             username,
