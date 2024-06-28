@@ -41,6 +41,7 @@ class TestSaveFilter:
         [
             pytest.param("", "PM-201-HJ-CRY-FLOW > 10", id="Empty name"),
             pytest.param("Test Create Invalid Filter", "", id="Empty filter"),
+            pytest.param("", "", id="Empty name and filter"),
         ],
     )
     def test_invalid_save_filter(
