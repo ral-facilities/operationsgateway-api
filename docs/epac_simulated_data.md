@@ -15,10 +15,10 @@ To generate a year's worth of data that's now stored in Echo (plus a supporting 
 ```bash
 # Creates `schedule_calendar.yml`
 # You need Python 3.9 for this otherwise you'll face a `ModuleNotFoundError` for `zoneinfo`. Use `pyenv` or install a different version using `yum`
-poetry run epac-data-sim calendar -s 2022-06-01 -e 2023-06-01 -o ~/dev/operationsgateway-api/util/realistic_data/resources/
+poetry run epac-data-sim calendar -s 2022-10-01 -e 2023-10-01 -o ~/dev/operationsgateway-api/util/realistic_data/resources/
 
 # Creates a second calendar file which is renamed as a schedule for daily data
-poetry run epac-data-sim calendar -s 2023-06-02 -e 2027-01-01 -o /tmp
+poetry run epac-data-sim calendar -s 2023-10-02 -e 2027-01-01 -o /tmp
 mv /tmp/schedule_calendar.yml ~/dev/operationsgateway-api/util/realistic_data/resources/daily_data_schedule.yml
 
 # Clone EPAC-DataSim and create virtualenv so we have access to config generator script

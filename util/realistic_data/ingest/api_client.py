@@ -80,6 +80,8 @@ class APIClient:
 
     def submit_hdf(self, hdf_file: Dict[str, BytesIO]) -> int:
         if self.process:
+            # Flushing stdout buffer so it doesn't become full, causing the script
+            # to hang
             t = threading.Thread(target=APIStarter.clear_buffers, args=(self.process,))
             t.start()
 

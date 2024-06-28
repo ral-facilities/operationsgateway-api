@@ -1780,7 +1780,7 @@
 		},
 		{
 			"key": "og-api",
-			"value": "https://opsgateway-epac-dev.clf.stfc.ac.uk",
+			"value": "https://opsgateway-epac-dev.clf.stfc.ac.uk/api",
 			"disabled": true
 		},
 		{

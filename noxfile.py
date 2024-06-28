@@ -97,6 +97,10 @@ def safety(session):
             "check",
             f"--file={requirements.name}",
             "--full-report",
+            # jinja2 report widely disputed as not valid, no fix available:
+            # https://github.com/pallets/jinja/issues/1994
+            "--ignore",
+            "70612",
         )
 
         try:
