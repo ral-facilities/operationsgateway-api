@@ -115,11 +115,11 @@ async def update_favourite_filter(
         ),
     ],
     name: str = Query(
-        "",
+        None,
         description="Name of the favourite filter",
     ),
     filter: str = Query(  # noqa: A002
-        "",
+        None,
         description="Contents of the favourite filter",
     ),
 ):
@@ -128,16 +128,23 @@ async def update_favourite_filter(
     parameter
     """
 
+    if not name and not filter:
+        return "No updates necessary"
+
     token_payload = JwtHandler.get_payload(access_token)
     username = token_payload["username"]
 
     log.info("Updating favourite filter '%s' for user '%s", _id, username)
     log.debug("Name: %s, Filter: %s", name, filter)
 
+    filter_result = await FavouriteFilter.get_by_id(username, _id)
+    updated_name = name if name is not None or name == "" else filter_result.name
+    updated_filter = filter if filter is not None else filter_result.filter
+
     update_filter = FavouriteFilter(
         username,
-        name,
-        filter,
+        updated_name,
+        updated_filter,
         id_=_id,
     )
 
