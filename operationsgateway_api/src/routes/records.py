@@ -121,6 +121,7 @@ async def get_records(
                 lower_level,
                 upper_level,
                 colourmap_name,
+                truncate=truncate,
             )
 
     return records_data

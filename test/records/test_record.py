@@ -343,7 +343,7 @@ class TestRecord:
                 },
                 id="Multiple functions",
             ),
-            # Traces
+            # Waveforms
             pytest.param(
                 [
                     {
@@ -357,7 +357,7 @@ class TestRecord:
                         "metadata": {"channel_dtype": "waveform", "x_units": "nm"},
                     },
                 },
-                id="Trace operation",
+                id="Waveform operation",
             ),
             pytest.param(
                 [
@@ -372,7 +372,7 @@ class TestRecord:
                         "metadata": {"channel_dtype": "waveform", "x_units": "nm"},
                     },
                 },
-                id="Trace element-wise function",
+                id="Waveform element-wise function",
             ),
             pytest.param(
                 [
@@ -387,7 +387,7 @@ class TestRecord:
                         "metadata": {"channel_dtype": "scalar"},
                     },
                 },
-                id="Trace reductive function",
+                id="Waveform reductive function",
             ),
             # Images
             pytest.param(
@@ -399,7 +399,7 @@ class TestRecord:
                 ],
                 {
                     "a": {
-                        "thumbnail": "bac4c41eecc9cc69",
+                        "thumbnail": "b9c0c6c9a79cccc5",
                         "metadata": {
                             "channel_dtype": "image",
                             "x_pixel_size": 1936,

@@ -41,22 +41,22 @@ class TestValidateFunction:
             pytest.param(
                 [{"name": "a", "expression": "CM-202-CVC-SP - 737"}],
                 "waveform",
-                id="Trace operation",
+                id="Waveform operation",
             ),
             pytest.param(
                 [{"name": "a", "expression": "log(CM-202-CVC-SP - 737)"}],
                 "waveform",
-                id="Trace element-wise",
+                id="Waveform element-wise",
             ),
             pytest.param(
                 [{"name": "a", "expression": "mean(log(CM-202-CVC-SP - 737))"}],
                 "scalar",
-                id="Trace reductive",
+                id="Waveform reductive",
             ),
             pytest.param(
                 [{"name": "a", "expression": "centre(CM-202-CVC-SP)"}],
                 "scalar",
-                id="Trace centre",
+                id="Waveform centre",
             ),
             pytest.param(
                 [{"name": "a", "expression": "FE-204-NSO-P1-CAM-1 - 4"}],
@@ -109,23 +109,17 @@ class TestValidateFunction:
             ),
             pytest.param(
                 [{"name": "a", "expression": "a"}],
-                "Unexpected variable in 'a': 'a' is not a recognised channel",
+                "'a' is not a recognised channel",
                 id="Undefined variable",
             ),
             pytest.param(
                 [{"name": "a", "expression": "centre(1)"}],
-                (
-                    "Unsupported type in 'centre(1)': "
-                    "'centre' accepts {'waveform'} type(s), 'scalar' provided"
-                ),
+                "'centre' accepts {'waveform'} type(s), 'scalar' provided",
                 id="Wrong function argument type",
             ),
             pytest.param(
                 [{"name": "a", "expression": "unknown(1)"}],
-                (
-                    "Unsupported function in 'unknown(1)': "
-                    "'unknown' is not a recognised builtin function name"
-                ),
+                "'unknown' is not a recognised builtin function name",
                 id="Unknown function",
             ),
             pytest.param(
@@ -140,10 +134,7 @@ class TestValidateFunction:
                     },
                     {"name": "a", "expression": "b + c"},
                 ],
-                (
-                    "Unsupported type in 'b + c': Operation between types "
-                    "['image', 'waveform'] not supported"
-                ),
+                "Operation between types ['image', 'waveform'] not supported",
                 id="Unsupported operands",
             ),
             pytest.param(

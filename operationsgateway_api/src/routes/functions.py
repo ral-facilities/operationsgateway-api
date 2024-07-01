@@ -95,14 +95,10 @@ async def validate_function(
             )
 
         except LarkError as e:
+            # Remove the Lark header on what rule was being executed and just
+            # return the original error message we raised
             message: str = e.args[0]
-            root_message = message.split("\n\n")[1].strip('"')
-            if 'Error trying to process rule "variable"' in message:
-                error = f"Unexpected variable in '{expression}': {root_message}"
-            elif "is not a recognised builtin function name" in message:
-                error = f"Unsupported function in '{expression}': {root_message}"
-            else:
-                error = f"Unsupported type in '{expression}': {root_message}"
+            error = message.split("\n\n")[1].strip('"')
 
         finally:
             if error is not None:

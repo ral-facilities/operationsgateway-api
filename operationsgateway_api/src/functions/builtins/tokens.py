@@ -12,7 +12,7 @@ TOKENS = [
         "symbol": "mean",
         "name": "Mean",
         "details": (
-            "Calculate the mean of a trace (using the y variable) or image "
+            "Calculate the mean of a waveform (using the y variable) or image "
             "input. No effect on a scalar input. Implementation: "
             "https://numpy.org/doc/stable/reference/generated/numpy.mean.html"
         ),
@@ -22,7 +22,7 @@ TOKENS = [
         "name": "Exponential",
         "details": (
             "Raise `e` to the power of the input argument (element-wise if a "
-            "trace or image is provided). Implementation: "
+            "waveform or image is provided). Implementation: "
             "https://numpy.org/doc/stable/reference/generated/numpy.exp.html"
         ),
     },
@@ -31,7 +31,7 @@ TOKENS = [
         "name": "Natural logarithm",
         "details": (
             "Calculate the logarithm in base `e` of the input argument "
-            "(element-wise if a trace or image is provided). Implementation:"
+            "(element-wise if a waveform or image is provided). Implementation:"
             "https://numpy.org/doc/stable/reference/generated/numpy.log.html"
         ),
     },
@@ -39,7 +39,7 @@ TOKENS = [
         "symbol": "max",
         "name": "Maximum",
         "details": (
-            "Calculate the maximum value in a trace (using the y variable) or "
+            "Calculate the maximum value in a waveform (using the y variable) or "
             "image input. No effect on a scalar input. Implementation: "
             "https://numpy.org/doc/stable/reference/generated/numpy.max.html"
         ),
@@ -48,7 +48,7 @@ TOKENS = [
         "symbol": "min",
         "name": "Minimum",
         "details": (
-            "Calculate the minimum value in a trace (using the y variable) or "
+            "Calculate the minimum value in a waveform (using the y variable) or "
             "image input. No effect on a scalar input. Implementation: "
             "https://numpy.org/doc/stable/reference/generated/numpy.min.html"
         ),

@@ -9,7 +9,7 @@ from operationsgateway_api.src.functions.waveform_variable import WaveformVariab
 class FWHMX(Builtin):
     input_types = {"image"}
     output_type = "scalar"
-    symbol = "fmhw_x"
+    symbol = "fwhm_x"
     token = {
         "symbol": symbol,
         "name": "Full Width Half Maximum (x)",

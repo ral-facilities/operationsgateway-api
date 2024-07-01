@@ -43,7 +43,7 @@ class TypeTransformer(Transformer):
 
         Also fetches the most recent channel manifest asynchronously for
         lookups. The resulting data type will also be stored in the
-        `chanel_types` attribute for future evaluations.
+        `channel_types` attribute for future evaluations.
 
         Args:
             name (str): Name used to label the output of the `expression`.

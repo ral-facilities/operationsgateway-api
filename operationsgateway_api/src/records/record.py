@@ -11,6 +11,7 @@ import pymongo
 from pymongo.results import DeleteResult
 
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
+from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import (
     ChannelSummaryError,
     DatabaseError,
@@ -423,6 +424,7 @@ class Record:
         upper_level: int,
         colourmap_name: str,
         return_thumbnails: bool = True,
+        truncate: bool = False,
     ) -> None:
         """
         Evaluates all functions and stores the results on `record` as though
@@ -445,6 +447,7 @@ class Record:
                 expression_transformer=expression_transformer,
                 function=function,
                 return_thumbnails=return_thumbnails,
+                truncate=truncate,
             )
 
     @staticmethod
@@ -464,6 +467,7 @@ class Record:
         expression_transformer: ExpressionTransformer,
         function: "dict[str, str]",
         return_thumbnails: bool = True,
+        truncate: bool = False,
     ) -> None:
         """
         Evaluates a single function and stores the result on `record` as though
@@ -502,6 +506,7 @@ class Record:
             function_name=function["name"],
             result=result,
             return_thumbnails=return_thumbnails,
+            truncate=truncate,
         )
         variable_data[function["name"]] = result
 
@@ -553,7 +558,6 @@ class Record:
             channel_value=channel_value,
         )
         if channel_dtype == "image":
-            # Loading from echo takes ~ 0.2 s per image
             image_bytes = await Image.get_image(
                 record_id,
                 name,
@@ -587,6 +591,7 @@ class Record:
         function_name: str,
         result: "np.ndarray | WaveformVariable | np.float64",
         return_thumbnails: bool = True,
+        truncate: bool = False,
     ) -> None:
         """
         Parses the numerical `result` and modifies `record` in place to contain
@@ -602,6 +607,7 @@ class Record:
                 upper_level=upper_level,
                 colourmap_name=colourmap_name,
                 return_thumbnails=return_thumbnails,
+                truncate=truncate,
             )
 
         elif isinstance(result, WaveformVariable):
@@ -633,6 +639,7 @@ class Record:
         upper_level: int,
         colourmap_name: str,
         return_thumbnails: bool,
+        truncate: bool,
     ) -> dict:
         """Parses a numpy ndarray and returns image bytes, either for a thumbnail or
         full image.
@@ -646,8 +653,16 @@ class Record:
                 "x_pixel_size": result.shape[1],
                 "y_pixel_size": result.shape[0],
             }
-            step_size = max(*result.shape) // 50
-            image_array = result[::step_size, ::step_size]
+
+            # In each dimension, determine the number of pixels in the original
+            # that need to map onto one pixel in the thumbnail
+            thumbnail_x_size = Config.config.images.image_thumbnail_size[0]
+            thumbnail_y_size = Config.config.images.image_thumbnail_size[1]
+            step_x = result.shape[1] // thumbnail_x_size
+            step_y = result.shape[0] // thumbnail_y_size
+
+            # Slice with a step size that downsamples to the thumbnails shape
+            image_array = result[::step_y, ::step_x]
             image_bytes = FalseColourHandler.apply_false_colour(
                 image_array,
                 bits_per_pixel,
@@ -657,7 +672,10 @@ class Record:
             )
             image_bytes.seek(0)
             image_b64 = base64.b64encode(image_bytes.getvalue())
-            return {"thumbnail": image_b64, "metadata": metadata}
+            if truncate:
+                return {"thumbnail": image_b64[:50], "metadata": metadata}
+            else:
+                return {"thumbnail": image_b64, "metadata": metadata}
         else:
             if original_image:
                 image_bytes = BytesIO()
