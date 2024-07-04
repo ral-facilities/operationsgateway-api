@@ -138,7 +138,7 @@ async def update_favourite_filter(
     log.debug("Name: %s, Filter: %s", name, filter)
 
     filter_result = await FavouriteFilter.get_by_id(username, _id)
-    updated_name = name if name is not None or name == "" else filter_result.name
+    updated_name = name if name is not None else filter_result.name
     updated_filter = filter if filter is not None else filter_result.filter
 
     update_filter = FavouriteFilter(

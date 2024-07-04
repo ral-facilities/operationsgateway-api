@@ -42,7 +42,9 @@ class FavouriteFilter:
         id_: Optional[str] = None,
     ) -> None:
         if name == "":
-            raise UserError("Filter name cannot be empty")
+            raise UserError("Name of filter cannot be empty")
+        if filter_ == "":
+            raise UserError("Filter cannot be empty")
 
         try:
             self.filter_id = ObjectId(id_) if id_ else ObjectId()
