@@ -389,6 +389,29 @@ class TestRecord:
                 },
                 id="Waveform reductive function",
             ),
+            pytest.param(
+                [
+                    {
+                        "name": "a",
+                        "expression": "CM-202-CVC-SP - 737.0041036717063",
+                    },
+                    {
+                        "name": "b",
+                        "expression": "mean(a)",
+                    },
+                ],
+                {
+                    "a": {
+                        "thumbnail": "bbb14eb0c14eb14e",
+                        "metadata": {"channel_dtype": "waveform", "x_units": "nm"},
+                    },
+                    "b": {
+                        "data": 984.4247056536747,
+                        "metadata": {"channel_dtype": "scalar"},
+                    },
+                },
+                id="Multiple waveform functions",
+            ),
             # Images
             pytest.param(
                 [
@@ -459,6 +482,33 @@ class TestRecord:
                 },
                 id="Image builtin function",
             ),
+            pytest.param(
+                [
+                    {
+                        "name": "a",
+                        "expression": "FE-204-NSO-P1-CAM-1 - 1",
+                    },
+                    {
+                        "name": "b",
+                        "expression": "mean(a)",
+                    },
+                ],
+                {
+                    "a": {
+                        "thumbnail": "b9c0c6c9a79cccc5",
+                        "metadata": {
+                            "channel_dtype": "image",
+                            "x_pixel_size": 1936,
+                            "y_pixel_size": 1216,
+                        },
+                    },
+                    "b": {
+                        "data": 375.9670147856405,
+                        "metadata": {"channel_dtype": "scalar"},
+                    },
+                },
+                id="Multiple image functions",
+            ),
         ],
     )
     async def test_apply_functions(
@@ -467,8 +517,9 @@ class TestRecord:
         functions: "list[dict[str, str]]",
         values: "dict[str, dict]",
     ):
+        record_copy = copy.deepcopy(record)
         await Record.apply_functions(
-            record=record,
+            record=record_copy,
             functions=functions,
             original_image=False,
             lower_level=0,
@@ -477,18 +528,19 @@ class TestRecord:
             return_thumbnails=True,
         )
 
-        assert "channels" in record
+        assert "channels" in record_copy
         for key, value in values.items():
-            assert key in record["channels"]
-            assert "metadata" in record["channels"][key]
-            assert record["channels"][key]["metadata"] == value["metadata"]
+            assert key in record_copy["channels"]
+            assert "_variable_value" not in record_copy["channels"][key]
+            assert "metadata" in record_copy["channels"][key]
+            assert record_copy["channels"][key]["metadata"] == value["metadata"]
             if "data" in value:
-                assert "data" in record["channels"][key]
-                test_data = record["channels"][key]["data"]
+                assert "data" in record_copy["channels"][key]
+                test_data = record_copy["channels"][key]["data"]
                 assert test_data == value["data"]
             else:
-                assert "thumbnail" in record["channels"][key]
-                image_b64 = record["channels"][key]["thumbnail"]
+                assert "thumbnail" in record_copy["channels"][key]
+                image_b64 = record_copy["channels"][key]["thumbnail"]
                 image_bytes = base64.b64decode(image_b64)
                 image = PILImage.open(BytesIO(image_bytes))
                 image_phash = str(imagehash.phash(image))

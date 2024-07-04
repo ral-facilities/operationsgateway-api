@@ -450,6 +450,10 @@ class Record:
                 truncate=truncate,
             )
 
+        for channel in record["channels"].values():
+            if "_variable_value" in channel:
+                del channel["_variable_value"]
+
     @staticmethod
     def _ensure_channels(record):
         if "channels" not in record:
@@ -477,6 +481,7 @@ class Record:
         variables = variable_transformer.variables
         channels_to_fetch = set()
 
+        log.debug("Attempting to extract %s from %s", variables, record["channels"])
         for variable in variables:
             if variable in record["channels"]:
                 variable_data[variable] = await Record._extract_variable(
@@ -552,6 +557,9 @@ class Record:
         Extracts and returns the relevant data from `channel_value`, handling
         extra calls needed for "image" and "waveform" types.
         """
+        if "_variable_value" in channel_value:
+            return channel_value["_variable_value"]
+
         channel_dtype = await Record.get_channel_dtype(
             record_id=record_id,
             channel_name=name,
@@ -615,14 +623,15 @@ class Record:
             if result.x_units is not None:
                 metadata["x_units"] = result.x_units
 
+            channel = {"_variable_value": result, "metadata": metadata}
             if return_thumbnails:
                 waveform = result.to_waveform()
                 # Creating thumbnail takes ~ 0.05 s per waveform
                 waveform.create_thumbnail()
-                channel = {"thumbnail": waveform.thumbnail, "metadata": metadata}
+                channel["thumbnail"] = waveform.thumbnail
             else:
                 waveform_model = result.to_waveform_model()
-                channel = {"data": waveform_model, "metadata": metadata}
+                channel["data"] = waveform_model
 
         else:
             metadata = {"channel_dtype": "scalar"}
@@ -672,10 +681,15 @@ class Record:
             )
             image_bytes.seek(0)
             image_b64 = base64.b64encode(image_bytes.getvalue())
+
+            channel = {"metadata": metadata, "_variable_value": result}
             if truncate:
-                return {"thumbnail": image_b64[:50], "metadata": metadata}
+                channel["thumbnail"] = image_b64[:50]
             else:
-                return {"thumbnail": image_b64, "metadata": metadata}
+                channel["thumbnail"] = image_b64
+
+            return channel
+
         else:
             if original_image:
                 image_bytes = BytesIO()
@@ -691,4 +705,4 @@ class Record:
                 )
 
             image_bytes.seek(0)
-            return {"data": image_bytes}
+            return {"data": image_bytes, "_variable_value": result}
