@@ -17,7 +17,7 @@ from test.experiments.scheduler_mocking.get_exp_dates_mocks import (
     general_mock,
     missing_rb_number,
 )
-from test.sessions.mock_models import MockUpdateResult
+from test.mock_models import MockUpdateResult
 
 
 class TestExperiment:
