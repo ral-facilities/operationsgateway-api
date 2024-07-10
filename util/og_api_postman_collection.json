@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "71c66833-ba71-47be-9f41-eaca496d06d5",
+		"_postman_id": "9c24826c-9b93-4601-a8aa-9be205452aee",
 		"name": "OperationsGateway API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "33242392"
@@ -354,39 +354,25 @@
 								}
 							]
 						},
-						"method": "GET",
+						"method": "POST",
 						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "[\r\n    {\"name\": \"scalar_operation\", \"expression\": \"TS-202-TSM-P1-CAM-2-CENX / 10\"},\r\n    {\"name\": \"waveform_operation\", \"expression\": \"CM-202-CVC-SP - 737\"},\r\n    {\"name\": \"image_operation\", \"expression\": \"FE-204-NSO-P1-CAM-1 - 1\"},\r\n    {\"name\": \"a\", \"expression\": \"mean(image_operation - scalar_operation) + waveform_operation\"}\r\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
 						"url": {
-							"raw": "{{og-api}}/functions/validate/a?functions={\"name\": \"scalar_operation\", \"expression\": \"TS-202-TSM-P1-CAM-2-CENX / 10\"}&functions={\"name\": \"waveform_operation\", \"expression\": \"CM-202-CVC-SP - 737\"}&functions={\"name\": \"image_operation\", \"expression\": \"FE-204-NSO-P1-CAM-1 - 1\"}&functions={\"name\": \"a\", \"expression\": \"mean(image_operation - scalar_operation) %2B waveform_operation\"}",
+							"raw": "{{og-api}}/functions/validate",
 							"host": [
 								"{{og-api}}"
 							],
 							"path": [
 								"functions",
-								"validate",
-								"a"
-							],
-							"query": [
-								{
-									"key": "functions",
-									"value": "{\"name\": \"scalar_operation\", \"expression\": \"TS-202-TSM-P1-CAM-2-CENX / 10\"}",
-									"description": "Scalar operation"
-								},
-								{
-									"key": "functions",
-									"value": "{\"name\": \"waveform_operation\", \"expression\": \"CM-202-CVC-SP - 737\"}",
-									"description": "Waveform operation"
-								},
-								{
-									"key": "functions",
-									"value": "{\"name\": \"image_operation\", \"expression\": \"FE-204-NSO-P1-CAM-1 - 1\"}",
-									"description": "Image operation"
-								},
-								{
-									"key": "functions",
-									"value": "{\"name\": \"a\", \"expression\": \"mean(image_operation - scalar_operation) %2B waveform_operation\"}",
-									"description": "Dependent on other functions (waveform)"
-								}
+								"validate"
 							]
 						}
 					},

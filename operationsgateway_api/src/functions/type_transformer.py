@@ -1,9 +1,10 @@
 from typing import Literal
 
-from lark import Transformer
+from lark import LarkError, Transformer
 
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.functions.builtins.builtins import Builtins
+from operationsgateway_api.src.functions.builtins.tokens import SYMBOLS
 from operationsgateway_api.src.functions.parser import parser
 
 
@@ -59,7 +60,22 @@ class TypeTransformer(Transformer):
         self.channel_manifest = manifest["channels"]
 
         if name in self.channel_manifest:
-            raise ValueError(f"Function name '{name}' is already a channel name")
+            raise ValueError(f"name '{name}' is already a channel name")
+        elif name in self.function_types:
+            raise ValueError(f"name '{name}' is already a function name")
+        elif name in SYMBOLS:
+            raise ValueError(f"name '{name}' is already a builtin name")
+        else:
+            try:
+                error = (
+                    f"name '{name}' must start with a letter, and can only contain "
+                    "letters, digits, '-' or '_' characters"
+                )
+                name_tree = parser.parse(name)
+                if name_tree.data != "variable":
+                    raise ValueError(error)
+            except LarkError as e:
+                raise ValueError(error) from e
 
         tree = parser.parse(expression)
         function_type = self.transform(tree)

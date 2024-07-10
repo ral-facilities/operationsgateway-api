@@ -55,3 +55,5 @@ TOKENS = [
     },
     *Builtins.tokens,
 ]
+
+SYMBOLS = {t["symbol"] for t in TOKENS}
