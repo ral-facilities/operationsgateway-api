@@ -1,20 +1,8 @@
-import os
-
 from fastapi.testclient import TestClient
-import pytest
 
 
 class TestGetExperiments:
-    @pytest.mark.skipif(
-        os.environ.get("GITHUB_ACTIONS") == "true",
-        reason="Scheduler can't be accessed on GitHub Actions so no experiments"
-        " will exist",
-    )
     def test_get_experiments(self, test_app: TestClient, login_and_get_token):
-        # There are quite a few experiments and the experiments rely on the data from
-        # the dev Scheduler (which could change). Therefore I think it's better to check
-        # just a few experiments and ensure they're correct, rather than checking every
-        # single experiment
         expected_experiments_snippet = [
             {
                 "end_date": "2023-06-21T23:59:59",
