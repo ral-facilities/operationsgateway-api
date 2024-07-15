@@ -27,16 +27,17 @@ def main():
     mongodb = DatabaseOperations()
     echo = S3Interface()
 
+    if Config.config.script_options.wipe_database:
+        print("Wiping database")
+        collection_names = ["channels", "experiments", "records"]
+        mongodb.drop_collections(collection_names)
+
     echo.download_experiments()
     mongodb.import_data(
         Config.config.database.remote_experiments_file_path,
         "experiments",
     )
 
-    if Config.config.script_options.wipe_database:
-        print("Wiping database")
-        collection_names = ["channels", "experiments", "records"]
-        mongodb.drop_collections(collection_names)
     if Config.config.script_options.wipe_echo:
         print(f"Wiping Echo bucket: {Config.config.echo.storage_bucket}")
         echo.delete_all()
