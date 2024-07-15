@@ -571,3 +571,30 @@ class TestRecord:
             await Record.apply_functions(record, functions, False, 0, 255, "binary")
 
         assert str(e.value) == "b is not known as a channel or function name"
+
+    @pytest.mark.asyncio
+    async def test_apply_functions_missing_channel(self):
+        # Note we need a record where not all channels are defined, so not using
+        # 20230605100000 as above
+        record = {"_id": "20230604000000"}
+        functions = [
+            {"name": "a", "expression": "TS-202-TSM-P1-CAM-2-CENX / 10"},
+            {"name": "b", "expression": "a / 10"},
+            {"name": "c", "expression": "1"},
+        ]
+        await Record.apply_functions(
+            record=record,
+            functions=functions,
+            original_image=False,
+            lower_level=0,
+            upper_level=255,
+            colourmap_name="binary",
+            return_thumbnails=True,
+        )
+
+        expected = {"data": 1, "metadata": {"channel_dtype": "scalar"}}
+        assert "channels" in record
+        assert "a" not in record["channels"]  # Skip, TS-202-TSM-P1-CAM-2-CENX undefined
+        assert "b" not in record["channels"]  # Skip, a undefined
+        assert "c" in record["channels"]  # Has no dependencies, so should be returned
+        assert record["channels"]["c"] == expected

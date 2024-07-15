@@ -497,8 +497,13 @@ class Record:
                 record,
                 variable_data,
                 channels_to_fetch,
+                skip_functions=variable_transformer.skip_functions,
             )
             if missing_channels:
+                # Remove any missing channels so we don't skip future functions which
+                # may not depend on them
+                variable_transformer.variables -= missing_channels
+                variable_transformer.skip_functions.add(function["name"])
                 return
 
         result = expression_transformer.evaluate(function["expression"])
@@ -520,6 +525,7 @@ class Record:
         record: "dict[str, dict]",
         variable_data: dict,
         channels_to_fetch: "set[str]",
+        skip_functions: "set[str]",
     ) -> "set[str]":
         """Fetches `channels_to_fetch`, returning known channels missing for this
         record and raising an exception if the channel is not known at all."""
@@ -531,13 +537,17 @@ class Record:
         if missing_channels:
             manifest = await ChannelManifest.get_most_recent_manifest()
             for missing_channel in missing_channels:
-                if missing_channel not in manifest["channels"]:
+                if missing_channel in skip_functions:
+                    message = "Function %s defined but cannot be evaluated for %s"
+                    log.warning(message, missing_channel, record["_id"])
+                elif missing_channel in manifest["channels"]:
+                    message = "Channel %s does not have a value for %s"
+                    log.warning(message, missing_channel, record["_id"])
+                else:
                     message = "%s is not known as a channel or function name"
                     log.error(message, missing_channel)
                     raise FunctionParseError(message % missing_channel)
 
-            message = "Channels %s exist but not defined for %s"
-            log.warning(message, missing_channels, record["_id"])
             return missing_channels
 
         for name, channel_value in fetched_channels.items():
