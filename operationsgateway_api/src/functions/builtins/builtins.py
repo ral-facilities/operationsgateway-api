@@ -1,5 +1,3 @@
-import numpy as np
-
 from operationsgateway_api.src.functions.builtins.background import Background
 from operationsgateway_api.src.functions.builtins.builtin import Builtin
 from operationsgateway_api.src.functions.builtins.centre import Centre
@@ -11,7 +9,6 @@ from operationsgateway_api.src.functions.builtins.fwhm_x import FWHMX
 from operationsgateway_api.src.functions.builtins.fwhm_y import FWHMY
 from operationsgateway_api.src.functions.builtins.integrate import Integrate
 from operationsgateway_api.src.functions.builtins.rising import Rising
-from operationsgateway_api.src.functions.waveform_variable import WaveformVariable
 
 
 class Builtins:
@@ -44,18 +41,9 @@ class Builtins:
         builtin = Builtins.get_builtin(builtin_name)
 
         if is_evaluation:
-            types_dict = {
-                float: "scalar",
-                WaveformVariable: "waveform",
-                np.ndarray: "image",
-            }
-            argument = types_dict[type(argument)]
-
-        if argument not in builtin.input_types:
-            raise TypeError(
-                f"'{builtin_name}' accepts {builtin.input_types} type(s), "
-                f"'{argument}' provided",
-            )
+            builtin.evaluation_type_check(argument)
+        else:
+            builtin.type_check(argument)
 
         return builtin.output_type
 

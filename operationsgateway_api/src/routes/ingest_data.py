@@ -1,3 +1,4 @@
+import ctypes
 import logging
 from multiprocessing.pool import ThreadPool
 
@@ -9,9 +10,14 @@ from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.error_handling import endpoint_error_handling
-from operationsgateway_api.src.records.hdf_handler import HDFDataHandler
 from operationsgateway_api.src.records.image import Image
-from operationsgateway_api.src.records.ingestion_validator import IngestionValidator
+from operationsgateway_api.src.records.ingestion.channel_checks import ChannelChecks
+from operationsgateway_api.src.records.ingestion.file_checks import FileChecks
+from operationsgateway_api.src.records.ingestion.hdf_handler import HDFDataHandler
+from operationsgateway_api.src.records.ingestion.partial_import_checks import (
+    PartialImportChecks,
+)
+from operationsgateway_api.src.records.ingestion.record_checks import RecordChecks
 from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.waveform import Waveform
 
@@ -44,13 +50,65 @@ async def submit_hdf(
     log.debug("Filename: %s, Content: %s", file.filename, file.content_type)
 
     hdf_handler = HDFDataHandler(file.file)
-    record_data, waveforms, images = hdf_handler.extract_data()
-    record = Record(record_data)
+    (
+        record_data,
+        waveforms,
+        images,
+        internal_failed_channel,
+    ) = await hdf_handler.extract_data()
 
-    stored_record = await record.find_existing_record()
-    # TODO - when I implement the validation, it should only run if `stored_record`
-    # actually contains something (i.e. isn't None)
-    ingest_checker = IngestionValidator(record_data, stored_record)  # noqa: F841
+    record_original = Record(record_data)
+    stored_record = await record_original.find_existing_record()
+
+    file_checker = FileChecks(record_data)
+    warning = file_checker.epac_data_version_checks()
+    record_checker = RecordChecks(record_data)
+    record_checker.active_area_checks()
+    record_checker.optional_metadata_checks()
+
+    channel_checker = ChannelChecks(
+        record_data,
+        waveforms,
+        images,
+        internal_failed_channel,
+    )
+    manifest = await ChannelManifest.get_most_recent_manifest()
+    channel_checker.set_channels(manifest)
+    channel_dict = await channel_checker.channel_checks()
+
+    if stored_record:
+        partial_import_checker = PartialImportChecks(
+            record_data,
+            stored_record,
+        )
+        accept_type = partial_import_checker.metadata_checks()
+        partial_channel_dict = partial_import_checker.channel_checks()
+
+        log.info("existent record found")
+        for key in channel_dict["rejected_channels"].keys():
+            if key in partial_channel_dict["accepted_channels"]:
+                partial_channel_dict["accepted_channels"].remove(key)
+                partial_channel_dict["rejected_channels"][key] = channel_dict[
+                    "rejected_channels"
+                ][key]
+            else:
+                partial_channel_dict["rejected_channels"][key] = channel_dict[
+                    "rejected_channels"
+                ][key]
+        checker_response = partial_channel_dict
+    else:
+        checker_response = channel_dict
+
+    checker_response["warnings"] = list(warning) if warning else []
+
+    record_data, images, waveforms = HDFDataHandler._update_data(
+        checker_response,
+        record_data,
+        images,
+        waveforms,
+    )
+
+    record = Record(record_data)
 
     log.debug("Processing waveforms")
     for w in waveforms:
@@ -68,22 +126,42 @@ async def submit_hdf(
     if len(image_instances) > 0:
         pool = ThreadPool(processes=Config.config.images.upload_image_threads)
         pool.map(Image.upload_image, image_instances)
+        pool.close()
+        image_instances = None
 
-    if stored_record:
+    if stored_record and accept_type == "accept_merge":
         log.debug(
             "Record matching ID %s already exists in the database, updating existing"
             " document",
             record.record.id_,
         )
         await record.update()
-        return f"Updated {stored_record.id_}"
+        content = {
+            "message": f"Updated {stored_record.id_}",
+            "response": checker_response,
+        }
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+        return content
     else:
         log.debug("Inserting new record into MongoDB")
         await record.insert()
+        record_id = record.record.id_
+        content = {
+            "message": f"Added as {record_id}",
+            "response": checker_response,
+        }
+
+        # Emptying variables to save memory
+        images = []
+        hdf_handler.images = []
+        hdf_handler = None
+        channel_checker = None
+        waveforms = None
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
         return JSONResponse(
-            record.record.id_,
+            content,
             status_code=status.HTTP_201_CREATED,
-            headers={"Location": f"/records/{record.record.id_}"},
+            headers={"Location": f"/records/{record_id}"},
         )
 
 

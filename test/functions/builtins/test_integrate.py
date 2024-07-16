@@ -61,8 +61,7 @@ class TestIntegrate:
         with pytest.raises(TypeError) as e:
             Integrate.evaluate(None)
 
-        message = (
-            "'integrate' accepts [WaveformVariable, np.ndarray], "
-            "<class 'NoneType'> provided"
+        assert str(e.value) in (
+            "'integrate' accepts {'image', 'waveform'} type(s), 'NoneType' provided",
+            "'integrate' accepts {'waveform', 'image'} type(s), 'NoneType' provided",
         )
-        assert str(e.value) == message

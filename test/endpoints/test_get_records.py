@@ -44,6 +44,7 @@ class TestGetRecords:
                     {
                         "_id": "20230605080000",
                         "metadata": {
+                            "active_area": "las",
                             "epac_ops_data_version": "1.0",
                             "shotnum": 423648000000,
                             "timestamp": "2023-06-05T08:00:00",
@@ -52,6 +53,8 @@ class TestGetRecords:
                     {
                         "_id": "20230605090000",
                         "metadata": {
+                            "active_area": "ea1",
+                            "active_experiment": "22042898",
                             "epac_ops_data_version": "1.0",
                             "shotnum": 423648036000,
                             "timestamp": "2023-06-05T09:00:00",

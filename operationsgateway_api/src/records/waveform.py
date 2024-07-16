@@ -4,7 +4,10 @@ import json
 import logging
 
 from botocore.exceptions import ClientError
-import matplotlib.pyplot as plt
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  # noqa: I202
 
 from operationsgateway_api.src.exceptions import EchoS3Error, WaveformError
 from operationsgateway_api.src.models import WaveformModel
@@ -90,6 +93,7 @@ class Waveform:
         plt.savefig(buffer, format="PNG", bbox_inches="tight", pad_inches=0, dpi=130)
         # Flushes the plot to remove data from previously ingested waveforms
         plt.clf()
+        plt.close()
 
     def _create_fullsize_plot(self, buffer, x_label, y_label) -> None:
         """

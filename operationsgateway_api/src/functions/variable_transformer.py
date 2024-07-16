@@ -30,9 +30,11 @@ class VariableTransformer(Transformer):
 
     def __init__(self) -> None:
         """Initialises the Transformer and creates an empty set for recording
-        `variables`.
+        `variables` and dependencies on other functions to be skipped in the case they
+        cannot be defined for this particular record.
         """
         self.variables = set()
+        self.skip_functions = set()
         super().__init__()
 
     def evaluate(self, expression: str) -> None:

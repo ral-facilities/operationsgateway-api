@@ -41,8 +41,5 @@ class Integrate(Builtin):
         elif isinstance(argument, np.ndarray):
             return np.sum(argument)
         else:
-            message = (
-                "'integrate' accepts [WaveformVariable, np.ndarray], "
-                f"{type(argument)} provided"
-            )
-            raise TypeError(message)
+            # The check will fail and raise a TypeError
+            Integrate.evaluation_type_check(argument)

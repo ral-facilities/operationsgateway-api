@@ -88,7 +88,7 @@ class UserSession:
         if delete_result.deleted_count != 1:
             raise DatabaseError(
                 "Unexpected result when deleting. Number of results deleted:"
-                f"{delete_result.deleted_count}",
+                f" {delete_result.deleted_count}",
             )
 
         return delete_result.deleted_count

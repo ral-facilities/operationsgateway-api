@@ -9,7 +9,7 @@ class CentroidY(Builtin):
     symbol = "centroid_y"
     token = {
         "symbol": symbol,
-        "name": "Centroid (Y)",
+        "name": "Centroid (y)",
         "details": (
             "Calculate the y position of the centroid of an image. Errors if "
             "waveform or scalar provided. Implementation: Returns the y position "

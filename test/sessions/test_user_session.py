@@ -14,7 +14,7 @@ from operationsgateway_api.src.exceptions import (
 )
 from operationsgateway_api.src.models import UserModel, UserSessionModel
 from operationsgateway_api.src.sessions.user_session import UserSession
-from test.sessions.mock_models import (
+from test.mock_models import (
     MockDeleteResult,
     MockInsertOneResult,
     MockUpdateResult,

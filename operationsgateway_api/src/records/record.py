@@ -11,6 +11,7 @@ import pymongo
 from pymongo.results import DeleteResult
 
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
+from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import (
     ChannelSummaryError,
     DatabaseError,
@@ -423,6 +424,7 @@ class Record:
         upper_level: int,
         colourmap_name: str,
         return_thumbnails: bool = True,
+        truncate: bool = False,
     ) -> None:
         """
         Evaluates all functions and stores the results on `record` as though
@@ -445,7 +447,12 @@ class Record:
                 expression_transformer=expression_transformer,
                 function=function,
                 return_thumbnails=return_thumbnails,
+                truncate=truncate,
             )
+
+        for channel in record["channels"].values():
+            if "_variable_value" in channel:
+                del channel["_variable_value"]
 
     @staticmethod
     def _ensure_channels(record):
@@ -464,6 +471,7 @@ class Record:
         expression_transformer: ExpressionTransformer,
         function: "dict[str, str]",
         return_thumbnails: bool = True,
+        truncate: bool = False,
     ) -> None:
         """
         Evaluates a single function and stores the result on `record` as though
@@ -473,6 +481,7 @@ class Record:
         variables = variable_transformer.variables
         channels_to_fetch = set()
 
+        log.debug("Attempting to extract %s from %s", variables, record["channels"])
         for variable in variables:
             if variable in record["channels"]:
                 variable_data[variable] = await Record._extract_variable(
@@ -488,8 +497,13 @@ class Record:
                 record,
                 variable_data,
                 channels_to_fetch,
+                skip_functions=variable_transformer.skip_functions,
             )
             if missing_channels:
+                # Remove any missing channels so we don't skip future functions which
+                # may not depend on them
+                variable_transformer.variables -= missing_channels
+                variable_transformer.skip_functions.add(function["name"])
                 return
 
         result = expression_transformer.evaluate(function["expression"])
@@ -502,6 +516,7 @@ class Record:
             function_name=function["name"],
             result=result,
             return_thumbnails=return_thumbnails,
+            truncate=truncate,
         )
         variable_data[function["name"]] = result
 
@@ -510,6 +525,7 @@ class Record:
         record: "dict[str, dict]",
         variable_data: dict,
         channels_to_fetch: "set[str]",
+        skip_functions: "set[str]",
     ) -> "set[str]":
         """Fetches `channels_to_fetch`, returning known channels missing for this
         record and raising an exception if the channel is not known at all."""
@@ -521,13 +537,17 @@ class Record:
         if missing_channels:
             manifest = await ChannelManifest.get_most_recent_manifest()
             for missing_channel in missing_channels:
-                if missing_channel not in manifest["channels"]:
+                if missing_channel in skip_functions:
+                    message = "Function %s defined but cannot be evaluated for %s"
+                    log.warning(message, missing_channel, record["_id"])
+                elif missing_channel in manifest["channels"]:
+                    message = "Channel %s does not have a value for %s"
+                    log.warning(message, missing_channel, record["_id"])
+                else:
                     message = "%s is not known as a channel or function name"
                     log.error(message, missing_channel)
                     raise FunctionParseError(message % missing_channel)
 
-            message = "Channels %s exist but not defined for %s"
-            log.warning(message, missing_channels, record["_id"])
             return missing_channels
 
         for name, channel_value in fetched_channels.items():
@@ -547,13 +567,15 @@ class Record:
         Extracts and returns the relevant data from `channel_value`, handling
         extra calls needed for "image" and "waveform" types.
         """
+        if "_variable_value" in channel_value:
+            return channel_value["_variable_value"]
+
         channel_dtype = await Record.get_channel_dtype(
             record_id=record_id,
             channel_name=name,
             channel_value=channel_value,
         )
         if channel_dtype == "image":
-            # Loading from echo takes ~ 0.2 s per image
             image_bytes = await Image.get_image(
                 record_id,
                 name,
@@ -587,6 +609,7 @@ class Record:
         function_name: str,
         result: "np.ndarray | WaveformVariable | np.float64",
         return_thumbnails: bool = True,
+        truncate: bool = False,
     ) -> None:
         """
         Parses the numerical `result` and modifies `record` in place to contain
@@ -602,6 +625,7 @@ class Record:
                 upper_level=upper_level,
                 colourmap_name=colourmap_name,
                 return_thumbnails=return_thumbnails,
+                truncate=truncate,
             )
 
         elif isinstance(result, WaveformVariable):
@@ -609,14 +633,15 @@ class Record:
             if result.x_units is not None:
                 metadata["x_units"] = result.x_units
 
+            channel = {"_variable_value": result, "metadata": metadata}
             if return_thumbnails:
                 waveform = result.to_waveform()
                 # Creating thumbnail takes ~ 0.05 s per waveform
                 waveform.create_thumbnail()
-                channel = {"thumbnail": waveform.thumbnail, "metadata": metadata}
+                channel["thumbnail"] = waveform.thumbnail
             else:
                 waveform_model = result.to_waveform_model()
-                channel = {"data": waveform_model, "metadata": metadata}
+                channel["data"] = waveform_model
 
         else:
             metadata = {"channel_dtype": "scalar"}
@@ -633,6 +658,7 @@ class Record:
         upper_level: int,
         colourmap_name: str,
         return_thumbnails: bool,
+        truncate: bool,
     ) -> dict:
         """Parses a numpy ndarray and returns image bytes, either for a thumbnail or
         full image.
@@ -646,8 +672,16 @@ class Record:
                 "x_pixel_size": result.shape[1],
                 "y_pixel_size": result.shape[0],
             }
-            step_size = max(*result.shape) // 50
-            image_array = result[::step_size, ::step_size]
+
+            # In each dimension, determine the number of pixels in the original
+            # that need to map onto one pixel in the thumbnail
+            thumbnail_x_size = Config.config.images.image_thumbnail_size[0]
+            thumbnail_y_size = Config.config.images.image_thumbnail_size[1]
+            step_x = result.shape[1] // thumbnail_x_size
+            step_y = result.shape[0] // thumbnail_y_size
+
+            # Slice with a step size that downsamples to the thumbnails shape
+            image_array = result[::step_y, ::step_x]
             image_bytes = FalseColourHandler.apply_false_colour(
                 image_array,
                 bits_per_pixel,
@@ -657,7 +691,15 @@ class Record:
             )
             image_bytes.seek(0)
             image_b64 = base64.b64encode(image_bytes.getvalue())
-            return {"thumbnail": image_b64, "metadata": metadata}
+
+            channel = {"metadata": metadata, "_variable_value": result}
+            if truncate:
+                channel["thumbnail"] = image_b64[:50]
+            else:
+                channel["thumbnail"] = image_b64
+
+            return channel
+
         else:
             if original_image:
                 image_bytes = BytesIO()
@@ -673,4 +715,4 @@ class Record:
                 )
 
             image_bytes.seek(0)
-            return {"data": image_bytes}
+            return {"data": image_bytes, "_variable_value": result}

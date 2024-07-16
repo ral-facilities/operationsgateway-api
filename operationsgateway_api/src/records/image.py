@@ -65,6 +65,8 @@ class Image:
             img = img.point(Image.lookup_table_16_to_8_bit, "L")
         self.thumbnail = ThumbnailHandler.convert_to_base64(img)
 
+        img.close()
+
     def extract_metadata_from_path(self) -> Tuple[str, str]:
         """
         Small string handler function to extract the record ID and channel name from the
@@ -148,6 +150,7 @@ class Image:
                     upper_level,
                     colourmap_name,
                 )
+                img_src.close()
                 return false_colour_image
         except (ClientError, EchoS3Error) as exc:
             # Record.count_records() could not be used because that would cause a

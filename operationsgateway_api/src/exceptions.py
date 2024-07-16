@@ -3,6 +3,18 @@ class ApiError(Exception):
     status_code = 500
 
 
+class RejectFileError(ApiError):
+    def __init__(self, msg="HDF file rejected", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 400
+
+
+class RejectRecordError(ApiError):
+    def __init__(self, msg="HDF file record rejected", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 400
+
+
 class DatabaseError(ApiError):
     def __init__(self, msg="Database error", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)
@@ -115,3 +127,9 @@ class WaveformError(ApiError):
     def __init__(self, msg="Waveform error", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)
         self.status_code = 500
+
+
+class UserError(ApiError):
+    def __init__(self, msg="User error", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 400

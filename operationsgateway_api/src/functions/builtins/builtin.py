@@ -106,3 +106,42 @@ class Builtin(ABC):
                 and abs(diff[-1] + diff[-2]) > diff_tolerance
             ):
                 y[-1] -= (3 * diff[-1] + diff[-2]) / 6
+
+    @classmethod
+    def type_check(cls, argument_type: str) -> None:
+        """Raises a TypeError with a human readable message detailed the
+        provided and acceptable types to this function.
+
+        Args:
+            argument (str): Argument provided.
+
+        Raises:
+            TypeError: Formatted with input and acceptable types.
+        """
+        if argument_type not in cls.input_types:
+            raise TypeError(
+                f"'{cls.symbol}' accepts {cls.input_types} type(s), "
+                f"'{argument_type}' provided",
+            )
+
+    @classmethod
+    def evaluation_type_check(
+        cls,
+        argument: "float | WaveformVariable | np.ndarray",
+    ) -> None:
+        """Raises a TypeError with a human readable message detailed the
+        provided and acceptable types to this function from an actual value
+        provided at evaluation.
+
+        Args:
+            argument (float | WaveformVariable | np.ndarray): Argument provided.
+
+        Raises:
+            TypeError: Formatted with input and acceptable types.
+        """
+        types_dict = {
+            float: "scalar",
+            WaveformVariable: "waveform",
+            np.ndarray: "image",
+        }
+        cls.type_check(types_dict.get(type(argument), type(argument).__name__))

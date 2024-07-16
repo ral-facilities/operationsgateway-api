@@ -43,8 +43,7 @@ class TestBackground:
         with pytest.raises(TypeError) as e:
             Background.evaluate(None)
 
-        message = (
-            "'background' accepts [WaveformVariable, np.ndarray], "
-            "<class 'NoneType'> provided"
+        assert str(e.value) in (
+            "'background' accepts {'image', 'waveform'} type(s), 'NoneType' provided",
+            "'background' accepts {'waveform', 'image'} type(s), 'NoneType' provided",
         )
-        assert str(e.value) == message

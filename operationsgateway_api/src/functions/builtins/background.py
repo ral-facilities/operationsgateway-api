@@ -47,8 +47,5 @@ class Background(Builtin):
         elif isinstance(argument, np.ndarray):
             return np.mean(argument[:10, :10])
         else:
-            message = (
-                "'background' accepts [WaveformVariable, np.ndarray], "
-                f"{type(argument)} provided"
-            )
-            raise TypeError(message)
+            # The check will fail and raise a TypeError
+            Background.evaluation_type_check(argument)

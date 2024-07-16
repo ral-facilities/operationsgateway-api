@@ -12,10 +12,18 @@ class TestGetWaveformByID:
             pytest.param(
                 "20230605100000",
                 "CM-202-CVC-SP",
-                {"name": "a", "expression": "CM-202-CVC-SP / 100"},
+                None,
                 645.0,
                 1803.1355895081488,
                 id="Ordinary request",
+            ),
+            pytest.param(
+                "20230605100000",
+                "CM-202-CVC-SP",
+                {"name": "a", "expression": "CM-202-CVC-SP / 100"},
+                645.0,
+                1803.1355895081488,
+                id="Request with unused function",
             ),
             pytest.param(
                 "20230605100000",
@@ -23,7 +31,7 @@ class TestGetWaveformByID:
                 {"name": "a", "expression": "CM-202-CVC-SP / 100"},
                 645.0,
                 18.031355895081488,
-                id="Ordinary request",
+                id="Request with used function",
             ),
         ],
     )
@@ -37,9 +45,13 @@ class TestGetWaveformByID:
         expected_first_x,
         expected_first_y,
     ):
-        functions_str = quote(json.dumps(functions))
+        if functions is not None:
+            functions_str = f"?functions={quote(json.dumps(functions))}"
+        else:
+            functions_str = ""
+
         test_response = test_app.get(
-            f"/waveforms/{record_id}/{channel_name}?functions={functions_str}",
+            f"/waveforms/{record_id}/{channel_name}{functions_str}",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
 

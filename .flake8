@@ -11,6 +11,7 @@ per-file-ignores =
   test/*: S101, S303
   test/experiments/scheduler_mocking/models.py: N815
   operationsgateway_api/src/models.py: B902
+  operationsgateway_api/src/records/waveform.py: E402
 # As recommended on https://github.com/tiangolo/fastapi/discussions/7463
 extend-immutable-calls = Depends, fastapi.Depends, Query, fastapi.Query, Body, fastapi.Body, Cookie, fastapi.Cookie, Path, fastapi.Path
 # As recommended on https://github.com/pydantic/pydantic/issues/568
