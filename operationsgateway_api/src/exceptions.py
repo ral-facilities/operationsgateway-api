@@ -121,3 +121,9 @@ class WaveformError(ApiError):
     def __init__(self, msg="Waveform error", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)
         self.status_code = 500
+
+
+class UserError(ApiError):
+    def __init__(self, msg="User error", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 400

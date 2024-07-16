@@ -5,6 +5,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
 from pydantic import Json
+import pymongo
 from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authorisation import (
@@ -110,7 +111,11 @@ async def export_records(
     if projection is None:
         raise ExportError("No channels specified to export")
 
-    query_order = list(ParameterHandler.extract_order_data(order)) if order else ""
+    query_order = (
+        list(ParameterHandler.extract_order_data(order))
+        if order
+        else [("_id", pymongo.ASCENDING)]
+    )
     log.info("conditions: %s", conditions)
     ParameterHandler.encode_date_for_conditions(conditions)
 

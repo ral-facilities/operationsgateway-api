@@ -21,6 +21,7 @@ from operationsgateway_api.src.routes import (
     channels,
     experiments,
     export,
+    filters,
     images,
     ingest_data,
     records,
@@ -83,6 +84,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"],
 )
 
 
@@ -129,6 +131,7 @@ add_router_to_app(export.router)
 add_router_to_app(sessions.router)
 add_router_to_app(user_preferences.router)
 add_router_to_app(users.router)
+add_router_to_app(filters.router)
 
 log.debug("ROUTE_MAPPINGS contents:")
 for item in ROUTE_MAPPINGS.items():

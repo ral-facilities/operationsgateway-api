@@ -100,6 +100,7 @@ class Waveform:
         plt.savefig(buffer, format="PNG", bbox_inches="tight", pad_inches=0, dpi=130)
         # Flushes the plot to remove data from previously ingested waveforms
         plt.clf()
+        plt.close()
 
     def _create_fullsize_plot(self, buffer, x_label, y_label) -> None:
         """

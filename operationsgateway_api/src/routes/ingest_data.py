@@ -1,3 +1,4 @@
+import ctypes
 import logging
 from multiprocessing.pool import ThreadPool
 
@@ -100,7 +101,7 @@ async def submit_hdf(
 
     checker_response["warnings"] = list(warning) if warning else []
 
-    record_data, images, waveforms = hdf_handler._update_data(
+    record_data, images, waveforms = HDFDataHandler._update_data(
         checker_response,
         record_data,
         images,
@@ -125,6 +126,8 @@ async def submit_hdf(
     if len(image_instances) > 0:
         pool = ThreadPool(processes=Config.config.images.upload_image_threads)
         pool.map(Image.upload_image, image_instances)
+        pool.close()
+        image_instances = None
 
     if stored_record and accept_type == "accept_merge":
         log.debug(
@@ -137,18 +140,28 @@ async def submit_hdf(
             "message": f"Updated {stored_record.id_}",
             "response": checker_response,
         }
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
         return content
     else:
         log.debug("Inserting new record into MongoDB")
         await record.insert()
+        record_id = record.record.id_
         content = {
-            "message": f"Added as {record.record.id_}",
+            "message": f"Added as {record_id}",
             "response": checker_response,
         }
+
+        # Emptying variables to save memory
+        images = []
+        hdf_handler.images = []
+        hdf_handler = None
+        channel_checker = None
+        waveforms = None
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
         return JSONResponse(
             content,
             status_code=status.HTTP_201_CREATED,
-            headers={"Location": f"/records/{record.record.id_}"},
+            headers={"Location": f"/records/{record_id}"},
         )
 
 

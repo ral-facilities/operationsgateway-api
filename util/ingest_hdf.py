@@ -187,6 +187,8 @@ if not args.url:
         # Check for the return code to see if the API started successfully
         api_process.poll()
         if api_process.returncode is not None and api_process.returncode != 0:
+            # Flushing stdout buffer so it doesn't become full, causing the script
+            # to hang
             t = threading.Thread(target=clear_buffers, args=(api_process, True))
             t.start()
             sys.exit("API has failed to start up, please see output above")

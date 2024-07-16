@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "28dd0246-c384-4402-a74c-19993baa9a1f",
+		"_postman_id": "481d999a-cda0-4e7d-801c-efcee7b4f09d",
 		"name": "OperationsGateway API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "5024263"
@@ -1421,7 +1421,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{og-api}}/export?conditions={\"_id\": {\"$in\": [\"20230605080000\",\"20230605090000\",\"20230605100000\",\"20230605110000\",\"20230605120000\"]}}&projection=metadata.shotnum&projection=metadata.timestamp&projection=metadata.epac_ops_data_version&projection=channels.FE-204-PSO-EM.data",
+							"raw": "{{og-api}}/export?conditions={\"_id\": {\"$in\": [\"20230605080000\",\"20230605090000\",\"20230605100000\",\"20230605110000\",\"20230605120000\"]}}&projection=_id&projection=metadata.shotnum&projection=metadata.timestamp&projection=metadata.epac_ops_data_version&projection=channels.FE-204-PSO-EM.data",
 							"host": [
 								"{{og-api}}"
 							],
@@ -1583,6 +1583,174 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Favourite Filters",
+			"item": [
+				{
+					"name": "Save Favourite Filter",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/users/filters?name=My Favourite Filter&filter=PM-201-HJ-CRY-FLOW > 4",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"users",
+								"filters"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "My Favourite Filter"
+								},
+								{
+									"key": "filter",
+									"value": "PM-201-HJ-CRY-FLOW > 4"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Favourite Filter",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/users/filters/66055ee49dc258bbfd26bbfc?name=My Updated Favourite Filter&filter=PM-201-HJ-CRY-FLOW < 3.8",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"users",
+								"filters",
+								"66055ee49dc258bbfd26bbfc"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "My Updated Favourite Filter"
+								},
+								{
+									"key": "filter",
+									"value": "PM-201-HJ-CRY-FLOW < 3.8"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Favourite Filter List",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/users/filters",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"users",
+								"filters"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Favourite Filter",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/users/filters/66055ee49dc258bbfd26bbfc",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"users",
+								"filters",
+								"66055ee49dc258bbfd26bbfc"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Favourite Filter",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/users/filters/66055ee49dc258bbfd26bbfc",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"users",
+								"filters",
+								"66055ee49dc258bbfd26bbfc"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"event": [
@@ -1612,7 +1780,7 @@
 		},
 		{
 			"key": "og-api",
-			"value": "https://opsgateway-epac-dev.clf.stfc.ac.uk",
+			"value": "https://opsgateway-epac-dev.clf.stfc.ac.uk/api",
 			"disabled": true
 		},
 		{

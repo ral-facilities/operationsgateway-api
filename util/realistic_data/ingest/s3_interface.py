@@ -34,7 +34,7 @@ class S3Interface:
         print("Downloaded channel manifest file from S3")
         return channel_manifest
 
-    def download_experiments(self) -> BytesIO:
+    def download_experiments(self) -> None:
         experiments_import = BytesIO()
         self.simulated_data_bucket.download_fileobj(
             Fileobj=experiments_import,
@@ -42,7 +42,14 @@ class S3Interface:
         )
         experiments_import.seek(0)
         print("Downloaded experiments (in format for mongoimport) from S3")
-        return experiments_import
+
+        binary_file = open(Config.config.database.remote_experiments_file_path, "wb")
+        binary_file.write(experiments_import.getvalue())
+        binary_file.close()
+
+        print(
+            f"Written '{Config.config.database.remote_experiments_file_path}' to file",
+        )
 
     def paginate_hdf_data(self):
         paginator = self.client.get_paginator("list_objects_v2")
