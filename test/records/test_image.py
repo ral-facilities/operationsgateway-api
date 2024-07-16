@@ -63,6 +63,41 @@ class TestImage:
         # the reason only 0s are being asserted is because this is checking the hash of
         # a purely black 300x300 square created in the test_image above
 
+    @pytest.mark.parametrize(
+        "image_size, config_thumbnail_size, expected_thumbnail_size",
+        [
+            pytest.param((300, 300), (50, 50), (50, 50), id="50x50 thumbnail"),
+            pytest.param((400, 300), (60, 80), (60, 80), id="60x80 thumbnail"),
+            pytest.param(
+                (300, 300),
+                (75, 100),
+                (75, 75),
+                id="75x100 thumbnail (square image)",
+            ),
+        ],
+    )
+    def test_create_thumbnail_config_size(
+        self,
+        image_size,
+        config_thumbnail_size,
+        expected_thumbnail_size,
+    ):
+        test_image = Image(
+            ImageModel(
+                path="test/path/photo.png",
+                data=np.ones(shape=image_size, dtype=np.int8),
+            ),
+        )
+        with patch(
+            "operationsgateway_api.src.config.Config.config.images.thumbnail_size",
+            config_thumbnail_size,
+        ):
+            test_image.create_thumbnail()
+
+        bytes_thumbnail = base64.b64decode(test_image.thumbnail)
+        img = PILImage.open(BytesIO(bytes_thumbnail))
+        assert img.size == expected_thumbnail_size
+
     def test_alternative_mode_thumbnail(self):
         test_image = Image(
             ImageModel(
