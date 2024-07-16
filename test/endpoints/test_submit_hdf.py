@@ -189,7 +189,6 @@ class TestSubmitHDF:
         ],
     )
     @pytest.mark.asyncio
-    # @pytest.mark.skip
     async def test_hdf_rejects(
         self,
         data_version,
@@ -217,7 +216,6 @@ class TestSubmitHDF:
         assert test_response.status_code == 400
 
     @pytest.mark.asyncio
-    # @pytest.mark.skip
     async def test_partial_import_record_reject(
         self,
         reset_databases,
@@ -249,7 +247,6 @@ class TestSubmitHDF:
         assert test_response.status_code == 400
 
     @pytest.mark.asyncio
-    # @pytest.mark.skip
     async def test_channel_all_fail(
         self,
         reset_databases,
@@ -290,7 +287,6 @@ class TestSubmitHDF:
         assert test_response.status_code == 201
 
     @pytest.mark.asyncio
-    # @pytest.mark.skip
     async def test_channel_multiple_reject_types(
         self,
         reset_databases,
