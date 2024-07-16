@@ -39,7 +39,7 @@ class Builtin(ABC):
         Calculates the centre of mass
         """
         sums = np.sum(image, axis=axis)
-        weighted_sums = sums * range(len(sums))
+        weighted_sums = sums * np.arange(len(sums))
         centre_of_mass = np.sum(weighted_sums) / np.sum(sums)
         return int(centre_of_mass)
 
