@@ -28,9 +28,20 @@ def main():
             tzinfo=tz.gettz("Europe/London"),
         )
         for file in hdf_files
-        # Removes `in_progress/` directory from list of files
+        # Includes files only, any directories are ignored
         if file.is_file()
     }
+
+    in_progress_date_format = f"{hdf_file_date_format}%S"
+    current_datetime = (
+        datetime.now().replace(microsecond=0).strftime(in_progress_date_format)
+    )
+    Path(f"{hdf_data_directory}/in_progress_{current_datetime}").mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+    in_progress_dir = Path(f"{hdf_data_directory}/in_progress_{current_datetime}")
+    print(f"Created {in_progress_dir} directory")
 
     files_to_ingest = []
     for file_path, file_datetime in hdf_file_dates.items():
@@ -41,7 +52,7 @@ def main():
                 # Updating `file_path` so the change in directory is captured when the
                 # file is opened later in the script
                 file_path = file_path.rename(
-                    f"{hdf_data_directory}/in_progress/{file_path.name}",
+                    f"{in_progress_dir}/{file_path.name}",
                 )
             except FileNotFoundError as e:
                 print(e)
@@ -76,14 +87,13 @@ def main():
                     )
                 except FileNotFoundError as e:
                     print(e)
-
     except Exception as e:
         print(e)
     finally:
-        # For any files that are left in `in_progress/` due to an issue (e.g. login
-        # failure) move them back to the original directory to be picked up by a future
-        # execution of this script
-        in_progress_files = Path(f"{hdf_data_directory}/in_progress").iterdir()
+        # For any files that are left in the 'in progress' directory (perhaps due to an
+        # issue such as login failure) move them back to the original directory to be
+        # picked up by a future execution of this script
+        in_progress_files = Path(in_progress_dir).iterdir()
         for file in in_progress_files:
             try:
                 file.rename(f"{hdf_data_directory}/{file.name}")
@@ -91,6 +101,10 @@ def main():
                 print(e)
             else:
                 print(f"{file} moved back to data directory")
+
+        # Clean up the 'in progress' directory
+        print(f"Going to remove: {in_progress_dir}")
+        Path.rmdir(in_progress_dir)
 
 
 if __name__ == "__main__":
