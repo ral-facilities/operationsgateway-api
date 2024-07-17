@@ -22,6 +22,7 @@ class App(BaseModel):
     host: Optional[StrictStr] = None
     port: Optional[StrictInt] = None
     reload: Optional[StrictBool] = None
+    url_prefix: StrictStr
 
 
 class ImagesConfig(BaseModel):
@@ -102,7 +103,7 @@ class APIConfig(BaseModel):
     # When in production, there's no `app` section in the config file. A default value
     # (i.e. an empty instance of `App`) has been assigned so that if the code attempts
     # to access a config value in this section, an error is prevented
-    app: Optional[App] = App()
+    app: App
     mongodb: MongoDB
     auth: AuthConfig
     experiments: ExperimentsConfig
