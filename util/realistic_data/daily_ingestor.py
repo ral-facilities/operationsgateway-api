@@ -51,30 +51,46 @@ def main():
     print("Files to ingest:")
     pprint([file.name for file in files_to_ingest])
 
-    og_api = APIClient(og_api_url)
+    try:
+        og_api = APIClient(og_api_url)
 
-    for file_to_ingest in files_to_ingest:
-        with open(file_to_ingest, "rb") as hdf_file:
-            response_code = og_api.submit_hdf({file_to_ingest.name: hdf_file})
+        for file_to_ingest in files_to_ingest:
+            with open(file_to_ingest, "rb") as hdf_file:
+                response_code = og_api.submit_hdf({file_to_ingest.name: hdf_file})
 
-        if response_code == 201 or response_code == 200:
-            print(
-                f"Successfully ingested ({response_code}) '{file_to_ingest.name}'."
-                " HDF file will be deleted",
-            )
-            file_to_ingest.unlink(missing_ok=True)
-        else:
-            print(
-                f"Ingestion unsuccessful for: {file_to_ingest.name},"
-                f" Response: {response_code}. Moving this file to so it can be"
-                f" investigated by a human: {failed_ingests_directory}",
-            )
-            try:
-                file_to_ingest.rename(
-                    f"{failed_ingests_directory}/{file_to_ingest.name}",
+            if response_code == 201 or response_code == 200:
+                print(
+                    f"Successfully ingested ({response_code}) '{file_to_ingest.name}'."
+                    " HDF file will be deleted",
                 )
+                file_to_ingest.unlink(missing_ok=True)
+            else:
+                print(
+                    f"Ingestion unsuccessful for: {file_to_ingest.name},"
+                    f" Response: {response_code}. Moving this file to so it can be"
+                    f" investigated by a human: {failed_ingests_directory}",
+                )
+                try:
+                    file_to_ingest.rename(
+                        f"{failed_ingests_directory}/{file_to_ingest.name}",
+                    )
+                except FileNotFoundError as e:
+                    print(e)
+
+    except Exception as e:
+        print(e)
+    finally:
+        # For any files that are left in `in_progress/` due to an issue (e.g. login
+        # failure) move them back to the original directory to be picked up by a future
+        # execution of this script
+        in_progress_files = Path(f"{hdf_data_directory}/in_progress").iterdir()
+        for file in in_progress_files:
+            try:
+                file.rename(f"{hdf_data_directory}/{file.name}")
             except FileNotFoundError as e:
                 print(e)
+            else:
+                print(f"{file} moved back to data directory")
 
 
 if __name__ == "__main__":
