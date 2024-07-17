@@ -44,6 +44,11 @@ class APIClient:
             return access_token, refresh_token
         except ConnectionError:
             print(f"Cannot connect with API at {self.url} for {endpoint}")
+        except requests.exceptions.InvalidSchema:
+            print(
+                "Invalid schema when logging in with requests. Have you added"
+                " http/https to the start of the API URL?",
+            )
 
     def refresh(self) -> str:
         print(f"Refresh token as '{Config.config.api.username}'")
