@@ -1,5 +1,6 @@
 import io
 import json
+from urllib.parse import quote
 from zipfile import ZipFile
 
 from fastapi import Response
@@ -644,6 +645,68 @@ class TestExport:
                 None,
                 id="Basic CSV export of different channel types incl. _id channel",
             ),
+            pytest.param(
+                {
+                    "_id": {
+                        "$in": [
+                            "20230605080000",
+                            "20230605090000",
+                            "20230605100000",
+                            "20230605110000",
+                            "20230605120000",
+                        ],
+                    },
+                },
+                0,
+                10,
+                "metadata.shotnum ASC",
+                # including a waveform channel to add waveform CSV files to export
+                [
+                    "metadata.shotnum",
+                    "metadata.timestamp",
+                    "metadata.epac_ops_data_version",
+                    "channels.scalar.data",
+                    "channels.waveform",
+                    "channels.image",
+                ],
+                True,  # export_waveform_images - request these
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                "20230605080000_to_20230605120000.zip",
+                None,
+                {
+                    "20230605080000_to_20230605120000.csv": "export/"
+                    "20230605080000_to_20230605120000_functions.csv",
+                    "20230605080000_image.png": "da2d4927045f24bf",
+                    "20230605090000_image.png": "c8270437263f26bf",
+                    "20230605100000_image.png": "c8262437273b373d",
+                    "20230605110000_image.png": "da6d49270437247f",
+                    "20230605120000_image.png": "dad7495b04ab04fa",
+                    "20230605080000_waveform.csv": "export/"
+                    "20230605080000_FE-204-PSO-P1-SP.csv",
+                    "20230605090000_waveform.csv": "export/"
+                    "20230605090000_FE-204-PSO-P1-SP.csv",
+                    "20230605100000_waveform.csv": "export/"
+                    "20230605100000_FE-204-PSO-P1-SP.csv",
+                    "20230605110000_waveform.csv": "export/"
+                    "20230605110000_FE-204-PSO-P1-SP.csv",
+                    "20230605120000_waveform.csv": "export/"
+                    "20230605120000_FE-204-PSO-P1-SP.csv",
+                    "20230605080000_waveform.png": "fa914e6e914eb04d",
+                    "20230605090000_waveform.png": "fa916e6e916e9181",
+                    "20230605100000_waveform.png": "fab14f6e914e90c1",
+                    "20230605110000_waveform.png": "fb914e6e914eb091",
+                    "20230605120000_waveform.png": "ff914e6e914eb081",
+                },
+                id=(
+                    "Zip export of main CSV, images, waveform CSVs and "
+                    "waveform images using functions"
+                ),
+            ),
         ],
     )
     def test_csv_export(
@@ -692,6 +755,13 @@ class TestExport:
         TestExport.compile_get_params(get_params, "lower_level", lower_level)
         TestExport.compile_get_params(get_params, "upper_level", upper_level)
         TestExport.compile_get_params(get_params, "colourmap_name", colourmap_name)
+        TestExport.compile_functions(get_params, "scalar", "FE-204-PSO-EM + 1")
+        TestExport.compile_functions(
+            get_params,
+            "waveform",
+            "FE-204-PSO-P1-SP + (1 - 1)",
+        )
+        TestExport.compile_functions(get_params, "image", "FE-204-PSO-CAM-1 + (1 - 1)")
 
         get_params_str = "&".join(get_params)
 
@@ -718,6 +788,11 @@ class TestExport:
             raise AssertionError(f"Unexpected file type: {expected_filename}")
 
         assert test_response.status_code == 200
+
+    @staticmethod
+    def compile_functions(get_params: list, name: str, expression: str) -> None:
+        function_str = json.dumps({"name": name, "expression": expression})
+        TestExport.compile_get_params(get_params, "functions", quote(function_str))
 
     @staticmethod
     def compile_get_params(get_params: list, param_name: str, param_value: str):
