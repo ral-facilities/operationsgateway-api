@@ -55,8 +55,12 @@ def main():
                 f" Response: {response_code}. Moving this file to so it can be"
                 f" investigated by a human: {failed_ingests_directory}",
             )
-
-            file_to_ingest.rename(f"{failed_ingests_directory}/{file_to_ingest.name}")
+            try:
+                file_to_ingest.rename(
+                    f"{failed_ingests_directory}/{file_to_ingest.name}",
+                )
+            except FileNotFoundError as e:
+                print(e)
 
 
 if __name__ == "__main__":
