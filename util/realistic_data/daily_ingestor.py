@@ -28,11 +28,25 @@ def main():
             tzinfo=tz.gettz("Europe/London"),
         )
         for file in hdf_files
+        # Removes `in_progress/` directory from list of files
+        if file.is_file()
     }
+
     files_to_ingest = []
     for file_path, file_datetime in hdf_file_dates.items():
         if file_datetime < datetime.now(tz=tz.gettz("Europe/London")):
-            files_to_ingest.append(file_path)
+            # Move the file to an 'in progress' directory to avoid collisions with other
+            # instances of this script (i.e. cron job every minute)
+            try:
+                # Updating `file_path` so the change in directory is captured when the
+                # file is opened later in the script
+                file_path = file_path.rename(
+                    f"{hdf_data_directory}/in_progress/{file_path.name}",
+                )
+            except FileNotFoundError as e:
+                print(e)
+            else:
+                files_to_ingest.append(file_path)
 
     print("Files to ingest:")
     pprint([file.name for file in files_to_ingest])
