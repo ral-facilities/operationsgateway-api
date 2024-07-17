@@ -75,6 +75,10 @@ async def export_records(
         description="The name of the matplotlib colour map to apply to the image"
         " thumbnails",
     ),
+    functions: Optional[List[Json]] = Query(
+        None,
+        description="Functions to evaluate on the record data being returned",
+    ),
     export_scalars: Optional[bool] = Query(
         True,
         description="Whether to export the scalar values from the main data table",
@@ -139,6 +143,7 @@ async def export_records(
         lower_level,
         upper_level,
         colourmap_name,
+        functions,
         export_scalars,
         export_images,
         export_waveform_csvs,

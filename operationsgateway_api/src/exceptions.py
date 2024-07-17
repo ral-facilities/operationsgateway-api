@@ -111,6 +111,12 @@ class ExperimentDetailsError(ApiError):
         self.status_code = 500
 
 
+class FunctionParseError(ApiError):
+    def __init__(self, msg="Problem with function syntax", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 400
+
+
 class ExportError(ApiError):
     def __init__(self, msg="Error during creation of export file", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)

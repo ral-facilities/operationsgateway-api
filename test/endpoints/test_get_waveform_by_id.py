@@ -1,17 +1,37 @@
+import json
+from urllib.parse import quote
+
 from fastapi.testclient import TestClient
 import pytest
 
 
 class TestGetWaveformByID:
     @pytest.mark.parametrize(
-        "record_id, channel_name, expected_first_x, expected_first_y",
+        "record_id, channel_name, functions, expected_first_x, expected_first_y",
         [
             pytest.param(
                 "20230605100000",
                 "CM-202-CVC-SP",
+                None,
                 645.0,
                 1803.1355895081488,
                 id="Ordinary request",
+            ),
+            pytest.param(
+                "20230605100000",
+                "CM-202-CVC-SP",
+                {"name": "a", "expression": "CM-202-CVC-SP / 100"},
+                645.0,
+                1803.1355895081488,
+                id="Request with unused function",
+            ),
+            pytest.param(
+                "20230605100000",
+                "a",
+                {"name": "a", "expression": "CM-202-CVC-SP / 100"},
+                645.0,
+                18.031355895081488,
+                id="Request with used function",
             ),
         ],
     )
@@ -21,11 +41,17 @@ class TestGetWaveformByID:
         login_and_get_token,
         record_id,
         channel_name,
+        functions: "dict[str, str]",
         expected_first_x,
         expected_first_y,
     ):
+        if functions is not None:
+            functions_str = f"?functions={quote(json.dumps(functions))}"
+        else:
+            functions_str = ""
+
         test_response = test_app.get(
-            f"/waveforms/{record_id}/{channel_name}",
+            f"/waveforms/{record_id}/{channel_name}{functions_str}",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
 

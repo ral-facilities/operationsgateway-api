@@ -1,14 +1,16 @@
 import logging
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Path, Query
 from fastapi.responses import StreamingResponse
+from pydantic import Json
 from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.record import Record
 
 log = logging.getLogger()
 router = APIRouter()
@@ -59,16 +61,40 @@ async def get_full_image(
         description="Return the original image in PNG format without any"
         " false colour applied (false)",
     ),
+    functions: List[Json] = Query(
+        None,
+        description="Functions to evaluate on the record data being returned",
+    ),
 ):
     """
     This endpoint can be used to retrieve a full-size image by specifying the shot
     number and channel name. Images are stored on disk and can be returned as a .png
     file, by default with false colour applied or optionally as the original image by
-    setting 'original_image' to True
+    setting 'original_image' to True.
+
+    If `channel_name` matches one of the entries in `functions`, then that will be
+    evaluated to generate the returned image.
     """
 
     if colourmap_name is None:
         colourmap_name = await Image.get_preferred_colourmap(access_token)
+
+    if functions:
+        for function_dict in functions:
+            if function_dict["name"] == channel_name:
+                record = {"_id": record_id}
+                await Record.apply_functions(
+                    record,
+                    functions,
+                    original_image,
+                    lower_level,
+                    upper_level,
+                    colourmap_name,
+                    return_thumbnails=False,
+                )
+
+                image_bytes = record["channels"][channel_name]["data"]
+                return StreamingResponse(image_bytes, media_type="image/png")
 
     image_bytes = await Image.get_image(
         record_id,

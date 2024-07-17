@@ -14,7 +14,7 @@ from test.conftest import (
 class TestGetRecords:
     @pytest.mark.parametrize(
         "conditions, skip, limit, order, projection, truncate, expected_channels_count"
-        ", expected_channels_data",
+        ", functions, expected_channels_data",
         [
             pytest.param(
                 {"metadata.shotnum": {"$exists": True}},
@@ -24,6 +24,7 @@ class TestGetRecords:
                 None,
                 False,
                 [353, 377],
+                [],
                 [
                     {"TS-202-TSM-P1-CAM-2-CENX": 3.0393419803062542},
                     {"TS-202-TSM-P1-CAM-2-CENX": -3.0646222644792527},
@@ -38,6 +39,7 @@ class TestGetRecords:
                 ["metadata"],
                 False,
                 None,
+                [],
                 [
                     {
                         "_id": "20230605080000",
@@ -69,6 +71,7 @@ class TestGetRecords:
                 ["metadata.shotnum", "metadata.timestamp"],
                 False,
                 None,
+                [],
                 [
                     {
                         "_id": "20230605080000",
@@ -95,6 +98,7 @@ class TestGetRecords:
                 ["channels.TS-202-TSM-P1-CAM-2-FWHMX.data"],
                 False,
                 None,
+                [],
                 [
                     {
                         "_id": "20230605080000",
@@ -119,6 +123,7 @@ class TestGetRecords:
                 None,
                 False,
                 [353],
+                [],
                 [{"N_COMP_FF_XPOS": 323.75}],
                 id="Query to retrieve specific shot",
             ),
@@ -130,11 +135,27 @@ class TestGetRecords:
                 None,
                 True,
                 [353, 377],
+                [],
                 [
                     {"TS-202-TSM-P1-CAM-2-CENX": 3.0393419803062542},
                     {"TS-202-TSM-P1-CAM-2-CENX": -3.0646222644792527},
                 ],
                 id="Query with truncate",
+            ),
+            pytest.param(
+                {"metadata.shotnum": {"$exists": True}},
+                0,
+                2,
+                "metadata.shotnum ASC",
+                None,
+                False,
+                [354, 378],
+                [{"name": "test", "expression": "1"}],
+                [
+                    {"TS-202-TSM-P1-CAM-2-CENX": 3.0393419803062542, "test": 1},
+                    {"TS-202-TSM-P1-CAM-2-CENX": -3.0646222644792527, "test": 1},
+                ],
+                id="Example with functions",
             ),
         ],
     )
@@ -148,6 +169,7 @@ class TestGetRecords:
         order,
         projection,
         truncate,
+        functions: "list[dict[str, str]]",
         expected_channels_count,
         expected_channels_data,
     ):
@@ -160,9 +182,12 @@ class TestGetRecords:
 
         print(f"Projection Param: {projection_param}")
 
+        functions_param = "".join([f"&functions={json.dumps(f)}" for f in functions])
+
         test_response = test_app.get(
             f"/records?{projection_param}&conditions={json.dumps(conditions)}"
-            f"&skip={skip}&limit={limit}&order={order}&truncate={json.dumps(truncate)}",
+            f"&skip={skip}&limit={limit}&order={order}&truncate={json.dumps(truncate)}"
+            f"{functions_param}",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
 
