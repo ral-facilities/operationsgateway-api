@@ -21,11 +21,6 @@ class ScriptOptions(BaseModel):
     file_to_restart_ingestion: Optional[str]
 
 
-class SSH(BaseModel):
-    enabled: bool
-    ssh_connection_url: str
-
-
 class Database(BaseModel):
     connection_uri: str
     remote_experiments_file_path: str
@@ -54,7 +49,6 @@ class API(BaseModel):
 
 class IngestEchoDataConfig(BaseModel):
     script_options: ScriptOptions
-    ssh: SSH
     database: Database
     echo: Echo
     api: API

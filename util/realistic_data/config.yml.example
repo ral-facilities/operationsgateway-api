@@ -3,13 +3,11 @@ script_options:
   wipe_echo: false
   launch_api: true
   import_users: true
+  # Either 'sequential' or 'parallel'
   ingest_mode: sequential
   # If you want the script to restart ingestion midway through, specify the last
   # successful file that ingested e.g. data/2023-06-04T1200.h5
   file_to_restart_ingestion: ""
-ssh:
-  enabled: false
-  ssh_connection_url: 127.0.0.1
 database:
   connection_uri: mongodb://localhost:27017/opsgateway
   remote_experiments_file_path: /tmp/experiments_for_mongoimport.json
