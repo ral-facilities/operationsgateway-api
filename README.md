@@ -6,6 +6,8 @@
 # OperationsGateway API
 This is an API built using [FastAPI](https://fastapi.tiangolo.com/) to work with [MongoDB](https://www.mongodb.com/) and the data stored as part of the OperationsGateway project.
 
+Assuming default configuration, the API will exist on 127.0.0.1:8000. You can visit `/docs` in a browser which will give an OpenAPI interface detailing each of the endpoints and an option to send requests to them. Alternatively, you can send requests to the API using a platform such as Postman to construct and save specific requests.
+
 
 ## Environment Setup
 If not already present, you may need to install development tools for the desired Python version using the appropriate package manager for your OS. For example, for Python3.8 on Fedora or RHEL:

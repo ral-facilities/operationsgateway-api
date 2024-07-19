@@ -31,5 +31,3 @@ To start the API, use the following command:
 ```bash
 poetry run python -m operationsgateway_api.src.main
 ```
-
-Assuming default configuration, the API will exist on 127.0.0.1:8000. You can visit `/docs` in a browser which will give an OpenAPI interface detailing each of the endpoints and an option to send requests to them. Alternatively, you can send requests to the API using a platform such as Postman to construct and save specific requests.
