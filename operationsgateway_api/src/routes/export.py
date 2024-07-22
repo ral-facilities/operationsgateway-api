@@ -2,8 +2,7 @@ import io
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Query
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, Query, Response
 from pydantic import Json
 import pymongo
 from typing_extensions import Annotated
@@ -153,16 +152,16 @@ async def export_records(
     if type(file_bytes_to_export) == io.BytesIO:
         # this is a zip file
         headers = {"Content-Disposition": f'attachment; filename="{filename}.zip"'}
-        return StreamingResponse(
-            file_bytes_to_export,
+        return Response(
+            file_bytes_to_export.read(),
             headers=headers,
             media_type="application/zip",
         )
     elif type(file_bytes_to_export) == io.StringIO:
         # this is a csv file
         headers = {"Content-Disposition": f'attachment; filename="{filename}.csv"'}
-        return StreamingResponse(
-            file_bytes_to_export,
+        return Response(
+            file_bytes_to_export.read(),
             headers=headers,
             media_type="text/plain",
         )
