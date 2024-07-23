@@ -64,7 +64,8 @@ class ChannelManifest:
 
         return datetime.now().strftime(ID_DATETIME_FORMAT)
 
-    def _use_model(self, data: dict) -> ChannelManifestModel:
+    @staticmethod
+    def _use_model(data: dict) -> ChannelManifestModel:
         """
         Convert dict into Pydantic model, with exception handling wrapped around the
         code to perform this
@@ -87,12 +88,10 @@ class ChannelManifest:
 
         return manifest_data
 
-    # TODO - does it need to be static?
     @staticmethod
     async def get_most_recent_manifest_new() -> ChannelManifestModel:
         """
         Get the most up to date manifest file from MongoDB and return it to the user
-        TODO
         """
 
         log.info("Getting most recent channel manifest file")
@@ -101,10 +100,7 @@ class ChannelManifest:
             sort=[("_id", pymongo.DESCENDING)],
         )
 
-        try:
-            return ChannelManifestModel(**manifest_data)
-        except ValidationError as exc:
-            raise ModelError(str(exc)) from exc
+        return ChannelManifest._use_model(manifest_data)
 
     @staticmethod
     async def get_channel(channel_name: str) -> ChannelModel:
