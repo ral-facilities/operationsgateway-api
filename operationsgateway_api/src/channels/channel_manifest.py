@@ -88,14 +88,32 @@ class ChannelManifest:
 
         return manifest_data
 
+    # TODO - does it need to be static?
+    @staticmethod
+    async def get_most_recent_manifest_new() -> ChannelManifestModel:
+        """
+        Get the most up to date manifest file from MongoDB and return it to the user
+        TODO
+        """
+
+        log.info("Getting most recent channel manifest file")
+        manifest_data = await MongoDBInterface.find_one(
+            "channels",
+            sort=[("_id", pymongo.DESCENDING)],
+        )
+
+        try:
+            return ChannelManifestModel(**manifest_data)
+        except ValidationError as exc:
+            raise ModelError(str(exc)) from exc
+
     @staticmethod
     async def get_channel(channel_name: str) -> ChannelModel:
         """
         Look for the most recent manifest file and return a specific channel's metadata
         from that file
         """
-        manifest_data = await ChannelManifest.get_most_recent_manifest()
-        manifest = ChannelManifestModel(**manifest_data)
+        manifest = await ChannelManifest.get_most_recent_manifest_new()
         try:
             return manifest.channels[channel_name]
         except KeyError as exc:
