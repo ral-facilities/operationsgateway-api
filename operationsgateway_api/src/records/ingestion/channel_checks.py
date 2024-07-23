@@ -3,6 +3,7 @@ from typing import Dict, List
 
 import numpy as np
 
+from operationsgateway_api.src.exceptions import ChannelManifestError
 from operationsgateway_api.src.models import ChannelModel
 
 
@@ -35,6 +36,11 @@ class ChannelChecks:
         ]
 
     def set_channels(self, manifest) -> None:
+        if not manifest:
+            raise ChannelManifestError(
+                "There is no manifest file stored in the database, channel checks"
+                " against cannot occur unless there is one present",
+            )
         self.manifest_channels = manifest.channels
 
     def _merge_internal_failed(

@@ -6,6 +6,7 @@ import pytest
 
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.exceptions import ChannelManifestError, ModelError
+from operationsgateway_api.src.models import ChannelManifestModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
 
@@ -92,3 +93,18 @@ class TestChannelManifest:
             )
             expected_manifest = json.loads(success_manifest_content)
             assert channel_manifest == expected_manifest
+
+    @pytest.mark.parametrize(
+        "data, expected_return",
+        [
+            pytest.param(
+                json.loads(success_manifest_content),
+                ChannelManifestModel(**json.loads(success_manifest_content)),
+                id="Typical dictionary input",
+            ),
+            pytest.param(None, None, id="Empty input"),
+        ],
+    )
+    def test_use_model(self, data, expected_return):
+        model = ChannelManifest._use_model(data)
+        assert model == expected_return

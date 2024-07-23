@@ -71,7 +71,8 @@ class ChannelManifest:
         code to perform this
         """
         try:
-            return ChannelManifestModel(**data)
+            model = ChannelManifestModel(**data) if data else None
+            return model
         except ValidationError as exc:
             raise ModelError(str(exc)) from exc
 
