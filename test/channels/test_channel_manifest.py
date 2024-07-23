@@ -70,7 +70,8 @@ class TestChannelManifest:
         instance = get_spooled_file()
 
         with patch(
-            "operationsgateway_api.src.channels.channel_manifest.ChannelManifest.get_most_recent_manifest",
+            "operationsgateway_api.src.channels.channel_manifest.ChannelManifest"
+            ".get_most_recent_manifest_new",
             return_value=None,
         ):
             await instance.validate(bypass_channel_check=True)

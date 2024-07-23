@@ -29,7 +29,6 @@ class ChannelManifest:
             ) from exc
 
         manifest_file["_id"] = self._add_id()
-
         self.data = self._use_model(manifest_file)
 
     async def insert(self) -> None:
@@ -46,13 +45,13 @@ class ChannelManifest:
         Validate the user's incoming manifest file by comparing that with the latest
         version stored in the database
         """
-        stored_manifest = await ChannelManifest.get_most_recent_manifest()
+        stored_manifest = await ChannelManifest.get_most_recent_manifest_new()
 
         # Validation can only be done if there's an existing manifest file stored
         if stored_manifest:
             validator = ManifestValidator(
                 self.data,
-                self._use_model(stored_manifest),
+                stored_manifest,
                 bypass_channel_check,
             )
             validator.perform_validation()

@@ -72,7 +72,7 @@ async def submit_hdf(
         images,
         internal_failed_channel,
     )
-    manifest = await ChannelManifest.get_most_recent_manifest()
+    manifest = await ChannelManifest.get_most_recent_manifest_new()
     channel_checker.set_channels(manifest)
     channel_dict = await channel_checker.channel_checks()
 
