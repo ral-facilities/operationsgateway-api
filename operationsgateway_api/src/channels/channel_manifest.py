@@ -45,7 +45,7 @@ class ChannelManifest:
         Validate the user's incoming manifest file by comparing that with the latest
         version stored in the database
         """
-        stored_manifest = await ChannelManifest.get_most_recent_manifest_new()
+        stored_manifest = await ChannelManifest.get_most_recent_manifest()
 
         # Validation can only be done if there's an existing manifest file stored
         if stored_manifest:
@@ -76,20 +76,7 @@ class ChannelManifest:
             raise ModelError(str(exc)) from exc
 
     @staticmethod
-    async def get_most_recent_manifest() -> dict:
-        """
-        Get the most up to date manifest file from MongoDB and return it to the user
-        """
-        log.info("Getting most recent channel manifest file")
-        manifest_data = await MongoDBInterface.find_one(
-            "channels",
-            sort=[("_id", pymongo.DESCENDING)],
-        )
-
-        return manifest_data
-
-    @staticmethod
-    async def get_most_recent_manifest_new() -> ChannelManifestModel:
+    async def get_most_recent_manifest() -> ChannelManifestModel:
         """
         Get the most up to date manifest file from MongoDB and return it to the user
         """
@@ -108,7 +95,7 @@ class ChannelManifest:
         Look for the most recent manifest file and return a specific channel's metadata
         from that file
         """
-        manifest = await ChannelManifest.get_most_recent_manifest_new()
+        manifest = await ChannelManifest.get_most_recent_manifest()
         try:
             return manifest.channels[channel_name]
         except KeyError as exc:

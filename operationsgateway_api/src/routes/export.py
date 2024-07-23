@@ -130,7 +130,7 @@ async def export_records(
     if len(records_data) == 0:
         raise ExportError("No records found to export")
 
-    channel_mainfest = await ChannelManifest.get_most_recent_manifest_new()
+    channel_mainfest = await ChannelManifest.get_most_recent_manifest()
 
     export_handler = ExportHandler(
         records_data,

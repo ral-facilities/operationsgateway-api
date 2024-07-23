@@ -70,7 +70,7 @@ class TestChannel:
             internal_failed_channel,
         )
 
-        manifest = await ChannelManifest.get_most_recent_manifest_new()
+        manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
         async_functions = [
             channel_checker.channel_dtype_checks,
@@ -205,7 +205,7 @@ class TestChannel:
             images,
             internal_failed_channel,
         )
-        manifest = await ChannelManifest.get_most_recent_manifest_new()
+        manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
         channel_response = create_channel_response(response)
@@ -387,7 +387,7 @@ class TestChannel:
             images,
             internal_failed_channel,
         )
-        manifest = await ChannelManifest.get_most_recent_manifest_new()
+        manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
         channel_response = create_channel_response(response, extra)
@@ -521,7 +521,7 @@ class TestChannel:
             images,
             internal_failed_channel,
         )
-        manifest = await ChannelManifest.get_most_recent_manifest_new()
+        manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
         channel_response = create_channel_response(response)
@@ -669,7 +669,7 @@ class TestChannel:
             images,
             internal_failed_channel,
         )
-        manifest = await ChannelManifest.get_most_recent_manifest_new()
+        manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
         channel_response = create_channel_response(response, extra)
@@ -813,7 +813,7 @@ class TestChannel:
             images,
             internal_failed_channel,
         )
-        manifest = await ChannelManifest.get_most_recent_manifest_new()
+        manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
         channel_response = create_channel_response(response)
@@ -893,7 +893,7 @@ class TestChannel:
             images,
             internal_failed_channel,
         )
-        manifest = await ChannelManifest.get_most_recent_manifest_new()
+        manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
         channel_response = create_channel_response(response)
@@ -1018,7 +1018,7 @@ class TestChannel:
             images,
             internal_failed_channel,
         )
-        manifest = await ChannelManifest.get_most_recent_manifest_new()
+        manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
         channel_response = create_channel_response(response, channels=channels_check)
@@ -1096,7 +1096,7 @@ class TestChannel:
             images,
             internal_failed_channel,
         )
-        manifest = await ChannelManifest.get_most_recent_manifest_new()
+        manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
         channel_response = create_channel_response(response)

@@ -36,7 +36,7 @@ class TestManifestValidator:
 
         with patch(
             "operationsgateway_api.src.channels.channel_manifest.ChannelManifest."
-            "get_most_recent_manifest_new",
+            "get_most_recent_manifest",
             return_value=altered_manifest,
         ):
             with pytest.raises(ChannelManifestError, match="has been modified on the"):
@@ -58,7 +58,7 @@ class TestManifestValidator:
 
         with patch(
             "operationsgateway_api.src.channels.channel_manifest.ChannelManifest."
-            "get_most_recent_manifest_new",
+            "get_most_recent_manifest",
             return_value=altered_manifest,
         ):
             await create_manifest_file.validate(bypass_channel_check=False)

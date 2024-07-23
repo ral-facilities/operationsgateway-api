@@ -239,7 +239,7 @@ class HDFDataHandler:
         """
 
         internal_failed_channel = []
-        manifest = await ChannelManifest.get_most_recent_manifest_new()
+        manifest = await ChannelManifest.get_most_recent_manifest()
 
         for channel_name, value in self.hdf_file.items():
             channel_metadata = dict(value.attrs)
