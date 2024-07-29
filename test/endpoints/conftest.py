@@ -73,27 +73,16 @@ async def remove_record(timestamp_id):
     )
 
 
-async def remove_image(images):
-    echo = EchoInterface()
-    for image_path in images:
-        echo.delete_file_object(image_path)
-
-
-async def remove_waveform():
-    await MongoDBInterface.delete_one(
-        "waveforms",
-        filter_={"_id": "20200407142816_PM-201-HJ-PD"},
-    )
-
-
 @pytest_asyncio.fixture(scope="function")
-async def reset_databases():
+async def reset_record_storage():
     yield
-    await remove_record("20200407142816")
-    await remove_image(
-        ["20200407142816/PM-201-FE-CAM-1.png", "20200407142816/PM-201-FE-CAM-2.png"],
-    )
-    await remove_waveform()
+    record_id = "20200407142816"
+    await remove_record(record_id)
+    echo = EchoInterface()
+
+    echo.delete_directory(f"{Waveform.echo_prefix}/{record_id}/")
+    echo.delete_directory(f"{Image.echo_prefix}/{record_id}/")
+
     if os.path.exists("test.h5"):
         os.remove("test.h5")
 
