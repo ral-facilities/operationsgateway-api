@@ -137,3 +137,25 @@ class EchoInterface:
                 raise EchoS3Error(
                     f"Deletion of {object_path} was unsuccessful",
                 ) from exc
+
+
+    def delete_directory(self, dir_path: str) -> None:
+        """
+        Given a path, delete an entire 'directory' from Echo. This is used to delete
+        waveforms and images when deleting a record by its ID
+        """
+
+        log.info("Deleting directory from %s", dir_path)
+
+        try:
+            self.bucket.objects.filter(Prefix=dir_path).delete()
+        except ClientError as exc:
+            log.error(
+                "%s: %s",
+                exc.response["Error"]["Code"],
+                exc.response["Error"].get("Message"),
+            )
+            raise EchoS3Error(
+                f"{exc.response['Error']['Code']} when deleting file at"
+                f" '{dir_path}'",
+            ) from exc
