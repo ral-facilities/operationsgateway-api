@@ -12,8 +12,10 @@ from operationsgateway_api.src.auth.authorisation import (
 )
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import QueryParameterError
+from operationsgateway_api.src.records.echo_interface import EchoInterface
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.record import Record as Record
+from operationsgateway_api.src.records.waveform import Waveform
 from operationsgateway_api.src.routes.common_parameters import ParameterHandler
 
 
@@ -248,11 +250,13 @@ async def delete_record_by_id(
     ],
     access_token: Annotated[str, Depends(authorise_route)],
 ):
-    # TODO 2 - full implementation will require searching through waveform channels to
-    # remove the documents in the waveforms collection. The images will need to be
-    # removed from disk too
     log.info("Deleting record by ID: %s", id_)
 
     await Record.delete_record(id_)
+    echo = EchoInterface()
+    log.info("Deleting waveforms for record ID '%s'", id_)
+    echo.delete_directory(f"{Waveform.echo_prefix}/{id_}/")
+    log.info("Deleting images for record ID '%s'", id_)
+    echo.delete_directory(f"{Image.echo_prefix}/{id_}/")
 
     return Response(status_code=HTTPStatus.NO_CONTENT.value)
