@@ -5,6 +5,7 @@ app:
   port: 8000
   # API will auto-reload when changes on code files are detected
   reload: true
+  url_prefix: ""
 images:
   # Thumbnail sizes should only ever be two element lists, of a x, y resolution
   image_thumbnail_size: [50, 50]

@@ -76,6 +76,7 @@ app = FastAPI(
     description=api_description,
     default_response_class=ORJSONResponse,
     lifespan=lifespan,
+    root_path=Config.config.app.url_prefix,
 )
 
 app.add_middleware(
