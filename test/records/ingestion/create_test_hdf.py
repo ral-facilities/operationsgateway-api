@@ -127,7 +127,7 @@ async def create_test_hdf_file(  # noqa: C901
         pm_201_fe_en.attrs.create("channel_dtype", "scalar")
         if required_attributes and "scalar" in required_attributes:
             scalar = required_attributes["scalar"]
-            if scalar["data"] != "missing":
+            if not isinstance(scalar["data"], str) or scalar["data"] != "missing":
                 pm_201_fe_en.create_dataset("data", data=(scalar["data"]))
         else:
             pm_201_fe_en.create_dataset("data", data=366272)
@@ -285,7 +285,7 @@ async def create_test_hdf_file(  # noqa: C901
             data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.uint16)
             if required_attributes and "image" in required_attributes:
                 image = required_attributes["image"]
-                if image["data"] != "missing":
+                if not isinstance(image["data"], str) or image["data"] != "missing":
                     pm_201_fe_cam_1.create_dataset("data", data=(image["data"]))
             else:
                 pm_201_fe_cam_1.create_dataset("data", data=data)
@@ -373,12 +373,12 @@ async def create_test_hdf_file(  # noqa: C901
             if required_attributes and "waveform" in required_attributes:
                 waveform = required_attributes["waveform"]
                 if "x" in waveform:
-                    if waveform["x"] != "missing":
+                    if not isinstance(waveform["x"], str) or waveform["x"] != "missing":
                         pm_201_hj_pd.create_dataset("x", data=(waveform["x"]))
                 else:
                     pm_201_hj_pd.create_dataset("x", data=x)
                 if "y" in waveform:
-                    if waveform["y"] != "missing":
+                    if not isinstance(waveform["y"], str) or waveform["y"] != "missing":
                         pm_201_hj_pd.create_dataset("y", data=(waveform["y"]))
                 else:
                     pm_201_hj_pd.create_dataset("y", data=y)
