@@ -5,6 +5,7 @@ import zipfile
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import ExportError
+from operationsgateway_api.src.models import ChannelManifestModel
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.waveform import Waveform
 
@@ -18,7 +19,7 @@ class ExportHandler:
     def __init__(
         self,
         records_data: List[dict],
-        channel_manifest_dict: dict,
+        channel_manifest: ChannelManifestModel,
         projection: List[str],
         lower_level: int,
         upper_level: int,
@@ -32,7 +33,7 @@ class ExportHandler:
         Store all of the information that needs to be processed during the export
         """
         self.records_data = records_data
-        self.channel_manifest_dict = channel_manifest_dict
+        self.channel_manifest = channel_manifest
         self.projection = projection
         self.lower_level = lower_level
         self.upper_level = upper_level
@@ -120,9 +121,10 @@ class ExportHandler:
             if proj.split(".")[0] == "channels":
                 # image and waveform data will be exported to separate files so will not
                 # have values put in the main csv file
-                if (
-                    self.channel_manifest_dict["channels"][channel_name]["type"]
-                ) not in ["image", "waveform"]:
+                if (self.channel_manifest.channels[channel_name].type_) not in [
+                    "image",
+                    "waveform",
+                ]:
                     line = self._add_value_to_csv_line(line, channel_name)
             else:
                 # this must be a "metadata" channel
@@ -157,11 +159,11 @@ class ExportHandler:
         that will be added to the main CSV file.
         """
         # process an image channel
-        if self.channel_manifest_dict["channels"][channel_name]["type"] == "image":
+        if self.channel_manifest.channels[channel_name].type_ == "image":
             log.info("Channel %s is an image", channel_name)
             await self._add_image_to_zip(record_data, record_id, channel_name)
         # process a waveform channel
-        elif self.channel_manifest_dict["channels"][channel_name]["type"] == "waveform":
+        elif self.channel_manifest.channels[channel_name].type_ == "waveform":
             log.info("Channel %s is a waveform", channel_name)
             x_units = record_data["channels"][channel_name]["metadata"].setdefault(
                 "x_units",

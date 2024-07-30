@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 
 from operationsgateway_api.src.exceptions import ChannelManifestError
+from operationsgateway_api.src.models import ChannelManifestModel
 
 
 class TestManifestValidator:
@@ -31,11 +32,12 @@ class TestManifestValidator:
                 },
             },
         }
+        altered_manifest = ChannelManifestModel(**altered_content)
 
         with patch(
             "operationsgateway_api.src.channels.channel_manifest.ChannelManifest."
             "get_most_recent_manifest",
-            return_value=altered_content,
+            return_value=altered_manifest,
         ):
             with pytest.raises(ChannelManifestError, match="has been modified on the"):
                 await create_manifest_file.validate(bypass_channel_check=False)
@@ -52,10 +54,11 @@ class TestManifestValidator:
                 },
             },
         }
+        altered_manifest = ChannelManifestModel(**altered_content)
 
         with patch(
             "operationsgateway_api.src.channels.channel_manifest.ChannelManifest."
             "get_most_recent_manifest",
-            return_value=altered_content,
+            return_value=altered_manifest,
         ):
             await create_manifest_file.validate(bypass_channel_check=False)
