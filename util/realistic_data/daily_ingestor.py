@@ -36,11 +36,8 @@ def main():
     current_datetime = (
         datetime.now().replace(microsecond=0).strftime(in_progress_date_format)
     )
-    Path(f"{hdf_data_directory}/in_progress_{current_datetime}").mkdir(
-        parents=True,
-        exist_ok=True,
-    )
     in_progress_dir = Path(f"{hdf_data_directory}/in_progress_{current_datetime}")
+    in_progress_dir.mkdir(parents=True, exist_ok=True)
     print(f"Created {in_progress_dir} directory")
 
     files_to_ingest = []
