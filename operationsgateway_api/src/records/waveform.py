@@ -96,7 +96,11 @@ class Waveform:
         plt.box(False)
 
         # Setting bbox_inches="tight" and pad_inches=0 removes padding around figure
-        # to make best use of the limited pixels available in a thumbnail
+        # to make best use of the limited pixels available in a thumbnail. Because of
+        # this, dpi has been set to 130 to offset the tight bbox removing white space
+        # around the figure and there keeps the thumbnail size calculation correct. The
+        # default dpi is 100 but that will result in thumbnails smaller than the
+        # configuration setting, hence the value of 130
         plt.savefig(buffer, format="PNG", bbox_inches="tight", pad_inches=0, dpi=130)
         # Flushes the plot to remove data from previously ingested waveforms
         plt.clf()

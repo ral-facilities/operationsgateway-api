@@ -34,10 +34,10 @@ class TestWaveform:
     @pytest.mark.parametrize(
         "config_thumbnail_size",
         [
-            pytest.param((50, 50), id="50x50 thumbnail"),
-            pytest.param((60, 80), id="60x80 thumbnail"),
-            pytest.param((90, 40), id="90x40 thumbnail"),
-            pytest.param((75, 100), id="75x100 thumbnail"),
+            pytest.param((50, 50), id="50x50 thumbnail (square)"),
+            pytest.param((60, 80), id="60x80 thumbnail (portrait)"),
+            pytest.param((90, 40), id="90x40 thumbnail (landscape)"),
+            pytest.param((75, 100), id="75x100 thumbnail (portrait)"),
         ],
     )
     def test_create_thumbnail_plot_size(self, config_thumbnail_size):

@@ -64,15 +64,32 @@ class TestImage:
         # a purely black 300x300 square created in the test_image above
 
     @pytest.mark.parametrize(
+        # image_size parameter = (rows, columns), not (width, height) which is what
+        # the other parameters in this test use. image_size is the shape of the numpy
+        # array. See https://data-flair.training/blogs/numpy-broadcasting/ for a good
+        # illustration
         "image_size, config_thumbnail_size, expected_thumbnail_size",
         [
             pytest.param((300, 300), (50, 50), (50, 50), id="50x50 thumbnail"),
-            pytest.param((400, 300), (60, 80), (60, 80), id="60x80 thumbnail"),
+            # (400, 300) makes a portrait image, as per numpy array shape (see above
+            # comment)
+            pytest.param(
+                (400, 300),
+                (60, 80),
+                (60, 80),
+                id="60x80 thumbnail (portrait)",
+            ),
+            pytest.param(
+                (300, 400),
+                (60, 80),
+                (60, 45),
+                id="60x45 thumbnail (landscape)",
+            ),
             pytest.param(
                 (300, 300),
                 (75, 100),
                 (75, 75),
-                id="75x100 thumbnail (square image)",
+                id="75x75 thumbnail (square image)",
             ),
         ],
     )
