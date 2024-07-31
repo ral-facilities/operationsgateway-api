@@ -18,7 +18,7 @@ class TestFalseColour:
             )
 
     def test_invalid_image_mode(self):
-        image_path = "test/records/jet_image.png"
+        image_path = "test/images/jet_image.png"
         pil_image = Image.open(image_path).convert("RGB")
 
         with pytest.raises(ImageError, match="Image mode RGB not recognised"):

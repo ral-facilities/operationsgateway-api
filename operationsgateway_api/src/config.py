@@ -28,13 +28,17 @@ class App(BaseModel):
 class ImagesConfig(BaseModel):
     # The dimensions will be stored as a list in the YAML file, but are cast to tuple
     # using `typing.Tuple` because this is the type used by Pillow
-    image_thumbnail_size: Tuple[int, int]
-    waveform_thumbnail_size: Tuple[int, int]
+    thumbnail_size: Tuple[int, int]
     # the system default colour map (used if no user preference is set)
     default_colour_map: StrictStr
     colourbar_height_pixels: StrictInt
     upload_image_threads: StrictInt
     preferred_colour_map_pref_name: StrictStr
+
+
+class WaveformsConfig(BaseModel):
+    thumbnail_size: Tuple[int, int]
+    line_width: float
 
 
 class EchoConfig(BaseModel):
@@ -108,6 +112,7 @@ class APIConfig(BaseModel):
     auth: AuthConfig
     experiments: ExperimentsConfig
     images: ImagesConfig
+    waveforms: WaveformsConfig
     echo: EchoConfig
     export: ExportConfig
 
