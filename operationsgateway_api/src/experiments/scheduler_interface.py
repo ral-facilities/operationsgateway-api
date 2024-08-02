@@ -1,10 +1,16 @@
 from datetime import datetime
+import json
 import logging
 from typing import Dict, List, Union
 
+import requests
 from zeep import Client
 
 from operationsgateway_api.src.config import Config
+from operationsgateway_api.src.exceptions import ExperimentDetailsError
+from operationsgateway_api.src.experiments.rest_error_handling import (
+    rest_error_handling,
+)
 from operationsgateway_api.src.experiments.soap_error_handling import (
     soap_error_handling,
 )
@@ -19,28 +25,48 @@ class SchedulerInterface:
     handling for the calls to the Scheduler too
     """
 
+    login_endpoint_name = "/sessions"
+
     def __init__(self) -> None:
-        self.user_office_client = self.create_user_office_client()
         self.scheduler_client = self.create_scheduler_client()
         self.session_id = self.login()
-
-    @soap_error_handling("create user office client")
-    def create_user_office_client(self) -> Client:
-        log.info("Creating user office client")
-        return Client(Config.config.experiments.user_office_wsdl_url)
 
     @soap_error_handling("create scheduler client")
     def create_scheduler_client(self) -> Client:
         log.info("Creating scheduler client")
         return Client(Config.config.experiments.scheduler_wsdl_url)
 
-    @soap_error_handling("login")
+    @rest_error_handling(login_endpoint_name)
     def login(self) -> str:
         log.info("Generating session ID for Scheduler system")
-        return self.user_office_client.service.login(
-            Config.config.experiments.username,
-            Config.config.experiments.password,
+        credentials = {
+            "username": Config.config.experiments.username,
+            "password": Config.config.experiments.password,
+        }
+        headers = {"Content-Type": "application/json"}
+
+        login_response = requests.post(
+            f"{Config.config.experiments.user_office_rest_api_url}"
+            f"{SchedulerInterface.login_endpoint_name}",
+            data=json.dumps(credentials),
+            headers=headers,
         )
+        if login_response.status_code != 201:
+            log.error("Request response: %s", login_response.json())
+            raise ExperimentDetailsError(
+                "Logging in to retrieve experiments wasn't successful. %s recieved",
+                login_response.status_code,
+            )
+        try:
+            session_id = login_response.json()["sessionId"]
+        except KeyError as exc:
+            log.error("Status code from POST /sessions: %s", login_response.status_code)
+            log.error("Request response: %s", login_response.json())
+            raise ExperimentDetailsError(
+                "Session ID cannot be found from User Office API login endpoint",
+            ) from exc
+
+        return session_id
 
     @soap_error_handling("getExperimentDatesForInstrument")
     def get_experiment_dates_for_instrument(
