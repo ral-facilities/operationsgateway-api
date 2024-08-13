@@ -37,7 +37,7 @@ class FWHMY(Builtin):
         """
         centroid_position = CentroidX.evaluate(image)
         y = image[:, centroid_position]
-        waveform_variable = WaveformVariable(x=np.array(range(len(y))), y=y)
+        waveform_variable = WaveformVariable(x=np.arange(len(y)), y=y)
 
         half_max_left, half_max_right = FWHM.calculate_fwhm(waveform_variable)
         return half_max_right - half_max_left
