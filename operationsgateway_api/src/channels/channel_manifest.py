@@ -29,7 +29,6 @@ class ChannelManifest:
             ) from exc
 
         manifest_file["_id"] = self._add_id()
-
         self.data = self._use_model(manifest_file)
 
     async def insert(self) -> None:
@@ -52,7 +51,7 @@ class ChannelManifest:
         if stored_manifest:
             validator = ManifestValidator(
                 self.data,
-                self._use_model(stored_manifest),
+                stored_manifest,
                 bypass_channel_check,
             )
             validator.perform_validation()
@@ -65,28 +64,31 @@ class ChannelManifest:
 
         return datetime.now().strftime(ID_DATETIME_FORMAT)
 
-    def _use_model(self, data: dict) -> ChannelManifestModel:
+    @staticmethod
+    def _use_model(data: dict) -> ChannelManifestModel:
         """
         Convert dict into Pydantic model, with exception handling wrapped around the
         code to perform this
         """
         try:
-            return ChannelManifestModel(**data)
+            model = ChannelManifestModel(**data) if data else None
+            return model
         except ValidationError as exc:
             raise ModelError(str(exc)) from exc
 
     @staticmethod
-    async def get_most_recent_manifest() -> dict:
+    async def get_most_recent_manifest() -> ChannelManifestModel:
         """
         Get the most up to date manifest file from MongoDB and return it to the user
         """
+
         log.info("Getting most recent channel manifest file")
         manifest_data = await MongoDBInterface.find_one(
             "channels",
             sort=[("_id", pymongo.DESCENDING)],
         )
 
-        return manifest_data
+        return ChannelManifest._use_model(manifest_data)
 
     @staticmethod
     async def get_channel(channel_name: str) -> ChannelModel:
@@ -94,8 +96,7 @@ class ChannelManifest:
         Look for the most recent manifest file and return a specific channel's metadata
         from that file
         """
-        manifest_data = await ChannelManifest.get_most_recent_manifest()
-        manifest = ChannelManifestModel(**manifest_data)
+        manifest = await ChannelManifest.get_most_recent_manifest()
         try:
             return manifest.channels[channel_name]
         except KeyError as exc:

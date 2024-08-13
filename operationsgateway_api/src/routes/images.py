@@ -1,8 +1,7 @@
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Path, Query
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, Path, Query, Response
 from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authorisation import authorise_token
@@ -80,7 +79,7 @@ async def get_full_image(
     )
     # ensure the "file pointer" is reset
     image_bytes.seek(0)
-    return StreamingResponse(image_bytes, media_type="image/png")
+    return Response(image_bytes.read(), media_type="image/png")
 
 
 @router.get(
@@ -125,7 +124,7 @@ async def get_colourbar_image(
         colourmap_name,
     )
     colourbar_image_bytes.seek(0)
-    return StreamingResponse(colourbar_image_bytes, media_type="image/png")
+    return Response(colourbar_image_bytes.read(), media_type="image/png")
 
 
 @router.get(
