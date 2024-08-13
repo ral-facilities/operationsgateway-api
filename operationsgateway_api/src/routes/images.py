@@ -3,7 +3,6 @@ import logging
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Path, Query, Response
-from fastapi.responses import StreamingResponse
 import numpy as np
 from PIL import Image as PILImage
 from pydantic import Json
