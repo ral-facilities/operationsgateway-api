@@ -540,7 +540,7 @@ class Record:
                 if missing_channel in skip_functions:
                     message = "Function %s defined but cannot be evaluated for %s"
                     log.warning(message, missing_channel, record["_id"])
-                elif missing_channel in manifest["channels"]:
+                elif missing_channel in manifest.channels:
                     message = "Channel %s does not have a value for %s"
                     log.warning(message, missing_channel, record["_id"])
                 else:
@@ -675,8 +675,8 @@ class Record:
 
             # In each dimension, determine the number of pixels in the original
             # that need to map onto one pixel in the thumbnail
-            thumbnail_x_size = Config.config.images.image_thumbnail_size[0]
-            thumbnail_y_size = Config.config.images.image_thumbnail_size[1]
+            thumbnail_x_size = Config.config.images.thumbnail_size[0]
+            thumbnail_y_size = Config.config.images.thumbnail_size[1]
             step_x = result.shape[1] // thumbnail_x_size
             step_y = result.shape[0] // thumbnail_y_size
 

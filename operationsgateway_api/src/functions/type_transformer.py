@@ -57,7 +57,7 @@ class TypeTransformer(Transformer):
             str: Return type of the function ("scalar", "waveform" or "image").
         """
         manifest = await ChannelManifest.get_most_recent_manifest()
-        self.channel_manifest = manifest["channels"]
+        self.channel_manifest = manifest.channels
 
         if name in self.channel_manifest:
             raise ValueError(f"name '{name}' is already a channel name")
@@ -91,7 +91,7 @@ class TypeTransformer(Transformer):
     def variable(self, tokens: list) -> str:
         name = "".join(tokens)
         if name in self.channel_manifest:
-            return self.channel_manifest[name]["type"]
+            return self.channel_manifest[name].type_
         elif name in self.function_types:
             return self.function_types[name]
         else:

@@ -1,6 +1,10 @@
 import logging
+from typing import Dict, List
 
 import numpy as np
+
+from operationsgateway_api.src.exceptions import ChannelManifestError
+from operationsgateway_api.src.models import ChannelModel
 
 
 log = logging.getLogger()
@@ -32,7 +36,12 @@ class ChannelChecks:
         ]
 
     def set_channels(self, manifest) -> None:
-        self.manifest_channels = manifest["channels"]
+        if not manifest:
+            raise ChannelManifestError(
+                "There is no manifest file stored in the database, channel checks"
+                " against cannot occur unless there is one present",
+            )
+        self.manifest_channels = manifest.channels
 
     def _merge_internal_failed(
         self,
@@ -86,7 +95,7 @@ class ChannelChecks:
 
             if "channel_dtype" in value:
                 if (
-                    self.manifest_channels[key]["type"] != value["channel_dtype"]
+                    self.manifest_channels[key].type_ != value["channel_dtype"]
                     or value["channel_dtype"] not in self.supported_channel_types
                 ):
                     rejected_channels.append(
@@ -408,7 +417,12 @@ class ChannelChecks:
 
         return rejected_channels
 
-    def _check_name(self, rejected_channels, manifest, key):
+    def _check_name(
+        self,
+        rejected_channels: List[dict],
+        manifest: Dict[str, ChannelModel],
+        key,
+    ):
         """
         Checks if the channel name appears in the most recent channel manifest
 

@@ -368,7 +368,7 @@ class TestRecord:
                 ],
                 {
                     "a": {
-                        "thumbnail": "ce39b1474e6c91a9",
+                        "thumbnail": "ce39b1c74e6c9191",
                         "metadata": {"channel_dtype": "waveform", "x_units": "nm"},
                     },
                 },

@@ -56,9 +56,7 @@ class WaveformModel(BaseModel):
     path: Optional[str] = default_exclude_field
     x: Optional[Union[List[float], Any]]
     y: Optional[Union[List[float], Any]]
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @field_validator("x", "y", mode="before")
     def encode_values(cls, value):  # noqa: N805

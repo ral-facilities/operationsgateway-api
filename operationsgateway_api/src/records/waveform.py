@@ -9,6 +9,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: I202
 
+from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import EchoS3Error, WaveformError
 from operationsgateway_api.src.models import WaveformModel
 from operationsgateway_api.src.records.echo_interface import EchoInterface
@@ -77,19 +78,29 @@ class Waveform:
         Using Matplotlib, create a thumbnail sized plot of the waveform data and save
         it to a bytes IO object provided as a parameter to this function
         """
-        # Making changes to plot so figure size and line width is correct and axes are
-        # disabled
-        plt.figure(figsize=(1, 0.75))
+        thumbnail_size = Config.config.waveforms.thumbnail_size
+        # 1 in figsize = 100px
+        plt.figure(figsize=(thumbnail_size[0] / 100, thumbnail_size[1] / 100))
+        # Removes the notches on the plot that provide a scale
         plt.xticks([])
         plt.yticks([])
+        # Line width is configurable - thickness of line in the waveform
         plt.plot(
             self.waveform.x,
             self.waveform.y,
-            linewidth=0.5,
+            linewidth=Config.config.waveforms.line_width,
         )
+        # Disables all axis decorations
         plt.axis("off")
+        # Removes the frame around the plot
         plt.box(False)
 
+        # Setting bbox_inches="tight" and pad_inches=0 removes padding around figure
+        # to make best use of the limited pixels available in a thumbnail. Because of
+        # this, dpi has been set to 130 to offset the tight bbox removing white space
+        # around the figure and there keeps the thumbnail size calculation correct. The
+        # default dpi is 100 but that will result in thumbnails smaller than the
+        # configuration setting, hence the value of 130
         plt.savefig(buffer, format="PNG", bbox_inches="tight", pad_inches=0, dpi=130)
         # Flushes the plot to remove data from previously ingested waveforms
         plt.clf()

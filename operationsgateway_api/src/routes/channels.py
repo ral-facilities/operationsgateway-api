@@ -79,7 +79,8 @@ async def get_channels(
 
     log.info("Getting channel metadata from database")
 
-    return await ChannelManifest.get_most_recent_manifest()
+    manifest = await ChannelManifest.get_most_recent_manifest()
+    return manifest.model_dump(by_alias=True, exclude_unset=True)
 
 
 @router.get(

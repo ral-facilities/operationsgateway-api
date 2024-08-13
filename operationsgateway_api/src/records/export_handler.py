@@ -6,6 +6,7 @@ import zipfile
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import ExportError
 from operationsgateway_api.src.functions.type_transformer import TypeTransformer
+from operationsgateway_api.src.models import ChannelManifestModel
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.waveform import Waveform
@@ -20,7 +21,7 @@ class ExportHandler:
     def __init__(
         self,
         records_data: List[dict],
-        channel_manifest_dict: dict,
+        channel_manifest: ChannelManifestModel,
         projection: List[str],
         lower_level: int,
         upper_level: int,
@@ -35,7 +36,7 @@ class ExportHandler:
         Store all of the information that needs to be processed during the export
         """
         self.records_data = records_data
-        self.channel_manifest_dict = channel_manifest_dict
+        self.channel_manifest = channel_manifest
         self.projection = projection
         self.lower_level = lower_level
         self.upper_level = upper_level
@@ -187,7 +188,7 @@ class ExportHandler:
         if channel_name in self.function_types:
             return self.function_types[channel_name]
         else:
-            return self.channel_manifest_dict["channels"][channel_name]["type"]
+            return self.channel_manifest.channels[channel_name].type_
 
     async def _process_data_channel(
         self,

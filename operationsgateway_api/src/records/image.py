@@ -53,7 +53,7 @@ class Image:
         if img.mode == "I;16":
             img = img.convert("I")
 
-        img.thumbnail(Config.config.images.image_thumbnail_size)
+        img.thumbnail(Config.config.images.thumbnail_size)
         # convert 16 bit greyscale thumbnails to 8 bit to save space
         if img.mode == "I":
             log.debug("Converting 16 bit greyscale thumbnail to 8 bit")
