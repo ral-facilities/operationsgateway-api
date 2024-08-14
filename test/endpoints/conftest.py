@@ -115,29 +115,29 @@ async def remove_experiment_fixture():
 async def data_for_delete_records():
     record_id = "19000000000011"
     test_record = {
-            "_id": record_id,
-            "metadata": {
-                "epac_ops_data_version": "1.0",
-                "shotnum": 423648000000,
-                "timestamp": "2023-06-05T08:00:00",
+        "_id": record_id,
+        "metadata": {
+            "epac_ops_data_version": "1.0",
+            "shotnum": 423648000000,
+            "timestamp": "2023-06-05T08:00:00",
+        },
+        "channels": {
+            "test-scalar-channel-id": {
+                "metadata": {"channel_dtype": "scalar", "units": "µm"},
+                "data": 5.126920467610521,
             },
-            "channels": {
-                "test-scalar-channel-id": {
-                    "metadata": {"channel_dtype": "scalar", "units": "µm"},
-                    "data": 5.126920467610521,
-                },
-                "test-image-channel-id": {
-                    "metadata": {"channel_dtype": "image"},
-                    "image_path": f"{record_id}/test-image-channel-id.png",
-                    "thumbnail": "i5~9=",
-                },
-                "test-waveform-channel-id": {
-                    "metadata": {"channel_dtype": "waveform"},
-                    "waveform_path": f"{record_id}/test-waveform-channel-id.json",
-                    "thumbnail": "i5~9=",
-                },
+            "test-image-channel-id": {
+                "metadata": {"channel_dtype": "image"},
+                "image_path": f"{record_id}/test-image-channel-id.png",
+                "thumbnail": "i5~9=",
             },
-        }
+            "test-waveform-channel-id": {
+                "metadata": {"channel_dtype": "waveform"},
+                "waveform_path": f"{record_id}/test-waveform-channel-id.json",
+                "thumbnail": "i5~9=",
+            },
+        },
+    }
 
     record_instance = Record(test_record)
     await record_instance.insert()

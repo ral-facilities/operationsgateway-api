@@ -138,7 +138,6 @@ class EchoInterface:
                     f"Deletion of {object_path} was unsuccessful",
                 ) from exc
 
-
     def delete_directory(self, dir_path: str) -> None:
         """
         Given a path, delete an entire 'directory' from Echo. This is used to delete
