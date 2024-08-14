@@ -75,6 +75,10 @@ async def get_records(
         description="The name of the matplotlib colour map to apply to the image"
         " thumbnails",
     ),
+    functions: Optional[List[Json]] = Query(
+        None,
+        description="Functions to evaluate on the record data being returned",
+    ),
 ):
     """
     This endpoint uses MongoDB's find() method to query the records
@@ -110,6 +114,17 @@ async def get_records(
 
             if truncate:
                 Record.truncate_thumbnails(record_data)
+
+        if functions:
+            await Record.apply_functions(
+                record_data,
+                functions,
+                False,
+                lower_level,
+                upper_level,
+                colourmap_name,
+                truncate=truncate,
+            )
 
     return records_data
 
