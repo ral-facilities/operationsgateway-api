@@ -52,8 +52,11 @@ class TestSchedulerInterface:
             "comments": None,
         }
 
-        test_scheduler = SchedulerInterface()
-        assert test_scheduler.session_id == mock_session_id
+        # Use object.__new__ so __init__() doesn't run. We don't want to run that as
+        # we're only testing login()
+        test_scheduler = object.__new__(SchedulerInterface)
+        session_id = test_scheduler.login()
+        assert session_id == mock_session_id
 
     @patch("requests.post")
     @pytest.mark.parametrize(
@@ -90,7 +93,10 @@ class TestSchedulerInterface:
         mock_user_office_login.return_value.json.return_value = mock_json_response
 
         with pytest.raises(ExperimentDetailsError):
-            SchedulerInterface()
+            # Use object.__new__ so __init__() doesn't run. We don't want to run that as
+            # we're only testing login()
+            test_scheduler = object.__new__(SchedulerInterface)
+            test_scheduler.login()
 
     @patch(
         "operationsgateway_api.src.config.Config.config.experiments.instrument_names",
