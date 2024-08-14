@@ -143,7 +143,7 @@ async def data_for_delete_records():
     await record_instance.insert()
 
     echo = EchoInterface()
-    with open("test/records/original_image.png", "rb") as f:
+    with open("test/images/original_image.png", "rb") as f:
         echo.upload_file_object(
             f,
             f"{Image.echo_prefix}/{record_id}/test-image-channel-id.png",
