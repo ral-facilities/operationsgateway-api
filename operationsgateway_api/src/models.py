@@ -3,7 +3,14 @@ from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Union
 
 from bson.objectid import ObjectId
 import numpy as np
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    constr,
+    Field,
+    field_validator,
+    model_validator,
+)
 from pydantic_core import core_schema
 from typing_extensions import Annotated
 
@@ -256,3 +263,8 @@ class FavouriteFilterModel(BaseModel):
     id_: Id = default_id
     name: str
     filter: str  # noqa: A003
+
+
+class Function(BaseModel):
+    name: constr(strip_whitespace=True, min_length=1)
+    expression: constr(strip_whitespace=True, min_length=1)

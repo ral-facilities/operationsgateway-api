@@ -23,7 +23,7 @@ numpy = "^1.23.1"
 h5py = "^3.7.0"
 Pillow = "^10.3.0"
 matplotlib = "^3.5.2"
-gunicorn = "^22.0.0"
+gunicorn = "^23.0.0"
 orjson = "^3.10.3"
 python-dateutil = "^2.8.2"
 PyJWT = "2.4.0"
@@ -38,6 +38,7 @@ httpx = "^0.23.3"
 # Workaround for: https://github.com/python-poetry/poetry-plugin-export/issues/183
 # urllib3 isn't a dependency of this project, remove once the issue has been resolved
 urllib3 = ">=1.25.4,<1.27"
+lark = "1.1.9"
 
 [tool.poetry.dev-dependencies]
 black = "^24.4.0"
