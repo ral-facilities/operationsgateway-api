@@ -89,10 +89,13 @@ class PartialImportChecks:
 
     def channel_checks(self):
         """
-        Checks if any of the incoming channels exist in the stored record
+        Checks if any of the incoming channels exist in the stored record. If the
+        channels exist, they're rejected, otherwise they become an accepted channel.
 
-        if they do they are rejected and a channel response similar to the main channel
-        checks is returned
+        For image and waveform channels, a check is conducted to determine whether the
+        associated image/waveform is stored in Echo; there could be a situation where
+        there's an image channel in the record, but the image isn't stored in Echo
+        (perhaps due to a failure in ingestion or someone's manually deleted it)
         """
         ingested_channels = self.ingested_record.channels
         stored_channels = self.stored_record.channels
