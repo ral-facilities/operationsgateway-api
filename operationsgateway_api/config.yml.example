@@ -39,7 +39,7 @@ auth:
   fedid_server_url: ldap://fed.cclrc.ac.uk:389
   fedid_server_ldap_realm: FED.CCLRC.AC.UK
 experiments:
-  user_office_rest_api_url: https://devapi.facilities.rl.ac.uk/users-service/v0
+  user_office_rest_api_url: https://devapi.facilities.rl.ac.uk/users-service/v1
   scheduler_wsdl_url: https://devapis.facilities.rl.ac.uk/ws/ScheduleWebService?wsdl
   # Credentials for user office/scheduler system
   username: username
