@@ -1,4 +1,5 @@
 import copy
+from unittest.mock import patch
 
 import pytest
 
@@ -219,4 +220,16 @@ class TestPartialImport:
             stored_record,
         )
 
-        assert partial_import_checker.channel_checks() == response
+        # This test doesn't use any data stored in the database/Echo, it provides
+        # instances of RecordModel as inputs to PartialImportChecks. For image and
+        # waveform channels, a check is conducted to make sure the associated
+        # image/waveform is actually on Echo and because we're not using stored data for
+        # this test, we need to mock that check
+        with patch.object(
+            partial_import_checker,
+            "_is_image_or_waveform_stored",
+        ) as mock_is_stored:
+            mock_is_stored.return_value = True
+            partial_import_channel_checks = partial_import_checker.channel_checks()
+
+        assert partial_import_channel_checks == response

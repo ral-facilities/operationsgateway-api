@@ -276,3 +276,56 @@ class TestEchoInterface:
             test_echo = EchoInterface()
             with pytest.raises(EchoS3Error):
                 test_echo.delete_file_object(self.test_image_path)
+
+    @patch(
+        "operationsgateway_api.src.config.Config.config.echo.url",
+        config_echo_url,
+    )
+    @patch(
+        "operationsgateway_api.src.config.Config.config.echo.access_key",
+        config_echo_access_key,
+    )
+    @patch(
+        "operationsgateway_api.src.config.Config.config.echo.secret_key",
+        config_echo_secret_key,
+    )
+    @patch(
+        "operationsgateway_api.src.config.Config.config.echo.bucket_name",
+        config_image_bucket_name,
+    )
+    @patch("boto3.resource")
+    def test_valid_delete_directory(self, _):
+        test_echo = EchoInterface()
+        test_echo.delete_directory("test/image/19900202143000/")
+        assert test_echo.bucket.objects.filter.return_value.delete.call_count == 1
+
+    @patch(
+        "operationsgateway_api.src.config.Config.config.echo.url",
+        config_echo_url,
+    )
+    @patch(
+        "operationsgateway_api.src.config.Config.config.echo.access_key",
+        config_echo_access_key,
+    )
+    @patch(
+        "operationsgateway_api.src.config.Config.config.echo.secret_key",
+        config_echo_secret_key,
+    )
+    @patch(
+        "operationsgateway_api.src.config.Config.config.echo.bucket_name",
+        config_image_bucket_name,
+    )
+    @patch("boto3.resource")
+    def test_invalid_delete_directory(self, _):
+        with patch("boto3.resource") as mock_resource:
+            mock_bucket = mock_resource.return_value.Bucket.return_value
+
+            mock_bucket.objects.filter.return_value.delete.side_effect = ClientError(
+                {"Error": {"Code": "AccessDenied", "Message": "Access Denied"}},
+                "delete",
+            )
+
+            test_echo = EchoInterface()
+
+            with pytest.raises(EchoS3Error, match="when deleting file at"):
+                test_echo.delete_directory("test/image/19900202143000/")

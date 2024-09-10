@@ -40,7 +40,7 @@ log = logging.getLogger()
 
 
 class Record:
-    def __init__(self, record: RecordModel) -> None:
+    def __init__(self, record: Union[RecordModel, dict]) -> None:
         """
         Store a record within the object. If the input is a dictionary, it will be
         converted into a `RecordModel` object
