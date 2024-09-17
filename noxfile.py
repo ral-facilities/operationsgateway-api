@@ -54,10 +54,9 @@ def install_with_constraints(session, *args, **kwargs):
 
 @nox.session(reuse_venv=True)
 def black(session):
-    args = session.posargs or code_locations
-
+    args = session.posargs
     install_with_constraints(session, "black")
-    session.run("black", *args, external=True)
+    session.run("black", *code_locations, *args, external=True)
 
 
 @nox.session(reuse_venv=True)
