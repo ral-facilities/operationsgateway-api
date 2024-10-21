@@ -1,0 +1,51 @@
+services:
+
+  operations_gateway_api:
+    build:
+      context: .
+      target: test
+    container_name: operations_gateway_api
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/docs" ]
+      interval: 90s       # Check every 30 seconds
+      timeout: 1s         # Wait 10 seconds for a response
+      retries: 5          # Retry up to 5 times before marking as unhealthy
+      start_period: 5s   # Wait 30 seconds before starting health checks
+
+# can use this in a shell to look around: docker exec -it mongodb_container mongosh
+  mongo:
+    image: mongo:6.0
+    container_name: mongodb_container
+    ports:
+      - "27017:27017"  # Expose MongoDB on default port
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    volumes:
+      - ./util/realistic_data/init_mongo.js:/docker-entrypoint-initdb.d/mongo-init.js  # Add the init script
+
+# available at http://localhost:9001
+  minio:
+    image: docker.io/bitnami/minio
+    container_name: minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_DEFAULT_BUCKETS: og-test
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+## downloads and ingests (4th (full day) /5th June (cut down))
+#  data_ingestor:
+#    build:
+#      context: .
+#      dockerfile: util/realistic_data/Dockerfile.testdata
+#    container_name: data_ingestor
+#    #stdin_open: true  # Keep stdin open for interaction
+#   # tty: true         # Allocate a pseudo-TTY for the container
+#    depends_on:
+#      operations_gateway_api:
+#        condition: service_healthy  # Wait until the API is healthy
