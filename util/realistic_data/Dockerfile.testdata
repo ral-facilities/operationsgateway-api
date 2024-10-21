@@ -1,0 +1,41 @@
+# Base Stage: Shared base for both production and testing
+FROM python:3.9-slim AS base
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+
+# Install system dependencies needed for Poetry, and general development
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    libssl-dev \
+    libldap2-dev \
+    libsasl2-dev \
+    gcc \
+    libffi-dev \
+    openssh-client \
+    && apt-get clean
+
+# Install Poetry
+RUN curl -sSL https://install.python-poetry.org | python3 -
+
+# Add Poetry to the PATH
+ENV PATH="/root/.local/bin:$PATH"
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the pyproject.toml and poetry.lock files to the container
+COPY ../../pyproject.toml ../../poetry.lock* /app/
+
+# Install development and testing dependencies
+RUN --mount=type=ssh poetry install --no-dev --no-interaction --no-ansi
+
+# Copy the rest of the application code to the container
+COPY . /app
+
+ENV PYTHONPATH=/app
+
+# Command to run the Python script
+#CMD ["bash"]
+CMD ["poetry", "run", "python", "util/realistic_data/ingest_echo_data.py"]

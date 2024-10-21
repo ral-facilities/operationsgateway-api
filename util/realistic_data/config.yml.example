@@ -1,7 +1,7 @@
 script_options:
   wipe_database: true
   wipe_echo: false
-  launch_api: true
+  launch_api: false
   import_users: true
   # Either 'sequential' or 'parallel'
   ingest_mode: sequential
