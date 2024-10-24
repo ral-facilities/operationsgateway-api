@@ -1,5 +1,4 @@
-# Base Stage: Shared base for both prod / dev and testing
-FROM python:3.9-slim AS base
+FROM python:3.9-slim as base
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
@@ -12,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     libldap2-dev \
     libsasl2-dev \
     gcc \
+    lsof \
     libffi-dev \
     openssh-client \
     && apt-get clean
@@ -33,13 +33,12 @@ RUN ssh-keygen -t rsa -b 4096 -f /app/id_rsa -N "" && \
     chmod 600 /app/id_rsa && \
     chmod 644 /app/id_rsa.pub
 
-# Production Stage: Uses the base and installs production dependencies
-FROM base AS prod
+FROM base AS production
 
 # Install only production dependencies
-RUN poetry config virtualenvs.create false && poetry install --no-dev --no-interaction --no-ansi
+RUN poetry config virtualenvs.create false && poetry install --no-dev --no-interaction --no-ansi --without simulated-data
 
-# Copy the rest of the api code to the container
+# Copy the rest of the application code to the container
 COPY ./operationsgateway_api /app/operationsgateway_api
 
 # Expose the port that FastAPI will run on
@@ -48,24 +47,20 @@ EXPOSE 8000
 # Command for running the FastAPI app without Poetry
 CMD ["uvicorn", "operationsgateway_api.src.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
-# Test Stage: Uses the base stage to add nox and testing dependencies
-FROM base AS test
+FROM base AS add_test_data
 
-# Install Nox for running tests
-RUN pip install nox
+RUN --mount=type=ssh poetry install --no-interaction --no-ansi  --without simulated-data
 
-# Forward SSH key during the build to allow access to private repos
-# Ensure that SSH keys are properly set up on your machine
-RUN mkdir -p /root/.ssh && chmod 0700 /root/.ssh
-
-# Add the known hosts to avoid SSH prompt
-RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
-
-# Install development and testing dependencies
-RUN --mount=type=ssh poetry install --no-interaction --no-ansi
-
-# Copy the rest of the application code to the container
 COPY . /app
 
-# Run the tests with Nox
-CMD ["poetry", "run", "nox", "-s", "tests"]
+ENV PYTHONPATH=/app
+
+CMD ["poetry", "run", "python", "util/realistic_data/ingest_echo_data.py"]
+
+FROM base AS test
+
+RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi --without simulated-data
+
+COPY . /app
+
+CMD ["pytest", "--disable-warnings", "--maxfail=1", "-v"]
