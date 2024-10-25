@@ -1,5 +1,5 @@
 services:
-  
+
   # Targets:
   #- add_test_data: Starts the api and ingest some data into the mongodb and minio s3
   #- test: Run the tests against the test data added in previous step
@@ -7,7 +7,7 @@ services:
   operations_gateway_api:
     build:
       context: .
-      target: add_test_data
+      target: production
     ports:
       - "8000:8000"
     healthcheck:
