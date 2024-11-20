@@ -76,7 +76,7 @@ class TestSubmitHDF:
     @pytest.mark.asyncio
     async def test_ingest_data_success(
         self,
-        reset_databases,
+        reset_record_storage,
         test_app: TestClient,
         login_and_get_token,
     ):
@@ -121,7 +121,7 @@ class TestSubmitHDF:
     @pytest.mark.asyncio
     async def test_merge_record_success(
         self,
-        reset_databases,
+        reset_record_storage,
         test_app: TestClient,
         login_and_get_token,
     ):
@@ -194,7 +194,7 @@ class TestSubmitHDF:
         data_version,
         active_area,
         expected_response,
-        reset_databases,
+        reset_record_storage,
         test_app: TestClient,
         login_and_get_token,
     ):
@@ -218,7 +218,7 @@ class TestSubmitHDF:
     @pytest.mark.asyncio
     async def test_partial_import_record_reject(
         self,
-        reset_databases,
+        reset_record_storage,
         test_app: TestClient,
         login_and_get_token,
     ):
@@ -249,7 +249,7 @@ class TestSubmitHDF:
     @pytest.mark.asyncio
     async def test_channel_all_fail(
         self,
-        reset_databases,
+        reset_record_storage,
         test_app: TestClient,
         login_and_get_token,
     ):
@@ -289,7 +289,7 @@ class TestSubmitHDF:
     @pytest.mark.asyncio
     async def test_channel_multiple_reject_types(
         self,
-        reset_databases,
+        reset_record_storage,
         test_app: TestClient,
         login_and_get_token,
     ):

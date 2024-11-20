@@ -4,8 +4,12 @@ import os
 import pymongo
 import pytest_asyncio
 
+from operationsgateway_api.src.models import WaveformModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.record import Record
+from operationsgateway_api.src.records.waveform import Waveform
 
 
 async def add_user(auth_type):
@@ -69,27 +73,16 @@ async def remove_record(timestamp_id):
     )
 
 
-async def remove_image(images):
-    echo = EchoInterface()
-    for image_path in images:
-        echo.delete_file_object(image_path)
-
-
-async def remove_waveform():
-    await MongoDBInterface.delete_one(
-        "waveforms",
-        filter_={"_id": "20200407142816_PM-201-HJ-PD"},
-    )
-
-
 @pytest_asyncio.fixture(scope="function")
-async def reset_databases():
+async def reset_record_storage():
     yield
-    await remove_record("20200407142816")
-    await remove_image(
-        ["20200407142816/PM-201-FE-CAM-1.png", "20200407142816/PM-201-FE-CAM-2.png"],
-    )
-    await remove_waveform()
+    record_id = "20200407142816"
+    await remove_record(record_id)
+    echo = EchoInterface()
+
+    echo.delete_directory(f"{Waveform.echo_prefix}/{record_id}/")
+    echo.delete_directory(f"{Image.echo_prefix}/{record_id}/")
+
     if os.path.exists("test.h5"):
         os.remove("test.h5")
 
@@ -115,4 +108,59 @@ async def remove_experiment_fixture():
             "experiment_id": "20310001",
             "start_date": datetime(1920, 4, 30, 10, 0),
         },
+    )
+
+
+@pytest_asyncio.fixture(scope="function")
+async def data_for_delete_records():
+    record_id = "19000000000011"
+    test_record = {
+        "_id": record_id,
+        "metadata": {
+            "epac_ops_data_version": "1.0",
+            "shotnum": 423648000000,
+            "timestamp": "2023-06-05T08:00:00",
+        },
+        "channels": {
+            "test-scalar-channel-id": {
+                "metadata": {"channel_dtype": "scalar", "units": "µm"},
+                "data": 5.126920467610521,
+            },
+            "test-image-channel-id": {
+                "metadata": {"channel_dtype": "image"},
+                "image_path": f"{record_id}/test-image-channel-id.png",
+                "thumbnail": "i5~9=",
+            },
+            "test-waveform-channel-id": {
+                "metadata": {"channel_dtype": "waveform"},
+                "waveform_path": f"{record_id}/test-waveform-channel-id.json",
+                "thumbnail": "i5~9=",
+            },
+        },
+    }
+
+    record_instance = Record(test_record)
+    await record_instance.insert()
+
+    echo = EchoInterface()
+    with open("test/images/original_image.png", "rb") as f:
+        echo.upload_file_object(
+            f,
+            f"{Image.echo_prefix}/{record_id}/test-image-channel-id.png",
+        )
+    waveform = Waveform(WaveformModel(x=[1.0, 2.0, 3.0], y=[1.0, 2.0, 3.0]))
+    waveform_bytes = waveform.to_json()
+    echo.upload_file_object(
+        waveform_bytes,
+        f"{Waveform.echo_prefix}/{record_id}/test-waveform-channel-id.json",
+    )
+
+    yield
+
+    await Record.delete_record(record_id)
+    echo.delete_file_object(
+        f"{Image.echo_prefix}/{record_id}/test-image-channel-id.png",
+    )
+    echo.delete_file_object(
+        f"{Waveform.echo_prefix}/{record_id}/test-waveform-channel-id.json",
     )
