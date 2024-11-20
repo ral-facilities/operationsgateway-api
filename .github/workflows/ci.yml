@@ -200,7 +200,7 @@ jobs:
           key: ${{ runner.os }}-poetry-nox-black-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
 
       - name: Run Nox black session
-        run: nox -s black
+        run: nox -s black -- --check --diff
 
 
   safety:

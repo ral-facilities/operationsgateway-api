@@ -28,12 +28,7 @@ class ChannelChecks:
         self.ingested_image = ingested_image or []
         self.internal_failed_channel = internal_failed_channel or []
 
-        self.supported_channel_types = [
-            "scalar",
-            "image",
-            "rgb-image",
-            "waveform",
-        ]
+        self.supported_channel_types = ["scalar", "image", "rgb-image", "waveform"]
 
     def set_channels(self, manifest) -> None:
         if not manifest:
