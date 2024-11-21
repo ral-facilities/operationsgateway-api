@@ -77,7 +77,7 @@ class ExperimentsConfig(BaseModel):
     scheduler_background_frequency: StrictStr
     scheduler_background_timezone: StrictStr
     scheduler_background_retry_mins: float
-    user_office_wsdl_url: StrictStr
+    user_office_rest_api_url: StrictStr
     username: StrictStr
     password: StrictStr
     scheduler_wsdl_url: StrictStr
