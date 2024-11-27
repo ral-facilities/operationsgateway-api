@@ -10,12 +10,9 @@ jobs:
   tests:
     strategy:
       fail-fast: false
-      matrix:
-        os: [ubuntu-22.04]
-        python-version: ["3.11"]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-22.04
 
-    name: Python ${{ matrix.python-version }} Tests
+    name: Python 3.11 Tests
     steps:
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
@@ -24,18 +21,18 @@ jobs:
       - name: Install python-ldap dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libsasl2-dev python${{ matrix.python-version }}-dev libldap2-dev libssl-dev
+          sudo apt-get install -y libsasl2-dev python3.11-dev libldap2-dev libssl-dev
 
       # Setup Python and environment dependencies (via cache)
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.11
       - name: Load Pip cache
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
+          key: ${{ runner.os }}-pip-3.11-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
       - name: Install Poetry & Nox
         run: pip install -r .github/ci_requirements.txt
 
@@ -47,7 +44,6 @@ jobs:
 
       # Used to install mongoimport when Ubuntu 22.04 is used, identified at https://github.com/actions/runner-images/issues/6626#issuecomment-1327744126
       - name: Install MongoDB Database Tools
-        if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y wget gnupg
@@ -65,7 +61,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pypoetry/virtualenvs
-          key: ${{ runner.os }}-poetry-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
+          key: ${{ runner.os }}-poetry-3.11-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
       - name: Install dependencies
         run: poetry install --without simulated-data
 
@@ -124,13 +120,12 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/tests*
-          key: ${{ runner.os }}-poetry-nox-tests-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
+          key: ${{ runner.os }}-poetry-nox-tests-3.11-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
 
       # Run Nox tests session, saves and uploads a coverage report to codecov
       - name: Run Nox tests session
-        run: nox -p ${{ matrix.python-version }} -s tests -- --cov=operationsgateway_api --cov-report=xml
+        run: nox -p 3.11 -s tests -- --cov=operationsgateway_api --cov-report=xml
       - name: Upload code coverage report
-        if: matrix.python-version == '3.8'
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -143,7 +138,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.8.14"
+          python-version: "3.11"
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
@@ -151,7 +146,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
+          key: ${{ runner.os }}-pip-3.11-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
       - name: Install Poetry & Nox
         run: pip install -r .github/ci_requirements.txt
 
@@ -159,7 +154,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/lint*
-          key: ${{ runner.os }}-poetry-nox-lint-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
+          key: ${{ runner.os }}-poetry-nox-lint-3.11-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
 
       - name: Run Nox lint session
         run: nox -s lint
@@ -172,7 +167,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.8.14"
+          python-version: "3.11"
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
@@ -180,7 +175,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
+          key: ${{ runner.os }}-pip-3.11-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
       - name: Install Poetry & Nox
         run: pip install -r .github/ci_requirements.txt
 
@@ -188,7 +183,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/black*
-          key: ${{ runner.os }}-poetry-nox-black-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
+          key: ${{ runner.os }}-poetry-nox-black-3.11-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
 
       - name: Run Nox black session
         run: nox -s black -- --check --diff
@@ -201,7 +196,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.8.14"
+          python-version: "3.11"
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
@@ -209,7 +204,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
+          key: ${{ runner.os }}-pip-3.11-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
       - name: Install Poetry & Nox
         run: pip install -r .github/ci_requirements.txt
 
@@ -217,7 +212,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/safety*
-          key: ${{ runner.os }}-poetry-nox-safety-${{ matrix.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
+          key: ${{ runner.os }}-poetry-nox-safety-3.11-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
 
       - name: Run Nox safety session
         run: nox -s safety
