@@ -1,4 +1,5 @@
 import json
+import logging
 from unittest.mock import patch
 
 import matplotlib.pyplot as plt
@@ -66,7 +67,13 @@ class TestColourmapMapping:
         flat_colourmap_list = [
             colourmap for group in colourmap_mapping.values() for colourmap in group
         ]
-
+        logging.info(plt.colormaps())
+        logging.info(flat_colourmap_list)
         # Checking the mapping file contains all colourmaps available in Matplotlib
+        # From Matplotlib v3.9, they have introduced alias for common typos so
+        # excluding these.
+        alias = {"grey", "gist_grey", "gist_yerg", "Grays"}
         for colourmap in plt.colormaps():
+            if colourmap in alias:
+                continue
             assert colourmap in flat_colourmap_list
