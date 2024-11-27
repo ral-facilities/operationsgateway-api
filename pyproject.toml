@@ -10,7 +10,7 @@ authors = ["Matthew Richards <matthew.richards@stfc.ac.uk>"]
 # but python3.8 is only compatible with scipy<=1.10.1
 # so it is not possible to target both at the same time
 python = ">=3.8,<3.12"
-fastapi = "^0.111.0"
+fastapi = "^0.115.5"
 motor = "^3.3.2"
 uvicorn = "^0.20.0"
 python-multipart = "^0.0.7"

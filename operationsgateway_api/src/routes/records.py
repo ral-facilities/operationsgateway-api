@@ -163,11 +163,11 @@ async def count_records(
 async def convert_search_ranges(
     access_token: AuthoriseToken,
     shotnum_range: Json = Query(
-        {},
+        "{}",
         description='Min and max shot number range (e.g. {"min": 200, "max": 500})',
     ),
     date_range: Json = Query(
-        {},
+        "{}",
         description="From and to date range (e.g."
         ' {"from": "2022-04-07 14:16:19", "to": "2022-04-07 21:00:00"})',
     ),
@@ -196,7 +196,7 @@ async def get_record_by_id(
             description="`_id` of the record to fetch from the database",
         ),
     ],
-    conditions: Json = Query({}, description="Conditions to apply to the query"),
+    conditions: Json = Query("{}", description="Conditions to apply to the query"),
     truncate: Optional[bool] = Query(
         False,
         description="Parameter used for development to reduce the output of"
