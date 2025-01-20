@@ -36,7 +36,7 @@ class Waveform:
         b.seek(0)
         return b
 
-    def insert_waveform(self)  -> Optional[str]:
+    def insert_waveform(self) -> Optional[str]:
         """
         Store the waveform from this object in Echo
         """
@@ -52,7 +52,9 @@ class Waveform:
         except EchoS3Error as e:
             # Extract the channel name and propagate it
             channel_name = self.get_channel_name_from_id()
-            log.error("Failed to upload waveform for channel '%s': %s", channel_name, str(e))
+            log.error(
+                "Failed to upload waveform for channel '%s': %s", channel_name, str(e)
+            )
             return channel_name
 
     def create_thumbnail(self) -> None:
