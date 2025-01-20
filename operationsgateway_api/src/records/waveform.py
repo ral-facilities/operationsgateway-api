@@ -2,6 +2,7 @@ import base64
 from io import BytesIO
 import json
 import logging
+from typing import Optional
 
 from botocore.exceptions import ClientError
 import matplotlib
@@ -35,17 +36,24 @@ class Waveform:
         b.seek(0)
         return b
 
-    def insert_waveform(self) -> None:
+    def insert_waveform(self)  -> Optional[str]:
         """
         Store the waveform from this object in Echo
         """
         log.info("Storing waveform: %s", self.waveform.path)
         bytes_json = self.to_json()
         echo = EchoInterface()
-        echo.upload_file_object(
-            bytes_json,
-            Waveform.get_full_path(self.waveform.path),
-        )
+        try:
+            echo.upload_file_object(
+                bytes_json,
+                Waveform.get_full_path(self.waveform.path),
+            )
+            return None  # Successful upload
+        except EchoS3Error as e:
+            # Extract the channel name and propagate it
+            channel_name = self.get_channel_name_from_id()
+            log.error("Failed to upload waveform for channel '%s': %s", channel_name, str(e))
+            return channel_name
 
     def create_thumbnail(self) -> None:
         """
