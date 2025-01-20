@@ -49,11 +49,12 @@ class Waveform:
                 Waveform.get_full_path(self.waveform.path),
             )
             return None  # Successful upload
-        except EchoS3Error as e:
+        except EchoS3Error:
             # Extract the channel name and propagate it
             channel_name = self.get_channel_name_from_id()
-            log.error(
-                "Failed to upload waveform for channel '%s': %s", channel_name, str(e)
+            log.exception(
+                "Failed to upload waveform for channel '%s'",
+                channel_name,
             )
             return channel_name
 

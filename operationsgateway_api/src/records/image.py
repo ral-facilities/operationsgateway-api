@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from io import BytesIO
 import logging
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 
 from botocore.exceptions import ClientError
 import numpy as np
