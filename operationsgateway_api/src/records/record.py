@@ -109,6 +109,14 @@ class Record:
                 },
             )
 
+    def remove_channel(self, channel_name: str) -> None:
+        if channel_name in self.record.channels:
+            log.info("Removing channel '%s' from record.", channel_name)
+            del self.record.channels[channel_name]
+        else:
+            log.warning("Channel '%s' not found in record.", channel_name)
+            raise KeyError(f"Channel '{channel_name}' does not exist in the record.")
+
     async def find_existing_record(self) -> Union[RecordModel, None]:
         """
         Using the ID, check if the object's record is currently stored in the database
