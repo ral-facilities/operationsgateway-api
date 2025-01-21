@@ -72,7 +72,16 @@ class TestColourmapMapping:
         # Checking the mapping file contains all colourmaps available in Matplotlib
         # From Matplotlib v3.9, they have introduced alias for common typos so
         # excluding these.
-        alias = {"grey", "grey_r","gist_grey", "gist_grey_r", "gist_yerg", "gist_yerg_r", "Grays", "Grays_r"}
+        alias = {
+            "grey",
+            "grey_r",
+            "gist_grey",
+            "gist_grey_r",
+            "gist_yerg",
+            "gist_yerg_r",
+            "Grays",
+            "Grays_r",
+        }
         for colourmap in plt.colormaps():
             if colourmap in alias:
                 continue
