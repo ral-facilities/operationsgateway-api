@@ -1,8 +1,11 @@
+from unittest.mock import patch
+
 from fastapi.testclient import TestClient
 import h5py
 import numpy as np
 import pytest
 
+from operationsgateway_api.src.exceptions import DatabaseError, EchoS3Error
 from test.records.ingestion.create_test_hdf import create_test_hdf_file
 
 
@@ -331,3 +334,193 @@ class TestSubmitHDF:
 
         assert test_response.json() == expected_response
         assert test_response.status_code == 200
+
+    #  The DB is but ECHO is not accessible before ingestion starts.
+    @pytest.mark.asyncio
+    async def test_echo_failure_on_start(
+        self,
+        reset_record_storage,
+        test_app: TestClient,
+        login_and_get_token,
+    ):
+        with patch(
+            "operationsgateway_api.src.records.echo_interface.EchoInterface.upload_file_object",
+            side_effect=EchoS3Error(),
+        ):
+            create_integration_test_hdf()
+
+            test_file = "test.h5"
+            files = {"file": (test_file, open(test_file, "rb"))}
+
+            test_response = test_app.post(
+                "/submit/hdf",
+                headers={"Authorization": f"Bearer {login_and_get_token}"},
+                files=files,
+            )
+
+            assert test_response.status_code == 201
+
+            expected_response = {
+                "message": "Added as 20200407142816",
+                "response": {
+                    "accepted_channels": ["PM-201-TJ-CAM-2-FWHMY"],
+                    "rejected_channels": {
+                        "PM-201-FE-CAM-2": [
+                            "Upload to Echo failed",
+                        ],
+                        "PM-201-HJ-PD": [
+                            "Upload to Echo failed",
+                        ],
+                    },
+                    "warnings": [],
+                },
+            }
+            print("-----------------------")
+            print(test_response.json())
+            print("-----------------------")
+            assert test_response.json() == expected_response
+
+    # DB and ECHO become inaccessible mid-way through ingesting a NEW .h5 file
+    @pytest.mark.asyncio
+    async def test_partial_s3_and_db_upload_failure(
+        self,
+        reset_record_storage,
+        test_app: TestClient,
+        login_and_get_token,
+    ):
+
+        # Define a side_effect function for the mock upload
+        def mock_upload_file_object(file_object, object_path):
+            # Extract channel name from the path
+            channel_name = object_path.split("/")[-1]
+            if channel_name == "PM-201-FE-CAM-2.json":
+                raise EchoS3Error()
+
+        # Define a side_effect function for the database insert
+        def mock_insert_one(collection_name, data):
+            if "PM-201-HJ-PD" in data["channels"]:
+                raise DatabaseError()
+
+        # Patch both the S3 upload method and the MongoDB insert_one method
+        with patch(
+            "operationsgateway_api.src.records.echo_interface.EchoInterface.upload_file_object",
+            side_effect=mock_upload_file_object,
+        ), patch(
+            "operationsgateway_api.src.mongo.interface.MongoDBInterface.insert_one",
+            side_effect=mock_insert_one,
+        ):
+
+            # Create a test HDF file with the defined channels
+            create_integration_test_hdf()
+
+            # Simulate the file upload
+            test_file = "test.h5"
+            files = {"file": (test_file, open(test_file, "rb"))}
+
+            # Call the endpoint
+            test_response = test_app.post(
+                "/submit/hdf",
+                headers={"Authorization": f"Bearer {login_and_get_token}"},
+                files=files,
+            )
+
+            # Check the status code
+            assert test_response.status_code == 500
+
+            assert test_response.json() == {"detail": "Database error"}
+
+    # The DB is but ECHO is not accessible mid-way through ingesting a NEW .h5 file.
+    @pytest.mark.asyncio
+    async def test_partial_s3_upload_failure(
+        self,
+        reset_record_storage,
+        test_app: TestClient,
+        login_and_get_token,
+    ):
+
+        # Track uploaded channels
+        uploaded_channels = []
+
+        # Define a side_effect function for the mock
+        def mock_upload_file_object(file_object, object_path):
+            # Extract channel name from the path
+            channel_name = object_path.split("/")[-1]
+            if channel_name == "PM-201-HJ-PD.json":  # Simulate success for the first
+                uploaded_channels.append(channel_name)
+            else:
+                raise EchoS3Error()
+
+        # Patch the S3 upload method
+        with patch(
+            "operationsgateway_api.src.records.echo_interface.EchoInterface.upload_file_object",
+            side_effect=mock_upload_file_object,
+        ):
+            # Create a test HDF file with the defined channels
+            create_integration_test_hdf()
+
+            # Simulate the file upload
+            test_file = "test.h5"
+            files = {"file": (test_file, open(test_file, "rb"))}
+
+            # Call the endpoint
+            test_response = test_app.post(
+                "/submit/hdf",
+                headers={"Authorization": f"Bearer {login_and_get_token}"},
+                files=files,
+            )
+
+            # Check the status code
+            assert test_response.status_code == 201
+
+            expected_response = {
+                "message": "Added as 20200407142816",
+                "response": {
+                    "accepted_channels": ["PM-201-HJ-PD", "PM-201-TJ-CAM-2-FWHMY"],
+                    "rejected_channels": {
+                        "PM-201-FE-CAM-2": [
+                            "Upload to Echo failed",
+                        ],
+                    },
+                    "warnings": [],
+                },
+            }
+            assert test_response.json() == expected_response
+
+    # ECHO is but the db is not accessible mid-way through ingesting a NEW .h5 file.
+    @pytest.mark.asyncio
+    async def test_partial_db_failure(
+        self,
+        reset_record_storage,
+        test_app: TestClient,
+        login_and_get_token,
+    ):
+
+        # Define a side_effect function for the database insert
+        def mock_insert_one(collection_name, data):
+            if "PM-201-HJ-PD" in data["channels"]:
+                raise DatabaseError()
+
+        # Patch both the MongoDB insert_one method
+        with patch(
+            "operationsgateway_api.src.mongo.interface.MongoDBInterface.insert_one",
+            side_effect=mock_insert_one,
+        ):
+
+            # Create a test HDF file with the defined channels
+            create_integration_test_hdf()
+
+            # Simulate the file upload
+            test_file = "test.h5"
+            files = {"file": (test_file, open(test_file, "rb"))}
+
+            # Call the endpoint
+            test_response = test_app.post(
+                "/submit/hdf",
+                headers={"Authorization": f"Bearer {login_and_get_token}"},
+                files=files,
+            )
+
+            # Check the status code
+            assert test_response.status_code == 500
+
+            assert test_response.json() == {"detail": "Database error"}
