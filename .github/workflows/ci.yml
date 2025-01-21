@@ -10,7 +10,7 @@ jobs:
   tests:
     strategy:
       fail-fast: false
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     name: Python 3.11 Tests
     steps:
