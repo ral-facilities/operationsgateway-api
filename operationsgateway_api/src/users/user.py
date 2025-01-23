@@ -18,6 +18,7 @@ class User:
         "/experiments POST",
         "/users POST",
         "/users PATCH",
+        "/users GET",
         "/users/{id_} DELETE",
     ]
 
@@ -43,6 +44,16 @@ class User:
         else:
             log.error("No user document found for user: '%s'", username)
             raise UnauthorisedError
+
+    @staticmethod
+    async def get_all_users():
+        """
+        Get all user documents from the database.
+        :return: a list of user documents
+        """
+        cursor = MongoDBInterface.find("users", {})
+        users = await cursor.to_list(length=None)  # Convert the cursor to a list of documents
+        return users
 
     @staticmethod
     async def update_password(username: str, password: str):

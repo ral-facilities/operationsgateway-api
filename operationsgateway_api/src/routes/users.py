@@ -163,3 +163,38 @@ async def delete_user(
     log.info("successfully deleted user '%s' ", id_)
 
     return Response(status_code=HTTPStatus.NO_CONTENT.value)
+
+
+@router.get(
+    "/users",
+    summary="Retrieve all users with their auth types and authorised routes",
+    response_description="List of all users with their details",
+    tags=["Users"],
+)
+@endpoint_error_handling
+async def get_all_users(access_token: AuthoriseRoute):
+    """
+    Fetch all users from the database, including their usernames (_id),
+    authentication types, and authorised routes.
+    """
+    users = await User.get_all_users()
+
+    response_data = []
+    for user in users:
+        # Skip users without a valid auth_type or those missing essential fields
+        if "_id" not in user or "auth_type" not in user or user["auth_type"] not in User.auth_type_list:
+            log.warning(f"Skipping invalid or incomplete user: {user}")
+            continue
+
+        user_info = {
+            "username": user["_id"],
+            "auth_type": user["auth_type"],
+            "authorised_routes": user.get("authorised_routes", []),
+        }
+        response_data.append(user_info)
+
+    log.info("Successfully retrieved all users.")
+    return JSONResponse(
+        content={"users": response_data},
+        status_code=status.HTTP_200_OK,
+    )

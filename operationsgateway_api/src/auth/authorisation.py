@@ -46,7 +46,7 @@ async def authorise_route(
     request_endpoint_function = request.scope["endpoint"]
     endpoint_path_from_mapping = ROUTE_MAPPINGS[request_endpoint_function]
     log.debug("endpoint_path_from_mapping: %s", endpoint_path_from_mapping)
-    if "authorised_routes" in payload_dict:
+    if "authorised_routes" in payload_dict and payload_dict["authorised_routes"] is not None:
         if endpoint_path_from_mapping in payload_dict["authorised_routes"]:
             return access_token
     # getting this far means the user is not authorised for this endpoint
