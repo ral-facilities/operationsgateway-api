@@ -52,7 +52,9 @@ class User:
         :return: a list of user documents
         """
         cursor = MongoDBInterface.find("users", {})
-        users = await cursor.to_list(length=None)  # Convert the cursor to a list of documents
+        users = await cursor.to_list(
+            length=None,
+        )  # Convert the cursor to a list of documents
         return users
 
     @staticmethod

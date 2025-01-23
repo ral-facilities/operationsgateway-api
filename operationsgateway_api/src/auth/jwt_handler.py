@@ -50,7 +50,7 @@ class JwtHandler:
         payload["authorised_routes"] = self.user_model.authorised_routes
 
         if self.user_model.authorised_routes is not None:
-            if '/users GET' in self.user_model.authorised_routes:
+            if "/users GET" in self.user_model.authorised_routes:
                 payload["userIsAdmin"] = True
         else:
             payload["userIsAdmin"] = False

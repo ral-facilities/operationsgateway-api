@@ -182,8 +182,12 @@ async def get_all_users(access_token: AuthoriseRoute):
     response_data = []
     for user in users:
         # Skip users without a valid auth_type or those missing essential fields
-        if "_id" not in user or "auth_type" not in user or user["auth_type"] not in User.auth_type_list:
-            log.warning(f"Skipping invalid or incomplete user: {user}")
+        if (
+            "_id" not in user
+            or "auth_type" not in user
+            or user["auth_type"] not in User.auth_type_list
+        ):
+            log.warning("Skipping invalid or incomplete user '%s':", user)
             continue
 
         user_info = {
