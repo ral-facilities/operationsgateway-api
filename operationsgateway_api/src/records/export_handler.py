@@ -92,12 +92,13 @@ class ExportHandler:
 
             if self.functions:
                 await Record.apply_functions(
-                    record_data,
-                    self.functions,
-                    self.original_image,
-                    self.lower_level,
-                    self.upper_level,
-                    self.colourmap_name,
+                    record=record_data,
+                    functions=self.functions,
+                    original_image=self.original_image,
+                    lower_level=self.lower_level,
+                    upper_level=self.upper_level,
+                    limit_bit_depth=8,  # Assume the limit bit depth for the export
+                    colourmap_name=self.colourmap_name,
                     return_thumbnails=False,
                 )
 
@@ -264,12 +265,13 @@ class ExportHandler:
                 image_bytes = channel["data"]
             else:
                 image_bytes = await Image.get_image(
-                    record_id,
-                    channel_name,
-                    self.original_image,
-                    self.lower_level,
-                    self.upper_level,
-                    self.colourmap_name,
+                    record_id=record_id,
+                    channel_name=channel_name,
+                    original_image=self.original_image,
+                    lower_level=self.lower_level,
+                    upper_level=self.upper_level,
+                    limit_bit_depth=8,  # Assume the limit bit depth for the export
+                    colourmap_name=self.colourmap_name,
                 )
             self.zip_file.writestr(
                 f"{record_id}_{channel_name}.png",

@@ -51,7 +51,7 @@ class TestImage:
         test_image = Image(
             ImageModel(
                 path="test/path/photo.png",
-                data=np.ones(shape=(300, 300), dtype=np.int8),
+                data=np.ones(shape=(300, 300), dtype=np.uint8),
             ),
         )
         test_image.create_thumbnail()
@@ -59,9 +59,7 @@ class TestImage:
         bytes_thumbnail = base64.b64decode(test_image.thumbnail)
         img = PILImage.open(BytesIO(bytes_thumbnail))
         thumbnail_checksum = str(imagehash.phash(img))
-        assert thumbnail_checksum == "0000000000000000"
-        # the reason only 0s are being asserted is because this is checking the hash of
-        # a purely black 300x300 square created in the test_image above
+        assert thumbnail_checksum == "8000000000000000"
 
     @pytest.mark.parametrize(
         # image_size parameter = (rows, columns), not (width, height) which is what
@@ -102,7 +100,7 @@ class TestImage:
         test_image = Image(
             ImageModel(
                 path="test/path/photo.png",
-                data=np.ones(shape=image_size, dtype=np.int8),
+                data=np.ones(shape=image_size, dtype=np.uint8),
             ),
         )
         with patch(
@@ -119,7 +117,7 @@ class TestImage:
         test_image = Image(
             ImageModel(
                 path="test/path/photo.png",
-                data=np.ones(shape=(300, 300), dtype=np.int8),
+                data=np.ones(shape=(300, 300), dtype=np.uint8),
             ),
         )
 
@@ -163,7 +161,7 @@ class TestImage:
         expected_channel_name,
     ):
         test_image = Image(
-            ImageModel(path=image_path, data=np.ones(shape=(300, 300), dtype=np.int8)),
+            ImageModel(path=image_path, data=np.ones(shape=(300, 300), dtype=np.uint8)),
         )
 
         record_id, channel_name = test_image.extract_metadata_from_path()
@@ -195,7 +193,7 @@ class TestImage:
         test_image = Image(
             ImageModel(
                 path=self.test_image_path,
-                data=np.ones(shape=(300, 300), dtype=np.int8),
+                data=np.ones(shape=(300, 300), dtype=np.uint8),
             ),
         )
         Image.upload_image(test_image)
@@ -234,7 +232,7 @@ class TestImage:
         test_image = Image(
             ImageModel(
                 path=self.test_image_path,
-                data=np.ones(shape=(300, 300), dtype=np.int8),
+                data=np.ones(shape=(300, 300), dtype=np.uint8),
             ),
         )
         with pytest.raises(ImageError):
@@ -282,12 +280,13 @@ class TestImage:
                 return_value=self._get_bytes_of_image(expected_image_filename),
             ):
                 test_image = await Image.get_image(
-                    "test_record_id",
-                    "test_channel_name",
-                    original_image_flag,
-                    0,
-                    255,
-                    "jet",
+                    record_id="test_record_id",
+                    channel_name="test_channel_name",
+                    original_image=original_image_flag,
+                    lower_level=0,
+                    upper_level=255,
+                    limit_bit_depth=8,
+                    colourmap_name="jet",
                 )
 
             assert (
@@ -334,12 +333,13 @@ class TestImage:
         ):
             with pytest.raises(expected_exception):
                 await Image.get_image(
-                    "test_record_id",
-                    "test_channel_name",
-                    True,
-                    0,
-                    255,
-                    "jet",
+                    record_id="test_record_id",
+                    channel_name="test_channel_name",
+                    original_image=True,
+                    lower_level=0,
+                    upper_level=255,
+                    limit_bit_depth=8,
+                    colourmap_name="jet",
                 )
 
     def test_get_relative_path(self):

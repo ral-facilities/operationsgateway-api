@@ -58,6 +58,17 @@ async def get_full_image(
         ge=0,
         le=255,
     ),
+    limit_bit_depth: int = Query(
+        8,
+        description=(
+            "The bit depth to which `lower_level` and `upper_level` are relative. This "
+            "can be any value as long as it is consistent with the provided levels, "
+            "but is intended to reflect the original bit depth of the raw data, so "
+            "meaningful values can be displayed and set in the frontend."
+        ),
+        ge=0,
+        le=16,
+    ),
     original_image: Optional[bool] = Query(
         False,
         description="Return the original image in PNG format without any"
@@ -82,13 +93,14 @@ async def get_full_image(
         colourmap_name = await Image.get_preferred_colourmap(access_token)
 
     image_bytes = await get_image_bytes(
-        record_id,
-        channel_name,
-        colourmap_name,
-        upper_level,
-        lower_level,
-        original_image,
-        functions,
+        record_id=record_id,
+        channel_name=channel_name,
+        colourmap_name=colourmap_name,
+        upper_level=upper_level,
+        lower_level=lower_level,
+        limit_bit_depth=limit_bit_depth,
+        original_image=original_image,
+        functions=functions,
     )
     # ensure the "file pointer" is reset
     image_bytes.seek(0)
@@ -145,13 +157,14 @@ async def get_crosshair_intensity(
     evaluated to generate the returned image.
     """
     image_bytes = await get_image_bytes(
-        record_id,
-        channel_name,
-        None,
-        255,
-        0,
-        True,
-        functions,
+        record_id=record_id,
+        channel_name=channel_name,
+        colourmap_name=None,
+        upper_level=255,
+        lower_level=0,
+        limit_bit_depth=8,
+        original_image=True,
+        functions=functions,
     )
     img_src = PILImage.open(image_bytes)
     orig_img_array = np.array(img_src)
@@ -190,6 +203,17 @@ async def get_colourbar_image(
         ge=0,
         le=255,
     ),
+    limit_bit_depth: int = Query(
+        8,
+        description=(
+            "The bit depth to which `lower_level` and `upper_level` are relative. This "
+            "can be any value as long as it is consistent with the provided levels, "
+            "but is intended to reflect the original bit depth of the raw data, so "
+            "meaningful values can be displayed and set in the frontend."
+        ),
+        ge=0,
+        le=16,
+    ),
 ):
     """
     This endpoint can be used to retrieve a colourbar image showing the colour spectrum
@@ -202,9 +226,10 @@ async def get_colourbar_image(
         colourmap_name = await Image.get_preferred_colourmap(access_token)
 
     colourbar_image_bytes = FalseColourHandler.create_colourbar(
-        lower_level,
-        upper_level,
-        colourmap_name,
+        lower_level=lower_level,
+        upper_level=upper_level,
+        limit_bit_depth=limit_bit_depth,
+        colourmap_name=colourmap_name,
     )
     colourbar_image_bytes.seek(0)
     return Response(colourbar_image_bytes.read(), media_type="image/png")
@@ -238,6 +263,7 @@ async def get_image_bytes(
     colourmap_name: str,
     upper_level: int,
     lower_level: int,
+    limit_bit_depth: int,
     original_image: bool,
     functions: "list[dict]",
 ) -> BytesIO:
@@ -249,21 +275,23 @@ async def get_image_bytes(
             if function_dict["name"] == channel_name:
                 record = {"_id": record_id}
                 await Record.apply_functions(
-                    record,
-                    functions,
-                    original_image,
-                    lower_level,
-                    upper_level,
-                    colourmap_name,
+                    record=record,
+                    functions=functions,
+                    original_image=original_image,
+                    lower_level=lower_level,
+                    upper_level=upper_level,
+                    limit_bit_depth=limit_bit_depth,
+                    colourmap_name=colourmap_name,
                     return_thumbnails=False,
                 )
                 return record["channels"][channel_name]["data"]
 
     return await Image.get_image(
-        record_id,
-        channel_name,
-        original_image,
-        lower_level,
-        upper_level,
-        colourmap_name,
+        record_id=record_id,
+        channel_name=channel_name,
+        original_image=original_image,
+        lower_level=lower_level,
+        upper_level=upper_level,
+        limit_bit_depth=limit_bit_depth,
+        colourmap_name=colourmap_name,
     )

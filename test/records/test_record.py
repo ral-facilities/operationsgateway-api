@@ -524,6 +524,7 @@ class TestRecord:
             original_image=False,
             lower_level=0,
             upper_level=255,
+            limit_bit_depth=8,
             colourmap_name="binary",
             return_thumbnails=True,
         )
@@ -568,7 +569,7 @@ class TestRecord:
     ):
         record = {"_id": "20230605100000"}
         with pytest.raises(FunctionParseError) as e:
-            await Record.apply_functions(record, functions, False, 0, 255, "binary")
+            await Record.apply_functions(record, functions, False, 0, 255, 8, "binary")
 
         assert str(e.value) == "b is not known as a channel or function name"
 
@@ -588,6 +589,7 @@ class TestRecord:
             original_image=False,
             lower_level=0,
             upper_level=255,
+            limit_bit_depth=8,
             colourmap_name="binary",
             return_thumbnails=True,
         )

@@ -45,6 +45,7 @@ default_exclude_field = Field(None, exclude=True)
 class ImageModel(BaseModel):
     path: Optional[Union[str, Any]]
     data: Optional[Union[np.ndarray, Any]]
+    bit_depth: Optional[Union[int, Any]] = None
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
@@ -74,6 +75,7 @@ class ImageChannelMetadataModel(BaseModel):
     x_pixel_units: Optional[Union[str, Any]] = None
     y_pixel_size: Optional[Union[float, Any]] = None
     y_pixel_units: Optional[Union[str, Any]] = None
+    bit_depth: Optional[Union[int, Any]] = None
 
 
 class ImageChannelModel(BaseModel):
