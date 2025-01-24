@@ -9,28 +9,65 @@ class TestGetUsers:
         test_app: TestClient,
         login_and_get_token,
     ):
-        expected_backend_user = {
-            "username": "backend",
-            "auth_type": "local",
-            "authorised_routes": [
-                "/submit/hdf POST",
-                "/submit/manifest POST",
-                "/records/{id_} DELETE",
-                "/experiments POST",
-                "/users POST",
-                "/users PATCH",
-                "/users/{id_} DELETE",
-                "/users GET",
-            ],
-        }
+        # Expected users to validate
+        expected_users = [
+            {
+                "username": "frontend",
+                "auth_type": "local",
+                "authorised_routes": [],
+            },
+            {
+                "username": "backend",
+                "auth_type": "local",
+                "authorised_routes": [
+                    "/submit/hdf POST",
+                    "/submit/manifest POST",
+                    "/records/{id_} DELETE",
+                    "/experiments POST",
+                    "/users POST",
+                    "/users PATCH",
+                    "/users/{id_} DELETE",
+                    "/users GET",
+                ],
+            },
+        ]
 
         response = test_app.get(
             "/users",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
         assert response.status_code == 200
+
         response_data = response.json()
-        assert expected_backend_user in response_data["users"]
+
+        # Filter the response to only include `frontend` and `backend` users
+        users_to_validate = [
+            user
+            for user in response_data["users"]
+            if user["username"] in {"frontend", "backend"}
+        ]
+
+        # Validate the filtered users, we have to be careful
+        # because the response from the DB can be in any order
+        for user_in_response in users_to_validate:
+            matching_user = next(
+                (
+                    expected_user
+                    for expected_user in expected_users
+                    if expected_user["username"] == user_in_response["username"]
+                ),
+                None,
+            )
+
+            assert (
+                matching_user is not None
+            ), f"Unexpected user: {user_in_response['username']}"
+
+            assert user_in_response["auth_type"] == matching_user["auth_type"]
+            assert (
+                user_in_response["authorised_routes"]
+                == matching_user["authorised_routes"]
+            )
 
     @pytest.mark.asyncio
     async def test_get_users_unauthorised(
