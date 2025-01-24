@@ -59,14 +59,11 @@ class TestGetUsers:
                 None,
             )
 
-            assert (
-                matching_user is not None
-            ), f"Unexpected user: {user_in_response['username']}"
-
             assert user_in_response["auth_type"] == matching_user["auth_type"]
-            assert (
-                user_in_response["authorised_routes"]
-                == matching_user["authorised_routes"]
+
+            # Convert lists to sets for order-independent comparison
+            assert set(user_in_response["authorised_routes"]) == set(
+                matching_user["authorised_routes"]
             )
 
     @pytest.mark.asyncio
