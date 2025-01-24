@@ -24,9 +24,9 @@ class TestGetUsers:
                     "/records/{id_} DELETE",
                     "/experiments POST",
                     "/users POST",
-                    "/users GET",
                     "/users PATCH",
                     "/users/{id_} DELETE",
+                    "/users GET",
                 ],
             },
             {
@@ -46,8 +46,12 @@ class TestGetUsers:
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
         assert response.status_code == 200
+        # Parse the response JSON
         response_data = response.json()
-        assert response_data == expected_users
+
+        # Extract the `users` field and compare it to the expected data
+        assert "users" in response_data
+        assert response_data["users"] == expected_users
 
     @pytest.mark.asyncio
     async def test_get_users_unauthorised(
