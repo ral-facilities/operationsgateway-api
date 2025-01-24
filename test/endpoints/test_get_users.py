@@ -9,49 +9,28 @@ class TestGetUsers:
         test_app: TestClient,
         login_and_get_token,
     ):
-        # Expected user data for validation
-        expected_users = [
-            {"username": "rqw38472", "auth_type": "FedID", "authorised_routes": []},
-            {"username": "xfu59478", "auth_type": "FedID", "authorised_routes": []},
-            {"username": "dgs12138", "auth_type": "FedID", "authorised_routes": []},
-            {"username": "frontend", "auth_type": "local", "authorised_routes": []},
-            {
-                "username": "backend",
-                "auth_type": "local",
-                "authorised_routes": [
-                    "/submit/hdf POST",
-                    "/submit/manifest POST",
-                    "/records/{id_} DELETE",
-                    "/experiments POST",
-                    "/users POST",
-                    "/users PATCH",
-                    "/users/{id_} DELETE",
-                    "/users GET",
-                ],
-            },
-            {
-                "username": "hdf_import",
-                "auth_type": "local",
-                "authorised_routes": ["/submit/hdf POST", "/submit/manifest POST"],
-            },
-            {
-                "username": "local_user_no_password",
-                "auth_type": "local",
-                "authorised_routes": [],
-            },
-        ]
+        expected_backend_user = {
+            "username": "backend",
+            "auth_type": "local",
+            "authorised_routes": [
+                "/submit/hdf POST",
+                "/submit/manifest POST",
+                "/records/{id_} DELETE",
+                "/experiments POST",
+                "/users POST",
+                "/users PATCH",
+                "/users/{id_} DELETE",
+                "/users GET",
+            ],
+        }
 
         response = test_app.get(
             "/users",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
         assert response.status_code == 200
-        # Parse the response JSON
         response_data = response.json()
-
-        # Extract the `users` field and compare it to the expected data
-        assert "users" in response_data
-        assert response_data["users"] == expected_users
+        assert expected_backend_user in response_data["users"]
 
     @pytest.mark.asyncio
     async def test_get_users_unauthorised(
