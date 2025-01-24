@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 import pytest
 
+
 class TestGetUsers:
     @pytest.mark.asyncio
     async def test_get_users_success(
@@ -33,7 +34,11 @@ class TestGetUsers:
                 "auth_type": "local",
                 "authorised_routes": ["/submit/hdf POST", "/submit/manifest POST"],
             },
-            {"username": "local_user_no_password", "auth_type": "local", "authorised_routes": []},
+            {
+                "username": "local_user_no_password",
+                "auth_type": "local",
+                "authorised_routes": [],
+            },
         ]
 
         response = test_app.get(
@@ -45,10 +50,10 @@ class TestGetUsers:
         assert response_data == expected_users
 
     @pytest.mark.asyncio
-    async def test_get_users_success(
-            self,
-            test_app: TestClient,
-            login_as_frontend_and_get_token,
+    async def test_get_users_unauthorised(
+        self,
+        test_app: TestClient,
+        login_as_frontend_and_get_token,
     ):
         response = test_app.get(
             "/users",
@@ -56,7 +61,7 @@ class TestGetUsers:
         )
         assert response.status_code == 403
 
-        expected_message = "User 'frontend' is not authorised to use endpoint '/users GET'"
+        expected_message = (
+            "User 'frontend' is not authorised to use endpoint '/users GET'"
+        )
         assert expected_message in response.text
-
-
