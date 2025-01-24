@@ -16,9 +16,9 @@ expected_users = [
             "/records/{id_} DELETE",
             "/experiments POST",
             "/users POST",
+            "/users GET",
             "/users PATCH",
             "/users/{id_} DELETE",
-            "/users GET",
         ],
     },
     {
