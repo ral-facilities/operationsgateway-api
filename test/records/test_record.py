@@ -600,3 +600,14 @@ class TestRecord:
         assert "b" not in record["channels"]  # Skip, a undefined
         assert "c" in record["channels"]  # Has no dependencies, so should be returned
         assert record["channels"]["c"] == expected
+
+    @pytest.mark.parametrize(
+        ["img_array", "raw_bit_depth"],
+        [
+            pytest.param(np.ones(1, dtype=np.int32) * 4, 6),
+            pytest.param(np.ones(1, dtype=np.int32) * 16, 12),
+        ],
+    )
+    def test_bit_shift_to_raw(self, img_array: np.ndarray, raw_bit_depth: int):
+        img = Record._bit_shift_to_raw(img_array=img_array, raw_bit_depth=raw_bit_depth)
+        assert img[0] == 1

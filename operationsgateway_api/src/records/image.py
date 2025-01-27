@@ -41,10 +41,10 @@ class Image:
             bit_depth = self.image.bit_depth
             if bit_depth <= 8 and self.image.data.dtype != np.uint8:
                 msg = (
-                    "Specified bit depth %s is lower than actual bit depth with dtype "
-                    "of %s, least significant bits will be lost"
+                    "Specified bit depth is lower than actual bit depth with dtype "
+                    "of %s, only data in the %s least significant bits will be kept"
                 )
-                log.warning(msg, bit_depth, self.image.data.dtype)
+                log.warning(msg, self.image.data.dtype, bit_depth)
         else:
             if self.image.data.dtype == np.uint8:
                 bit_depth = 8
@@ -61,8 +61,8 @@ class Image:
             target_bit_depth = 16
             target_dtype = np.uint16
 
-        self.image.data *= 2 ** (target_bit_depth - bit_depth)
         self.image.data = self.image.data.astype(target_dtype)
+        self.image.data *= 2 ** (target_bit_depth - bit_depth)
 
     def create_thumbnail(self) -> None:
         """

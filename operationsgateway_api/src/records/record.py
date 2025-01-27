@@ -376,10 +376,7 @@ class Record:
                 [f"channels.{channel_name}.metadata.bit_depth"],
             )
             metadata = record_dict["channels"][channel_name]["metadata"]
-            if "bit_depth" in metadata:
-                raw_bit_depth = metadata["bit_depth"]
-            else:
-                raw_bit_depth = None
+            raw_bit_depth = metadata.get("bit_depth")  # May be None
 
         return raw_bit_depth
 
@@ -634,16 +631,10 @@ class Record:
             )
             img_src = PILImage.open(image_bytes)
             img_array = np.array(img_src)
-            if raw_bit_depth in (None, 8, 16):
-                # If we don't know the original bit depth, or it exactly matches a
-                # storage depth, no shift is possible/needed
-                return img_array
-            elif raw_bit_depth < 8:
-                # Bit depths < 8 would have been stored as 8 bit, so shift back to raw
-                return img_array / 2 ** (8 - raw_bit_depth)
-            else:
-                # Bit depths > 8 would have been stored as 16 bit, so shift back to raw
-                return img_array / 2 ** (16 - raw_bit_depth)
+            return Record._bit_shift_to_raw(
+                img_array=img_array,
+                raw_bit_depth=raw_bit_depth,
+            )
 
         elif channel_dtype == "waveform":
             waveform_path = channel_value["waveform_path"]
@@ -656,6 +647,32 @@ class Record:
             return WaveformVariable(waveform, x_units=x_units)
         else:
             return channel_value["data"]
+
+    @staticmethod
+    def _bit_shift_to_raw(
+        img_array: np.ndarray,
+        raw_bit_depth: "int | None",
+    ) -> np.ndarray:
+        """Shift the bits of a stored image back from most significant to original
+        positions, so functions are applied to the raw pixel values.
+
+        Args:
+            img_array (np.ndarray): Stored image as a np.ndarray.
+            raw_bit_depth (int | None): Original specified bit depth of the raw data.
+
+        Returns:
+            np.ndarray: Input image with the bits shifted to their original position.
+        """
+        if raw_bit_depth in (None, 8, 16):
+            # If we don't know the original bit depth, or it exactly matches a
+            # storage depth, no shift is possible/needed
+            return img_array
+        elif raw_bit_depth < 8:
+            # Bit depths < 8 would have been stored as 8 bit, so shift back to raw
+            return img_array / 2 ** (8 - raw_bit_depth)
+        else:
+            # Bit depths > 8 would have been stored as 16 bit, so shift back to raw
+            return img_array / 2 ** (16 - raw_bit_depth)
 
     @staticmethod
     def _parse_function_results(

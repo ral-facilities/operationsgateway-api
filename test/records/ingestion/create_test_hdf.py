@@ -268,6 +268,8 @@ async def create_test_hdf_file(  # noqa: C901
                         pm_201_fe_cam_1.attrs.create("y_pixel_units", 346)
                 else:
                     pm_201_fe_cam_1.attrs.create("y_pixel_units", "µm")
+                if "bit_depth" in image and image["bit_depth"] == "invalid":
+                    pm_201_fe_cam_1.attrs.create("bit_depth", "12")
             else:
                 pm_201_fe_cam_1.attrs.create("exposure_time_s", 0.001)
                 pm_201_fe_cam_1.attrs.create("gain", 5.5)

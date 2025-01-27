@@ -1,5 +1,6 @@
 import pytest
 
+from operationsgateway_api.src.exceptions import QueryParameterError
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 
 
@@ -70,3 +71,13 @@ class TestFalseColourHandler:
             )
             assert vmin == vmin_expected[bits_per_pixel]
             assert vmax == vmax_expected[bits_per_pixel]
+
+    def test_pixel_limits_error(self):
+        with pytest.raises(QueryParameterError) as e:
+            FalseColourHandler.pixel_limits(
+                storage_bit_depth=16,
+                lower_level=0,
+                upper_level=512,
+                limit_bit_depth=8,
+            )
+        assert "upper_level must be less than 2**limit_bit_depth" in e.exconly()
