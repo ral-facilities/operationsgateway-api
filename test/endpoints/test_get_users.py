@@ -63,7 +63,7 @@ class TestGetUsers:
 
             # Convert lists to sets for order-independent comparison
             assert set(user_in_response["authorised_routes"]) == set(
-                matching_user["authorised_routes"]
+                matching_user["authorised_routes"],
             )
 
     @pytest.mark.asyncio
