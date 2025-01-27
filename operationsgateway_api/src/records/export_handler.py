@@ -25,6 +25,7 @@ class ExportHandler:
         projection: List[str],
         lower_level: int,
         upper_level: int,
+        limit_bit_depth: int,
         colourmap_name: str,
         functions: "list[dict[str, str]]",
         export_scalars: bool,
@@ -40,6 +41,7 @@ class ExportHandler:
         self.projection = projection
         self.lower_level = lower_level
         self.upper_level = upper_level
+        self.limit_bit_depth = limit_bit_depth
         self.colourmap_name = colourmap_name
         self.export_scalars = export_scalars
         self.export_images = export_images
@@ -68,6 +70,7 @@ class ExportHandler:
         return (
             self.lower_level == 0
             and self.upper_level == 255
+            and self.limit_bit_depth == 8
             and self.colourmap_name is None
         )
 
@@ -97,7 +100,7 @@ class ExportHandler:
                     original_image=self.original_image,
                     lower_level=self.lower_level,
                     upper_level=self.upper_level,
-                    limit_bit_depth=8,  # Assume the limit bit depth for the export
+                    limit_bit_depth=self.limit_bit_depth,
                     colourmap_name=self.colourmap_name,
                     return_thumbnails=False,
                 )
@@ -270,7 +273,7 @@ class ExportHandler:
                     original_image=self.original_image,
                     lower_level=self.lower_level,
                     upper_level=self.upper_level,
-                    limit_bit_depth=8,  # Assume the limit bit depth for the export
+                    limit_bit_depth=self.limit_bit_depth,
                     colourmap_name=self.colourmap_name,
                 )
             self.zip_file.writestr(

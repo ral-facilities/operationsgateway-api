@@ -50,13 +50,13 @@ async def get_full_image(
         255,
         description="The upper level threshold for false colour (0-255)",
         ge=0,
-        le=255,
+        le=65535,
     ),
     lower_level: Optional[int] = Query(
         0,
         description="The lower level threshold for false colour (0-255)",
         ge=0,
-        le=255,
+        le=65535,
     ),
     limit_bit_depth: int = Query(
         8,
@@ -195,13 +195,13 @@ async def get_colourbar_image(
         255,
         description="The upper level threshold for false colour (0-255)",
         ge=0,
-        le=255,
+        le=65535,
     ),
     lower_level: Optional[int] = Query(
         0,
         description="The lower level threshold for false colour (0-255)",
         ge=0,
-        le=255,
+        le=65535,
     ),
     limit_bit_depth: int = Query(
         8,
