@@ -77,6 +77,27 @@ class ImageChannelMetadataModel(BaseModel):
     y_pixel_units: Optional[Union[str, Any]] = None
     bit_depth: Optional[Union[int, Any]] = None
 
+    @field_validator("bit_depth")
+    def validate_bit_depth(bit_depth: "int | Any | None") -> "int | Any | None":
+        """
+        Ensure that we do not attempt to persist a np.integer by the use of Any.
+        While the value from the hdf5 file will (at time of writing) be this type, it
+        cannot be sent to Mongo in the model_dump as it is not a valid JSON type.
+
+        Oddly, this only needs to be done for integers - floats behave as expected, and
+        Pydantic casts np.floating to float upon __init__.
+
+        Args:
+            bit_depth (int | Any | None): Value for bit depth, possible a np.integer
+
+        Returns:
+            int | Any | None: Value for bit depth, definitely not a np.integer
+        """
+        if isinstance(bit_depth, np.integer):
+            return int(bit_depth)
+        else:
+            return bit_depth
+
 
 class ImageChannelModel(BaseModel):
     metadata: ImageChannelMetadataModel

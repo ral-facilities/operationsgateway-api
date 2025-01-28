@@ -253,7 +253,7 @@ class ChannelChecks:
         if (
             "bit_depth" in value_dict
             and value_dict["bit_depth"] is not None
-            and not isinstance(value_dict["bit_depth"], int)
+            and not isinstance(value_dict["bit_depth"], (int, np.integer))
         ):
             rejected_channels.append({key: "bit_depth attribute has wrong datatype"})
 
