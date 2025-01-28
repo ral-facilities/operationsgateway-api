@@ -29,7 +29,7 @@ python-dateutil = "^2.8.2"
 PyJWT = "2.10.1"
 cryptography = "^43.0.1"
 python-ldap = "3.4.2"
-boto3 = "^1.26.97"
+boto3 = ">=1.26.97,<1.36.0"
 cron-converter = "^1.0.1"
 zeep = "^4.2.1"
 # Indirect dependency lxml 5.1.0 causes symbol not found in flat namespace '_exsltDateXpathCtxtRegister' error
