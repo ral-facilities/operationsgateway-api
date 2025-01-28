@@ -78,7 +78,8 @@ class ImageChannelMetadataModel(BaseModel):
     bit_depth: Optional[Union[int, Any]] = None
 
     @field_validator("bit_depth")
-    def validate_bit_depth(bit_depth: "int | Any | None") -> "int | Any | None":
+    @classmethod
+    def validate_bit_depth(cls, bit_depth: "int | Any | None") -> "int | Any | None":
         """
         Ensure that we do not attempt to persist a np.integer by the use of Any.
         While the value from the hdf5 file will (at time of writing) be this type, it
