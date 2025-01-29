@@ -12,14 +12,24 @@ from test.conftest import set_preferred_colourmap, unset_preferred_colourmap
 
 class TestGetImage:
     @pytest.mark.parametrize(
-        "record_id, channel_name, original_image, use_preferred_colourmap,"
-        "lower_level, upper_level, colourmap_name, expected_image_phash",
+        [
+            "record_id",
+            "channel_name",
+            "original_image",
+            "use_preferred_colourmap",
+            "lower_level",
+            "upper_level",
+            "limit_bit_depth",
+            "colourmap_name",
+            "expected_image_phash",
+        ],
         [
             pytest.param(
                 "20230605100000",
                 "FE-204-NSO-P1-CAM-1",
                 True,
                 False,
+                None,
                 None,
                 None,
                 None,
@@ -31,6 +41,7 @@ class TestGetImage:
                 "FE-204-NSO-P1-CAM-1",
                 False,
                 False,
+                None,
                 None,
                 None,
                 None,
@@ -47,6 +58,7 @@ class TestGetImage:
                 None,
                 None,
                 None,
+                None,
                 "c417386737333a1b",
                 id="Image using user's preferred colourmap",
             ),
@@ -57,6 +69,7 @@ class TestGetImage:
                 False,
                 50,
                 200,
+                None,
                 "jet_r",
                 "8000000000000000",
                 id="Image with all false colour params specified",
@@ -70,10 +83,47 @@ class TestGetImage:
                 True,
                 50,
                 200,
+                None,
                 "jet_r",
                 "8000000000000000",
                 id="Image with all false colour params specified (ignoring "
                 "user's pref)",
+            ),
+            pytest.param(
+                "20230606120000",
+                "CM-202-CVC-CAM-1",
+                True,
+                False,
+                None,
+                None,
+                None,
+                None,
+                "d5aa5455525542fd",
+                id="v1.1 12 bit image, original",
+            ),
+            pytest.param(
+                "20230606120000",
+                "CM-202-CVC-CAM-1",
+                None,
+                False,
+                32,
+                63,
+                8,
+                "jet_r",
+                "c37e0c3330db33cc",
+                id="v1.1 12 bit image, limits in 8 bit",
+            ),
+            pytest.param(
+                "20230606120000",
+                "CM-202-CVC-CAM-1",
+                None,
+                False,
+                512,
+                1023,
+                12,
+                "jet_r",
+                "c37e0c3330db33cc",
+                id="v1.1 12 bit image, limits in 12 bit",
             ),
         ],
     )
@@ -85,7 +135,7 @@ class TestGetImage:
                 id="Functions undefined",
             ),
             pytest.param(
-                {"name": "a", "expression": "FE-204-NSO-P1-CAM-1"},
+                {"name": "a"},
                 id="Functions defined",
             ),
         ],
@@ -100,6 +150,7 @@ class TestGetImage:
         use_preferred_colourmap,
         lower_level,
         upper_level,
+        limit_bit_depth,
         colourmap_name,
         expected_image_phash,
         functions: "dict[str, str]",
@@ -116,9 +167,12 @@ class TestGetImage:
             query_params_array.append(f"lower_level={lower_level}")
         if upper_level:
             query_params_array.append(f"upper_level={upper_level}")
+        if limit_bit_depth:
+            query_params_array.append(f"limit_bit_depth={limit_bit_depth}")
         if colourmap_name:
             query_params_array.append(f"colourmap_name={colourmap_name}")
         if functions:
+            functions["expression"] = channel_name
             query_params_array.append(f"functions={quote(json.dumps(functions))}")
             channel_name = functions["name"]
 

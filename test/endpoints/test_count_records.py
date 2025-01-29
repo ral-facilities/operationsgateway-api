@@ -10,7 +10,7 @@ class TestCountRecords:
         [
             pytest.param(
                 {},
-                399,
+                400,
                 id="No conditions",
             ),
             pytest.param(
@@ -20,7 +20,7 @@ class TestCountRecords:
             ),
             pytest.param(
                 {"metadata.shotnum": {"$gt": 423648072000}},
-                6,
+                7,
                 id="Shot number range with operator",
             ),
         ],

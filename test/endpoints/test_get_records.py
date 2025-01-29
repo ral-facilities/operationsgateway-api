@@ -157,6 +157,57 @@ class TestGetRecords:
                 ],
                 id="Example with functions",
             ),
+            pytest.param(
+                {"metadata.shotnum": 423648000000},
+                0,
+                1,
+                "metadata.shotnum ASC",
+                ["channels.CM-202-CVC-CAM-1.metadata"],
+                False,
+                None,
+                [],
+                [
+                    {
+                        "_id": "20230605080000",
+                        "channels": {
+                            "CM-202-CVC-CAM-1": {
+                                "metadata": {
+                                    "channel_dtype": "image",
+                                    "exposure_time_s": 0.0012,
+                                    "gain": 4.826012758558324,
+                                },
+                            },
+                        },
+                    },
+                ],
+                id="Query for bit_depth, not present",
+            ),
+            pytest.param(
+                {"metadata.shotnum": 423649008000},
+                0,
+                1,
+                "metadata.shotnum ASC",
+                ["channels.CM-202-CVC-CAM-1.metadata"],
+                False,
+                None,
+                [],
+                [
+                    {
+                        "_id": "20230606120000",
+                        "channels": {
+                            "CM-202-CVC-CAM-1": {
+                                "metadata": {
+                                    "bit_depth": 12,
+                                    "channel_dtype": "image",
+                                    "exposure_time_s": 0.0012,
+                                    "gain": 0.7862722445526737,
+                                },
+                            },
+                        },
+                    },
+                ],
+                id="Query for bit_depth, present",
+            ),
         ],
     )
     def test_valid_get_records(
