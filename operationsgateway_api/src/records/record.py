@@ -114,8 +114,7 @@ class Record:
             log.info("Removing channel '%s' from record.", channel_name)
             del self.record.channels[channel_name]
         else:
-            log.warning("Channel '%s' not found in record.", channel_name)
-            raise KeyError(f"Channel '{channel_name}' does not exist in the record.")
+            log.error("Channel '%s' not found in record.", channel_name)
 
     async def find_existing_record(self) -> Union[RecordModel, None]:
         """
