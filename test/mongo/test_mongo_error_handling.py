@@ -64,6 +64,19 @@ class TestMongoDBErrorHandling:
         result = await mock_find_one()
         assert result == {"key": "value"}
 
+    @pytest.mark.asyncio
+    async def test_async_propagate_database_error(self):
+        """Ensure the async decorator does not wrap an existing DatabaseError."""
+
+        @mongodb_error_handling("find_one")
+        async def mock_find_one():
+            raise DatabaseError("Simulated DatabaseError")
+
+        with pytest.raises(DatabaseError) as exc_info:
+            await mock_find_one()
+
+        assert "Simulated DatabaseError" in str(exc_info.value)
+
     def test_sync_unit_failure(self):
         """Test the sync version of the MongoDB error
         handling decorator in isolation."""
@@ -93,3 +106,15 @@ class TestMongoDBErrorHandling:
 
         result = mock_insert_one()
         assert result == {"key": "value"}
+
+    def test_sync_propagate_database_error(self):
+        """Ensure the sync decorator does not wrap an existing DatabaseError."""
+
+        @mongodb_error_handling("insert_one")
+        def mock_insert_one():
+            raise DatabaseError("Simulated DatabaseError")
+
+        with pytest.raises(DatabaseError) as exc_info:
+            mock_insert_one()
+
+        assert "Simulated DatabaseError" in str(exc_info.value)
