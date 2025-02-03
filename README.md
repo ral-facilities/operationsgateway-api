@@ -10,20 +10,20 @@ Assuming default configuration, the API will exist on 127.0.0.1:8000. You can vi
 
 
 ## Environment Setup
-If not already present, you may need to install development tools for the desired Python version using the appropriate package manager for your OS. For example, for Python3.8 on Fedora or RHEL:
+If not already present, you may need to install development tools for the desired Python version using the appropriate package manager for your OS. For example, for Python3.11 on Fedora or RHEL:
 ```bash
-sudo dnf install "@Development Tools" python38 python38-pip python38-setuptools python38-devel openldap-devel git
+sudo dnf install "@Development Tools" python3.11 python3.11-pip python3.11-setuptools python3.11-devel openldap-devel git
 ```
 
-[Poetry](https://python-poetry.org/) is used to manage the dependencies of this API. To install Poetry, follow [the instructions](https://python-poetry.org/docs/master/#installing-with-the-official-installer) from their documentation.
+[Poetry](https://python-poetry.org/) is used to manage the dependencies of this API. To install Poetry, follow [the instructions](https://python-poetry.org/docs/) from their documentation.
 
-To install the project's dependencies, execute `poetry install`. The dependencies and the code in this repo are compatible with Python >=3.8, <3.12.
+To install the project's dependencies, execute `poetry install`. The dependencies and the code in this repo are compatible with Python >=3.11, <3.12.
 
 ## Nox Sessions
 Like [DataGateway API](https://github.com/ral-facilities/datagateway-api), this repository contains a [Nox](https://nox.thea.codes) file (`noxfile.py`) which exists in the root level of this repository. There are a handful of sessions which help with repetitive tasks during development To install Nox, use the following command:
 
 ```bash
-pip install --user --upgrade nox
+python3.11 -m pip install --user --upgrade nox
 ```
 
 To run a specific Nox session, use the following:

@@ -9,11 +9,11 @@ authors = ["Matthew Richards <matthew.richards@stfc.ac.uk>"]
 # Note that python3.12 is only compatible with scipy>=1.11.3
 # but python3.8 is only compatible with scipy<=1.10.1
 # so it is not possible to target both at the same time
-python = ">=3.8,<3.12"
+python = ">=3.11,<3.12"
 fastapi = "^0.115.5"
 motor = "^3.3.2"
 uvicorn = "^0.20.0"
-python-multipart = "^0.0.7"
+python-multipart = "^0.0.18"
 PyYAML = "^6.0"
 ImageHash = "4.3.1"
 # scipy is a dependency of ImageHash but is listed to mitigate
@@ -26,10 +26,10 @@ matplotlib = "^3.5.2"
 gunicorn = "^23.0.0"
 orjson = "^3.10.3"
 python-dateutil = "^2.8.2"
-PyJWT = "2.4.0"
+PyJWT = "2.10.1"
 cryptography = "^43.0.1"
 python-ldap = "3.4.2"
-boto3 = "^1.26.97"
+boto3 = ">=1.26.97,<1.36.0"
 cron-converter = "^1.0.1"
 zeep = "^4.2.1"
 # Indirect dependency lxml 5.1.0 causes symbol not found in flat namespace '_exsltDateXpathCtxtRegister' error
