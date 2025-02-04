@@ -22,7 +22,7 @@ class TestFile:
 
         assert (
             file_checker.epac_data_version_checks()
-            == "File minor version number too high (expected 0)"
+            == "File minor version number too high (expected <=1)"
         )
 
     @pytest.mark.parametrize(

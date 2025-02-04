@@ -61,13 +61,24 @@ async def export_records(
         0,
         description="The lower level threshold for false colour (0-255)",
         ge=0,
-        le=255,
+        le=65535,
     ),
     upper_level: Optional[int] = Query(
         255,
         description="The upper level threshold for false colour (0-255)",
         ge=0,
-        le=255,
+        le=65535,
+    ),
+    limit_bit_depth: int = Query(
+        8,
+        description=(
+            "The bit depth to which `lower_level` and `upper_level` are relative. This "
+            "can be any value as long as it is consistent with the provided levels, "
+            "but is intended to reflect the original bit depth of the raw data, so "
+            "meaningful values can be displayed and set in the frontend."
+        ),
+        ge=0,
+        le=16,
     ),
     colourmap_name: Optional[str] = Query(
         None,
@@ -141,6 +152,7 @@ async def export_records(
         projection,
         lower_level,
         upper_level,
+        limit_bit_depth,
         colourmap_name,
         functions,
         export_scalars,

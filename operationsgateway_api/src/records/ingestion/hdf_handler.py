@@ -122,14 +122,15 @@ class HDFDataHandler:
             return None, internal_failed_channel
 
         try:
-            self.images.append(
-                ImageModel(path=image_path, data=value["data"][()]),
+            metadata = ImageChannelMetadataModel(**channel_metadata)
+            channel = ImageChannelModel(metadata=metadata, image_path=image_path)
+            image_model = ImageModel(
+                path=image_path,
+                data=value["data"][()],
+                bit_depth=metadata.bit_depth,
             )
+            self.images.append(image_model)
 
-            channel = ImageChannelModel(
-                metadata=ImageChannelMetadataModel(**channel_metadata),
-                image_path=image_path,
-            )
             return channel, False
         except KeyError:
             internal_failed_channel.append(

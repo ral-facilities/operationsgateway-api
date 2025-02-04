@@ -45,6 +45,7 @@ class FalseColourHandler:
     def create_colourbar(
         lower_level: int,
         upper_level: int,
+        limit_bit_depth: int,
         colourmap_name: str,
     ) -> BytesIO:
         """
@@ -60,11 +61,12 @@ class FalseColourHandler:
             range(256) for _ in range(FalseColourHandler.colourbar_height_pixels)
         ]
         return FalseColourHandler.apply_false_colour(
-            image_array,
-            8,
-            lower_level,
-            upper_level,
-            colourmap_name,
+            image_array=image_array,
+            storage_bit_depth=8,
+            lower_level=lower_level,
+            upper_level=upper_level,
+            limit_bit_depth=limit_bit_depth,
+            colourmap_name=colourmap_name,
         )
 
     @staticmethod
@@ -83,17 +85,19 @@ class FalseColourHandler:
         return FalseColourHandler.apply_false_colour(
             image_array,
             FalseColourHandler.get_pixel_depth(img_src),
-            lower_level,
-            upper_level,
-            colourmap_name,
+            lower_level=lower_level,
+            upper_level=upper_level,
+            limit_bit_depth=8,  # All thumbnails are 8 bit, so limits should be too
+            colourmap_name=colourmap_name,
         )
 
     @staticmethod
     def apply_false_colour(
         image_array: np.ndarray,
-        bits_per_pixel: int,
+        storage_bit_depth: int,
         lower_level: int,
         upper_level: int,
+        limit_bit_depth: int,
         colourmap_name: str,
     ) -> BytesIO:
         """
@@ -102,9 +106,10 @@ class FalseColourHandler:
         retrieved as base 64 from the database, or from an image stored on disk.
         """
         vmin, vmax = FalseColourHandler.pixel_limits(
-            bits_per_pixel,
-            lower_level,
-            upper_level,
+            storage_bit_depth=storage_bit_depth,
+            lower_level=lower_level,
+            upper_level=upper_level,
+            limit_bit_depth=limit_bit_depth,
         )
         if colourmap_name is None:
             colourmap_name = FalseColourHandler.default_colour_map_name
@@ -128,39 +133,46 @@ class FalseColourHandler:
 
     @staticmethod
     def pixel_limits(
-        bits_per_pixel: int,
+        storage_bit_depth: int,
         lower_level: int,
         upper_level: int,
+        limit_bit_depth: int,
     ) -> "tuple[int, int]":
-        """Adjusts pixel limits to account for the number of `bits_per_pixel`.
+        """Adjusts pixel limits to account for the bit depth the image was actually
+        saved with.
 
         Args:
-            bits_per_pixel (int):
-                Bits of depth to each pixel, such that the max value is
-                `2**bits_per_pixel - 1`
-            lower_level (int): Low pixel value in 8 bit depth
-            upper_level (int): High pixel value in 8 bit depth
+            storage_bit_depth (int):
+                Bit depth of each pixel in the stored format, such that the max value is
+                `2**actual_bit_depth - 1`
+            lower_level (int): Low pixel value in `limit_bit_depth`
+            upper_level (int): High pixel value in `limit_bit_depth`
+            limit_bit_depth (int): The bit depth used for the limit levels provided
 
         Raises:
-            ImageError: If `bits_per_pixel` is neither `8` nor `16`
-            QueryParameterError: If `lower_level` is greater than `upper_level`
+            QueryParameterError:
+                If `lower_level` is greater than `upper_level` or `upper_level` is
+                greater than or equal to 2**`limit_bit_depth`.
 
         Returns:
             tuple[int, int]: The scaled limits
         """
-        if bits_per_pixel != 8 and bits_per_pixel != 16:
-            raise ImageError(f"{bits_per_pixel} bits per pixel is not supported")
 
         if lower_level is None:
             lower_level = 0
+
         if upper_level is None:
-            upper_level = 255
+            upper_level = 2**limit_bit_depth - 1
+        elif upper_level >= 2**limit_bit_depth:
+            msg = "upper_level must be less than 2**limit_bit_depth"
+            raise QueryParameterError(msg)
+
         if upper_level < lower_level:
             raise QueryParameterError(
                 "lower_level must be less than or equal to upperlevel",
             )
 
-        pixel_multiplier = 2 ** (bits_per_pixel - 8)
+        pixel_multiplier = 2 ** (storage_bit_depth - limit_bit_depth)
         vmin = lower_level * pixel_multiplier
         vmax = (upper_level + 1) * pixel_multiplier - 1
         return vmin, vmax

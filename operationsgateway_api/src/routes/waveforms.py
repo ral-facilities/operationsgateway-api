@@ -63,12 +63,13 @@ async def get_waveform_by_id(
                 record = {"_id": record_id}
                 colourmap_name = await Image.get_preferred_colourmap(access_token)
                 await Record.apply_functions(
-                    record,
-                    functions,
-                    False,
-                    0,
-                    255,
-                    colourmap_name,
+                    record=record,
+                    functions=functions,
+                    original_image=False,
+                    lower_level=0,
+                    upper_level=255,
+                    limit_bit_depth=8,  # Limits hardcoded to 8 bit
+                    colourmap_name=colourmap_name,
                     return_thumbnails=False,
                 )
 
