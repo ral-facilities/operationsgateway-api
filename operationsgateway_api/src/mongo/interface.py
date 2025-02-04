@@ -86,6 +86,7 @@ class MongoDBInterface:
         )
 
     @staticmethod
+    @mongodb_error_handling("query_to_list")
     async def query_to_list(query: Cursor) -> List[Dict[str, Any]]:
         """
         Sends the query to MongoDB and converts the query results into a list

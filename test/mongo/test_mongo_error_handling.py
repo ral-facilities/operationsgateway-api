@@ -3,9 +3,12 @@ from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
 import pytest
 
+from operationsgateway_api.src.exceptions import DatabaseError
+from operationsgateway_api.src.mongo.mongo_error_handling import mongodb_error_handling
+
 
 class TestMongoDBErrorHandling:
-    @pytest.mark.asyncio
+
     @pytest.mark.parametrize(
         "record_id, expected_status_code, expected_response",
         [
@@ -17,11 +20,8 @@ class TestMongoDBErrorHandling:
             ),
         ],
     )
-    # This test simulates an exception being raised in the collection.find_one call
-    # (within interface.py), which the decorator should handle and produce a
-    # DatabaseError, ultimately flowing this back up to the user in the endpoint,
-    # producing a 500
-    async def test_find_one_exception_in_interface(
+    @pytest.mark.asyncio
+    async def test_async_integration_failure(
         self,
         test_app: TestClient,
         login_and_get_token,
@@ -29,6 +29,11 @@ class TestMongoDBErrorHandling:
         expected_status_code,
         expected_response,
     ):
+        """This test simulates an exception being raised in the collection.find_one call
+        (within interface.py), which the decorator should handle and produce a
+        DatabaseError, ultimately flowing this back up to the user in the endpoint,
+        producing a 500"""
+
         with patch(
             "operationsgateway_api.src.mongo.interface.MongoDBInterface.get_collection_object",
         ) as mock_get_collection_object:
@@ -46,3 +51,70 @@ class TestMongoDBErrorHandling:
             # Assert the status code and responseAsyncMock
             assert response.status_code == expected_status_code
             assert response.json() == expected_response
+
+    @pytest.mark.asyncio
+    async def test_async_unit_success(self):
+        """Ensure the async decorator allows normal execution
+        if no exception occurs."""
+
+        @mongodb_error_handling("find_one")
+        async def mock_find_one():
+            return {"key": "value"}
+
+        result = await mock_find_one()
+        assert result == {"key": "value"}
+
+    @pytest.mark.asyncio
+    async def test_async_propagate_database_error(self):
+        """Ensure the async decorator does not wrap an existing DatabaseError."""
+
+        @mongodb_error_handling("find_one")
+        async def mock_find_one():
+            raise DatabaseError("Simulated DatabaseError")
+
+        with pytest.raises(DatabaseError) as exc_info:
+            await mock_find_one()
+
+        assert "Simulated DatabaseError" in str(exc_info.value)
+
+    def test_sync_unit_failure(self):
+        """Test the sync version of the MongoDB error
+        handling decorator in isolation."""
+
+        @mongodb_error_handling("insert_one")
+        def mock_insert_one():
+            raise Exception("Simulated database error")
+
+        with patch(
+            "operationsgateway_api.src.mongo.mongo_error_handling.log",
+        ) as mock_log:
+            with pytest.raises(DatabaseError) as exc_info:
+                mock_insert_one()
+
+            assert "Database operation failed during insert_one" in str(exc_info.value)
+            mock_log.error.assert_called_once_with(
+                "Database operation: %s failed",
+                "insert_one",
+            )
+
+    def test_sync_unit_success(self):
+        """Ensure the sync decorator allows normal execution if no exception occurs."""
+
+        @mongodb_error_handling("insert_one")
+        def mock_insert_one():
+            return {"key": "value"}
+
+        result = mock_insert_one()
+        assert result == {"key": "value"}
+
+    def test_sync_propagate_database_error(self):
+        """Ensure the sync decorator does not wrap an existing DatabaseError."""
+
+        @mongodb_error_handling("insert_one")
+        def mock_insert_one():
+            raise DatabaseError("Simulated DatabaseError")
+
+        with pytest.raises(DatabaseError) as exc_info:
+            mock_insert_one()
+
+        assert "Simulated DatabaseError" in str(exc_info.value)
