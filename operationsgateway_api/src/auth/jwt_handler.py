@@ -48,6 +48,13 @@ class JwtHandler:
         payload = {}
         payload["username"] = self.user_model.username
         payload["authorised_routes"] = self.user_model.authorised_routes
+
+        if self.user_model.authorised_routes is not None:
+            if "/users GET" in self.user_model.authorised_routes:
+                payload["userIsAdmin"] = True
+        else:
+            payload["userIsAdmin"] = False
+
         payload["exp"] = datetime.now(timezone.utc) + timedelta(
             minutes=Config.config.auth.access_token_validity_mins,
         )

@@ -29,6 +29,16 @@ def login_and_get_token(test_app: TestClient):
 
 
 @pytest.fixture()
+def login_as_frontend_and_get_token(test_app: TestClient):
+    json = '{"username": "frontend", "password": "front"}'
+    response = test_app.post("/login", content=json)
+    # strip the first and last characters off the response
+    # (the double quotes that surround it)
+    token = response.text[1:-1]
+    return token
+
+
+@pytest.fixture()
 def remove_background_pid_file():
     """
     Remove background file for experiments task after tests relating to it have run
