@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from io import BytesIO
 import logging
-from typing import Tuple
+from typing import Optional, Tuple
 
 from botocore.exceptions import ClientError
 import numpy as np
@@ -79,7 +79,7 @@ class Image:
         return record_id, channel_name
 
     @staticmethod
-    def upload_image(input_image: Image) -> None:
+    def upload_image(input_image: Image) -> Optional[str]:
         """
         Save the image on Echo S3 object storage
         """
@@ -96,7 +96,15 @@ class Image:
         echo = EchoInterface()
         storage_path = Image.get_full_path(input_image.image.path)
         log.info("Storing image on S3: %s", storage_path)
-        echo.upload_file_object(image_bytes, storage_path)
+
+        try:
+            echo.upload_file_object(image_bytes, storage_path)
+            return None  # No failure
+        except EchoS3Error:
+            # Extract the channel name and propagate it
+            record_id, channel_name = input_image.extract_metadata_from_path()
+            log.error("Failed to upload image for channel: %s", channel_name)
+            return channel_name
 
     @staticmethod
     async def get_image(
