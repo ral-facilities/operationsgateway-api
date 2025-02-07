@@ -25,6 +25,8 @@ class Integrate(Builtin):
     @staticmethod
     def evaluate(argument: "WaveformVariable | np.ndarray") -> float:
         """
+        Integrate a waveform or image. Errors if scalar provided.
+
         Waveform:
         First, applies smoothing by taking weighted nearest and next-nearest
         neighbour contributions to  y values whose difference from their neighbours

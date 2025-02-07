@@ -1,0 +1,28 @@
+site_name: OperationsGateway API
+theme: readthedocs
+
+plugins:
+- mkdocstrings:
+    default_handler: python
+    handlers:
+      python:
+        paths: [../operationsgateway_api/src/functions]
+
+nav:
+  - Home: index.md
+  - Functions:
+    - Images:
+      - Background: functions/background.md
+      - Centroid (X): functions/centroid_x.md
+      - Centroid (Y): functions/centroid_y.md
+      - FWHM (X): functions/fwhm_x.md
+      - FWHM (Y): functions/fwhm_y.md
+      - Integrate: functions/integrate.md
+    - Waveforms:
+      - Background: functions/background.md
+      - Centre: functions/centre.md
+      - FWHM: functions/fwhm.md
+      - Falling: functions/falling.md
+      - Rising: functions/rising.md
+      - Integrate: functions/integrate.md
+
