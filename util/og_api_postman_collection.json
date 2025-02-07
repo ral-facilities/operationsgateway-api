@@ -3,7 +3,7 @@
 		"_postman_id": "fa28d10a-2892-4814-b257-65fb06897008",
 		"name": "OperationsGateway API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "33242392"
+		"_exporter_id": "7069916"
 	},
 	"item": [
 		{
@@ -33,7 +33,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"username\": \"backend\",\r\n  \"password\": \"back\"\r\n}",
+							"raw": "{\r\n  \"username\": \"\",\r\n  \"password\": \"\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1345,6 +1345,45 @@
 		{
 			"name": "Users",
 			"item": [
+				{
+					"name": "Get all Users",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{og-api}}/users",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
 				{
 					"name": "Add user",
 					"request": {

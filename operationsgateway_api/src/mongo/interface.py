@@ -14,6 +14,7 @@ from pymongo.results import (
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import DatabaseError
 from operationsgateway_api.src.mongo.connection import ConnectionInstance
+from operationsgateway_api.src.mongo.mongo_error_handling import mongodb_error_handling
 
 log = logging.getLogger()
 ProjectionAlias = Optional[Union[Mapping[str, Any], Iterable[str]]]
@@ -22,16 +23,17 @@ ProjectionAlias = Optional[Union[Mapping[str, Any], Iterable[str]]]
 class MongoDBInterface:
     """
     An implementation of various PyMongo and Motor functions that suit our specific
-    database and colllection names
+    database and collection names
 
     Motor doesn't support type annotations (see
     https://jira.mongodb.org/browse/MOTOR-331 for any updates) so type annotations are
-    used from PyMongo which from a user perspective, acts almost identically (exlcuding
+    used from PyMongo which from a user perspective, acts almost identically (excluding
     async support of course). This means the type hinting can actually be useful for
     developers of this repo
     """
 
     @staticmethod
+    @mongodb_error_handling("get_collection_object")
     def get_collection_object(collection_name: str) -> Collection:
         """
         Simple getter function which gets a particular collection so it can be
@@ -44,6 +46,7 @@ class MongoDBInterface:
             raise DatabaseError("Invalid collection name given") from exc
 
     @staticmethod
+    @mongodb_error_handling("find")
     def find(
         collection_name: str = "images",
         filter_: dict = None,
@@ -83,6 +86,7 @@ class MongoDBInterface:
         )
 
     @staticmethod
+    @mongodb_error_handling("query_to_list")
     async def query_to_list(query: Cursor) -> List[Dict[str, Any]]:
         """
         Sends the query to MongoDB and converts the query results into a list
@@ -99,6 +103,7 @@ class MongoDBInterface:
         return await query.to_list(length=Config.config.mongodb.max_documents)
 
     @staticmethod
+    @mongodb_error_handling("find_one")
     async def find_one(
         collection_name: str,
         filter_: Dict[str, Any] = None,
@@ -120,6 +125,7 @@ class MongoDBInterface:
         return await collection.find_one(filter_, sort=sort, projection=projection)
 
     @staticmethod
+    @mongodb_error_handling("update_one")
     async def update_one(
         collection_name: str,
         filter_: Dict[str, Any] = None,
@@ -153,6 +159,7 @@ class MongoDBInterface:
             ) from exc
 
     @staticmethod
+    @mongodb_error_handling("update_many")
     async def update_many(
         collection_name: str,
         filter_: Dict[str, Any] = {},  # noqa: B006
@@ -177,6 +184,7 @@ class MongoDBInterface:
             ) from exc
 
     @staticmethod
+    @mongodb_error_handling("insert_one")
     async def insert_one(collection_name: str, data: Dict[str, Any]) -> InsertOneResult:
         """
         Using the input data, insert a single document into a given collection
@@ -194,6 +202,7 @@ class MongoDBInterface:
             ) from exc
 
     @staticmethod
+    @mongodb_error_handling("insert_many")
     async def insert_many(
         collection_name: str,
         data: List[Dict[str, Any]],
@@ -215,6 +224,7 @@ class MongoDBInterface:
             ) from exc
 
     @staticmethod
+    @mongodb_error_handling("delete_one")
     async def delete_one(
         collection_name: str,
         filter_: Dict[str, Any] = None,
@@ -245,6 +255,7 @@ class MongoDBInterface:
             ) from exc
 
     @staticmethod
+    @mongodb_error_handling("count_documents")
     async def count_documents(
         collection_name: str,
         filter_: Dict[str, Any] = None,
@@ -273,6 +284,7 @@ class MongoDBInterface:
             ) from exc
 
     @staticmethod
+    @mongodb_error_handling("aggregate")
     async def aggregate(
         collection_name: str,
         pipeline,

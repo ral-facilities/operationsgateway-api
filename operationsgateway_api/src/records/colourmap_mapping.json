@@ -107,7 +107,13 @@
         "bwr",
         "bwr_r",
         "seismic",
-        "seismic_r"
+        "seismic_r",
+        "berlin",
+        "berlin_r",
+        "managua",
+        "managua_r",
+        "vanimo",
+        "vanimo_r"
     ],
     "Cyclic": [
         "twilight",

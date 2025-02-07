@@ -111,23 +111,51 @@ async def submit_hdf(
     record = Record(record_data)
 
     log.debug("Processing waveforms")
+    failed_waveform_uploads = []
     for w in waveforms:
         waveform = Waveform(w)
-        waveform.insert_waveform()
-        waveform.create_thumbnail()
-        record.store_thumbnail(waveform)
+        # Call insert_waveform and track failures
+        failed_upload = waveform.insert_waveform()  # Returns channel name if failed
+        # if the upload to echo fails, don't process the waveform any further
+        if failed_upload:
+            failed_waveform_uploads.append(failed_upload)
+        else:
+            waveform.create_thumbnail()
+            record.store_thumbnail(waveform)  # in the record not echo
 
+    # This section distributes the Image.upload_image calls across
+    # the threads in the pool.It takes the image_instances list,
+    # applies the Image.upload_image function to each item, and collects
+    # the return values in upload_results. The map function blocks the main
+    # thread until all the tasks in the pool are complete.
     log.debug("Processing images")
+    failed_image_uploads = []
     image_instances = [Image(i) for i in images]
     for image in image_instances:
         image.create_thumbnail()
-        record.store_thumbnail(image)
-
+        record.store_thumbnail(image)  # in the record not echo
     if len(image_instances) > 0:
         pool = ThreadPool(processes=Config.config.images.upload_image_threads)
-        pool.map(Image.upload_image, image_instances)
+        upload_results = pool.map(Image.upload_image, image_instances)
+        # Filter out successful uploads, collect only failed ones
+        failed_image_uploads = [channel for channel in upload_results if channel]
         pool.close()
         image_instances = None
+
+    # Combine failed channels from waveforms and images and remove them from the record
+    # Update the channel checker to reflect failed uploads
+    all_failed_upload_channels = failed_waveform_uploads + failed_image_uploads
+    for channel in all_failed_upload_channels:
+        record.remove_channel(channel)
+        if channel in checker_response["accepted_channels"]:
+            # Remove from accepted_channels and add to rejected_channels
+            checker_response["accepted_channels"].remove(channel)
+            checker_response["rejected_channels"][channel] = ["Upload to Echo failed"]
+        elif channel in checker_response["rejected_channels"]:
+            # Append the failure reason to the existing reasons
+            checker_response["rejected_channels"][channel].append(
+                "Upload to Echo failed",
+            )
 
     if stored_record and accept_type == "accept_merge":
         log.debug(

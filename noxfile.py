@@ -110,7 +110,7 @@ def safety(session):
             session.log("Error: The temporary requirements file could not be closed")
 
 
-@nox.session(python=["3.8", "3.9", "3.10", "3.11"], reuse_venv=True)
+@nox.session(python=["3.11"], reuse_venv=True)
 def tests(session):
     args = session.posargs
     session.run("poetry", "install", "--without", "simulated-data", external=True)
