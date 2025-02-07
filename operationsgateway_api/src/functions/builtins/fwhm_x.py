@@ -40,7 +40,7 @@ class FWHMX(Builtin):
         applies smoothing by taking weighted nearest and next-nearest neighbour
         contributions to pixel values whose difference from their neighbours is more
         than 0.2 times the total range in values.
-        
+
         The global maximum value is then identified along with the first
         positions to either side of the peak where the pixel value is less than
         or equal to half the global maximum. If all pixel values to one side of

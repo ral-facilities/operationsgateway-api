@@ -34,7 +34,7 @@ class Centre(Builtin):
         First, applies smoothing by taking weighted nearest and next-nearest
         neighbour contributions to  y values whose difference from their neighbours
         is more than 0.2 times the total range in y.
-        
+
         The global maximum y value is then identified along with the first x positions
         either side of the peak where the y value is less than or equal to half the
         global maximum. If all values of y to one side of the peak are greater than
