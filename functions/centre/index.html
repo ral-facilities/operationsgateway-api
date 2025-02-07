@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Centre - OperationsGateway API</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Centre";
+        var mkdocs_page_input_path = "functions/centre.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> OperationsGateway API
+        </a>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Functions</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" >Images</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../background/">Background</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../centroid_x/">Centroid (X)</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../centroid_y/">Centroid (Y)</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../fwhm_x/">FWHM (X)</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../fwhm_y/">FWHM (Y)</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../integrate/">Integrate</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" >Waveforms</a>
+    <ul class="current">
+                <li class="toctree-l2"><a class="reference internal" href="../background/">Background</a>
+                </li>
+                <li class="toctree-l2 current"><a class="reference internal current" href="#">Centre</a>
+    <ul class="current">
+    <li class="toctree-l3"><a class="reference internal" href="#builtins.centre.Centre.evaluate">evaluate</a>
+    </li>
+    </ul>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../fwhm/">FWHM</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../falling/">Falling</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../rising/">Rising</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../integrate/">Integrate</a>
+                </li>
+    </ul>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">OperationsGateway API</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Functions</li>
+          <li class="breadcrumb-item">Waveforms</li>
+      <li class="breadcrumb-item active">Centre</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="centre">Centre</h1>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<a id="builtins.centre.Centre.evaluate"></a>
+    <div class="doc doc-contents first">
+
+        <p>Calculate the centre of a waveform. Errors if image or scalar provided.</p>
+<p>First, applies smoothing by taking weighted nearest and next-nearest
+neighbour contributions to  y values whose difference from their neighbours
+is more than 0.2 times the total range in y.</p>
+<p>The global maximum y value is then identified along with the first x positions
+either side of the peak where the y value is less than or equal to half the
+global maximum. If all values of y to one side of the peak are greater than
+half the global maximum, the position of the global maximum is used. The value
+of x at these two positions is averaged and returned.</p>
+<p>Note this will not be the same as the x value of the maximum, unless the data
+is symmetric.</p>
+
+            <details class="quote">
+              <summary>Source code in <code>builtins/centre.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="n">waveform</span><span class="p">:</span> <span class="n">WaveformVariable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate the centre of a waveform. Errors if image or scalar provided.</span>
+
+<span class="sd">    First, applies smoothing by taking weighted nearest and next-nearest</span>
+<span class="sd">    neighbour contributions to  y values whose difference from their neighbours</span>
+<span class="sd">    is more than 0.2 times the total range in y.</span>
+
+<span class="sd">    The global maximum y value is then identified along with the first x positions</span>
+<span class="sd">    either side of the peak where the y value is less than or equal to half the</span>
+<span class="sd">    global maximum. If all values of y to one side of the peak are greater than</span>
+<span class="sd">    half the global maximum, the position of the global maximum is used. The value</span>
+<span class="sd">    of x at these two positions is averaged and returned.</span>
+
+<span class="sd">    Note this will not be the same as the x value of the maximum, unless the data</span>
+<span class="sd">    is symmetric.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">half_max_left</span><span class="p">,</span> <span class="n">half_max_right</span> <span class="o">=</span> <span class="n">Builtin</span><span class="o">.</span><span class="n">calculate_fwhm</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">half_max_left</span> <span class="o">+</span> <span class="n">half_max_right</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../background/" class="btn btn-neutral float-left" title="Background"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../fwhm/" class="btn btn-neutral float-right" title="FWHM">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../background/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../fwhm/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

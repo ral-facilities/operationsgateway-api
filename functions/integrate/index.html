@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Integrate - OperationsGateway API</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Integrate";
+        var mkdocs_page_input_path = "functions/integrate.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> OperationsGateway API
+        </a>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Functions</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" >Images</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../background/">Background</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../centroid_x/">Centroid (X)</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../centroid_y/">Centroid (Y)</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../fwhm_x/">FWHM (X)</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../fwhm_y/">FWHM (Y)</a>
+                </li>
+                <li class="toctree-l2 current"><a class="reference internal current" href="#">Integrate</a>
+    <ul class="current">
+    <li class="toctree-l3"><a class="reference internal" href="#builtins.integrate.Integrate.evaluate">evaluate</a>
+    </li>
+    </ul>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" >Waveforms</a>
+    <ul class="current">
+                <li class="toctree-l2"><a class="reference internal" href="../background/">Background</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../centre/">Centre</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../fwhm/">FWHM</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../falling/">Falling</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../rising/">Rising</a>
+                </li>
+                <li class="toctree-l2 current"><a class="reference internal current" href="#">Integrate</a>
+    <ul class="current">
+    <li class="toctree-l3"><a class="reference internal" href="#builtins.integrate.Integrate.evaluate">evaluate</a>
+    </li>
+    </ul>
+                </li>
+    </ul>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">OperationsGateway API</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Functions</li>
+          <li class="breadcrumb-item">Waveforms</li>
+      <li class="breadcrumb-item active">Integrate</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="integrate">Integrate</h1>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<a id="builtins.integrate.Integrate.evaluate"></a>
+    <div class="doc doc-contents first">
+
+        <p>Integrate a waveform or image. Errors if scalar provided.</p>
+<p>Waveform:
+First, applies smoothing by taking weighted nearest and next-nearest
+neighbour contributions to  y values whose difference from their neighbours
+is more than 0.2 times the total range in y.
+The y values are then integrated with respect to x, with the last y value
+neglected.</p>
+<p>Image:
+Return the sum of all pixel values.</p>
+
+            <details class="quote">
+              <summary>Source code in <code>builtins/integrate.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="n">argument</span><span class="p">:</span> <span class="s2">&quot;WaveformVariable | np.ndarray&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Integrate a waveform or image. Errors if scalar provided.</span>
+
+<span class="sd">    Waveform:</span>
+<span class="sd">    First, applies smoothing by taking weighted nearest and next-nearest</span>
+<span class="sd">    neighbour contributions to  y values whose difference from their neighbours</span>
+<span class="sd">    is more than 0.2 times the total range in y.</span>
+<span class="sd">    The y values are then integrated with respect to x, with the last y value</span>
+<span class="sd">    neglected.</span>
+
+<span class="sd">    Image:</span>
+<span class="sd">    Return the sum of all pixel values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">argument</span><span class="p">,</span> <span class="n">WaveformVariable</span><span class="p">):</span>
+        <span class="n">Builtin</span><span class="o">.</span><span class="n">smooth</span><span class="p">(</span><span class="n">argument</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">argument</span><span class="o">.</span><span class="n">y</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">argument</span><span class="o">.</span><span class="n">x</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">argument</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">argument</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># The check will fail and raise a TypeError</span>
+        <span class="n">Integrate</span><span class="o">.</span><span class="n">evaluation_type_check</span><span class="p">(</span><span class="n">argument</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../rising/" class="btn btn-neutral float-left" title="Rising"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../rising/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
