@@ -366,6 +366,35 @@ class TestImage:
         [
             pytest.param(
                 np.ones(1, np.uint8) * 255,
+                0,
+                [],
+                np.uint8,
+                0,
+                id="Expect to shift up by 8 bits, 1111 1111 -> 0000 0000",
+            ),
+            pytest.param(
+                np.ones(1, np.uint16) * 65535,
+                0,
+                [
+                    (
+                        "root",
+                        logging.WARNING,
+                        (
+                            "Specified bit depth is lower than actual bit depth with "
+                            "dtype of uint16, only data in the 0 least significant "
+                            "bits will be kept"
+                        ),
+                    ),
+                ],
+                np.uint8,
+                0,
+                id=(
+                    "Expect to shift up by 8 bits, 1111 1111 1111 1111 -> 0000 0000, "
+                    "and warn only lower bits are kept"
+                ),
+            ),
+            pytest.param(
+                np.ones(1, np.uint8) * 255,
                 6,
                 [],
                 np.uint8,
@@ -417,7 +446,7 @@ class TestImage:
                 ],
                 np.uint8,
                 255,
-                id=("Expect no change, and warn that only lower bits are kept"),
+                id="Expect no change, and warn that only lower bits are kept",
             ),
             pytest.param(
                 np.ones(1, np.uint8) * 255,
@@ -453,6 +482,48 @@ class TestImage:
                 np.uint16,
                 65535,
                 id="Expect no change",
+            ),
+            pytest.param(
+                np.ones(1, np.uint8) * 255,
+                24,
+                [
+                    (
+                        "root",
+                        logging.WARNING,
+                        (
+                            "Specified bit depth is higher than the max supported "
+                            "depth of 16, only data in the 16 most significant bits "
+                            "will be kept"
+                        ),
+                    ),
+                ],
+                np.uint16,
+                0,
+                id=(
+                    "Expect to shift down by 8 bits, 1111 1111 -> 0000 0000, "
+                    "and warn only upper bits are kept"
+                ),
+            ),
+            pytest.param(
+                np.ones(1, np.uint16) * 65535,
+                24,
+                [
+                    (
+                        "root",
+                        logging.WARNING,
+                        (
+                            "Specified bit depth is higher than the max supported "
+                            "depth of 16, only data in the 16 most significant bits "
+                            "will be kept"
+                        ),
+                    ),
+                ],
+                np.uint16,
+                255,
+                id=(
+                    "Expect to shift down by 8 bits, 1111 1111 1111 1111 -> "
+                    "0000 0000 1111 1111, and warn only upper bits are kept"
+                ),
             ),
         ],
     )

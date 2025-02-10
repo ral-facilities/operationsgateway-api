@@ -45,6 +45,11 @@ class Image:
                     "of %s, only data in the %s least significant bits will be kept"
                 )
                 log.warning(msg, self.image.data.dtype, bit_depth)
+            elif bit_depth > 16:
+                log.warning(
+                    "Specified bit depth is higher than the max supported depth of 16, "
+                    "only data in the 16 most significant bits will be kept",
+                )
         else:
             if self.image.data.dtype == np.uint8:
                 bit_depth = 8
@@ -62,7 +67,9 @@ class Image:
             target_dtype = np.uint16
 
         self.image.data = self.image.data.astype(target_dtype)
-        self.image.data *= 2 ** (target_bit_depth - bit_depth)
+        shifted_data = self.image.data * 2 ** (target_bit_depth - bit_depth)
+        # Negative shifts may result in a float output, so cast the type again
+        self.image.data = shifted_data.astype(target_dtype)
 
     def create_thumbnail(self) -> None:
         """
