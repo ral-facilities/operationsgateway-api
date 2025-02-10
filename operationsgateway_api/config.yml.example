@@ -6,6 +6,8 @@ app:
   # API will auto-reload when changes on code files are detected
   reload: true
   url_prefix: ""
+  maintenance_file: operationsgateway_api/maintenance.json.example
+  scheduled_maintenance_file: operationsgateway_api/scheduled_maintenance.json.example
 images:
   # Thumbnail sizes should only ever be two element lists, of a x, y resolution
   thumbnail_size: [50, 50]
