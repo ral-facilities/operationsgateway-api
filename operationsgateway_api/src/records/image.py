@@ -122,9 +122,10 @@ class Image:
         image_bytes = BytesIO()
         try:
             image = PILImage.fromarray(input_image.image.data)
-            if input_image.image.bit_depth is not None:
+            bit_depth = input_image.image.bit_depth
+            if bit_depth is not None and 0 < bit_depth <= 16:
                 info = PngImagePlugin.PngInfo()
-                sbit = input_image.image.bit_depth.to_bytes(1, byteorder="big")
+                sbit = bit_depth.to_bytes(1, byteorder="big")
                 info.add(b"sBIT", sbit)
                 image.save(image_bytes, format="PNG", pnginfo=info)
             else:
