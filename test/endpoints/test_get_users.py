@@ -28,6 +28,10 @@ class TestGetUsers:
                     "/users PATCH",
                     "/users/{id_} DELETE",
                     "/users GET",
+                    "/maintenance GET",
+                    "/maintenance POST",
+                    "/maintenance/scheduled GET",
+                    "/maintenance/scheduled POST",
                 ],
             },
         ]
