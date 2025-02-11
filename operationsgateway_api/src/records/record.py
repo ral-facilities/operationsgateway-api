@@ -353,6 +353,41 @@ class Record:
         return channel_dtype
 
     @staticmethod
+    async def get_raw_bit_depth(
+        record_id: str,
+        channel_name: str,
+        channel_value: dict,
+    ) -> "int | None":
+        """
+        Extract "bit_depth" from `channel_value`, or if not present, retrieve with a
+        separate lookup.
+
+        Args:
+            record_id (str): Record identifier
+            channel_name (str): Channel name to get the bit depth for
+            channel_value (dict):
+                Previously fetched channel (may not include all the metadata).
+
+        Returns:
+            int | None: The bit_depth if found, `None` otherwise.
+        """
+        try:
+            raw_bit_depth = channel_value["metadata"]["bit_depth"]
+        except KeyError:
+            # if a projection has been applied then the record will only contain
+            # the requested fields and probably not the channel_dtype
+            # so it needs to be looked up separately
+            record_dict = await Record.find_record_by_id(
+                record_id,
+                {},
+                [f"channels.{channel_name}.metadata.bit_depth"],
+            )
+            metadata = record_dict["channels"][channel_name]["metadata"]
+            raw_bit_depth = metadata.get("bit_depth")  # May be None
+
+        return raw_bit_depth
+
+    @staticmethod
     async def convert_search_ranges(date_range, shotnum_range):
         if date_range:
             # Convert date range to shot number range
@@ -429,6 +464,7 @@ class Record:
         original_image: bool,
         lower_level: int,
         upper_level: int,
+        limit_bit_depth: int,
         colourmap_name: str,
         return_thumbnails: bool = True,
         truncate: bool = False,
@@ -448,6 +484,7 @@ class Record:
                 original_image=original_image,
                 lower_level=lower_level,
                 upper_level=upper_level,
+                limit_bit_depth=limit_bit_depth,
                 colourmap_name=colourmap_name,
                 variable_data=variable_data,
                 variable_transformer=variable_transformer,
@@ -472,6 +509,7 @@ class Record:
         original_image: bool,
         lower_level: int,
         upper_level: int,
+        limit_bit_depth: int,
         colourmap_name: str,
         variable_data: dict,
         variable_transformer: VariableTransformer,
@@ -487,6 +525,7 @@ class Record:
         variable_transformer.evaluate(function["expression"])
         variables = variable_transformer.variables
         channels_to_fetch = set()
+        bit_depths = []
 
         log.debug("Attempting to extract %s from %s", variables, record["channels"])
         for variable in variables:
@@ -495,6 +534,7 @@ class Record:
                     record["_id"],
                     variable,
                     record["channels"][variable],
+                    bit_depths=bit_depths,
                 )
             else:
                 channels_to_fetch.add(variable)
@@ -505,6 +545,7 @@ class Record:
                 variable_data,
                 channels_to_fetch,
                 skip_functions=variable_transformer.skip_functions,
+                bit_depths=bit_depths,
             )
             if missing_channels:
                 # Remove any missing channels so we don't skip future functions which
@@ -519,11 +560,13 @@ class Record:
             original_image=original_image,
             lower_level=lower_level,
             upper_level=upper_level,
+            limit_bit_depth=limit_bit_depth,
             colourmap_name=colourmap_name,
             function_name=function["name"],
             result=result,
             return_thumbnails=return_thumbnails,
             truncate=truncate,
+            bit_depths=bit_depths,
         )
         variable_data[function["name"]] = result
 
@@ -533,6 +576,7 @@ class Record:
         variable_data: dict,
         channels_to_fetch: "set[str]",
         skip_functions: "set[str]",
+        bit_depths: "list[int]",
     ) -> "set[str]":
         """Fetches `channels_to_fetch`, returning known channels missing for this
         record and raising an exception if the channel is not known at all."""
@@ -562,6 +606,7 @@ class Record:
                 record["_id"],
                 name,
                 channel_value,
+                bit_depths=bit_depths,
             )
 
     @staticmethod
@@ -569,6 +614,7 @@ class Record:
         record_id: str,
         name: str,
         channel_value: dict,
+        bit_depths: "list[int]",
     ) -> "np.ndarray | WaveformVariable | float":
         """
         Extracts and returns the relevant data from `channel_value`, handling
@@ -583,17 +629,31 @@ class Record:
             channel_value=channel_value,
         )
         if channel_dtype == "image":
+            raw_bit_depth = await Record.get_raw_bit_depth(
+                record_id=record_id,
+                channel_name=name,
+                channel_value=channel_value,
+            )
+            if raw_bit_depth is not None:
+                # Modify in place to store for each channel, getting around static func
+                bit_depths.append(raw_bit_depth)
+
             image_bytes = await Image.get_image(
-                record_id,
-                name,
-                True,
-                0,
-                255,
-                None,
+                record_id=record_id,
+                channel_name=name,
+                original_image=True,
+                lower_level=0,
+                upper_level=255,
+                limit_bit_depth=8,  # Not relevant when `original_image=True`
+                colourmap_name=None,
             )
             img_src = PILImage.open(image_bytes)
             img_array = np.array(img_src)
-            return img_array
+            return Record._bit_shift_to_raw(
+                img_array=img_array,
+                raw_bit_depth=raw_bit_depth,
+            )
+
         elif channel_dtype == "waveform":
             waveform_path = channel_value["waveform_path"]
             if "metadata" in channel_value and "x_units" in channel_value["metadata"]:
@@ -607,14 +667,69 @@ class Record:
             return channel_value["data"]
 
     @staticmethod
+    def _bit_shift_to_raw(
+        img_array: np.ndarray,
+        raw_bit_depth: "int | None",
+    ) -> np.ndarray:
+        """Shift the bits of a stored image back from most significant to original
+        positions, so functions are applied to the raw pixel values.
+
+        Args:
+            img_array (np.ndarray): Stored image as a np.ndarray.
+            raw_bit_depth (int | None): Original specified bit depth of the raw data.
+
+        Returns:
+            np.ndarray: Input image with the bits shifted to their original position.
+        """
+        if raw_bit_depth in (None, 8, 16):
+            # If we don't know the original bit depth, or it exactly matches a
+            # storage depth, no shift is possible/needed
+            return img_array
+        elif raw_bit_depth < 8:
+            # Bit depths < 8 would have been stored as 8 bit, so shift back to raw
+            return img_array / 2 ** (8 - raw_bit_depth)
+        else:
+            # Bit depths > 8 would have been stored as 16 bit, so shift back to raw
+            return img_array / 2 ** (16 - raw_bit_depth)
+
+    @staticmethod
+    def _bit_shift_to_storage(
+        img_array: np.ndarray,
+        raw_bit_depth: "int | None",
+    ) -> "tuple[np.ndarray, int]":
+        """Shift the bits of a calculated image from numerically accurate positions to
+        most significant bits for display/storage.
+
+        Args:
+            img_array (np.ndarray): Calculated image as a np.ndarray.
+            raw_bit_depth (int | None): Original specified bit depth of the raw data.
+
+        Returns:
+            tuple[np.ndarray, int]:
+                Input image with the bits shifted to storage/display positions,
+                and the value of this storage bit depth.
+        """
+        if raw_bit_depth in (8, 16):
+            # If bit depth exactly matches a storage depth, no shift is needed
+            return img_array, raw_bit_depth
+        elif raw_bit_depth < 8:
+            # Bit depths < 8 would have been stored as 8 bit, so shift up to storage
+            return img_array.astype(np.uint8) * 2 ** (8 - raw_bit_depth), 8
+        else:
+            # Bit depths > 8 would have been stored as 16 bit, so shift up to storage
+            return img_array.astype(np.uint16) * 2 ** (16 - raw_bit_depth), 16
+
+    @staticmethod
     def _parse_function_results(
         record: dict,
         original_image: bool,
         lower_level: int,
         upper_level: int,
+        limit_bit_depth: int,
         colourmap_name: str,
         function_name: str,
         result: "np.ndarray | WaveformVariable | np.float64",
+        bit_depths: "list[int]",
         return_thumbnails: bool = True,
         truncate: bool = False,
     ) -> None:
@@ -630,9 +745,11 @@ class Record:
                 original_image=original_image,
                 lower_level=lower_level,
                 upper_level=upper_level,
+                limit_bit_depth=limit_bit_depth,
                 colourmap_name=colourmap_name,
                 return_thumbnails=return_thumbnails,
                 truncate=truncate,
+                bit_depths=bit_depths,
             )
 
         elif isinstance(result, WaveformVariable):
@@ -663,16 +780,30 @@ class Record:
         original_image: bool,
         lower_level: int,
         upper_level: int,
+        limit_bit_depth: int,
         colourmap_name: str,
         return_thumbnails: bool,
         truncate: bool,
+        bit_depths: "list[int]",
     ) -> dict:
         """Parses a numpy ndarray and returns image bytes, either for a thumbnail or
         full image.
         """
-        # We do not track the bit depth of inputs, so keep maximum depth to
-        # avoid losing information
-        bits_per_pixel = 16
+        if len(bit_depths) == 0:
+            # We have no information about input bit depths, so set to max supported
+            # This will not lose any information, but may make the image very dark
+            overall_bit_depth = 16
+        else:
+            # Otherwise, take the highest depth encountered. There may be more than one
+            # if the function depends on multiple channels with different depths,
+            # in which case, we should try and store all information which means
+            # choosing the highest bit depth needed
+            overall_bit_depth = max(bit_depths)
+
+        result, storage_bit_depth = Record._bit_shift_to_storage(
+            img_array=result,
+            raw_bit_depth=overall_bit_depth,
+        )
         if return_thumbnails:
             metadata = {
                 "channel_dtype": "image",
@@ -690,11 +821,12 @@ class Record:
             # Slice with a step size that downsamples to the thumbnails shape
             image_array = result[::step_y, ::step_x]
             image_bytes = FalseColourHandler.apply_false_colour(
-                image_array,
-                bits_per_pixel,
-                lower_level,
-                upper_level,
-                colourmap_name,
+                image_array=image_array,
+                storage_bit_depth=storage_bit_depth,
+                lower_level=lower_level,
+                upper_level=upper_level,
+                limit_bit_depth=limit_bit_depth,
+                colourmap_name=colourmap_name,
             )
             image_bytes.seek(0)
             image_b64 = base64.b64encode(image_bytes.getvalue())
@@ -714,11 +846,12 @@ class Record:
                 img_temp.save(image_bytes, format="PNG")
             else:
                 image_bytes = FalseColourHandler.apply_false_colour(
-                    result,
-                    bits_per_pixel,
-                    lower_level,
-                    upper_level,
-                    colourmap_name,
+                    image_array=result,
+                    storage_bit_depth=storage_bit_depth,
+                    lower_level=lower_level,
+                    upper_level=upper_level,
+                    limit_bit_depth=limit_bit_depth,
+                    colourmap_name=colourmap_name,
                 )
 
             image_bytes.seek(0)

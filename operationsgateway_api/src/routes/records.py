@@ -117,12 +117,14 @@ async def get_records(
 
         if functions:
             await Record.apply_functions(
-                record_data,
-                functions,
-                False,
-                lower_level,
-                upper_level,
-                colourmap_name,
+                record=record_data,
+                functions=functions,
+                original_image=False,
+                lower_level=lower_level,
+                upper_level=upper_level,
+                limit_bit_depth=8,  # We are returning thumbnails, so limits are 8 bit
+                colourmap_name=colourmap_name,
+                return_thumbnails=True,
                 truncate=truncate,
             )
 

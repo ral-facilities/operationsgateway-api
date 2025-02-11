@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 
 from botocore.exceptions import ClientError
 import numpy as np
-from PIL import Image as PILImage
+from PIL import Image as PILImage, PngImagePlugin
 from pydantic import Json
 
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
@@ -36,6 +36,40 @@ class Image:
 
     def __init__(self, image: ImageModel) -> None:
         self.image = image
+
+        if isinstance(self.image.bit_depth, int):
+            bit_depth = self.image.bit_depth
+            if bit_depth <= 8 and self.image.data.dtype != np.uint8:
+                msg = (
+                    "Specified bit depth is lower than actual bit depth with dtype "
+                    "of %s, only data in the %s least significant bits will be kept"
+                )
+                log.warning(msg, self.image.data.dtype, bit_depth)
+            elif bit_depth > 16:
+                log.warning(
+                    "Specified bit depth is higher than the max supported depth of 16, "
+                    "only data in the 16 most significant bits will be kept",
+                )
+        else:
+            if self.image.data.dtype == np.uint8:
+                bit_depth = 8
+            else:
+                # In principle this could be data with any number of bits, but we have
+                # no way of knowing without an explicit bit_depth so default to 16
+                bit_depth = 16
+
+        # We only store data as either 8 or 16 bit PNGs, scale to most significant bits
+        if bit_depth <= 8:
+            target_bit_depth = 8
+            target_dtype = np.uint8
+        else:
+            target_bit_depth = 16
+            target_dtype = np.uint16
+
+        self.image.data = self.image.data.astype(target_dtype)
+        shifted_data = self.image.data * 2 ** (target_bit_depth - bit_depth)
+        # Negative shifts may result in a float output, so cast the type again
+        self.image.data = shifted_data.astype(target_dtype)
 
     def create_thumbnail(self) -> None:
         """
@@ -88,7 +122,14 @@ class Image:
         image_bytes = BytesIO()
         try:
             image = PILImage.fromarray(input_image.image.data)
-            image.save(image_bytes, format="PNG")
+            bit_depth = input_image.image.bit_depth
+            if bit_depth is not None and 0 < bit_depth <= 16:
+                info = PngImagePlugin.PngInfo()
+                sbit = bit_depth.to_bytes(1, byteorder="big")
+                info.add(b"sBIT", sbit)
+                image.save(image_bytes, format="PNG", pnginfo=info)
+            else:
+                image.save(image_bytes, format="PNG")
         except TypeError as exc:
             log.exception(msg=exc)
             raise ImageError("Image data is not in correct format to be read") from exc
@@ -113,6 +154,7 @@ class Image:
         original_image: bool,
         lower_level: int,
         upper_level: int,
+        limit_bit_depth: int,
         colourmap_name: str,
     ) -> BytesIO:
         """
@@ -150,13 +192,14 @@ class Image:
                 )
                 img_src = PILImage.open(image_bytes)
                 orig_img_array = np.array(img_src)
-
+                storage_bit_depth = FalseColourHandler.get_pixel_depth(img_src)
                 false_colour_image = FalseColourHandler.apply_false_colour(
-                    orig_img_array,
-                    FalseColourHandler.get_pixel_depth(img_src),
-                    lower_level,
-                    upper_level,
-                    colourmap_name,
+                    image_array=orig_img_array,
+                    storage_bit_depth=storage_bit_depth,
+                    lower_level=lower_level,
+                    upper_level=upper_level,
+                    limit_bit_depth=limit_bit_depth,
+                    colourmap_name=colourmap_name,
                 )
                 img_src.close()
                 return false_colour_image

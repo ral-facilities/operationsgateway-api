@@ -524,6 +524,7 @@ class TestRecord:
             original_image=False,
             lower_level=0,
             upper_level=255,
+            limit_bit_depth=8,
             colourmap_name="binary",
             return_thumbnails=True,
         )
@@ -568,7 +569,7 @@ class TestRecord:
     ):
         record = {"_id": "20230605100000"}
         with pytest.raises(FunctionParseError) as e:
-            await Record.apply_functions(record, functions, False, 0, 255, "binary")
+            await Record.apply_functions(record, functions, False, 0, 255, 8, "binary")
 
         assert str(e.value) == "b is not known as a channel or function name"
 
@@ -588,6 +589,7 @@ class TestRecord:
             original_image=False,
             lower_level=0,
             upper_level=255,
+            limit_bit_depth=8,
             colourmap_name="binary",
             return_thumbnails=True,
         )
@@ -598,3 +600,14 @@ class TestRecord:
         assert "b" not in record["channels"]  # Skip, a undefined
         assert "c" in record["channels"]  # Has no dependencies, so should be returned
         assert record["channels"]["c"] == expected
+
+    @pytest.mark.parametrize(
+        ["img_array", "raw_bit_depth"],
+        [
+            pytest.param(np.ones(1, dtype=np.int32) * 4, 6),
+            pytest.param(np.ones(1, dtype=np.int32) * 16, 12),
+        ],
+    )
+    def test_bit_shift_to_raw(self, img_array: np.ndarray, raw_bit_depth: int):
+        img = Record._bit_shift_to_raw(img_array=img_array, raw_bit_depth=raw_bit_depth)
+        assert img[0] == 1
