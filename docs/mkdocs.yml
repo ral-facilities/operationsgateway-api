@@ -1,5 +1,6 @@
 site_name: OperationsGateway API
 theme: readthedocs
+docs_dir: user
 
 plugins:
 - mkdocstrings:
