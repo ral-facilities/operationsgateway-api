@@ -1,0 +1,45 @@
+name: ci 
+on:
+  push:
+    branches:
+      - main
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Checkout OperationsGateway API
+        uses: actions/checkout@v3
+
+      - name: Load Pip cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-3.11-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
+
+      - name: Install Poetry & Nox
+        run: pip install -r .github/ci_requirements.txt
+
+      - name: Load Poetry cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-poetry-3.11-docs-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
+
+      - name: Install dependencies
+        run: poetry install --only docs
+
+      - name: Configure Git Credentials
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
+      - name: Deploy to pages
+        working-directory: ./docs
+        run: mkdocs gh-deploy --force

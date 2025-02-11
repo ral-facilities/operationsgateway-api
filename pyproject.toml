@@ -64,6 +64,11 @@ s4cmd = "^2.1.0"
 [tool.poetry.group.simulated-data.dependencies]
 epac-data-sim = {git = "git@github.com:CentralLaserFacility/EPAC-DataSim.git"}
 
+
+[tool.poetry.group.docs.dependencies]
+mkdocs = "^1.6.1"
+mkdocstrings-python = "^1.14.5"
+
 [tool.coverage.paths]
 source = ["operationsgateway_api"]
 
