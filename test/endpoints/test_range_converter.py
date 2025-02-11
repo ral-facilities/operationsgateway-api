@@ -30,7 +30,7 @@ class TestRangeConverter:
             pytest.param(
                 None,
                 {"min": 423648072000, "max": 999999999999},
-                {"from": "2023-06-05T10:00:00", "to": "2023-06-05T16:00:00"},
+                {"from": "2023-06-05T10:00:00", "to": "2023-06-06T12:00:00"},
                 id="Shotnum to date range where max shotnum > last shotnum stored in"
                 " database",
             ),
@@ -44,7 +44,7 @@ class TestRangeConverter:
             pytest.param(
                 {"from": "2022-04-07T15:10:00", "to": "2100-01-01 18:00:00"},
                 None,
-                {"min": 423648000000, "max": 423648288000},
+                {"min": 423648000000, "max": 423649008000},
                 id="Date to shotnum range where to date > last timestamp stored in"
                 " database",
             ),

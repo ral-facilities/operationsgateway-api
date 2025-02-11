@@ -611,3 +611,23 @@ class TestRecord:
     def test_bit_shift_to_raw(self, img_array: np.ndarray, raw_bit_depth: int):
         img = Record._bit_shift_to_raw(img_array=img_array, raw_bit_depth=raw_bit_depth)
         assert img[0] == 1
+
+    @pytest.mark.parametrize(
+        ["raw_bit_depth", "expected_value"],
+        [
+            pytest.param(6, 4, id="Expect upshift by 2 to 8 bit, 0001 -> 0100"),
+            pytest.param(8, 1, id="Expect no shift as already 8 bit"),
+            pytest.param(
+                12,
+                16,
+                id="Expect upshift by 4 to 16 bit, 0000 0001 -> 0001 0000",
+            ),
+            pytest.param(16, 1, id="Expect no shift as already 16 bit"),
+        ],
+    )
+    def test_bit_shift_to_storage(self, raw_bit_depth: int, expected_value: int):
+        img = Record._bit_shift_to_storage(
+            img_array=np.ones(1, dtype=np.int32),
+            raw_bit_depth=raw_bit_depth,
+        )
+        assert img[0] == expected_value
