@@ -7,6 +7,7 @@ from dateutil import tz
 from pydantic import (
     BaseModel,
     field_validator,
+    FilePath,
     StrictBool,
     StrictInt,
     StrictStr,
@@ -23,6 +24,8 @@ class App(BaseModel):
     port: Optional[StrictInt] = None
     reload: Optional[StrictBool] = None
     url_prefix: StrictStr
+    maintenance_file: FilePath
+    scheduled_maintenance_file: FilePath
 
 
 class ImagesConfig(BaseModel):

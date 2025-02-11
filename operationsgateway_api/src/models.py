@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import StrEnum
 from typing import Any, Callable, ClassVar, Dict, List, Literal, Optional, Union
 
 from bson.objectid import ObjectId
@@ -268,3 +269,17 @@ class FavouriteFilterModel(BaseModel):
 class Function(BaseModel):
     name: constr(strip_whitespace=True, min_length=1)
     expression: constr(strip_whitespace=True, min_length=1)
+
+
+class Severity(StrEnum):
+    INFO = "info"
+    WARNING = "warning"
+
+
+class MaintenanceModel(BaseModel):
+    show: bool
+    message: str
+
+
+class ScheduledMaintenanceModel(MaintenanceModel):
+    severity: Severity

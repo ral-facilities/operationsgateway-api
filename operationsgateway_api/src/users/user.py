@@ -20,6 +20,10 @@ class User:
         "/users PATCH",
         "/users GET",
         "/users/{id_} DELETE",
+        "/maintenance GET"
+        "/maintenance POST"
+        "/maintenance/scheduled GET"
+        "/maintenance/scheduled POST",
     ]
 
     auth_type_list = [
