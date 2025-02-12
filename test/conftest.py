@@ -55,9 +55,16 @@ def assert_record(record, expected_channel_count, expected_channel_data):
     test_channel_name = list(expected_channel_data.keys())[0]
     channel_found = False
     for channel_name, value in record["channels"].items():
+        assert "variable_value" not in value  # Should never be included in response
         if channel_name == test_channel_name:
             channel_found = True
-            assert value["data"] == expected_channel_data[channel_name]
+            if "data" in value:
+                assert value["data"] == expected_channel_data[channel_name]
+            else:
+                image_bytes = base64.b64decode(value["thumbnail"])
+                image = Image.open(io.BytesIO(image_bytes))
+                image_phash = str(imagehash.phash(image))
+                assert image_phash == expected_channel_data[channel_name]
 
     if not channel_found:
         raise AssertionError("Expected channel not found")
