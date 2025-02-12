@@ -11,6 +11,7 @@ from operationsgateway_api.src.models import (
     ChannelManifestModel,
     PartialChannels,
     PartialRecordModel,
+    PartialWaveformChannelModel,
     WaveformChannelMetadataModel,
 )
 from operationsgateway_api.src.records.image import Image
@@ -68,6 +69,17 @@ class ExportHandler:
         self.functions = functions
         self.function_types = {}
 
+    @staticmethod
+    def _ensure_waveform_metadata(channel: PartialWaveformChannelModel) -> None:
+        """Utility method for ensuring Waveform Metadata and units are not None."""
+        if channel.metadata is None:
+            channel.metadata = WaveformChannelMetadataModel(x_units="", y_units="")
+        else:
+            if channel.metadata.x_units is None:
+                channel.metadata.x_units = ""
+            if channel.metadata.y_units is None:
+                channel.metadata.y_units = ""
+
     @property
     def original_image(self) -> bool:
         """If none of the false colour parameters are set then the original
@@ -116,9 +128,17 @@ class ExportHandler:
                 log.debug("projection: %s", proj)
                 projection_parts = proj.split(".")
                 if proj == "_id":
-                    value = record_data.id_
+                    line = self._add_value_to_csv_line(
+                        line=line,
+                        value=record_data.id_,
+                        verbose=True,
+                    )
                 elif projection_parts[0] == "metadata":
-                    value = getattr(record_data.metadata, projection_parts[1], "")
+                    line = self._add_value_to_csv_line(
+                        line=line,
+                        value=getattr(record_data.metadata, projection_parts[1], ""),
+                        verbose=True,
+                    )
                 elif projection_parts[0] == "channels":
                     # process one of the data channels
                     line = await self._process_data_channel(
@@ -127,15 +147,11 @@ class ExportHandler:
                         projection_parts[1],
                         line,
                     )
-                    continue
                 else:
                     log.warning(
                         "Unrecognised first projection part: %s",
                         projection_parts[0],
                     )
-                    continue
-
-                line = self._add_value_to_csv_line(line=line, value=value, verbose=True)
 
             # don't put empty lines in the CSV file
             if line != "":
@@ -223,14 +239,7 @@ class ExportHandler:
         elif channel_type == "waveform":
             log.info("Channel %s is a waveform", channel_name)
             channel = channels[channel_name]
-            if channel.metadata is None:
-                channel.metadata = WaveformChannelMetadataModel()
-
-            if channel.metadata.x_units is None:
-                channel.metadata.x_units = ""
-            if channel.metadata.y_units is None:
-                channel.metadata.y_units = ""
-
+            ExportHandler._ensure_waveform_metadata(channel)
             await self._add_waveform_to_zip(
                 channels,
                 record_id,

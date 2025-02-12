@@ -32,6 +32,7 @@ from operationsgateway_api.src.functions.variable_models import (
     PartialWaveformVariableChannelModel,
 )
 from operationsgateway_api.src.models import (
+    ChannelDtype,
     DateConverterRange,
     PartialChannelModel,
     PartialRecordModel,
@@ -319,29 +320,22 @@ class Record:
                 channel_name,
                 value,
             )
-            try:
-                if channel_dtype == "image" and value.thumbnail is not None:
-                    b64_thumbnail_str = value.thumbnail
-                    thumbnail_bytes = FalseColourHandler.apply_false_colour_to_b64_img(
-                        b64_thumbnail_str,
-                        lower_level,
-                        upper_level,
-                        colourmap_name,
-                    )
-                    thumbnail_bytes.seek(0)
-                    value.thumbnail = base64.b64encode(thumbnail_bytes.getvalue())
-            except AttributeError:
-                # If there's no thumbnail (e.g. if channel isn't an image or waveform)
-                # then a KeyError will be raised. This is normal behaviour, so
-                # acceptable to pass
-                pass
+            b64_thumbnail_str = getattr(value, "thumbnail", None)
+            if channel_dtype == "image" and b64_thumbnail_str is not None:
+                thumbnail_bytes = FalseColourHandler.apply_false_colour_to_b64_img(
+                    base64_image=b64_thumbnail_str,
+                    lower_level=lower_level,
+                    upper_level=upper_level,
+                    colourmap_name=colourmap_name,
+                )
+                value.thumbnail = base64.b64encode(thumbnail_bytes.getvalue())
 
     @staticmethod
     async def get_channel_dtype(
         record_id: str,
         channel_name: str,
         channel_value: PartialChannelModel,
-    ) -> str:
+    ) -> ChannelDtype:
         """
         Extract "channel_dtype" from `channel_value`, or if not present, retrieve with a
         separate lookup.
@@ -663,11 +657,7 @@ class Record:
 
         elif channel_dtype == "waveform":
             waveform_path = channel_value.waveform_path
-            try:
-                x_units = channel_value.metadata.x_units
-            except AttributeError:
-                x_units = None
-
+            x_units = getattr(channel_value.metadata, "x_units", None)
             waveform = Waveform.get_waveform(waveform_path)
             return WaveformVariable(waveform, x_units=x_units)
         else:
@@ -837,15 +827,11 @@ class Record:
             image_bytes.seek(0)
             image_b64 = base64.b64encode(image_bytes.getvalue())
 
-            channel = PartialImageVariableChannelModel(
+            return PartialImageVariableChannelModel(
                 metadata=metadata,
                 variable_value=result,
+                thumbnail=Record.truncate_bytes(truncate, image_b64),
             )
-            if truncate:
-                channel.thumbnail = image_b64[:50]
-            else:
-                channel.thumbnail = image_b64
-            return channel
 
         else:
             if original_image:
@@ -866,3 +852,11 @@ class Record:
                 data=image_bytes.getvalue(),
                 variable_value=result,
             )
+
+    @staticmethod
+    def truncate_bytes(truncate: bool, image_b64: bytes) -> bytes:
+        """Utility function for optionally truncating bytes for testing."""
+        if truncate:
+            return image_b64[:50]
+        else:
+            return image_b64

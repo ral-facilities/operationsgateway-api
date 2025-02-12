@@ -627,3 +627,12 @@ class TestRecord:
             raw_bit_depth=raw_bit_depth,
         )
         assert img[0] == expected_value
+
+    @pytest.mark.parametrize(
+        ["truncate", "length"],
+        [pytest.param(True, 50), pytest.param(False, 100)],
+    )
+    def test_truncate_bytes(self, truncate: bool, length: int):
+        long_bytes = b"0" * 100
+        truncated_bytes = Record.truncate_bytes(truncate=truncate, image_b64=long_bytes)
+        assert len(truncated_bytes) == length
