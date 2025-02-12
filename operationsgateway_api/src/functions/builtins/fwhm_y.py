@@ -3,7 +3,7 @@ import numpy as np
 from operationsgateway_api.src.functions.builtins.builtin import Builtin
 from operationsgateway_api.src.functions.builtins.centroid_x import CentroidX
 from operationsgateway_api.src.functions.builtins.fwhm import FWHM
-from operationsgateway_api.src.functions.waveform_variable import WaveformVariable
+from operationsgateway_api.src.functions.variable_models import WaveformVariable
 
 
 class FWHMY(Builtin):
