@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from io import BytesIO
 import logging
-from typing import Optional, Tuple
+from typing import Optional
 
 from botocore.exceptions import ClientError
 import numpy as np
@@ -101,16 +101,11 @@ class Image:
 
         img.close()
 
-    def extract_metadata_from_path(self) -> Tuple[str, str]:
+    def get_channel_name_from_path(self) -> str:
         """
-        Small string handler function to extract the record ID and channel name from the
-        image's path
+        Small string handler function to extract the channel name from the path
         """
-
-        record_id = self.image.path.split("/")[-2]
-        channel_name = self.image.path.split("/")[-1].split(".")[0]
-
-        return record_id, channel_name
+        return self.image.path.split("/")[-1].split(".")[0]
 
     @staticmethod
     def upload_image(input_image: Image) -> Optional[str]:
@@ -143,7 +138,7 @@ class Image:
             return None  # No failure
         except EchoS3Error:
             # Extract the channel name and propagate it
-            record_id, channel_name = input_image.extract_metadata_from_path()
+            channel_name = input_image.get_channel_name_from_path()
             log.error("Failed to upload image for channel: %s", channel_name)
             return channel_name
 
@@ -174,21 +169,26 @@ class Image:
         echo = EchoInterface()
 
         try:
-            original_image_path = Image.get_relative_path(record_id, channel_name)
-            image_bytes = echo.download_file_object(
-                Image.get_full_path(original_image_path),
-            )
+            try:
+                relative_path = Image.get_relative_path(record_id, channel_name)
+                full_path = Image.get_full_path(relative_path)
+                image_bytes = echo.download_file_object(full_path)
+            except EchoS3Error:
+                # Try again without subdirectories, might be stored in old format
+                relative_path = Image.get_relative_path(record_id, channel_name, False)
+                full_path = Image.get_full_path(relative_path)
+                image_bytes = echo.download_file_object(full_path)
 
             if original_image:
                 log.debug(
                     "Original image requested, return unmodified image bytes: %s",
-                    original_image_path,
+                    relative_path,
                 )
                 return image_bytes
             else:
                 log.debug(
                     "False colour requested, applying false colour to image: %s",
-                    original_image_path,
+                    relative_path,
                 )
                 img_src = PILImage.open(image_bytes)
                 orig_img_array = np.array(img_src)
@@ -243,13 +243,17 @@ class Image:
                 ) from exc
 
     @staticmethod
-    def get_relative_path(record_id: str, channel_name: str) -> str:
+    def get_relative_path(
+        record_id: str,
+        channel_name: str,
+        use_subdirectories: bool = True,
+    ) -> str:
         """
         Returns a relative image path given a record ID and channel name. The path is
         relative to the base directory of where images are stored in Echo
         """
-
-        return f"{record_id}/{channel_name}.png"
+        directories = EchoInterface.format_record_id(record_id, use_subdirectories)
+        return f"{directories}/{channel_name}.png"
 
     @staticmethod
     def get_full_path(relative_path: str) -> str:

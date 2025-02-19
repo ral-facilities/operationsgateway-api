@@ -51,7 +51,7 @@ class Waveform:
             return None  # Successful upload
         except EchoS3Error:
             # Extract the channel name and propagate it
-            channel_name = self.get_channel_name_from_id()
+            channel_name = self.get_channel_name_from_path()
             log.exception(
                 "Failed to upload waveform for channel '%s'",
                 channel_name,
@@ -74,15 +74,11 @@ class Waveform:
             self._create_fullsize_plot(waveform_image_buffer, x_label, y_label)
             return waveform_image_buffer.getvalue()
 
-    def get_channel_name_from_id(self) -> str:
+    def get_channel_name_from_path(self) -> str:
         """
-        From a waveform path, extract and return the channel name associated with the
-        waveform.
-        For example, 20220408140310/N_COMP_SPEC_TRACE.json -> N_COMP_SPEC_TRACE
+        Small string handler function to extract the channel name from the path
         """
-        filename = self.waveform.path.split("/")[1:][0]
-        channel_name = filename.split(".json")[0]
-        return channel_name
+        return self.waveform.path.split("/")[-1].split(".")[0]
 
     def _create_thumbnail_plot(self, buffer) -> None:
         """
@@ -135,12 +131,17 @@ class Waveform:
         plt.clf()
 
     @staticmethod
-    def get_relative_path(record_id: str, channel_name: str) -> str:
+    def get_relative_path(
+        record_id: str,
+        channel_name: str,
+        use_subdirectories: bool = True,
+    ) -> str:
         """
         Returns a relative waveform path given a record ID and channel name. The path is
         relative to the base directory of where waveforms are stored in Echo
         """
-        return f"{record_id}/{channel_name}.json"
+        directories = EchoInterface.format_record_id(record_id, use_subdirectories)
+        return f"{directories}/{channel_name}.json"
 
     @staticmethod
     def get_full_path(relative_path: str) -> str:
@@ -151,7 +152,7 @@ class Waveform:
         return f"{Waveform.echo_prefix}/{relative_path}"
 
     @staticmethod
-    def get_waveform(waveform_path: str) -> WaveformModel:
+    def get_waveform(record_id: str, channel_name: str) -> WaveformModel:
         """
         Given a waveform path, find the waveform from Echo. This function assumes that
         the waveform should exist; if no waveform can be found, a `WaveformError` will
@@ -160,13 +161,24 @@ class Waveform:
         echo = EchoInterface()
 
         try:
-            waveform_file = echo.download_file_object(
-                Waveform.get_full_path(waveform_path),
-            )
+            try:
+                relative_path = Waveform.get_relative_path(record_id, channel_name)
+                full_path = Waveform.get_full_path(relative_path)
+                waveform_file = echo.download_file_object(full_path)
+            except EchoS3Error:
+                # Try again without subdirectories, might be stored in old format
+                relative_path = Waveform.get_relative_path(
+                    record_id=record_id,
+                    channel_name=channel_name,
+                    use_subdirectories=False,
+                )
+                full_path = Waveform.get_full_path(relative_path)
+                waveform_file = echo.download_file_object(full_path)
+
             waveform_data = json.loads(waveform_file.getvalue().decode())
             return WaveformModel(**waveform_data)
         except (ClientError, EchoS3Error) as exc:
-            log.error("Waveform could not be found: %s", waveform_path)
+            log.error("Waveform could not be found: %s", relative_path)
             raise WaveformError(
-                f"Waveform could not be found on object storage: {waveform_path}",
+                f"Waveform could not be found on object storage: {relative_path}",
             ) from exc

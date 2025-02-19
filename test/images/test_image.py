@@ -133,23 +133,20 @@ class TestImage:
                 test_image.create_thumbnail()
 
     @pytest.mark.parametrize(
-        "image_path, expected_record_id, expected_channel_name",
+        ["image_path", "expected_channel_name"],
         [
             pytest.param(
                 "20220408165857/N_INP_NF_IMAGE.png",
-                "20220408165857",
                 "N_INP_NF_IMAGE",
                 id="Typical path",
             ),
             pytest.param(
                 "test/path.png",
-                "test",
                 "path",
                 id="Test path",
             ),
             pytest.param(
                 "/test/path.png",
-                "test",
                 "path",
                 id="Path starting at root level",
             ),
@@ -158,15 +155,13 @@ class TestImage:
     def test_extract_metadata(
         self,
         image_path,
-        expected_record_id,
         expected_channel_name,
     ):
         test_image = Image(
             ImageModel(path=image_path, data=np.ones(shape=(300, 300), dtype=np.uint8)),
         )
 
-        record_id, channel_name = test_image.extract_metadata_from_path()
-        assert record_id == expected_record_id
+        channel_name = test_image.get_channel_name_from_path()
         assert channel_name == expected_channel_name
 
     @patch(
@@ -357,9 +352,20 @@ class TestImage:
                     colourmap_name="jet",
                 )
 
-    def test_get_relative_path(self):
-        test_path = Image.get_relative_path("20220408165857", "N_INP_NF_IMAGE")
-        assert test_path == "20220408165857/N_INP_NF_IMAGE.png"
+    @pytest.mark.parametrize(
+        ["use_subdirectories", "path"],
+        [
+            pytest.param(False, "20220408165857/N_INP_NF_IMAGE.png"),
+            pytest.param(True, "2022/04/08/165857/N_INP_NF_IMAGE.png"),
+        ],
+    )
+    def test_get_relative_path(self, use_subdirectories: bool, path: str):
+        test_path = Image.get_relative_path(
+            "20220408165857",
+            "N_INP_NF_IMAGE",
+            use_subdirectories=use_subdirectories,
+        )
+        assert test_path == path
 
     @pytest.mark.parametrize(
         ["data", "bit_depth", "record_tuples", "dtype", "value"],
