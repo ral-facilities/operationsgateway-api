@@ -26,6 +26,12 @@ class EchoInterface:
     def __init__(self) -> None:
         log.debug("Creating S3 resource to connect to Echo")
         try:
+            self.client = boto3.client(
+                "s3",
+                endpoint_url=Config.config.echo.url,
+                aws_access_key_id=Config.config.echo.access_key,
+                aws_secret_access_key=Config.config.echo.secret_key,
+            )
             self.resource = boto3.resource(
                 "s3",
                 endpoint_url=Config.config.echo.url,
@@ -57,6 +63,23 @@ class EchoInterface:
                 Config.config.echo.bucket_name,
             )
             raise EchoS3Error("Bucket for object storage cannot be found")
+
+    def head_object(self, object_path: str) -> bool:
+        """
+        https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/head_object.html
+
+        Uses the head operation to check the existence of an object without downloading
+        it.
+        """
+        log.info("Head object in Echo: %s", object_path)
+        try:
+            self.client.head_object(
+                Bucket=Config.config.echo.bucket_name,
+                Key=object_path,
+            )
+            return True
+        except ClientError:
+            return False
 
     def download_file_object(self, object_path: str) -> BytesIO:
         """

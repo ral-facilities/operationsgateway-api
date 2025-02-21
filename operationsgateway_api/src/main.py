@@ -26,6 +26,7 @@ from operationsgateway_api.src.routes import (
     images,
     ingest_data,
     maintenance,
+    nullable_images,
     records,
     sessions,
     user_preferences,
@@ -124,6 +125,7 @@ def add_router_to_app(api_router: APIRouter):
 
 # Adding endpoints to FastAPI app
 add_router_to_app(images.router)
+add_router_to_app(nullable_images.router)
 add_router_to_app(ingest_data.router)
 add_router_to_app(records.router)
 add_router_to_app(waveforms.router)

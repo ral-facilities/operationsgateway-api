@@ -50,6 +50,12 @@ class ImageModel(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
+class NullableImageModel(BaseModel):
+    path: str | Any | None
+    data: np.ndarray | Any | None
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
 class WaveformModel(BaseModel):
     # Path is optional as we need it when ingesting waveforms (so we know where to store
     # it) but don't want to display it when a user is retrieving a waveform. Setting
@@ -107,6 +113,20 @@ class ImageChannelModel(BaseModel):
     thumbnail: Optional[Union[bytes, Any]] = None
 
 
+class NullableImageChannelMetadataModel(BaseModel):
+    channel_dtype: Literal["nullable_image"] | Any | None = "nullable_image"
+    x_pixel_size: float | Any | None = None
+    x_pixel_units: str | Any | None = None
+    y_pixel_size: float | Any | None = None
+    y_pixel_units: str | Any | None = None
+
+
+class NullableImageChannelModel(BaseModel):
+    metadata: ImageChannelMetadataModel
+    image_path: str | Any | None
+    thumbnail: bytes | Any | None = None
+
+
 class ScalarChannelMetadataModel(BaseModel):
     channel_dtype: Optional[Union[str, Any]]
     units: Optional[Union[str, Any]] = None
@@ -142,7 +162,10 @@ class RecordModel(BaseModel):
     metadata: RecordMetadataModel
     channels: Dict[
         str,
-        Union[ImageChannelModel, ScalarChannelModel, WaveformChannelModel],
+        ImageChannelModel
+        | NullableImageChannelModel
+        | ScalarChannelModel
+        | WaveformChannelModel,
     ]
 
 
@@ -175,7 +198,10 @@ class ChannelModel(BaseModel):
 
     name: str
     path: str
-    type_: Optional[Literal["scalar", "image", "waveform"]] = Field(None, alias="type")
+    type_: Literal["scalar", "image", "nullable_image", "waveform"] | None = Field(
+        None,
+        alias="type",
+    )
 
     # Should the value be displayed as it is stored or be shown in x10^n format
     notation: Optional[Literal["scientific", "normal"]] = None

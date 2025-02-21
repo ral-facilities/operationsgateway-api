@@ -39,6 +39,13 @@ class ImagesConfig(BaseModel):
     preferred_colour_map_pref_name: StrictStr
 
 
+class NullableImagesConfig(BaseModel):
+    thumbnail_size: tuple[int, int]
+    default_colour_map: StrictStr
+    upload_image_threads: StrictInt
+    preferred_colour_map_pref_name: StrictStr
+
+
 class WaveformsConfig(BaseModel):
     thumbnail_size: Tuple[int, int]
     line_width: float
@@ -115,6 +122,7 @@ class APIConfig(BaseModel):
     auth: AuthConfig
     experiments: ExperimentsConfig
     images: ImagesConfig
+    nullable_images: NullableImagesConfig
     waveforms: WaveformsConfig
     echo: EchoConfig
     export: ExportConfig

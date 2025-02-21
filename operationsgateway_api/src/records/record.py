@@ -33,6 +33,7 @@ from operationsgateway_api.src.models import (
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.nullable_image import NullableImage
 from operationsgateway_api.src.records.waveform import Waveform
 
 
@@ -55,12 +56,12 @@ class Record:
         else:
             raise RecordError("RecordModel or dictionary not passed to Record init")
 
-    def store_thumbnail(self, data: Union[Image, Waveform]) -> None:
+    def store_thumbnail(self, data: Image | NullableImage | Waveform) -> None:
         """
         Extract a thumbnail from a given image or waveform and store it in the record
         object so it can be inserted in the database as part of the record
         """
-        if isinstance(data, Image):
+        if isinstance(data, (Image, NullableImage)):
             _, channel_name = data.extract_metadata_from_path()
         elif isinstance(data, Waveform):
             channel_name = data.get_channel_name_from_id()
@@ -292,6 +293,7 @@ class Record:
         lower_level: int,
         upper_level: int,
         colourmap_name: str,
+        nullable_colourmap_name: str,
     ) -> None:
         """
         Apply false colour to any greyscale image thumbnails in the record.
@@ -319,6 +321,15 @@ class Record:
                         colourmap_name,
                     )
                     thumbnail_bytes.seek(0)
+                    value["thumbnail"] = base64.b64encode(thumbnail_bytes.getvalue())
+                elif channel_dtype == "nullable_image":
+                    b64_thumbnail_str = value["thumbnail"]
+                    thumbnail_bytes = (
+                        FalseColourHandler.apply_false_colour_to_b64_nullable_img(
+                            b64_thumbnail_str,
+                            nullable_colourmap_name,
+                        )
+                    )
                     value["thumbnail"] = base64.b64encode(thumbnail_bytes.getvalue())
             except KeyError:
                 # If there's no thumbnail (e.g. if channel isn't an image or waveform)

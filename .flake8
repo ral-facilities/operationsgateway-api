@@ -1,7 +1,7 @@
 # .flake8
 [flake8]
 select = A,B,B9,BLK,C,E,F,I,N,S,W
-ignore = E203,W503,E501,B905
+ignore = E203,W503,E501,B905,E704
 max-complexity = 12
 max-line-length = 80
 application-import-names = operationsgateway_api,test
