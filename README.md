@@ -120,11 +120,9 @@ poetry run python operationsgateway_api/src/main.py
 
 Assuming the default configuration, the API will exist on 127.0.0.1:8000.
 
-Note:
->
-> The port forwarding service on most IDEs will allow you to access the API on the remote VM through your local web browser. Then, you can visit `/docs` in a browser, which will give an OpenAPI interface detailing each of the endpoints.
->
-> Alternatively, you can use the Postman requests in this repo. This gives a more user-friendly way of interacting with the API. Certain environments and scripts have been set up in Postman to help with using the API. For example, before any call is made to the API, the `/login` call can be used to get and store a JWT, which will be used automatically in the `auth` header of following calls to the API.
+The port forwarding service on most IDEs will allow you to access the API on the remote VM through your local web browser. Then, you can visit `/docs` in a browser, which will give an OpenAPI interface detailing each of the endpoints.
+
+Alternatively, you can use the Postman requests in this repo. This gives a more user-friendly way of interacting with the API. Certain environments and scripts have been set up in Postman to help with using the API. For example, before any call is made to the API, the `/login` call can be used to get and store a JWT, which will be used automatically in the `auth` header of following calls to the API.
 
 ## Testing
 
