@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from io import BytesIO
 import logging
-from typing import Optional, Tuple
+from typing import Optional
 
 from botocore.exceptions import ClientError
 import numpy as np
@@ -14,28 +14,28 @@ from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import (
     EchoS3Error,
     ImageError,
-    ImageNotFoundError,
 )
 from operationsgateway_api.src.functions.builtins.centroid_x import CentroidX
 from operationsgateway_api.src.functions.builtins.centroid_y import CentroidY
 from operationsgateway_api.src.functions.builtins.fwhm import FWHM
 from operationsgateway_api.src.functions.waveform_variable import WaveformVariable
 from operationsgateway_api.src.models import ImageModel
-from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.echo_interface import EchoInterface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
+from operationsgateway_api.src.records.image_abc import ImageABC
 from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
 
 
 log = logging.getLogger()
 
 
-class Image:
+class Image(ImageABC):
     lookup_table_16_to_8_bit = [i / 256 for i in range(65536)]
     echo_prefix = "images"
+    echo_extension = "png"
 
     def __init__(self, image: ImageModel) -> None:
-        self.image = image
+        super().__init__(image)
 
         if isinstance(self.image.bit_depth, int):
             bit_depth = self.image.bit_depth
@@ -100,17 +100,6 @@ class Image:
         self.thumbnail = ThumbnailHandler.convert_to_base64(img)
 
         img.close()
-
-    def extract_metadata_from_path(self) -> Tuple[str, str]:
-        """
-        Small string handler function to extract the record ID and channel name from the
-        image's path
-        """
-
-        record_id = self.image.path.split("/")[-2]
-        channel_name = self.image.path.split("/")[-1].split(".")[0]
-
-        return record_id, channel_name
 
     @staticmethod
     def upload_image(input_image: Image) -> Optional[str]:
@@ -204,60 +193,7 @@ class Image:
                 img_src.close()
                 return false_colour_image
         except (ClientError, EchoS3Error) as exc:
-            # Record.count_records() could not be used because that would cause a
-            # circular import
-            record_count = await MongoDBInterface.count_documents(
-                "records",
-                {
-                    "_id": record_id,
-                    f"channels.{channel_name}": {"$exists": True},
-                },
-            )
-
-            if record_count == 1:
-                log.error(
-                    "Image could not be found on object storage. Record ID: %s, channel"
-                    " name: %s",
-                    record_id,
-                    channel_name,
-                )
-                raise ImageError("Image could not be found on object storage") from exc
-            elif record_count == 0:
-                log.error(
-                    "Image not available due to invalid record ID (%s) or channel name"
-                    " (%s)",
-                    record_id,
-                    channel_name,
-                )
-                raise ImageNotFoundError(
-                    "Image not available due to incorrect record ID or channel name",
-                ) from exc
-            else:
-                log.error(
-                    "Unexpected number of records (%d) found when verifying whether the"
-                    " image should be available on object storage",
-                    record_count,
-                )
-                raise ImageError(
-                    "Unexpected error finding image on object storage",
-                ) from exc
-
-    @staticmethod
-    def get_relative_path(record_id: str, channel_name: str) -> str:
-        """
-        Returns a relative image path given a record ID and channel name. The path is
-        relative to the base directory of where images are stored in Echo
-        """
-
-        return f"{record_id}/{channel_name}.png"
-
-    @staticmethod
-    def get_full_path(relative_path: str) -> str:
-        """
-        Converts a relative image path to a full path by adding the 'prefix' onto a
-        relative path of an image. The full path doesn't include the bucket name
-        """
-        return f"{Image.echo_prefix}/{relative_path}"
+            await Image._handle_get_image_exception(record_id, channel_name, exc)
 
     @staticmethod
     async def get_preferred_colourmap(access_token: str) -> str:

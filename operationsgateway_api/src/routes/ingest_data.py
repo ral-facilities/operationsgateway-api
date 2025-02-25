@@ -18,6 +18,7 @@ from operationsgateway_api.src.records.ingestion.partial_import_checks import (
     PartialImportChecks,
 )
 from operationsgateway_api.src.records.ingestion.record_checks import RecordChecks
+from operationsgateway_api.src.records.nullable_image import NullableImage
 from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.waveform import Waveform
 
@@ -54,6 +55,7 @@ async def submit_hdf(
         record_data,
         waveforms,
         images,
+        nullable_images,
         internal_failed_channel,
     ) = await hdf_handler.extract_data()
 
@@ -67,44 +69,30 @@ async def submit_hdf(
     record_checker.optional_metadata_checks()
 
     channel_checker = ChannelChecks(
-        record_data,
-        waveforms,
-        images,
-        internal_failed_channel,
+        ingested_record=record_data,
+        ingested_waveforms=waveforms,
+        ingested_images=images,
+        ingested_nullable_images=nullable_images,
+        internal_failed_channels=internal_failed_channel,
     )
     manifest = await ChannelManifest.get_most_recent_manifest()
     channel_checker.set_channels(manifest)
     channel_dict = await channel_checker.channel_checks()
 
     if stored_record:
-        partial_import_checker = PartialImportChecks(
-            record_data,
-            stored_record,
-        )
+        partial_import_checker = PartialImportChecks(record_data, stored_record)
         accept_type = partial_import_checker.metadata_checks()
-        partial_channel_dict = partial_import_checker.channel_checks()
-
-        log.info("existent record found")
-        for key in channel_dict["rejected_channels"].keys():
-            if key in partial_channel_dict["accepted_channels"]:
-                partial_channel_dict["accepted_channels"].remove(key)
-                partial_channel_dict["rejected_channels"][key] = channel_dict[
-                    "rejected_channels"
-                ][key]
-            else:
-                partial_channel_dict["rejected_channels"][key] = channel_dict[
-                    "rejected_channels"
-                ][key]
-        checker_response = partial_channel_dict
+        checker_response = partial_import_checker.channel_checks(channel_dict)
     else:
         checker_response = channel_dict
 
     checker_response["warnings"] = list(warning) if warning else []
 
-    record_data, images, waveforms = HDFDataHandler._update_data(
+    record_data, images, nullable_images, waveforms = HDFDataHandler._update_data(
         checker_response,
         record_data,
         images,
+        nullable_images,
         waveforms,
     )
 
@@ -142,9 +130,27 @@ async def submit_hdf(
         pool.close()
         image_instances = None
 
+    log.debug("Processing nullable images")
+    failed_nullable_image_uploads = []
+    nullable_image_instances = [NullableImage(i) for i in nullable_images]
+    for nullable_image in nullable_image_instances:
+        nullable_image.create_thumbnail()
+        record.store_thumbnail(nullable_image)  # in the record not echo
+    if len(nullable_image_instances) > 0:
+        pool = ThreadPool(processes=Config.config.nullable_images.upload_image_threads)
+        upload_results = pool.map(NullableImage.upload_image, nullable_image_instances)
+        # Filter out successful uploads, collect only failed ones
+        failed_nullable_image_uploads = [
+            channel for channel in upload_results if channel
+        ]
+        pool.close()
+        nullable_image_instances = None
+
     # Combine failed channels from waveforms and images and remove them from the record
     # Update the channel checker to reflect failed uploads
-    all_failed_upload_channels = failed_waveform_uploads + failed_image_uploads
+    all_failed_upload_channels = (
+        failed_waveform_uploads + failed_image_uploads + failed_nullable_image_uploads
+    )
     for channel in all_failed_upload_channels:
         record.remove_channel(channel)
         if channel in checker_response["accepted_channels"]:
@@ -181,7 +187,9 @@ async def submit_hdf(
 
         # Emptying variables to save memory
         images = []
+        nullable_images = []
         hdf_handler.images = []
+        hdf_handler.nullable_images = []
         hdf_handler = None
         channel_checker = None
         waveforms = None
