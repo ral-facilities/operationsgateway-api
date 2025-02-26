@@ -31,6 +31,7 @@ from operationsgateway_api.src.models import (
     ShotnumConverterRange,
 )
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
+from operationsgateway_api.src.records.echo_interface import EchoInterface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.waveform import Waveform
@@ -856,3 +857,20 @@ class Record:
 
             image_bytes.seek(0)
             return {"data": image_bytes, "_variable_value": result}
+
+    @staticmethod
+    async def generate_presigned_urls(record: dict) -> None:
+        """
+        For every raw file channel in the record, generate a presigned url
+        for that raw file and include it in the channel dict.
+        """
+        echo = EchoInterface()
+        record_id = record["_id"]
+        for channel_name, value in record["channels"].items():
+            channel_dtype = await Record.get_channel_dtype(
+                record_id,
+                channel_name,
+                value,
+            )
+            if channel_dtype == "raw_file" and "file_path" in value:
+                value["file_path"] = echo.generate_presigned_url(value["file_path"])

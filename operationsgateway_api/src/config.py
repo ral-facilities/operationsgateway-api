@@ -50,6 +50,7 @@ class EchoConfig(BaseModel):
     access_key: StrictStr
     secret_key: StrictStr
     bucket_name: StrictStr
+    presigned_url_expiry: int = 3600  # boto3 default is 1 hour
 
 
 class MongoDB(BaseModel):
