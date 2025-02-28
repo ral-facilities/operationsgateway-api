@@ -1,7 +1,7 @@
 from datetime import datetime
 import logging
 from tempfile import SpooledTemporaryFile
-from typing import List, Tuple
+from typing import Any, Literal
 
 import h5py
 from pydantic import ValidationError
@@ -13,6 +13,9 @@ from operationsgateway_api.src.models import (
     ImageChannelMetadataModel,
     ImageChannelModel,
     ImageModel,
+    NullableImageChannelMetadataModel,
+    NullableImageChannelModel,
+    NullableImageModel,
     RecordMetadataModel,
     RecordModel,
     ScalarChannelMetadataModel,
@@ -33,6 +36,7 @@ class HDFDataHandler:
     acceptable_datasets = {
         "scalar": ["data"],
         "image": ["data"],
+        "nullable_image": ["data"],
         "waveform": ["x", "y"],
     }
 
@@ -45,10 +49,17 @@ class HDFDataHandler:
         self.channels = {}
         self.waveforms = []
         self.images = []
+        self.nullable_images = []
 
     async def extract_data(
         self,
-    ) -> Tuple[RecordModel, List[WaveformModel], List[ImageModel]]:
+    ) -> tuple[
+        RecordModel,
+        list[WaveformModel],
+        list[ImageModel],
+        list[NullableImageModel],
+        list[dict[str, str]],
+    ]:
         """
         Extract data from a HDF file that is formatted in the OperationsGateway data
         structure format. Metadata of the shot, channel data and its metadata is
@@ -92,7 +103,13 @@ class HDFDataHandler:
         except ValidationError as exc:
             raise ModelError(str(exc)) from exc
 
-        return record, self.waveforms, self.images, self.internal_failed_channel
+        return (
+            record,
+            self.waveforms,
+            self.images,
+            self.nullable_images,
+            self.internal_failed_channel,
+        )
 
     def _unexpected_attribute(self, channel_type, value):
         """
@@ -130,6 +147,49 @@ class HDFDataHandler:
                 bit_depth=metadata.bit_depth,
             )
             self.images.append(image_model)
+
+            return channel, False
+        except KeyError:
+            internal_failed_channel.append(
+                {channel_name: "data attribute is missing"},
+            )
+            return None, internal_failed_channel
+        except ValidationError as exc:
+            raise ModelError(str(exc)) from exc
+
+    def _extract_nullable_image(
+        self,
+        internal_failed_channel: list[dict[str, str]],
+        channel_name: str,
+        channel_metadata: dict,
+        value: Any,
+    ) -> (
+        tuple[NullableImageChannelModel, Literal[False]]
+        | tuple[None, list[dict[str, str]]]
+    ):
+        """
+        Extract data for nullable images in the HDF file and place the data into
+        relevant Pydantic models as well as performing nullable image specific checks.
+        """
+        image_path = Image.get_relative_path(self.record_id, channel_name)
+
+        if self._unexpected_attribute("nullable_image", value):
+            internal_failed_channel.append(
+                {channel_name: "unexpected group or dataset in channel group"},
+            )
+            return None, internal_failed_channel
+
+        try:
+            metadata = NullableImageChannelMetadataModel(**channel_metadata)
+            channel = NullableImageChannelModel(
+                metadata=metadata,
+                image_path=image_path,
+            )
+            image_model = NullableImageModel(
+                path=image_path,
+                data=value["data"][()],
+            )
+            self.nullable_images.append(image_model)
 
             return channel, False
         except KeyError:
@@ -265,6 +325,17 @@ class HDFDataHandler:
                     internal_failed_channel = fail
                     continue
 
+            elif value.attrs["channel_dtype"] == "nullable_image":
+                channel, fail = self._extract_nullable_image(
+                    internal_failed_channel,
+                    channel_name,
+                    channel_metadata,
+                    value,
+                )
+                if fail:
+                    internal_failed_channel = fail
+                    continue
+
             elif value.attrs["channel_dtype"] == "rgb-image":
                 # TODO - implement colour image ingestion. Currently waiting on the
                 # OG-HDF5 converter to support conversion of colour images.
@@ -300,7 +371,18 @@ class HDFDataHandler:
         self.internal_failed_channel = internal_failed_channel
 
     @staticmethod
-    def _update_data(checker_response, record_data, images, waveforms):
+    def _update_data(
+        checker_response: dict[str, Any],
+        record_data: RecordModel,
+        images: list[ImageModel],
+        nullable_images: list[NullableImageModel],
+        waveforms: list[WaveformModel],
+    ) -> tuple[
+        RecordModel,
+        list[ImageModel],
+        list[NullableImageModel],
+        list[WaveformModel],
+    ]:
         for key in checker_response["rejected_channels"].keys():
             try:
                 channel = record_data.channels[key]
@@ -308,19 +390,22 @@ class HDFDataHandler:
                 continue
 
             if channel.metadata.channel_dtype == "image":
-                channel_image_path = channel.image_path
-                for image in images:
-                    if image.path == channel_image_path:
-                        images.remove(image)
-                del record_data.channels[key]
-
+                HDFDataHandler.remove_channel(images, channel.image_path)
+            elif channel.metadata.channel_dtype == "nullable_image":
+                HDFDataHandler.remove_channel(nullable_images, channel.image_path)
             elif channel.metadata.channel_dtype == "waveform":
-                channel_waveform_path = channel.waveform_path
-                for waveform in waveforms:
-                    if waveform.path == channel_waveform_path:
-                        waveforms.remove(waveform)
-                del record_data.channels[key]
+                HDFDataHandler.remove_channel(waveforms, channel.waveform_path)
 
-            else:
-                del record_data.channels[key]
-        return record_data, images, waveforms
+            del record_data.channels[key]
+
+        return record_data, images, nullable_images, waveforms
+
+    @staticmethod
+    def remove_channel(
+        models: list[ImageModel] | list[NullableImageModel] | list[WaveformModel],
+        path: str,
+    ) -> None:
+        """Removes the model from models with the specified path, if found."""
+        for model in models:
+            if model.path == path:
+                return models.remove(model)
