@@ -208,14 +208,21 @@ class ExportHandler:
             return "ID"
         else:
             projection_parts = projection.split(".")
+            if len(projection_parts) < 2:
+                message = f"Projection '{projection}' did not include a second term"
+                raise ExportError(message)
+
             return projection_parts[1]
 
     def _get_channel_type(self, channel_name: str) -> ChannelDtype:
         """Extracts the "type" for either a function or channel."""
         if channel_name in self.function_types:
             return self.function_types[channel_name]
-        else:
+        elif channel_name in self.channel_manifest.channels:
             return self.channel_manifest.channels[channel_name].type_
+        else:
+            message = f"'{channel_name}' is not a recognised channel or function name"
+            raise ExportError(message)
 
     async def _process_data_channel(
         self,
