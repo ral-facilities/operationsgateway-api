@@ -34,7 +34,7 @@ class TestWaveform:
     async def test_insert_waveform_success(
         self,
         test_waveform: WaveformModel,
-        remove_waveform_entry,
+        remove_test_objects,
     ):
         waveform_instance = Waveform(test_waveform)
         response = waveform_instance.insert_waveform()
