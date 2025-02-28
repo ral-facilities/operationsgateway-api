@@ -8,6 +8,7 @@ from operationsgateway_api.src.exceptions import ExportError
 from operationsgateway_api.src.functions.type_transformer import TypeTransformer
 from operationsgateway_api.src.models import ChannelManifestModel
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.raw_file import RawFile
 from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.waveform import Waveform
 
@@ -32,6 +33,7 @@ class ExportHandler:
         export_images: bool,
         export_waveform_csvs: bool,
         export_waveform_images: bool,
+        export_raw_files: bool,
     ) -> None:
         """
         Store all of the information that needs to be processed during the export
@@ -47,6 +49,7 @@ class ExportHandler:
         self.export_images = export_images
         self.export_waveform_csvs = export_waveform_csvs
         self.export_waveform_images = export_waveform_images
+        self.export_raw_files = export_raw_files
 
         self.record_ids = []
         self.errors_file_in_memory = io.StringIO()
@@ -167,7 +170,7 @@ class ExportHandler:
                 # image and waveform data will be exported to separate files so will not
                 # have values put in the main csv file
                 channel_type = self._get_channel_type(channel_name)
-                if channel_type not in ["image", "waveform"]:
+                if channel_type not in ["image", "waveform", "raw_file"]:
                     line = self._add_value_to_csv_line(line, channel_name)
             else:
                 # this must be a "metadata" channel
@@ -228,6 +231,9 @@ class ExportHandler:
                 x_units,
                 y_units,
             )
+        elif channel_type == "raw_file":
+            log.info("Channel %s is a raw_file", channel_name)
+            await self._add_raw_file_to_zip(record_data, record_id, channel_name)
         # process a scalar channel
         else:
             log.info("Channel %s is a scalar", channel_name)
@@ -352,6 +358,35 @@ class ExportHandler:
                     waveform_png_bytes,
                 )
                 self._check_zip_file_size()
+
+    async def _add_raw_file_to_zip(
+        self,
+        record_data: dict,
+        record_id: str,
+        channel_name: str,
+    ) -> None:
+        """
+        Get the bytes of a raw file from storage and add it to the zip file being
+        created for download.
+        """
+        if not self.export_raw_files:
+            return
+
+        try:
+            record_data["channels"][channel_name]
+        except KeyError:
+            # there is no entry for this channel in the record
+            # so there is no raw file to process
+            return
+
+        log.info("Getting raw file to add to zip: %s %s", record_id, channel_name)
+        try:
+            bytes_io = await RawFile.get_raw_file(record_id, channel_name)
+            self.zip_file.writestr(f"{record_id}_{channel_name}", bytes_io.getvalue())
+            self._check_zip_file_size()
+        except Exception:
+            s = f"Could not find raw file for {record_id} {channel_name}\n"
+            self.errors_file_in_memory.write(s)
 
     def _add_main_csv_file_to_zip(self):
         """

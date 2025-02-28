@@ -75,6 +75,18 @@ class ImageNotFoundError(ApiError):
         self.status_code = 404
 
 
+class RawFileError(ApiError):
+    def __init__(self, msg="Raw file error", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 500
+
+
+class RawFileNotFoundError(ApiError):
+    def __init__(self, msg="Raw file cannot be found in storage", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 404
+
+
 class RecordError(ApiError):
     def __init__(self, msg="Record error", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)

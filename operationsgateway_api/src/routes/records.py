@@ -105,6 +105,7 @@ async def get_records(
 
     for record_data in records_data:
         if record_data.get("channels"):
+            await Record.generate_presigned_urls(record=record_data)
             await Record.apply_false_colour_to_thumbnails(
                 record_data,
                 lower_level,
@@ -233,6 +234,7 @@ async def get_record_by_id(
     record_data = await Record.find_record_by_id(id_, conditions)
 
     if record_data.get("channels"):
+        await Record.generate_presigned_urls(record=record_data)
         if colourmap_name is None:
             colourmap_name = await Image.get_preferred_colourmap(access_token)
 
