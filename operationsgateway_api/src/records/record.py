@@ -61,9 +61,9 @@ class Record:
         object so it can be inserted in the database as part of the record
         """
         if isinstance(data, Image):
-            _, channel_name = data.extract_metadata_from_path()
+            channel_name = data.get_channel_name_from_path()
         elif isinstance(data, Waveform):
-            channel_name = data.get_channel_name_from_id()
+            channel_name = data.get_channel_name_from_path()
 
         self.record.channels[channel_name].thumbnail = data.thumbnail
 
@@ -655,13 +655,12 @@ class Record:
             )
 
         elif channel_dtype == "waveform":
-            waveform_path = channel_value["waveform_path"]
             if "metadata" in channel_value and "x_units" in channel_value["metadata"]:
                 x_units = channel_value["metadata"]["x_units"]
             else:
                 x_units = None
 
-            waveform = Waveform.get_waveform(waveform_path)
+            waveform = Waveform.get_waveform(record_id, name)
             return WaveformVariable(waveform, x_units=x_units)
         else:
             return channel_value["data"]

@@ -24,9 +24,18 @@ async def remove_record_entry():
 
 
 @pytest.fixture(scope="function")
-def remove_waveform_entry():
+def remove_test_objects():
     yield
     echo = EchoInterface()
     echo.delete_file_object(
+        "images/19520605070023/test-channel-name.png",
+    )
+    echo.delete_file_object(
+        "images/1952/06/05/070023/test-channel-name.png",
+    )
+    echo.delete_file_object(
         "waveforms/19520605070023/test-channel-name.json",
+    )
+    echo.delete_file_object(
+        "waveforms/1952/06/05/070023/test-channel-name.json",
     )
