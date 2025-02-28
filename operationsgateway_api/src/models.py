@@ -43,6 +43,12 @@ default_id = Field(None, alias="_id")
 default_exclude_field = Field(None, exclude=True)
 
 
+class ChannelDtype(StrEnum):
+    IMAGE = "image"
+    WAVEFORM = "waveform"
+    SCALAR = "scalar"
+
+
 class ImageModel(BaseModel):
     path: Optional[Union[str, Any]]
     data: Optional[Union[np.ndarray, Any]]
@@ -69,7 +75,7 @@ class WaveformModel(BaseModel):
 
 
 class ImageChannelMetadataModel(BaseModel):
-    channel_dtype: Optional[Union[str, Any]]
+    channel_dtype: Literal[ChannelDtype.IMAGE] | Any | None = ChannelDtype.IMAGE
     exposure_time_s: Optional[Union[float, Any]] = None
     gain: Optional[Union[float, Any]] = None
     x_pixel_size: Optional[Union[float, Any]] = None
@@ -108,7 +114,7 @@ class ImageChannelModel(BaseModel):
 
 
 class ScalarChannelMetadataModel(BaseModel):
-    channel_dtype: Optional[Union[str, Any]]
+    channel_dtype: Literal[ChannelDtype.SCALAR] | Any | None = ChannelDtype.SCALAR
     units: Optional[Union[str, Any]] = None
 
 
@@ -118,7 +124,7 @@ class ScalarChannelModel(BaseModel):
 
 
 class WaveformChannelMetadataModel(BaseModel):
-    channel_dtype: Optional[Union[str, Any]]
+    channel_dtype: Literal[ChannelDtype.WAVEFORM] | Any | None = ChannelDtype.WAVEFORM
     x_units: Optional[Union[str, Any]] = None
     y_units: Optional[Union[str, Any]] = None
 
@@ -140,10 +146,35 @@ class RecordMetadataModel(BaseModel):
 class RecordModel(BaseModel):
     id_: str = Field(alias="_id")
     metadata: RecordMetadataModel
-    channels: Dict[
-        str,
-        Union[ImageChannelModel, ScalarChannelModel, WaveformChannelModel],
-    ]
+    channels: dict[str, ImageChannelModel | ScalarChannelModel | WaveformChannelModel]
+
+
+class PartialImageChannelModel(ImageChannelModel):
+    metadata: ImageChannelMetadataModel | None = None
+    image_path: str | None = None
+    thumbnail: bytes | None = None
+
+
+class PartialScalarChannelModel(ScalarChannelModel):
+    metadata: ScalarChannelMetadataModel | None = None
+    data: int | float | str | None = None
+
+
+class PartialWaveformChannelModel(WaveformChannelModel):
+    metadata: WaveformChannelMetadataModel | None = None
+    thumbnail: bytes | None = None
+    waveform_path: str | None = None
+
+
+PartialChannelModel = (
+    PartialImageChannelModel | PartialScalarChannelModel | PartialWaveformChannelModel
+)
+PartialChannels = dict[str, PartialChannelModel]
+
+
+class PartialRecordModel(RecordModel):
+    metadata: RecordMetadataModel | None = None
+    channels: PartialChannels | None = None
 
 
 class LoginDetailsModel(BaseModel):

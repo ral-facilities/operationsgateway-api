@@ -19,7 +19,7 @@ from operationsgateway_api.src.exceptions import (
 from operationsgateway_api.src.functions.builtins.centroid_x import CentroidX
 from operationsgateway_api.src.functions.builtins.centroid_y import CentroidY
 from operationsgateway_api.src.functions.builtins.fwhm import FWHM
-from operationsgateway_api.src.functions.waveform_variable import WaveformVariable
+from operationsgateway_api.src.functions.variable_models import WaveformVariable
 from operationsgateway_api.src.models import ImageModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.echo_interface import EchoInterface

@@ -789,6 +789,43 @@ class TestExport:
 
         assert test_response.status_code == 200
 
+    @pytest.mark.parametrize(
+        ["projection", "message"],
+        [
+            pytest.param(
+                "channels",
+                "Projection 'channels' did not include a second term",
+            ),
+            pytest.param(
+                "channels.non_existent_channel",
+                "'non_existent_channel' is not a recognised channel or function name",
+            ),
+        ],
+    )
+    def test_csv_export_failure(
+        self,
+        test_app: TestClient,
+        login_and_get_token: str,
+        projection: str,
+        message: str,
+    ):
+        get_params = []
+        conditions = {"_id": {"$in": ["20230605080000"]}}
+        get_params.append(f"conditions={json.dumps(conditions)}")
+        get_params.append(f"projection={projection}")
+        TestExport.compile_get_params(get_params, "skip", 0)
+        TestExport.compile_get_params(get_params, "limit", 1)
+        TestExport.compile_get_params(get_params, "order", "metadata.shotnum ASC")
+        get_params_str = "&".join(get_params)
+
+        test_response = test_app.get(
+            f"/export?{get_params_str}",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+        )
+
+        assert test_response.status_code == 400
+        assert json.loads(test_response.content.decode())["detail"] == message
+
     @staticmethod
     def compile_functions(get_params: list, name: str, expression: str) -> None:
         function_str = json.dumps({"name": name, "expression": expression})
