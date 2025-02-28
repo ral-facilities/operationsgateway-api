@@ -9,7 +9,15 @@ from operationsgateway_api.src.records.echo_interface import EchoInterface
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.waveform import Waveform
 
-parser = argparse.ArgumentParser()
+description = (
+    "Utility script for moving objects stored in echo from their actual location to a "
+    "new, preferred path. For one or more records, every channel storing data in an "
+    "old style location is fetched. This data is then copied from to a location using "
+    "the current preferred path style, and the record in the database is updated. "
+    "Finally, data in the old location is deleted. Renaming buckets is not possible, "
+    "so the data must be copied then deleted at the original location."
+)
+parser = argparse.ArgumentParser(description=description)
 parser.add_argument(
     "-u",
     "--url",
