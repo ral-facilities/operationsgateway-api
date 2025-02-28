@@ -9,6 +9,7 @@ from operationsgateway_api.src.functions.type_transformer import TypeTransformer
 from operationsgateway_api.src.models import ChannelManifestModel
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.record import Record
+from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
 
 
@@ -32,6 +33,8 @@ class ExportHandler:
         export_images: bool,
         export_waveform_csvs: bool,
         export_waveform_images: bool,
+        export_vector_csvs: bool,
+        export_vector_images: bool,
     ) -> None:
         """
         Store all of the information that needs to be processed during the export
@@ -47,6 +50,8 @@ class ExportHandler:
         self.export_images = export_images
         self.export_waveform_csvs = export_waveform_csvs
         self.export_waveform_images = export_waveform_images
+        self.export_vector_csvs = export_vector_csvs
+        self.export_vector_images = export_vector_images
 
         self.record_ids = []
         self.errors_file_in_memory = io.StringIO()
@@ -167,7 +172,7 @@ class ExportHandler:
                 # image and waveform data will be exported to separate files so will not
                 # have values put in the main csv file
                 channel_type = self._get_channel_type(channel_name)
-                if channel_type not in ["image", "waveform"]:
+                if channel_type not in ["image", "waveform", "vector"]:
                     line = self._add_value_to_csv_line(line, channel_name)
             else:
                 # this must be a "metadata" channel
@@ -228,6 +233,12 @@ class ExportHandler:
                 x_units,
                 y_units,
             )
+        elif channel_type == "vector":
+            log.info("Channel %s is a vector", channel_name)
+            labels = None
+            if "metadata" in channel and "labels" in channel["metadata"]:
+                labels = channel["metadata"]["labels"]
+            await self._add_vector_to_zip(record_data, record_id, channel_name, labels)
         # process a scalar channel
         else:
             log.info("Channel %s is a scalar", channel_name)
@@ -351,6 +362,63 @@ class ExportHandler:
                     f"{record_id}_{channel_name}.png",
                     waveform_png_bytes,
                 )
+                self._check_zip_file_size()
+
+    async def _add_vector_to_zip(
+        self,
+        record_data: dict,
+        record_id: str,
+        channel_name: str,
+        labels: list[str] | None,
+    ) -> None:
+        """
+        Get the arrays of x and y values for a waveform and then either write them to a
+        CSV file or create a rendered image of the waveform (or both) and add the
+        created file(s) to the zip file being created ready for download.
+        """
+        try:
+            # first check that there should be a vector to process
+            record_data["channels"][channel_name]
+        except KeyError:
+            # there is no entry for this channel in the record
+            # so there is no vector to process
+            return
+
+        if self.export_vector_csvs or self.export_vector_images:
+            log.info(
+                "Getting vector to add to zip: %s %s",
+                record_id,
+                channel_name,
+            )
+            try:
+                # TODO functions support?
+                vector_model = await Vector.get_vector(
+                    Vector.get_relative_path(record_id, channel_name),
+                )
+            except Exception:
+                self.errors_file_in_memory.write(
+                    f"Could not find vector for {record_id} {channel_name}\n",
+                )
+                # no point trying to process the vector so return at this point
+                return
+
+            if self.export_vector_csvs:
+                string_io = io.StringIO()
+                if labels:
+                    for label, value in zip(labels, vector_model.data, strict=True):
+                        string_io.write(f"{label},{value}\n")
+                else:
+                    for value in vector_model.data:
+                        string_io.write(f"{value}\n")
+
+                data = string_io.getvalue()
+                self.zip_file.writestr(f"{record_id}_{channel_name}.csv", data)
+                self._check_zip_file_size()
+
+            if self.export_vector_images:
+                vector = Vector(vector_model)
+                vector_image = vector.get_fullsize_png(labels)
+                self.zip_file.writestr(f"{record_id}_{channel_name}.png", vector_image)
                 self._check_zip_file_size()
 
     def _add_main_csv_file_to_zip(self):

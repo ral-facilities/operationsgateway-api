@@ -44,6 +44,10 @@ class WaveformsConfig(BaseModel):
     line_width: float
 
 
+class VectorsConfig(BaseModel):
+    thumbnail_size: tuple[int, int]
+
+
 class EchoConfig(BaseModel):
     url: StrictStr
     username: StrictStr
@@ -116,6 +120,7 @@ class APIConfig(BaseModel):
     experiments: ExperimentsConfig
     images: ImagesConfig
     waveforms: WaveformsConfig
+    vectors: VectorsConfig
     echo: EchoConfig
     export: ExportConfig
 
