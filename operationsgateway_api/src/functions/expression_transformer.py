@@ -3,7 +3,7 @@ import numpy as np
 
 from operationsgateway_api.src.functions.builtins.builtins import Builtins
 from operationsgateway_api.src.functions.parser import parser
-from operationsgateway_api.src.functions.waveform_variable import WaveformVariable
+from operationsgateway_api.src.functions.variable_models import WaveformVariable
 
 
 class ExpressionTransformer(Transformer):
