@@ -246,6 +246,8 @@ class TestRecord:
             lower_level=2,
             upper_level=3,
             colourmap_name="test",
+            vector_skip=None,
+            vector_limit=None,
         )
 
     @pytest.mark.asyncio

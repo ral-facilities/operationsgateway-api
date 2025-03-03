@@ -10,6 +10,24 @@ log = logging.getLogger()
 
 class UserPreferences:
     @staticmethod
+    async def get_default(
+        username: str,
+        pref_name: str,
+        default: int | float | bool | str | None = None,
+    ) -> int | float | bool | str:
+        """
+        Get the user preference value stored for the given user. If the user doesn't
+        have any preferences set yet or doesn't have this particular preference
+        set then return `default`.
+
+        :return: the user preference value or `default`
+        """
+        try:
+            return UserPreferences.get(username, pref_name)
+        except MissingAttributeError:
+            return default
+
+    @staticmethod
     async def get(username: str, pref_name: str) -> Union[int, float, bool, str]:
         """
         Get the user preference value stored for the given user. If the user doesn't

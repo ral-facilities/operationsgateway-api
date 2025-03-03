@@ -6,6 +6,7 @@ import logging
 from botocore.exceptions import ClientError
 from matplotlib import pyplot as plt
 
+from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import (
     EchoS3Error,
@@ -13,6 +14,7 @@ from operationsgateway_api.src.exceptions import (
 )
 from operationsgateway_api.src.models import VectorModel
 from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.users.preferences import UserPreferences
 
 
 log = logging.getLogger()
@@ -61,6 +63,26 @@ class Vector:
         """
         return f"{Vector.echo_prefix}/{relative_path}"
 
+    @staticmethod
+    async def get_skip_limit(access_token: str) -> tuple[int | None, int | None]:
+        """
+        Check the user's database record to see if they have a preferred skip and/or
+        limit on the entries to display.
+        """
+        username = JwtHandler.get_payload(access_token)["username"]
+        skip = await UserPreferences.get_default(
+            username,
+            Config.config.vectors.skip_pref_name,
+        )
+        limit = await UserPreferences.get_default(
+            username,
+            Config.config.vectors.limit_pref_name,
+        )
+
+        msg = "Preferred vector skip, limit for %s is %s, %s"
+        log.debug(msg, username, skip, limit)
+        return skip, limit
+
     def get_channel_name_from_path(self) -> str:
         """
         Get the channel name from the storage path.
@@ -87,17 +109,22 @@ class Vector:
             )
             return channel_name
 
-    def create_thumbnail(self) -> None:
+    def create_thumbnail(
+        self,
+        skip: int | None = None,
+        limit: int | None = None,
+    ) -> None:
         """
         Create a thumbnail of the vector data and store it in this object.
         """
+        data = self.vector.data[skip:limit]
         with BytesIO() as bytes_io:
             thumbnail_size = Config.config.vectors.thumbnail_size
             # 1 in figsize = 100px
             plt.figure(figsize=(thumbnail_size[0] / 100, thumbnail_size[1] / 100))
             plt.xticks([])
             plt.yticks([])
-            plt.bar(range(len(self.vector.data)), self.vector.data)
+            plt.bar(range(len(data)), data)
             plt.axis("off")
             plt.axhline(c="black")
             plt.box(False)
