@@ -16,6 +16,7 @@ from operationsgateway_api.src.models import PartialRecordModel
 from operationsgateway_api.src.records.echo_interface import EchoInterface
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.record import Record as Record
+from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
 from operationsgateway_api.src.routes.common_parameters import ParameterHandler
 
@@ -105,6 +106,7 @@ async def get_records(
     if colourmap_name is None:
         colourmap_name = await Image.get_preferred_colourmap(access_token)
 
+    vector_skip, vector_limit = await Vector.get_skip_limit(access_token)
     for record_data in records_data:
         if record_data.channels:
             await Record.apply_false_colour_to_thumbnails(
@@ -112,6 +114,8 @@ async def get_records(
                 lower_level,
                 upper_level,
                 colourmap_name,
+                vector_skip=vector_skip,
+                vector_limit=vector_limit,
             )
 
             if truncate:
@@ -239,11 +243,14 @@ async def get_record_by_id(
         if colourmap_name is None:
             colourmap_name = await Image.get_preferred_colourmap(access_token)
 
+        vector_skip, vector_limit = await Vector.get_skip_limit(access_token)
         await Record.apply_false_colour_to_thumbnails(
             record_data,
             lower_level,
             upper_level,
             colourmap_name,
+            vector_skip=vector_skip,
+            vector_limit=vector_limit,
         )
 
         if truncate:
