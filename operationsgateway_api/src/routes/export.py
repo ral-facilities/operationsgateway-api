@@ -105,6 +105,10 @@ async def export_records(
         False,
         description="Whether to export rendered images of the waveforms",
     ),
+    export_raw_files: bool = Query(
+        True,
+        description="Whether to export the images for image channels",
+    ),
 ):
     """
     Export the specified data to a file for download.
@@ -159,6 +163,7 @@ async def export_records(
         export_images,
         export_waveform_csvs,
         export_waveform_images,
+        export_raw_files,
     )
 
     await export_handler.process_records()

@@ -41,6 +41,7 @@ from operationsgateway_api.src.models import (
     ShotnumConverterRange,
 )
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
+from operationsgateway_api.src.records.echo_interface import EchoInterface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.waveform import Waveform
@@ -851,6 +852,22 @@ class Record:
                 data=image_bytes.getvalue(),
                 variable_value=result,
             )
+
+    @staticmethod
+    async def generate_presigned_urls(record: PartialRecordModel) -> None:
+        """
+        For every raw file channel in the record, generate a presigned url
+        for that raw file and include it in the channel dict.
+        """
+        echo = EchoInterface()
+        for channel_name, value in record.channels.items():
+            channel_dtype = await Record.get_channel_dtype(
+                record.id_,
+                channel_name,
+                value,
+            )
+            if channel_dtype == "raw_file" and value.file_path is not None:
+                value.file_path = echo.generate_presigned_url(value.file_path)
 
     @staticmethod
     def truncate_bytes(truncate: bool, image_b64: bytes) -> bytes:
