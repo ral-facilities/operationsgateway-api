@@ -135,7 +135,7 @@ class TestRecord:
 
         with pytest.raises(
             AttributeError,
-            match="'str' object has no attribute 'thumbnail",
+            match="'str' object has no attribute 'get_channel_name_from_path'",
         ):
             record_instance.store_thumbnail("test_image")
 

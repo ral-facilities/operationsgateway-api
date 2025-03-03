@@ -320,7 +320,7 @@ class ExportHandler:
 
     async def _add_nullable_image_to_zip(
         self,
-        record_data: dict,
+        channels: PartialChannels,
         record_id: str,
         channel_name: str,
     ) -> None:
@@ -328,13 +328,7 @@ class ExportHandler:
         Get a nullable image from Echo and add it to the zip file being created for
         download.
         """
-        if not self.export_nullable_images:
-            return
-
-        # first check that there should be an image to process
-        if "channels" not in record_data or channel_name not in record_data["channels"]:
-            # there is no entry for this channel in the record
-            # so there is no image to process
+        if not self.export_nullable_images or channel_name not in channels:
             return
 
         log.info("Getting nullable image to add to zip: %s %s", record_id, channel_name)

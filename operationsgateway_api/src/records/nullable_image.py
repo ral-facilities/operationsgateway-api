@@ -73,7 +73,7 @@ class NullableImage(ImageABC):
             return None  # No failure
         except EchoS3Error:
             # Extract the channel name and propagate it
-            record_id, channel_name = input_image.extract_metadata_from_path()
+            channel_name = input_image.get_channel_name_from_path()
             log.error("Failed to upload nullable image for channel: %s", channel_name)
             return channel_name
 

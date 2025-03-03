@@ -175,6 +175,34 @@ class RecordModel(BaseModel):
     ]
 
 
+class PartialImageChannelModel(ImageChannelModel):
+    metadata: ImageChannelMetadataModel | None = None
+    image_path: str | None = None
+    thumbnail: bytes | None = None
+
+
+class PartialScalarChannelModel(ScalarChannelModel):
+    metadata: ScalarChannelMetadataModel | None = None
+    data: int | float | str | None = None
+
+
+class PartialWaveformChannelModel(WaveformChannelModel):
+    metadata: WaveformChannelMetadataModel | None = None
+    thumbnail: bytes | None = None
+    waveform_path: str | None = None
+
+
+PartialChannelModel = (
+    PartialImageChannelModel | PartialScalarChannelModel | PartialWaveformChannelModel
+)
+PartialChannels = dict[str, PartialChannelModel]
+
+
+class PartialRecordModel(RecordModel):
+    metadata: RecordMetadataModel | None = None
+    channels: PartialChannels | None = None
+
+
 class LoginDetailsModel(BaseModel):
     username: str
     password: str
