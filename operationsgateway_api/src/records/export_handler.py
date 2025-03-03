@@ -343,9 +343,7 @@ class ExportHandler:
                 if channel_name in self.function_types:
                     waveform_model = channel.data
                 else:
-                    waveform_model = Waveform.get_waveform(
-                        Waveform.get_relative_path(record_id, channel_name),
-                    )
+                    waveform_model = Waveform.get_waveform(record_id, channel_name)
             except Exception:
                 self.errors_file_in_memory.write(
                     f"Could not find waveform for {record_id} {channel_name}\n",
