@@ -25,8 +25,18 @@ from operationsgateway_api.src.functions import (
     VariableTransformer,
     WaveformVariable,
 )
+from operationsgateway_api.src.functions.variable_models import (
+    PartialImageVariableChannelModel,
+    PartialVariableChannelModel,
+    PartialVariableChannels,
+    PartialWaveformVariableChannelModel,
+)
 from operationsgateway_api.src.models import (
+    ChannelDtype,
     DateConverterRange,
+    PartialChannelModel,
+    PartialRecordModel,
+    PartialScalarChannelModel,
     RecordModel,
     ShotnumConverterRange,
 )
@@ -61,9 +71,9 @@ class Record:
         object so it can be inserted in the database as part of the record
         """
         if isinstance(data, Image):
-            _, channel_name = data.extract_metadata_from_path()
+            channel_name = data.get_channel_name_from_path()
         elif isinstance(data, Waveform):
-            channel_name = data.get_channel_name_from_id()
+            channel_name = data.get_channel_name_from_path()
 
         self.record.channels[channel_name].thumbnail = data.thumbnail
 
@@ -148,7 +158,7 @@ class Record:
         limit: int,
         sort: List[Tuple[str, int]],
         projection: List[str],
-    ) -> List[dict]:
+    ) -> list[PartialRecordModel]:
         """
         Using the database query parameters, find record(s) that match the query and
         return them
@@ -162,14 +172,14 @@ class Record:
             projection=projection,
         )
         records_data = await MongoDBInterface.query_to_list(records_query)
-        return records_data
+        return [PartialRecordModel(**record) for record in records_data]
 
     @staticmethod
     async def find_record_by_id(
         id_: str,
         conditions: Dict[str, Any],
         projection: List[str] = None,
-    ) -> Dict[str, Any]:
+    ) -> PartialRecordModel:
         """
         Given an ID and any number of conditions, find a single record and return it. If
         the record cannot be found, a `MissingDocumentError` will be raised instead
@@ -181,7 +191,7 @@ class Record:
         )
 
         if record_data:
-            return record_data
+            return PartialRecordModel(**record_data)
         else:
             log.error("Record cannot be found. ID: %s, Conditions: %s", id_, conditions)
             raise MissingDocumentError("Record cannot be found")
@@ -272,23 +282,24 @@ class Record:
         return await MongoDBInterface.delete_one("records", {"_id": id_})
 
     @staticmethod
-    def truncate_thumbnails(record: Dict[str, Any]) -> None:
+    def truncate_thumbnails(record: PartialRecordModel) -> None:
         """
         Quality of life functionality for developers that chops the thumbnail strings so
         they don't bloat the API clients being used to test
         """
-        for value in record["channels"].values():
+        for value in record.channels.values():
             try:
-                value["thumbnail"] = value["thumbnail"][:50]
-            except KeyError:
+                value.thumbnail = value.thumbnail[:50]
+            except (AttributeError, TypeError):
                 # If there's no thumbnails (e.g. if channel isn't an image or waveform)
-                # then a KeyError will be raised. This is normal behaviour, so
-                # acceptable to pass
+                # then an AttributeError will be raised. If the thumbnail is None, a
+                # TypeError will be raised. This is normal behaviour, so acceptable to
+                # pass
                 pass
 
     @staticmethod
     async def apply_false_colour_to_thumbnails(
-        record: dict,
+        record: PartialRecordModel,
         lower_level: int,
         upper_level: int,
         colourmap_name: str,
@@ -302,53 +313,45 @@ class Record:
         Note: there will also be "thumbnail" entries in 'rgb-image' and 'waveform'
         channels but they should not have false colour applied to them.
         """
-        record_id = record["_id"]
-        for channel_name, value in record["channels"].items():
+        record_id = record.id_
+        for channel_name, value in record.channels.items():
             channel_dtype = await Record.get_channel_dtype(
                 record_id,
                 channel_name,
                 value,
             )
-            try:
-                if channel_dtype == "image":
-                    b64_thumbnail_str = value["thumbnail"]
-                    thumbnail_bytes = FalseColourHandler.apply_false_colour_to_b64_img(
-                        b64_thumbnail_str,
-                        lower_level,
-                        upper_level,
-                        colourmap_name,
-                    )
-                    thumbnail_bytes.seek(0)
-                    value["thumbnail"] = base64.b64encode(thumbnail_bytes.getvalue())
-            except KeyError:
-                # If there's no thumbnail (e.g. if channel isn't an image or waveform)
-                # then a KeyError will be raised. This is normal behaviour, so
-                # acceptable to pass
-                pass
+            b64_thumbnail_str = getattr(value, "thumbnail", None)
+            if channel_dtype == "image" and b64_thumbnail_str is not None:
+                thumbnail_bytes = FalseColourHandler.apply_false_colour_to_b64_img(
+                    base64_image=b64_thumbnail_str,
+                    lower_level=lower_level,
+                    upper_level=upper_level,
+                    colourmap_name=colourmap_name,
+                )
+                value.thumbnail = base64.b64encode(thumbnail_bytes.getvalue())
 
     @staticmethod
     async def get_channel_dtype(
         record_id: str,
         channel_name: str,
-        channel_value: dict,
-    ) -> str:
+        channel_value: PartialChannelModel,
+    ) -> ChannelDtype:
         """
         Extract "channel_dtype" from `channel_value`, or if not present, retrieve with a
         separate lookup.
         """
         try:
-            channel_dtype = channel_value["metadata"]["channel_dtype"]
-        except KeyError:
+            channel_dtype = channel_value.metadata.channel_dtype
+        except AttributeError:
             # if a projection has been applied then the record will only contain
             # the requested fields and probably not the channel_dtype
             # so it needs to be looked up separately
-            record_dict = await Record.find_record_by_id(
+            record = await Record.find_record_by_id(
                 record_id,
                 {},
                 [f"channels.{channel_name}.metadata.channel_dtype"],
             )
-            new_channel_value = record_dict["channels"][channel_name]
-            channel_dtype = new_channel_value["metadata"]["channel_dtype"]
+            channel_dtype = record.channels[channel_name].metadata.channel_dtype
 
         return channel_dtype
 
@@ -356,7 +359,7 @@ class Record:
     async def get_raw_bit_depth(
         record_id: str,
         channel_name: str,
-        channel_value: dict,
+        channel_value: PartialChannelModel,
     ) -> "int | None":
         """
         Extract "bit_depth" from `channel_value`, or if not present, retrieve with a
@@ -372,8 +375,8 @@ class Record:
             int | None: The bit_depth if found, `None` otherwise.
         """
         try:
-            raw_bit_depth = channel_value["metadata"]["bit_depth"]
-        except KeyError:
+            raw_bit_depth = channel_value.metadata.bit_depth
+        except AttributeError:
             # if a projection has been applied then the record will only contain
             # the requested fields and probably not the channel_dtype
             # so it needs to be looked up separately
@@ -382,8 +385,7 @@ class Record:
                 {},
                 [f"channels.{channel_name}.metadata.bit_depth"],
             )
-            metadata = record_dict["channels"][channel_name]["metadata"]
-            raw_bit_depth = metadata.get("bit_depth")  # May be None
+            raw_bit_depth = record_dict.channels[channel_name].metadata.bit_depth
 
         return raw_bit_depth
 
@@ -459,7 +461,7 @@ class Record:
 
     @staticmethod
     async def apply_functions(
-        record: "dict[str, dict]",
+        record: PartialRecordModel,
         functions: "list[dict[str, str]]",
         original_image: bool,
         lower_level: int,
@@ -468,19 +470,22 @@ class Record:
         colourmap_name: str,
         return_thumbnails: bool = True,
         truncate: bool = False,
-    ) -> None:
+    ) -> PartialVariableChannels:
         """
         Evaluates all functions and stores the results on `record` as though
         they were normal channels.
         """
         variable_data = {}
-        Record._ensure_channels(record)
+        channels = {}
+        if record.channels is not None:
+            channels.update(record.channels)
 
         variable_transformer = VariableTransformer()
         expression_transformer = ExpressionTransformer(variable_data)
         for function in functions:
             await Record._apply_function(
-                record=record,
+                record_id=record.id_,
+                channels=channels,
                 original_image=original_image,
                 lower_level=lower_level,
                 upper_level=upper_level,
@@ -494,18 +499,13 @@ class Record:
                 truncate=truncate,
             )
 
-        for channel in record["channels"].values():
-            if "_variable_value" in channel:
-                del channel["_variable_value"]
-
-    @staticmethod
-    def _ensure_channels(record):
-        if "channels" not in record:
-            record["channels"] = {}
+        record.channels = channels
+        return channels
 
     @staticmethod
     async def _apply_function(
-        record: "dict[str, dict]",
+        record_id: str,
+        channels: PartialVariableChannels,
         original_image: bool,
         lower_level: int,
         upper_level: int,
@@ -527,13 +527,13 @@ class Record:
         channels_to_fetch = set()
         bit_depths = []
 
-        log.debug("Attempting to extract %s from %s", variables, record["channels"])
+        log.debug("Attempting to extract %s from %s", variables, channels)
         for variable in variables:
-            if variable in record["channels"]:
+            if variable in channels:
                 variable_data[variable] = await Record._extract_variable(
-                    record["_id"],
-                    variable,
-                    record["channels"][variable],
+                    record_id=record_id,
+                    name=variable,
+                    channel_value=channels[variable],
                     bit_depths=bit_depths,
                 )
             else:
@@ -541,9 +541,9 @@ class Record:
 
         if channels_to_fetch:
             missing_channels = await Record._fetch_channels(
-                record,
-                variable_data,
-                channels_to_fetch,
+                record_id=record_id,
+                variable_data=variable_data,
+                channels_to_fetch=channels_to_fetch,
                 skip_functions=variable_transformer.skip_functions,
                 bit_depths=bit_depths,
             )
@@ -555,24 +555,23 @@ class Record:
                 return
 
         result = expression_transformer.evaluate(function["expression"])
-        Record._parse_function_results(
-            record=record,
+        channel = Record._parse_function_results(
             original_image=original_image,
             lower_level=lower_level,
             upper_level=upper_level,
             limit_bit_depth=limit_bit_depth,
             colourmap_name=colourmap_name,
-            function_name=function["name"],
             result=result,
             return_thumbnails=return_thumbnails,
             truncate=truncate,
             bit_depths=bit_depths,
         )
+        channels[function["name"]] = channel
         variable_data[function["name"]] = result
 
     @staticmethod
     async def _fetch_channels(
-        record: "dict[str, dict]",
+        record_id: str,
         variable_data: dict,
         channels_to_fetch: "set[str]",
         skip_functions: "set[str]",
@@ -582,18 +581,18 @@ class Record:
         record and raising an exception if the channel is not known at all."""
         log.debug("Fetching channels: %s", channels_to_fetch)
         projection = [f"channels.{v}" for v in channels_to_fetch]
-        record_extra = await Record.find_record_by_id(record["_id"], {}, projection)
-        fetched_channels: dict = record_extra["channels"]
+        record_extra = await Record.find_record_by_id(record_id, {}, projection)
+        fetched_channels = record_extra.channels
         missing_channels = channels_to_fetch.difference(fetched_channels)
         if missing_channels:
             manifest = await ChannelManifest.get_most_recent_manifest()
             for missing_channel in missing_channels:
                 if missing_channel in skip_functions:
                     message = "Function %s defined but cannot be evaluated for %s"
-                    log.warning(message, missing_channel, record["_id"])
+                    log.warning(message, missing_channel, record_id)
                 elif missing_channel in manifest.channels:
                     message = "Channel %s does not have a value for %s"
-                    log.warning(message, missing_channel, record["_id"])
+                    log.warning(message, missing_channel, record_id)
                 else:
                     message = "%s is not known as a channel or function name"
                     log.error(message, missing_channel)
@@ -603,9 +602,9 @@ class Record:
 
         for name, channel_value in fetched_channels.items():
             variable_data[name] = await Record._extract_variable(
-                record["_id"],
-                name,
-                channel_value,
+                record_id=record_id,
+                name=name,
+                channel_value=channel_value,
                 bit_depths=bit_depths,
             )
 
@@ -613,15 +612,17 @@ class Record:
     async def _extract_variable(
         record_id: str,
         name: str,
-        channel_value: dict,
+        channel_value: PartialChannelModel,
         bit_depths: "list[int]",
     ) -> "np.ndarray | WaveformVariable | float":
         """
         Extracts and returns the relevant data from `channel_value`, handling
         extra calls needed for "image" and "waveform" types.
         """
-        if "_variable_value" in channel_value:
-            return channel_value["_variable_value"]
+        if hasattr(channel_value, "variable_value"):
+            # Might be PartialImageVariableModel or PartialWaveformVariableChannelModel,
+            # which store the value across function evaluations
+            return channel_value.variable_value
 
         channel_dtype = await Record.get_channel_dtype(
             record_id=record_id,
@@ -655,16 +656,11 @@ class Record:
             )
 
         elif channel_dtype == "waveform":
-            waveform_path = channel_value["waveform_path"]
-            if "metadata" in channel_value and "x_units" in channel_value["metadata"]:
-                x_units = channel_value["metadata"]["x_units"]
-            else:
-                x_units = None
-
-            waveform = Waveform.get_waveform(waveform_path)
+            x_units = getattr(channel_value.metadata, "x_units", None)
+            waveform = Waveform.get_waveform(record_id, name)
             return WaveformVariable(waveform, x_units=x_units)
         else:
-            return channel_value["data"]
+            return channel_value.data
 
     @staticmethod
     def _bit_shift_to_raw(
@@ -721,26 +717,22 @@ class Record:
 
     @staticmethod
     def _parse_function_results(
-        record: dict,
         original_image: bool,
         lower_level: int,
         upper_level: int,
         limit_bit_depth: int,
         colourmap_name: str,
-        function_name: str,
         result: "np.ndarray | WaveformVariable | np.float64",
         bit_depths: "list[int]",
         return_thumbnails: bool = True,
         truncate: bool = False,
-    ) -> None:
+    ) -> PartialVariableChannelModel:
         """
         Parses the numerical `result` and modifies `record` in place to contain
         the data in the expected format for the type of the `result`.
         """
-        Record._ensure_channels(record)
-
         if isinstance(result, np.ndarray):
-            channel = Record._parse_image_result(
+            return Record._parse_image_result(
                 result=result,
                 original_image=original_image,
                 lower_level=lower_level,
@@ -757,22 +749,25 @@ class Record:
             if result.x_units is not None:
                 metadata["x_units"] = result.x_units
 
-            channel = {"_variable_value": result, "metadata": metadata}
+            channel = PartialWaveformVariableChannelModel(
+                metadata=metadata,
+                variable_value=result,
+            )
             if return_thumbnails:
                 waveform = result.to_waveform()
                 # Creating thumbnail takes ~ 0.05 s per waveform
                 waveform.create_thumbnail()
-                channel["thumbnail"] = waveform.thumbnail
+                channel.thumbnail = waveform.thumbnail
             else:
                 waveform_model = result.to_waveform_model()
-                channel["data"] = waveform_model
+                channel.data = waveform_model
+
+            return channel
 
         else:
             metadata = {"channel_dtype": "scalar"}
             # Cannot return np.float64 as it can't be cast to JSON
-            channel = {"data": float(result), "metadata": metadata}
-
-        record["channels"][function_name] = channel
+            return PartialScalarChannelModel(metadata=metadata, data=float(result))
 
     @staticmethod
     def _parse_image_result(
@@ -785,7 +780,7 @@ class Record:
         return_thumbnails: bool,
         truncate: bool,
         bit_depths: "list[int]",
-    ) -> dict:
+    ) -> PartialImageVariableChannelModel:
         """Parses a numpy ndarray and returns image bytes, either for a thumbnail or
         full image.
         """
@@ -831,13 +826,11 @@ class Record:
             image_bytes.seek(0)
             image_b64 = base64.b64encode(image_bytes.getvalue())
 
-            channel = {"metadata": metadata, "_variable_value": result}
-            if truncate:
-                channel["thumbnail"] = image_b64[:50]
-            else:
-                channel["thumbnail"] = image_b64
-
-            return channel
+            return PartialImageVariableChannelModel(
+                metadata=metadata,
+                variable_value=result,
+                thumbnail=Record.truncate_bytes(truncate, image_b64),
+            )
 
         else:
             if original_image:
@@ -854,5 +847,15 @@ class Record:
                     colourmap_name=colourmap_name,
                 )
 
-            image_bytes.seek(0)
-            return {"data": image_bytes, "_variable_value": result}
+            return PartialImageVariableChannelModel(
+                data=image_bytes.getvalue(),
+                variable_value=result,
+            )
+
+    @staticmethod
+    def truncate_bytes(truncate: bool, image_b64: bytes) -> bytes:
+        """Utility function for optionally truncating bytes for testing."""
+        if truncate:
+            return image_b64[:50]
+        else:
+            return image_b64
