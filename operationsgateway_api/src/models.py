@@ -75,7 +75,7 @@ class WaveformModel(BaseModel):
 
 
 class VectorModel(BaseModel):
-    path: str | Any | None
+    path: str | Any | None = Field(exclude=True)
     data: list[float] | Any | None
 
 
