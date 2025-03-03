@@ -77,6 +77,11 @@ async def get_records(
         description="The name of the matplotlib colour map to apply to the image"
         " thumbnails",
     ),
+    nullable_colourmap_name: Optional[str] = Query(
+        None,
+        description="The name of the matplotlib colour map to apply to nullable image"
+        " thumbnails",
+    ),
     functions: Optional[List[Json]] = Query(
         None,
         description="Functions to evaluate on the record data being returned",
@@ -112,6 +117,7 @@ async def get_records(
                 lower_level,
                 upper_level,
                 colourmap_name,
+                nullable_colourmap_name,
             )
 
             if truncate:
@@ -224,6 +230,11 @@ async def get_record_by_id(
         description="The name of the matplotlib colour map to apply to the image"
         " thumbnails",
     ),
+    nullable_colourmap_name: Optional[str] = Query(
+        None,
+        description="The name of the matplotlib colour map to apply to nullable image"
+        " thumbnails",
+    ),
 ) -> PartialRecordModel:
     """
     Get a single record by its ID. The `conditions` query parameter exists but a
@@ -244,6 +255,7 @@ async def get_record_by_id(
             lower_level,
             upper_level,
             colourmap_name,
+            nullable_colourmap_name,
         )
 
         if truncate:

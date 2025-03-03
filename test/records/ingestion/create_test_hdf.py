@@ -1,6 +1,12 @@
 import h5py
 import numpy as np
 
+from operationsgateway_api.src.models import (
+    ImageModel,
+    NullableImageModel,
+    RecordModel,
+    WaveformModel,
+)
 from operationsgateway_api.src.records.ingestion.hdf_handler import HDFDataHandler
 
 
@@ -63,7 +69,13 @@ async def create_test_hdf_file(  # noqa: C901
     channel_name=None,
     channels_check=False,
     test_type=None,
-):
+) -> tuple[
+    RecordModel,
+    list[WaveformModel],
+    list[ImageModel],
+    list[NullableImageModel],
+    list[dict[str, str]],
+]:
     """
     Generates an HDF file and returns the output of hdf_handler.py
     the file can be changed depending on which values have been selected from the

@@ -15,6 +15,7 @@ from operationsgateway_api.src.models import (
     WaveformChannelMetadataModel,
 )
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.nullable_image import NullableImage
 from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.waveform import Waveform
 
@@ -37,6 +38,7 @@ class ExportHandler:
         functions: "list[dict[str, str]]",
         export_scalars: bool,
         export_images: bool,
+        export_nullable_images: bool,
         export_waveform_csvs: bool,
         export_waveform_images: bool,
     ) -> None:
@@ -52,6 +54,7 @@ class ExportHandler:
         self.colourmap_name = colourmap_name
         self.export_scalars = export_scalars
         self.export_images = export_images
+        self.export_nullable_images = export_nullable_images
         self.export_waveform_csvs = export_waveform_csvs
         self.export_waveform_images = export_waveform_images
 
@@ -190,7 +193,7 @@ class ExportHandler:
                 # image and waveform data will be exported to separate files so will not
                 # have values put in the main csv file
                 channel_type = self._get_channel_type(channel_name)
-                if channel_type not in ["image", "waveform"]:
+                if channel_type not in ["image", "nullable_image", "waveform"]:
                     line = self._add_value_to_csv_line(line, channel_name)
             else:
                 # this must be a "metadata" channel
@@ -242,6 +245,9 @@ class ExportHandler:
         if channel_type == "image":
             log.info("Channel %s is an image", channel_name)
             await self._add_image_to_zip(channels, record_id, channel_name)
+        elif channel_type == "nullable_image":
+            log.info("Channel %s is a nullable image", channel_name)
+            await self._add_nullable_image_to_zip(channels, record_id, channel_name)
         # process a waveform channel
         elif channel_type == "waveform":
             log.info("Channel %s is a waveform", channel_name)
@@ -310,6 +316,35 @@ class ExportHandler:
         except Exception:
             self.errors_file_in_memory.write(
                 f"Could not find image for {record_id} {channel_name}\n",
+            )
+
+    async def _add_nullable_image_to_zip(
+        self,
+        channels: PartialChannels,
+        record_id: str,
+        channel_name: str,
+    ) -> None:
+        """
+        Get a nullable image from Echo and add it to the zip file being created for
+        download.
+        """
+        if not self.export_nullable_images or channel_name not in channels:
+            return
+
+        log.info("Getting nullable image to add to zip: %s %s", record_id, channel_name)
+        try:
+            storage_bytes = await NullableImage.get_storage_bytes(
+                record_id,
+                channel_name,
+            )
+            self.zip_file.writestr(
+                f"{record_id}_{channel_name}.npz",
+                storage_bytes.getvalue(),
+            )
+            self._check_zip_file_size()
+        except Exception:
+            self.errors_file_in_memory.write(
+                f"Could not find nullable image for {record_id} {channel_name}\n",
             )
 
     async def _add_waveform_to_zip(

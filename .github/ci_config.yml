@@ -12,6 +12,11 @@ images:
   colourbar_height_pixels: 16
   upload_image_threads: 4
   preferred_colour_map_pref_name: PREFERRED_COLOUR_MAP
+nullable_images:
+  thumbnail_size: [50, 50]
+  default_colour_map: bwr
+  upload_image_threads: 4
+  preferred_colour_map_pref_name: PREFERRED_NULLABLE_COLOUR_MAP
 waveforms:
   thumbnail_size: [100, 100]
   line_width: 0.3
