@@ -181,6 +181,12 @@ class PartialImageChannelModel(ImageChannelModel):
     thumbnail: bytes | None = None
 
 
+class PartialNullableImageChannelModel(NullableImageChannelModel):
+    metadata: ImageChannelMetadataModel | None = None
+    image_path: str | None = None
+    thumbnail: bytes | None = None
+
+
 class PartialScalarChannelModel(ScalarChannelModel):
     metadata: ScalarChannelMetadataModel | None = None
     data: int | float | str | None = None
@@ -193,7 +199,10 @@ class PartialWaveformChannelModel(WaveformChannelModel):
 
 
 PartialChannelModel = (
-    PartialImageChannelModel | PartialScalarChannelModel | PartialWaveformChannelModel
+    PartialImageChannelModel
+    | PartialNullableImageChannelModel
+    | PartialScalarChannelModel
+    | PartialWaveformChannelModel
 )
 PartialChannels = dict[str, PartialChannelModel]
 
