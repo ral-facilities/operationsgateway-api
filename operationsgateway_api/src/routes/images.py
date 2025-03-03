@@ -1,4 +1,3 @@
-from io import BytesIO
 import logging
 from typing import List, Optional
 
@@ -10,6 +9,7 @@ from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.error_handling import endpoint_error_handling
+from operationsgateway_api.src.models import PartialRecordModel
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.record import Record
@@ -102,9 +102,7 @@ async def get_full_image(
         original_image=original_image,
         functions=functions,
     )
-    # ensure the "file pointer" is reset
-    image_bytes.seek(0)
-    return Response(image_bytes.read(), media_type="image/png")
+    return Response(image_bytes, media_type="image/png")
 
 
 @router.get(
@@ -156,7 +154,7 @@ async def get_crosshair_intensity(
     If `channel_name` matches one of the entries in `functions`, then that will be
     evaluated to generate the returned image.
     """
-    image_bytes = await get_image_bytes(
+    orig_img_array = await get_image_array(
         record_id=record_id,
         channel_name=channel_name,
         colourmap_name=None,
@@ -166,8 +164,6 @@ async def get_crosshair_intensity(
         original_image=True,
         functions=functions,
     )
-    img_src = PILImage.open(image_bytes)
-    orig_img_array = np.array(img_src)
 
     position_x, position_y = Image.validate_position(position, orig_img_array)
 
@@ -266,16 +262,15 @@ async def get_image_bytes(
     limit_bit_depth: int,
     original_image: bool,
     functions: "list[dict]",
-) -> BytesIO:
+) -> bytes:
     """Get the bytes for the requested image (possibly as the output from
     one of the defined `functions`).
     """
     if functions:
         for function_dict in functions:
             if function_dict["name"] == channel_name:
-                record = {"_id": record_id}
-                await Record.apply_functions(
-                    record=record,
+                channels = await Record.apply_functions(
+                    record=PartialRecordModel(_id=record_id),
                     functions=functions,
                     original_image=original_image,
                     lower_level=lower_level,
@@ -284,9 +279,9 @@ async def get_image_bytes(
                     colourmap_name=colourmap_name,
                     return_thumbnails=False,
                 )
-                return record["channels"][channel_name]["data"]
+                return channels[channel_name].data
 
-    return await Image.get_image(
+    bytes_io = await Image.get_image(
         record_id=record_id,
         channel_name=channel_name,
         original_image=original_image,
@@ -295,3 +290,46 @@ async def get_image_bytes(
         limit_bit_depth=limit_bit_depth,
         colourmap_name=colourmap_name,
     )
+    return bytes_io.getvalue()
+
+
+async def get_image_array(
+    record_id: str,
+    channel_name: str,
+    colourmap_name: str,
+    upper_level: int,
+    lower_level: int,
+    limit_bit_depth: int,
+    original_image: bool,
+    functions: "list[dict]",
+) -> np.ndarray:
+    """
+    Get a np.ndarray for the requested image (possibly as the output from one of the
+    defined `functions`).
+    """
+    if functions:
+        for function_dict in functions:
+            if function_dict["name"] == channel_name:
+                channels = await Record.apply_functions(
+                    record=PartialRecordModel(_id=record_id),
+                    functions=functions,
+                    original_image=original_image,
+                    lower_level=lower_level,
+                    upper_level=upper_level,
+                    limit_bit_depth=limit_bit_depth,
+                    colourmap_name=colourmap_name,
+                    return_thumbnails=False,
+                )
+                return channels[channel_name].variable_value
+
+    bytes_io = await Image.get_image(
+        record_id=record_id,
+        channel_name=channel_name,
+        original_image=original_image,
+        lower_level=lower_level,
+        upper_level=upper_level,
+        limit_bit_depth=limit_bit_depth,
+        colourmap_name=colourmap_name,
+    )
+    image = PILImage.open(bytes_io)
+    return np.array(image)

@@ -18,7 +18,7 @@ from operationsgateway_api.src.exceptions import (
 from operationsgateway_api.src.functions.builtins.centroid_x import CentroidX
 from operationsgateway_api.src.functions.builtins.centroid_y import CentroidY
 from operationsgateway_api.src.functions.builtins.fwhm import FWHM
-from operationsgateway_api.src.functions.waveform_variable import WaveformVariable
+from operationsgateway_api.src.functions.variable_models import WaveformVariable
 from operationsgateway_api.src.models import ImageModel
 from operationsgateway_api.src.records.echo_interface import EchoInterface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
@@ -132,7 +132,7 @@ class Image(ImageABC):
             return None  # No failure
         except EchoS3Error:
             # Extract the channel name and propagate it
-            record_id, channel_name = input_image.extract_metadata_from_path()
+            channel_name = input_image.get_channel_name_from_path()
             log.error("Failed to upload image for channel: %s", channel_name)
             return channel_name
 
@@ -163,21 +163,26 @@ class Image(ImageABC):
         echo = EchoInterface()
 
         try:
-            original_image_path = Image.get_relative_path(record_id, channel_name)
-            image_bytes = echo.download_file_object(
-                Image.get_full_path(original_image_path),
-            )
+            try:
+                relative_path = Image.get_relative_path(record_id, channel_name)
+                full_path = Image.get_full_path(relative_path)
+                image_bytes = echo.download_file_object(full_path)
+            except EchoS3Error:
+                # Try again without subdirectories, might be stored in old format
+                relative_path = Image.get_relative_path(record_id, channel_name, False)
+                full_path = Image.get_full_path(relative_path)
+                image_bytes = echo.download_file_object(full_path)
 
             if original_image:
                 log.debug(
                     "Original image requested, return unmodified image bytes: %s",
-                    original_image_path,
+                    relative_path,
                 )
                 return image_bytes
             else:
                 log.debug(
                     "False colour requested, applying false colour to image: %s",
-                    original_image_path,
+                    relative_path,
                 )
                 img_src = PILImage.open(image_bytes)
                 orig_img_array = np.array(img_src)

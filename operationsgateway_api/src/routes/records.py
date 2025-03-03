@@ -12,6 +12,7 @@ from operationsgateway_api.src.auth.authorisation import (
 )
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import QueryParameterError
+from operationsgateway_api.src.models import PartialRecordModel
 from operationsgateway_api.src.records.echo_interface import EchoInterface
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.record import Record as Record
@@ -29,6 +30,7 @@ AuthoriseToken = Annotated[str, Depends(authorise_token)]
     summary="Get records using database-like filters",
     response_description="List of records",
     tags=["Records"],
+    response_model_exclude_unset=True,
 )
 @endpoint_error_handling
 async def get_records(
@@ -84,7 +86,7 @@ async def get_records(
         None,
         description="Functions to evaluate on the record data being returned",
     ),
-):
+) -> list[PartialRecordModel]:
     """
     This endpoint uses MongoDB's find() method to query the records
     collection. As a result, this endpoint exposes some of this functionality, which
@@ -109,7 +111,7 @@ async def get_records(
         colourmap_name = await Image.get_preferred_colourmap(access_token)
 
     for record_data in records_data:
-        if record_data.get("channels"):
+        if record_data.channels:
             await Record.apply_false_colour_to_thumbnails(
                 record_data,
                 lower_level,
@@ -193,6 +195,7 @@ async def convert_search_ranges(
     summary="Get a record specified by its ID",
     response_description="Single record object",
     tags=["Records"],
+    response_model_exclude_unset=True,
 )
 @endpoint_error_handling
 async def get_record_by_id(
@@ -232,7 +235,7 @@ async def get_record_by_id(
         description="The name of the matplotlib colour map to apply to nullable image"
         " thumbnails",
     ),
-):
+) -> PartialRecordModel:
     """
     Get a single record by its ID. The `conditions` query parameter exists but a
     specific use case is uncertain at this stage because the ID is the element that
@@ -243,7 +246,7 @@ async def get_record_by_id(
 
     record_data = await Record.find_record_by_id(id_, conditions)
 
-    if record_data.get("channels"):
+    if record_data.channels:
         if colourmap_name is None:
             colourmap_name = await Image.get_preferred_colourmap(access_token)
 

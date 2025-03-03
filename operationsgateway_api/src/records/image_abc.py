@@ -7,6 +7,7 @@ import logging
 from operationsgateway_api.src.exceptions import ImageError, ImageNotFoundError
 from operationsgateway_api.src.models import ImageModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
+from operationsgateway_api.src.records.echo_interface import EchoInterface
 
 
 log = logging.getLogger()
@@ -27,16 +28,11 @@ class ImageABC(ABC):
     @abstractmethod
     def create_thumbnail(self) -> None: ...
 
-    def extract_metadata_from_path(self) -> tuple[str, str]:
+    def get_channel_name_from_path(self) -> str:
         """
-        Small string handler function to extract the record ID and channel name from the
-        image's path
+        Small string handler function to extract the channel name from the path
         """
-
-        record_id = self.image.path.split("/")[-2]
-        channel_name = self.image.path.split("/")[-1].split(".")[0]
-
-        return record_id, channel_name
+        return self.image.path.split("/")[-1].split(".")[0]
 
     @staticmethod
     @abstractmethod
@@ -82,13 +78,18 @@ class ImageABC(ABC):
             raise ImageError(msg) from exc
 
     @classmethod
-    def get_relative_path(cls, record_id: str, channel_name: str) -> str:
+    def get_relative_path(
+        cls,
+        record_id: str,
+        channel_name: str,
+        use_subdirectories: bool = True,
+    ) -> str:
         """
         Returns a relative image path given a record ID and channel name. The path is
         relative to the base directory of where images are stored in Echo
         """
-
-        return f"{record_id}/{channel_name}.{cls.echo_extension}"
+        directories = EchoInterface.format_record_id(record_id, use_subdirectories)
+        return f"{directories}/{channel_name}.{cls.echo_extension}"
 
     @classmethod
     def get_full_path(cls, relative_path: str) -> str:

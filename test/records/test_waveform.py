@@ -12,24 +12,42 @@ from operationsgateway_api.src.records.waveform import Waveform
 
 class TestWaveform:
     test_waveform = WaveformModel(
-        path="19520605070023/test-channel-name.json",
+        path="1952/06/05/070023/test-channel-name.json",
         x=[1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
         y=[8.0, 3.0, 6.0, 2.0, 3.0, 8.0],
     )
 
     @pytest.mark.asyncio
-    async def test_insert_waveform_success(self, remove_waveform_entry):
-        waveform_instance = Waveform(TestWaveform.test_waveform)
-        waveform_instance.insert_waveform()
+    @pytest.mark.parametrize(
+        ["test_waveform"],
+        [
+            pytest.param(test_waveform),
+            pytest.param(
+                WaveformModel(
+                    path="19520605070023/test-channel-name.json",
+                    x=test_waveform.x,
+                    y=test_waveform.y,
+                ),
+            ),
+        ],
+    )
+    async def test_insert_waveform_success(
+        self,
+        test_waveform: WaveformModel,
+        remove_test_objects,
+    ):
+        waveform_instance = Waveform(test_waveform)
+        response = waveform_instance.insert_waveform()
+        assert response is None
 
-        waveform = Waveform.get_waveform("19520605070023/test-channel-name.json")
+        waveform = Waveform.get_waveform("19520605070023", "test-channel-name")
 
-        assert waveform.model_dump() == TestWaveform.test_waveform.model_dump()
+        assert waveform.model_dump() == test_waveform.model_dump()
 
     @pytest.mark.asyncio
     async def test_waveform_not_found(self):
         with pytest.raises(WaveformError, match="Waveform could not be found"):
-            Waveform.get_waveform("19520605070023/test-channel-name.json")
+            Waveform.get_waveform("19520605070023", "test-channel-name.json")
 
     @pytest.mark.parametrize(
         "config_thumbnail_size",

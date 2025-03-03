@@ -1,4 +1,4 @@
-name: ci 
+name: Docs
 on:
   push:
     branches:
@@ -42,4 +42,4 @@ jobs:
 
       - name: Deploy to pages
         working-directory: ./docs
-        run: mkdocs gh-deploy --force
+        run: poetry run mkdocs gh-deploy --force

@@ -1,6 +1,11 @@
 import numpy as np
 
-from operationsgateway_api.src.models import WaveformModel
+from operationsgateway_api.src.models import (
+    PartialImageChannelModel,
+    PartialScalarChannelModel,
+    PartialWaveformChannelModel,
+    WaveformModel,
+)
 from operationsgateway_api.src.records.waveform import Waveform
 
 
@@ -86,3 +91,29 @@ class WaveformVariable:
 
     def to_waveform_model(self) -> WaveformModel:
         return WaveformModel(_id="_", x=self.x, y=self.y)
+
+
+class PartialWaveformVariableChannelModel(PartialWaveformChannelModel):
+    variable_value: WaveformVariable  # Arbitrary type used to track variable internally
+    data: WaveformModel | None = None
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+class PartialImageVariableChannelModel(PartialImageChannelModel):
+    variable_value: np.ndarray  # Arbitrary type used to track variable internally
+    data: bytes | None = None
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+PartialVariableChannelModel = (
+    PartialImageVariableChannelModel
+    | PartialScalarChannelModel
+    | PartialWaveformVariableChannelModel
+)
+
+
+PartialVariableChannels = dict[str, PartialVariableChannelModel]

@@ -1,12 +1,19 @@
 import io
 import logging
-from typing import Dict, List, Tuple, Union
+from typing import Any, List, Tuple, Union
 import zipfile
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import ExportError
 from operationsgateway_api.src.functions.type_transformer import TypeTransformer
-from operationsgateway_api.src.models import ChannelManifestModel
+from operationsgateway_api.src.models import (
+    ChannelDtype,
+    ChannelManifestModel,
+    PartialChannels,
+    PartialRecordModel,
+    PartialWaveformChannelModel,
+    WaveformChannelMetadataModel,
+)
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.nullable_image import NullableImage
 from operationsgateway_api.src.records.record import Record
@@ -21,7 +28,7 @@ class ExportHandler:
 
     def __init__(
         self,
-        records_data: List[dict],
+        records_data: list[PartialRecordModel],
         channel_manifest: ChannelManifestModel,
         projection: List[str],
         lower_level: int,
@@ -65,6 +72,17 @@ class ExportHandler:
         self.functions = functions
         self.function_types = {}
 
+    @staticmethod
+    def _ensure_waveform_metadata(channel: PartialWaveformChannelModel) -> None:
+        """Utility method for ensuring Waveform Metadata and units are not None."""
+        if channel.metadata is None:
+            channel.metadata = WaveformChannelMetadataModel(x_units="", y_units="")
+        else:
+            if channel.metadata.x_units is None:
+                channel.metadata.x_units = ""
+            if channel.metadata.y_units is None:
+                channel.metadata.y_units = ""
+
     @property
     def original_image(self) -> bool:
         """If none of the false colour parameters are set then the original
@@ -92,7 +110,7 @@ class ExportHandler:
         self._create_main_csv_headers()
         for record_data in self.records_data:
             log.debug("record_data: %s", record_data)
-            record_id = record_data["_id"]
+            record_id = record_data.id_
             self.record_ids.append(record_id)
             log.debug("record_id: %s", record_id)
 
@@ -112,20 +130,25 @@ class ExportHandler:
             for proj in self.projection:
                 log.debug("projection: %s", proj)
                 projection_parts = proj.split(".")
-                if projection_parts[0] in ["_id", "metadata"]:
-                    # process either the top level "_id" channel
-                    # or one of the main "metadata" channels
-                    value = ExportHandler.get_value_from_dict(record_data, proj)
-                    log.debug("value: %s of type %s", value, type(value))
-                    line = self._add_value_to_csv_line(line, value)
+                if proj == "_id":
+                    line = self._add_value_to_csv_line(
+                        line=line,
+                        value=record_data.id_,
+                        verbose=True,
+                    )
+                elif projection_parts[0] == "metadata":
+                    line = self._add_value_to_csv_line(
+                        line=line,
+                        value=getattr(record_data.metadata, projection_parts[1], ""),
+                        verbose=True,
+                    )
                 elif projection_parts[0] == "channels":
                     # process one of the data channels
                     line = await self._process_data_channel(
-                        record_data,
+                        record_data.channels,
                         record_id,
                         projection_parts[1],
                         line,
-                        proj,
                     )
                 else:
                     log.warning(
@@ -188,22 +211,28 @@ class ExportHandler:
             return "ID"
         else:
             projection_parts = projection.split(".")
+            if len(projection_parts) < 2:
+                message = f"Projection '{projection}' did not include a second term"
+                raise ExportError(message)
+
             return projection_parts[1]
 
-    def _get_channel_type(self, channel_name: str) -> str:
+    def _get_channel_type(self, channel_name: str) -> ChannelDtype:
         """Extracts the "type" for either a function or channel."""
         if channel_name in self.function_types:
             return self.function_types[channel_name]
-        else:
+        elif channel_name in self.channel_manifest.channels:
             return self.channel_manifest.channels[channel_name].type_
+        else:
+            message = f"'{channel_name}' is not a recognised channel or function name"
+            raise ExportError(message)
 
     async def _process_data_channel(
         self,
-        record_data: Dict,
+        channels: PartialChannels,
         record_id: str,
         channel_name: str,
         line: str,
-        projection: str,
     ) -> str:
         """
         Process data channels (those whose "projection" starts with "channels." as
@@ -215,36 +244,35 @@ class ExportHandler:
         channel_type = self._get_channel_type(channel_name)
         if channel_type == "image":
             log.info("Channel %s is an image", channel_name)
-            await self._add_image_to_zip(record_data, record_id, channel_name)
+            await self._add_image_to_zip(channels, record_id, channel_name)
         elif channel_type == "nullable_image":
             log.info("Channel %s is a nullable image", channel_name)
-            await self._add_nullable_image_to_zip(record_data, record_id, channel_name)
+            await self._add_nullable_image_to_zip(channels, record_id, channel_name)
         # process a waveform channel
         elif channel_type == "waveform":
             log.info("Channel %s is a waveform", channel_name)
-            channel = record_data["channels"][channel_name]
-            if "metadata" not in channel:
-                channel["metadata"] = {}
-            x_units = channel["metadata"].setdefault("x_units", "")
-            y_units = channel["metadata"].setdefault("y_units", "")
+            channel = channels[channel_name]
+            ExportHandler._ensure_waveform_metadata(channel)
             await self._add_waveform_to_zip(
-                record_data,
+                channels,
                 record_id,
                 channel_name,
-                x_units,
-                y_units,
+                channel.metadata.x_units,
+                channel.metadata.y_units,
             )
         # process a scalar channel
         else:
             log.info("Channel %s is a scalar", channel_name)
-            value = ExportHandler.get_value_from_dict(record_data, projection)
-            log.info("value: %s of type %s", value, type(value))
-            line = self._add_value_to_csv_line(line, value)
+            if channel_name in channels and channels[channel_name].data is not None:
+                value = channels[channel_name].data
+            else:
+                value = ""
+            line = self._add_value_to_csv_line(line=line, value=value, verbose=True)
         return line
 
     async def _add_image_to_zip(
         self,
-        record_data: Dict,
+        channels: PartialChannels,
         record_id: str,
         channel_name: str,
     ) -> None:
@@ -262,7 +290,7 @@ class ExportHandler:
 
         try:
             # first check that there should be an image to process
-            channel = record_data["channels"][channel_name]
+            channel = channels[channel_name]
         except KeyError:
             # there is no entry for this channel in the record
             # so there is no image to process
@@ -271,9 +299,9 @@ class ExportHandler:
         log.info("Getting image to add to zip: %s %s", record_id, channel_name)
         try:
             if channel_name in self.function_types:
-                image_bytes = channel["data"]
+                image_bytes = channel.data
             else:
-                image_bytes = await Image.get_image(
+                image_bytes_io = await Image.get_image(
                     record_id=record_id,
                     channel_name=channel_name,
                     original_image=self.original_image,
@@ -282,10 +310,8 @@ class ExportHandler:
                     limit_bit_depth=self.limit_bit_depth,
                     colourmap_name=self.colourmap_name,
                 )
-            self.zip_file.writestr(
-                f"{record_id}_{channel_name}.png",
-                image_bytes.getvalue(),
-            )
+                image_bytes = image_bytes_io.getvalue()
+            self.zip_file.writestr(f"{record_id}_{channel_name}.png", image_bytes)
             self._check_zip_file_size()
         except Exception:
             self.errors_file_in_memory.write(
@@ -329,7 +355,7 @@ class ExportHandler:
 
     async def _add_waveform_to_zip(
         self,
-        record_data: Dict,
+        channels: PartialChannels,
         record_id: str,
         channel_name: str,
         x_units: str,
@@ -342,7 +368,7 @@ class ExportHandler:
         """
         try:
             # first check that there should be a waveform to process
-            channel = record_data["channels"][channel_name]
+            channel = channels[channel_name]
         except KeyError:
             # there is no entry for this channel in the record
             # so there is no waveform to process
@@ -356,11 +382,9 @@ class ExportHandler:
             )
             try:
                 if channel_name in self.function_types:
-                    waveform_model = channel["data"]
+                    waveform_model = channel.data
                 else:
-                    waveform_model = Waveform.get_waveform(
-                        Waveform.get_relative_path(record_id, channel_name),
-                    )
+                    waveform_model = Waveform.get_waveform(record_id, channel_name)
             except Exception:
                 self.errors_file_in_memory.write(
                     f"Could not find waveform for {record_id} {channel_name}\n",
@@ -468,10 +492,18 @@ class ExportHandler:
             last = record_ids_sorted[-1]
         return first, last
 
-    def _add_value_to_csv_line(self, line, value) -> str:
+    def _add_value_to_csv_line(
+        self,
+        line: str,
+        value: Any,
+        verbose: bool = False,
+    ) -> str:
         """
         Helper function for writing values to CSV files
         """
+        if verbose:
+            log.debug("value: %s of type %s", value, type(value))
+
         if value is None or value == "":
             # leave cell empty in these cases
             return line + ","
@@ -483,36 +515,6 @@ class ExportHandler:
             # just put the raw value into the CSV and
             # Excel should do its best to interpret the type
             return line + str(value) + ","
-
-    @staticmethod
-    def get_value_from_dict(record_dict, projection) -> Union[str, int, float, Dict]:
-        """
-        Recursive function to extract a value from a record dictionary by traversing
-        down the dictionary following a path specified by the projection to reach a
-        scalar value which is then returned.
-        The recursion handles values that are found at different depths in the record
-        dictionary such as metadata.shotnum and channels.N_COMP_FF_E.data.
-        """
-        # get the projection part up to the first dot
-        projection_array = projection.split(".")
-        next_projection_part = projection_array[0]
-        try:
-            # get either the entry in the dictionary
-            # or a value if we have reached the value we need
-            dict_or_value = record_dict.get(next_projection_part)
-        except AttributeError:
-            # there is no value for this item in this record - this is probably OK
-            # return empty string so that alignment is maintained in the CSV file
-            return ""
-        if len(projection_array) == 1:
-            # we should have reached an item value in the most nested dictionary
-            # so return it
-            return dict_or_value
-        else:
-            # we still have a dictionary which needs further processing
-            # to get down to lower levels where the value will be
-            new_projection = projection.split(".", 1)[1]
-            return ExportHandler.get_value_from_dict(dict_or_value, new_projection)
 
     def _check_zip_file_size(self) -> None:
         """

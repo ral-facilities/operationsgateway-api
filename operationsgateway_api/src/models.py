@@ -43,6 +43,12 @@ default_id = Field(None, alias="_id")
 default_exclude_field = Field(None, exclude=True)
 
 
+class ChannelDtype(StrEnum):
+    IMAGE = "image"
+    WAVEFORM = "waveform"
+    SCALAR = "scalar"
+
+
 class ImageModel(BaseModel):
     path: Optional[Union[str, Any]]
     data: Optional[Union[np.ndarray, Any]]
@@ -75,7 +81,7 @@ class WaveformModel(BaseModel):
 
 
 class ImageChannelMetadataModel(BaseModel):
-    channel_dtype: Optional[Union[str, Any]]
+    channel_dtype: Literal[ChannelDtype.IMAGE] | Any | None = ChannelDtype.IMAGE
     exposure_time_s: Optional[Union[float, Any]] = None
     gain: Optional[Union[float, Any]] = None
     x_pixel_size: Optional[Union[float, Any]] = None
@@ -128,7 +134,7 @@ class NullableImageChannelModel(BaseModel):
 
 
 class ScalarChannelMetadataModel(BaseModel):
-    channel_dtype: Optional[Union[str, Any]]
+    channel_dtype: Literal[ChannelDtype.SCALAR] | Any | None = ChannelDtype.SCALAR
     units: Optional[Union[str, Any]] = None
 
 
@@ -138,7 +144,7 @@ class ScalarChannelModel(BaseModel):
 
 
 class WaveformChannelMetadataModel(BaseModel):
-    channel_dtype: Optional[Union[str, Any]]
+    channel_dtype: Literal[ChannelDtype.WAVEFORM] | Any | None = ChannelDtype.WAVEFORM
     x_units: Optional[Union[str, Any]] = None
     y_units: Optional[Union[str, Any]] = None
 
@@ -160,7 +166,7 @@ class RecordMetadataModel(BaseModel):
 class RecordModel(BaseModel):
     id_: str = Field(alias="_id")
     metadata: RecordMetadataModel
-    channels: Dict[
+    channels: dict[
         str,
         ImageChannelModel
         | NullableImageChannelModel

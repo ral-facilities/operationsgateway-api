@@ -17,6 +17,7 @@ from operationsgateway_api.src.exceptions import (
 )
 from operationsgateway_api.src.models import (
     ImageModel,
+    PartialRecordModel,
     RecordModel,
     WaveformModel,
 )
@@ -241,7 +242,7 @@ class TestRecord:
         del record["channels"]["test-image-channel"]["thumbnail"]
 
         await record_instance.apply_false_colour_to_thumbnails(
-            record=record,
+            record=PartialRecordModel(**record),
             lower_level=2,
             upper_level=3,
             colourmap_name="test",
@@ -284,11 +285,11 @@ class TestRecord:
     @pytest.mark.parametrize(
         "record",
         [
-            pytest.param({"_id": "20230605100000"}, id="No channels"),
+            pytest.param(PartialRecordModel(_id="20230605100000"), id="No channels"),
             pytest.param(
-                {
-                    "_id": "20230605100000",
-                    "channels": {
+                PartialRecordModel(
+                    _id="20230605100000",
+                    channels={
                         "TS-202-TSM-P1-CAM-2-CENX": {"data": 4.145480878063205},
                         "CM-202-CVC-SP": {
                             "waveform_path": "20230605100000/CM-202-CVC-SP.json",
@@ -298,7 +299,7 @@ class TestRecord:
                             "image_path": "20230605100000/FE-204-NSO-P1-CAM-1.png",
                         },
                     },
-                },
+                ),
                 id="Channels loaded",
             ),
         ],
@@ -514,13 +515,12 @@ class TestRecord:
     )
     async def test_apply_functions(
         self,
-        record: dict,
+        record: PartialRecordModel,
         functions: "list[dict[str, str]]",
         values: "dict[str, dict]",
     ):
-        record_copy = copy.deepcopy(record)
         await Record.apply_functions(
-            record=record_copy,
+            record=record,
             functions=functions,
             original_image=False,
             lower_level=0,
@@ -530,19 +530,15 @@ class TestRecord:
             return_thumbnails=True,
         )
 
-        assert "channels" in record_copy
+        assert record.channels is not None
         for key, value in values.items():
-            assert key in record_copy["channels"]
-            assert "_variable_value" not in record_copy["channels"][key]
-            assert "metadata" in record_copy["channels"][key]
-            assert record_copy["channels"][key]["metadata"] == value["metadata"]
+            assert key in record.channels
+            dump = record.channels[key].metadata.model_dump(exclude_unset=True)
+            assert dump == value["metadata"]
             if "data" in value:
-                assert "data" in record_copy["channels"][key]
-                test_data = record_copy["channels"][key]["data"]
-                assert test_data == value["data"]
+                assert record.channels[key].data == value["data"]
             else:
-                assert "thumbnail" in record_copy["channels"][key]
-                image_b64 = record_copy["channels"][key]["thumbnail"]
+                image_b64 = record.channels[key].thumbnail
                 image_bytes = base64.b64decode(image_b64)
                 image = PILImage.open(BytesIO(image_bytes))
                 image_phash = str(imagehash.phash(image))
@@ -568,7 +564,7 @@ class TestRecord:
         self,
         functions: "list[dict[str, str]]",
     ):
-        record = {"_id": "20230605100000"}
+        record = PartialRecordModel(_id="20230605100000")
         with pytest.raises(FunctionParseError) as e:
             await Record.apply_functions(record, functions, False, 0, 255, 8, "binary")
 
@@ -578,7 +574,7 @@ class TestRecord:
     async def test_apply_functions_missing_channel(self):
         # Note we need a record where not all channels are defined, so not using
         # 20230605100000 as above
-        record = {"_id": "20230604000000"}
+        record = PartialRecordModel(_id="20230604000000")
         functions = [
             {"name": "a", "expression": "TS-202-TSM-P1-CAM-2-CENX / 10"},
             {"name": "b", "expression": "a / 10"},
@@ -596,11 +592,11 @@ class TestRecord:
         )
 
         expected = {"data": 1, "metadata": {"channel_dtype": "scalar"}}
-        assert "channels" in record
-        assert "a" not in record["channels"]  # Skip, TS-202-TSM-P1-CAM-2-CENX undefined
-        assert "b" not in record["channels"]  # Skip, a undefined
-        assert "c" in record["channels"]  # Has no dependencies, so should be returned
-        assert record["channels"]["c"] == expected
+        assert record.channels is not None
+        assert "a" not in record.channels  # Skip, TS-202-TSM-P1-CAM-2-CENX undefined
+        assert "b" not in record.channels  # Skip, a undefined
+        assert "c" in record.channels  # Has no dependencies, so should be returned
+        assert record.channels["c"].model_dump(exclude_unset=True) == expected
 
     @pytest.mark.parametrize(
         ["img_array", "raw_bit_depth"],
@@ -632,3 +628,12 @@ class TestRecord:
             raw_bit_depth=raw_bit_depth,
         )
         assert img[0] == expected_value
+
+    @pytest.mark.parametrize(
+        ["truncate", "length"],
+        [pytest.param(True, 50), pytest.param(False, 100)],
+    )
+    def test_truncate_bytes(self, truncate: bool, length: int):
+        long_bytes = b"0" * 100
+        truncated_bytes = Record.truncate_bytes(truncate=truncate, image_b64=long_bytes)
+        assert len(truncated_bytes) == length

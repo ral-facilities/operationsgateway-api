@@ -8,7 +8,7 @@ application-import-names = operationsgateway_api,test
 import-order-style = google
 enable-extensions=G
 per-file-ignores =
-  test/*: S101, S303
+  test/*: S101, S303, F401, F811
   test/experiments/scheduler_mocking/models.py: N815
   operationsgateway_api/src/models.py: B902
   operationsgateway_api/src/records/waveform.py: E402
