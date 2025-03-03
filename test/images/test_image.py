@@ -16,6 +16,7 @@ from operationsgateway_api.src.exceptions import (
 )
 from operationsgateway_api.src.models import ImageModel
 from operationsgateway_api.src.records.image import Image
+from test.records.conftest import remove_test_objects
 
 
 class MockImage:
@@ -32,7 +33,6 @@ class TestImage:
     config_echo_access_key = "TestAccessKey"
     config_echo_secret_key = "TestSecretKey"
     config_image_bucket_name = "MyTestBucket"
-    test_image_path = "test/image/path.png"
 
     def _get_bytes_of_image(self, filename):
         print(f"PATH: {os.path.dirname(os.path.realpath(__file__))}")
@@ -133,23 +133,20 @@ class TestImage:
                 test_image.create_thumbnail()
 
     @pytest.mark.parametrize(
-        "image_path, expected_record_id, expected_channel_name",
+        ["image_path", "expected_channel_name"],
         [
             pytest.param(
                 "20220408165857/N_INP_NF_IMAGE.png",
-                "20220408165857",
                 "N_INP_NF_IMAGE",
                 id="Typical path",
             ),
             pytest.param(
                 "test/path.png",
-                "test",
                 "path",
                 id="Test path",
             ),
             pytest.param(
                 "/test/path.png",
-                "test",
                 "path",
                 id="Path starting at root level",
             ),
@@ -158,57 +155,53 @@ class TestImage:
     def test_extract_metadata(
         self,
         image_path,
-        expected_record_id,
         expected_channel_name,
     ):
         test_image = Image(
             ImageModel(path=image_path, data=np.ones(shape=(300, 300), dtype=np.uint8)),
         )
 
-        record_id, channel_name = test_image.extract_metadata_from_path()
-        assert record_id == expected_record_id
+        channel_name = test_image.get_channel_name_from_path()
         assert channel_name == expected_channel_name
 
-    @patch(
-        "operationsgateway_api.src.config.Config.config.echo.url",
-        config_echo_url,
-    )
-    @patch(
-        "operationsgateway_api.src.config.Config.config.echo.access_key",
-        config_echo_access_key,
-    )
-    @patch(
-        "operationsgateway_api.src.config.Config.config.echo.secret_key",
-        config_echo_secret_key,
-    )
-    @patch(
-        "operationsgateway_api.src.config.Config.config.echo.bucket_name",
-        config_image_bucket_name,
-    )
-    @patch("boto3.resource")
-    @patch(
-        "operationsgateway_api.src.records.echo_interface.EchoInterface"
-        ".upload_file_object",
-    )
     @pytest.mark.parametrize(["bit_depth"], [pytest.param(None), pytest.param(8)])
-    def test_valid_upload_image(self, mock_upload_file_object, _, bit_depth: int):
+    @pytest.mark.parametrize(
+        ["path"],
+        [
+            pytest.param("1952/06/05/070023/test-channel-name.png"),
+            pytest.param("19520605070023/test-channel-name.png"),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_valid_upload_image(
+        self,
+        bit_depth: int,
+        path: str,
+        remove_test_objects: None,
+    ):
         test_image = Image(
             ImageModel(
-                path=self.test_image_path,
+                path=path,
                 data=np.ones(shape=(300, 300), dtype=np.uint8),
                 bit_depth=bit_depth,
             ),
         )
-        Image.upload_image(test_image)
+        response = Image.upload_image(test_image)
 
-        assert mock_upload_file_object.call_count == 1
+        assert response is None
 
-        assert len(mock_upload_file_object.call_args.args) == 2
-        uploaded_bytes_io = mock_upload_file_object.call_args.args[0]
-        assert isinstance(uploaded_bytes_io, BytesIO)
+        bytes_io = await Image.get_image(
+            record_id="19520605070023",
+            channel_name="test-channel-name",
+            original_image=True,
+            lower_level=0,
+            upper_level=255,
+            limit_bit_depth=8,
+            colourmap_name=None,
+        )
+        assert isinstance(bytes_io, BytesIO)
 
-        uploaded_bytes_io.seek(0)
-        uploaded_bytes = uploaded_bytes_io.read()
+        uploaded_bytes = bytes_io.getvalue()
         s_bit_offset = uploaded_bytes.find(b"sBIT")
         if bit_depth is None:
             assert s_bit_offset == -1
@@ -216,11 +209,6 @@ class TestImage:
             assert s_bit_offset != -1
             s_bit = uploaded_bytes[s_bit_offset + 4 : s_bit_offset + 5]
             assert int.from_bytes(s_bit, byteorder="big") == bit_depth
-
-        assert (
-            mock_upload_file_object.call_args.args[1]
-            == f"images/{self.test_image_path}"
-        )
 
     @patch(
         "operationsgateway_api.src.config.Config.config.echo.url",
@@ -246,7 +234,7 @@ class TestImage:
     def test_invalid_upload_image(self, _, __):
         test_image = Image(
             ImageModel(
-                path=self.test_image_path,
+                path="test/image/path.png",
                 data=np.ones(shape=(300, 300), dtype=np.uint8),
             ),
         )
@@ -357,9 +345,20 @@ class TestImage:
                     colourmap_name="jet",
                 )
 
-    def test_get_relative_path(self):
-        test_path = Image.get_relative_path("20220408165857", "N_INP_NF_IMAGE")
-        assert test_path == "20220408165857/N_INP_NF_IMAGE.png"
+    @pytest.mark.parametrize(
+        ["use_subdirectories", "path"],
+        [
+            pytest.param(False, "20220408165857/N_INP_NF_IMAGE.png"),
+            pytest.param(True, "2022/04/08/165857/N_INP_NF_IMAGE.png"),
+        ],
+    )
+    def test_get_relative_path(self, use_subdirectories: bool, path: str):
+        test_path = Image.get_relative_path(
+            "20220408165857",
+            "N_INP_NF_IMAGE",
+            use_subdirectories=use_subdirectories,
+        )
+        assert test_path == path
 
     @pytest.mark.parametrize(
         ["data", "bit_depth", "record_tuples", "dtype", "value"],

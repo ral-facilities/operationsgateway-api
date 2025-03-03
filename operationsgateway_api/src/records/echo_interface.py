@@ -64,6 +64,23 @@ class EchoInterface:
             )
             raise EchoS3Error("Bucket for object storage cannot be found")
 
+    @staticmethod
+    def format_record_id(record_id: str, use_subdirectories: bool = True) -> str:
+        """
+        Historically, objects had their record_id (YYYYMMDDHHMMSS) as a directory. This
+        can lead to large (~100,000) numbers of directories in the same bucket which
+        take too long to list when debugging.
+
+        By splitting the directories into the format YYYY/MM/DD/HHMMSS, the hope is to
+        improve findability. However since migrating large amounts of data can be
+        costly, it may be practical to support both the new and old formats when
+        querying.
+        """
+        if use_subdirectories and len(record_id) > 8:
+            return f"{record_id[:4]}/{record_id[4:6]}/{record_id[6:8]}/{record_id[8:]}"
+        else:
+            return record_id
+
     def head_object(self, object_path: str) -> bool:
         """
         https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/head_object.html
