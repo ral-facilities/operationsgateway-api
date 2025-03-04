@@ -21,7 +21,7 @@ AuthoriseRoute = Annotated[str, Depends(authorise_route)]
     response_description="The current maintenance message and whether to show it",
     tags=["Maintenance"],
 )
-def get_maintenance(access_token: AuthoriseRoute) -> MaintenanceModel:
+def get_maintenance() -> MaintenanceModel:
     return _get_maintenance()
 
 
@@ -40,21 +40,19 @@ def set_maintenance(
 
 
 @router.get(
-    "/maintenance/scheduled",
+    "/scheduled_maintenance",
     summary="Get the current scheduled maintenance message and whether to show it",
     response_description=(
         "The current scheduled maintenance message and whether to show it"
     ),
     tags=["Maintenance"],
 )
-def get_scheduled_maintenance(
-    access_token: AuthoriseRoute,
-) -> ScheduledMaintenanceModel:
+def get_scheduled_maintenance() -> ScheduledMaintenanceModel:
     return _get_scheduled_maintenance()
 
 
 @router.post(
-    "/maintenance/scheduled",
+    "/scheduled_maintenance",
     summary="Set the current scheduled maintenance message and whether to show it",
     tags=["Maintenance"],
 )

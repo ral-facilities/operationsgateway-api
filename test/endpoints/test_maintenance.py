@@ -29,10 +29,7 @@ class TestMaintenance:
             tmp_file.seek(0)  # Reset so we can read again later
 
             # Calling GET will save the return value to cache
-            response = test_app.get(
-                url="/maintenance",
-                headers={"Authorization": f"Bearer {login_and_get_token}"},
-            )
+            response = test_app.get(url="/maintenance")
             assert response.status_code == 200
             assert json.loads(response.content) == initial_content
 
@@ -47,12 +44,23 @@ class TestMaintenance:
             assert json.load(tmp_file) == updated_content
 
             # Cache has been cleared so should get the new message back
-            response = test_app.get(
-                url="/maintenance",
-                headers={"Authorization": f"Bearer {login_and_get_token}"},
-            )
+            response = test_app.get(url="/maintenance")
             assert response.status_code == 200
             assert json.loads(response.content) == updated_content
+
+    def test_maintenance_failure(
+        self,
+        test_app: TestClient,
+        login_as_frontend_and_get_token: str,
+    ):
+        response = test_app.post(
+            url="/maintenance",
+            content=json.dumps({"show": False, "message": ""}),
+            headers={"Authorization": f"Bearer {login_as_frontend_and_get_token}"},
+        )
+        assert response.status_code == 403
+        detail = "User 'frontend' is not authorised to use endpoint '/maintenance POST'"
+        assert json.loads(response.content)["detail"] == detail
 
     def test_scheduled_maintenance(
         self,
@@ -69,7 +77,7 @@ class TestMaintenance:
         with patch(target, tmp_file.name):
             # POST the initial contents (we are using a tmpfile, which will start empty)
             response = test_app.post(
-                url="/maintenance/scheduled",
+                url="/scheduled_maintenance",
                 content=json.dumps(initial_content),
                 headers={"Authorization": f"Bearer {login_and_get_token}"},
             )
@@ -79,16 +87,13 @@ class TestMaintenance:
             tmp_file.seek(0)  # Reset so we can read again later
 
             # Calling GET will save the return value to cache
-            response = test_app.get(
-                url="/maintenance/scheduled",
-                headers={"Authorization": f"Bearer {login_and_get_token}"},
-            )
+            response = test_app.get(url="/scheduled_maintenance")
             assert response.status_code == 200
             assert json.loads(response.content) == initial_content
 
             # Calling POST will clear the cache after writing to file
             response = test_app.post(
-                url="/maintenance/scheduled",
+                url="/scheduled_maintenance",
                 content=json.dumps(updated_content),
                 headers={"Authorization": f"Bearer {login_and_get_token}"},
             )
@@ -97,9 +102,22 @@ class TestMaintenance:
             assert json.load(tmp_file) == updated_content
 
             # Cache has been cleared so should get the new message back
-            response = test_app.get(
-                url="/maintenance/scheduled",
-                headers={"Authorization": f"Bearer {login_and_get_token}"},
-            )
+            response = test_app.get(url="/scheduled_maintenance")
             assert response.status_code == 200
             assert json.loads(response.content) == updated_content
+
+    def test_scheduled_maintenance_failure(
+        self,
+        test_app: TestClient,
+        login_as_frontend_and_get_token: str,
+    ):
+        response = test_app.post(
+            url="/scheduled_maintenance",
+            content=json.dumps({"show": False, "message": "", "severity": "info"}),
+            headers={"Authorization": f"Bearer {login_as_frontend_and_get_token}"},
+        )
+        assert response.status_code == 403
+        assert json.loads(response.content)["detail"] == (
+            "User 'frontend' is not authorised to use endpoint '/scheduled_maintenance "
+            "POST'"
+        )
