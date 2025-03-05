@@ -249,6 +249,14 @@ class ChannelChecks:
             rejected_channels.append(
                 {key: "y_pixel_units attribute has wrong datatype"},
             )
+
+        if (
+            "bit_depth" in value_dict
+            and value_dict["bit_depth"] is not None
+            and not isinstance(value_dict["bit_depth"], (int, np.integer))
+        ):
+            rejected_channels.append({key: "bit_depth attribute has wrong datatype"})
+
         return rejected_channels
 
     def optional_dtype_checks(self):

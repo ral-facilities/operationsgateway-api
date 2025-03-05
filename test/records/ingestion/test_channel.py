@@ -499,6 +499,11 @@ class TestChannel:
                 ],
                 id="Mixed invalid optional attributes",
             ),
+            pytest.param(
+                {"image": {"bit_depth": "invalid"}},
+                [{"PM-201-FE-CAM-1": "bit_depth attribute has wrong datatype"}],
+                id="Invalid bit_depth",
+            ),
         ],
     )
     @pytest.mark.asyncio

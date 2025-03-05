@@ -157,6 +157,87 @@ class TestGetRecords:
                 ],
                 id="Example with functions",
             ),
+            pytest.param(
+                {"channels.CM-202-CVC-SP": {"$exists": True}},
+                0,
+                2,
+                "metadata.shotnum ASC",
+                None,
+                False,
+                [354, 378],
+                [{"name": "test", "expression": "CM-202-CVC-SP - 700"}],
+                [
+                    {"test": "bab14eb3d04eb04e"},
+                    {"test": "bab14eb0c14eb14f"},
+                ],
+                id="Example with Waveform function",
+            ),
+            pytest.param(
+                {"channels.FE-204-NSO-P1-CAM-1": {"$exists": True}},
+                0,
+                2,
+                "metadata.shotnum ASC",
+                None,
+                False,
+                [354, 378],
+                [{"name": "test", "expression": "FE-204-NSO-P1-CAM-1 - 700"}],
+                [
+                    {"test": "c73b39c0c00fcc7e"},
+                    {"test": "c73c38e2c00fc73b"},
+                ],
+                id="Example with Image function",
+            ),
+            pytest.param(
+                {"metadata.shotnum": 423648000000},
+                0,
+                1,
+                "metadata.shotnum ASC",
+                ["channels.CM-202-CVC-CAM-1.metadata"],
+                False,
+                None,
+                [],
+                [
+                    {
+                        "_id": "20230605080000",
+                        "channels": {
+                            "CM-202-CVC-CAM-1": {
+                                "metadata": {
+                                    "channel_dtype": "image",
+                                    "exposure_time_s": 0.0012,
+                                    "gain": 4.826012758558324,
+                                },
+                            },
+                        },
+                    },
+                ],
+                id="Query for bit_depth, not present",
+            ),
+            pytest.param(
+                {"metadata.shotnum": 423649008000},
+                0,
+                1,
+                "metadata.shotnum ASC",
+                ["channels.CM-202-CVC-CAM-1.metadata"],
+                False,
+                None,
+                [],
+                [
+                    {
+                        "_id": "20230606120000",
+                        "channels": {
+                            "CM-202-CVC-CAM-1": {
+                                "metadata": {
+                                    "bit_depth": 12,
+                                    "channel_dtype": "image",
+                                    "exposure_time_s": 0.0012,
+                                    "gain": 0.7862722445526737,
+                                },
+                            },
+                        },
+                    },
+                ],
+                id="Query for bit_depth, present",
+            ),
         ],
     )
     def test_valid_get_records(

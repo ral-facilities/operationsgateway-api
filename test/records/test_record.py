@@ -17,6 +17,7 @@ from operationsgateway_api.src.exceptions import (
 )
 from operationsgateway_api.src.models import (
     ImageModel,
+    PartialRecordModel,
     RecordModel,
     WaveformModel,
 )
@@ -241,7 +242,7 @@ class TestRecord:
         del record["channels"]["test-image-channel"]["thumbnail"]
 
         await record_instance.apply_false_colour_to_thumbnails(
-            record=record,
+            record=PartialRecordModel(**record),
             lower_level=2,
             upper_level=3,
             colourmap_name="test",
@@ -283,11 +284,11 @@ class TestRecord:
     @pytest.mark.parametrize(
         "record",
         [
-            pytest.param({"_id": "20230605100000"}, id="No channels"),
+            pytest.param(PartialRecordModel(_id="20230605100000"), id="No channels"),
             pytest.param(
-                {
-                    "_id": "20230605100000",
-                    "channels": {
+                PartialRecordModel(
+                    _id="20230605100000",
+                    channels={
                         "TS-202-TSM-P1-CAM-2-CENX": {"data": 4.145480878063205},
                         "CM-202-CVC-SP": {
                             "waveform_path": "20230605100000/CM-202-CVC-SP.json",
@@ -297,7 +298,7 @@ class TestRecord:
                             "image_path": "20230605100000/FE-204-NSO-P1-CAM-1.png",
                         },
                     },
-                },
+                ),
                 id="Channels loaded",
             ),
         ],
@@ -513,34 +514,30 @@ class TestRecord:
     )
     async def test_apply_functions(
         self,
-        record: dict,
+        record: PartialRecordModel,
         functions: "list[dict[str, str]]",
         values: "dict[str, dict]",
     ):
-        record_copy = copy.deepcopy(record)
         await Record.apply_functions(
-            record=record_copy,
+            record=record,
             functions=functions,
             original_image=False,
             lower_level=0,
             upper_level=255,
+            limit_bit_depth=8,
             colourmap_name="binary",
             return_thumbnails=True,
         )
 
-        assert "channels" in record_copy
+        assert record.channels is not None
         for key, value in values.items():
-            assert key in record_copy["channels"]
-            assert "_variable_value" not in record_copy["channels"][key]
-            assert "metadata" in record_copy["channels"][key]
-            assert record_copy["channels"][key]["metadata"] == value["metadata"]
+            assert key in record.channels
+            dump = record.channels[key].metadata.model_dump(exclude_unset=True)
+            assert dump == value["metadata"]
             if "data" in value:
-                assert "data" in record_copy["channels"][key]
-                test_data = record_copy["channels"][key]["data"]
-                assert test_data == value["data"]
+                assert record.channels[key].data == value["data"]
             else:
-                assert "thumbnail" in record_copy["channels"][key]
-                image_b64 = record_copy["channels"][key]["thumbnail"]
+                image_b64 = record.channels[key].thumbnail
                 image_bytes = base64.b64decode(image_b64)
                 image = PILImage.open(BytesIO(image_bytes))
                 image_phash = str(imagehash.phash(image))
@@ -566,9 +563,9 @@ class TestRecord:
         self,
         functions: "list[dict[str, str]]",
     ):
-        record = {"_id": "20230605100000"}
+        record = PartialRecordModel(_id="20230605100000")
         with pytest.raises(FunctionParseError) as e:
-            await Record.apply_functions(record, functions, False, 0, 255, "binary")
+            await Record.apply_functions(record, functions, False, 0, 255, 8, "binary")
 
         assert str(e.value) == "b is not known as a channel or function name"
 
@@ -576,7 +573,7 @@ class TestRecord:
     async def test_apply_functions_missing_channel(self):
         # Note we need a record where not all channels are defined, so not using
         # 20230605100000 as above
-        record = {"_id": "20230604000000"}
+        record = PartialRecordModel(_id="20230604000000")
         functions = [
             {"name": "a", "expression": "TS-202-TSM-P1-CAM-2-CENX / 10"},
             {"name": "b", "expression": "a / 10"},
@@ -588,13 +585,54 @@ class TestRecord:
             original_image=False,
             lower_level=0,
             upper_level=255,
+            limit_bit_depth=8,
             colourmap_name="binary",
             return_thumbnails=True,
         )
 
         expected = {"data": 1, "metadata": {"channel_dtype": "scalar"}}
-        assert "channels" in record
-        assert "a" not in record["channels"]  # Skip, TS-202-TSM-P1-CAM-2-CENX undefined
-        assert "b" not in record["channels"]  # Skip, a undefined
-        assert "c" in record["channels"]  # Has no dependencies, so should be returned
-        assert record["channels"]["c"] == expected
+        assert record.channels is not None
+        assert "a" not in record.channels  # Skip, TS-202-TSM-P1-CAM-2-CENX undefined
+        assert "b" not in record.channels  # Skip, a undefined
+        assert "c" in record.channels  # Has no dependencies, so should be returned
+        assert record.channels["c"].model_dump(exclude_unset=True) == expected
+
+    @pytest.mark.parametrize(
+        ["img_array", "raw_bit_depth"],
+        [
+            pytest.param(np.ones(1, dtype=np.int32) * 4, 6),
+            pytest.param(np.ones(1, dtype=np.int32) * 16, 12),
+        ],
+    )
+    def test_bit_shift_to_raw(self, img_array: np.ndarray, raw_bit_depth: int):
+        img = Record._bit_shift_to_raw(img_array=img_array, raw_bit_depth=raw_bit_depth)
+        assert img[0] == 1
+
+    @pytest.mark.parametrize(
+        ["raw_bit_depth", "expected_value"],
+        [
+            pytest.param(6, 4, id="Expect upshift by 2 to 8 bit, 0001 -> 0100"),
+            pytest.param(8, 1, id="Expect no shift as already 8 bit"),
+            pytest.param(
+                12,
+                16,
+                id="Expect upshift by 4 to 16 bit, 0000 0001 -> 0001 0000",
+            ),
+            pytest.param(16, 1, id="Expect no shift as already 16 bit"),
+        ],
+    )
+    def test_bit_shift_to_storage(self, raw_bit_depth: int, expected_value: int):
+        img = Record._bit_shift_to_storage(
+            img_array=np.ones(1, dtype=np.int32),
+            raw_bit_depth=raw_bit_depth,
+        )
+        assert img[0] == expected_value
+
+    @pytest.mark.parametrize(
+        ["truncate", "length"],
+        [pytest.param(True, 50), pytest.param(False, 100)],
+    )
+    def test_truncate_bytes(self, truncate: bool, length: int):
+        long_bytes = b"0" * 100
+        truncated_bytes = Record.truncate_bytes(truncate=truncate, image_b64=long_bytes)
+        assert len(truncated_bytes) == length

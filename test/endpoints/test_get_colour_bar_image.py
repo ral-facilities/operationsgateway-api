@@ -59,16 +59,16 @@ class TestGetColourBarImage:
                 False,
                 422,  # pydantic error
                 None,
-                id="Client error due to lower_level not in range 1 to 255",
+                id="Client error due to lower_level not in range 1 to 65535",
             ),
             pytest.param(
                 None,
-                300,
+                65536,
                 None,
                 False,
                 422,  # pydantic error
                 None,
-                id="Client error due to upper_level not in range 1 to 255",
+                id="Client error due to upper_level not in range 1 to 65535",
             ),
             pytest.param(
                 100,

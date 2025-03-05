@@ -1,5 +1,6 @@
 import base64
 from io import BytesIO
+import logging
 import os
 from unittest.mock import patch
 
@@ -15,6 +16,7 @@ from operationsgateway_api.src.exceptions import (
 )
 from operationsgateway_api.src.models import ImageModel
 from operationsgateway_api.src.records.image import Image
+from test.records.conftest import remove_test_objects
 
 
 class MockImage:
@@ -31,7 +33,6 @@ class TestImage:
     config_echo_access_key = "TestAccessKey"
     config_echo_secret_key = "TestSecretKey"
     config_image_bucket_name = "MyTestBucket"
-    test_image_path = "test/image/path.png"
 
     def _get_bytes_of_image(self, filename):
         print(f"PATH: {os.path.dirname(os.path.realpath(__file__))}")
@@ -51,7 +52,7 @@ class TestImage:
         test_image = Image(
             ImageModel(
                 path="test/path/photo.png",
-                data=np.ones(shape=(300, 300), dtype=np.int8),
+                data=np.ones(shape=(300, 300), dtype=np.uint8),
             ),
         )
         test_image.create_thumbnail()
@@ -59,9 +60,7 @@ class TestImage:
         bytes_thumbnail = base64.b64decode(test_image.thumbnail)
         img = PILImage.open(BytesIO(bytes_thumbnail))
         thumbnail_checksum = str(imagehash.phash(img))
-        assert thumbnail_checksum == "0000000000000000"
-        # the reason only 0s are being asserted is because this is checking the hash of
-        # a purely black 300x300 square created in the test_image above
+        assert thumbnail_checksum == "8000000000000000"
 
     @pytest.mark.parametrize(
         # image_size parameter = (rows, columns), not (width, height) which is what
@@ -102,7 +101,7 @@ class TestImage:
         test_image = Image(
             ImageModel(
                 path="test/path/photo.png",
-                data=np.ones(shape=image_size, dtype=np.int8),
+                data=np.ones(shape=image_size, dtype=np.uint8),
             ),
         )
         with patch(
@@ -119,7 +118,7 @@ class TestImage:
         test_image = Image(
             ImageModel(
                 path="test/path/photo.png",
-                data=np.ones(shape=(300, 300), dtype=np.int8),
+                data=np.ones(shape=(300, 300), dtype=np.uint8),
             ),
         )
 
@@ -134,23 +133,20 @@ class TestImage:
                 test_image.create_thumbnail()
 
     @pytest.mark.parametrize(
-        "image_path, expected_record_id, expected_channel_name",
+        ["image_path", "expected_channel_name"],
         [
             pytest.param(
                 "20220408165857/N_INP_NF_IMAGE.png",
-                "20220408165857",
                 "N_INP_NF_IMAGE",
                 id="Typical path",
             ),
             pytest.param(
                 "test/path.png",
-                "test",
                 "path",
                 id="Test path",
             ),
             pytest.param(
                 "/test/path.png",
-                "test",
                 "path",
                 id="Path starting at root level",
             ),
@@ -159,55 +155,60 @@ class TestImage:
     def test_extract_metadata(
         self,
         image_path,
-        expected_record_id,
         expected_channel_name,
     ):
         test_image = Image(
-            ImageModel(path=image_path, data=np.ones(shape=(300, 300), dtype=np.int8)),
+            ImageModel(path=image_path, data=np.ones(shape=(300, 300), dtype=np.uint8)),
         )
 
-        record_id, channel_name = test_image.extract_metadata_from_path()
-        assert record_id == expected_record_id
+        channel_name = test_image.get_channel_name_from_path()
         assert channel_name == expected_channel_name
 
-    @patch(
-        "operationsgateway_api.src.config.Config.config.echo.url",
-        config_echo_url,
+    @pytest.mark.parametrize(["bit_depth"], [pytest.param(None), pytest.param(8)])
+    @pytest.mark.parametrize(
+        ["path"],
+        [
+            pytest.param("1952/06/05/070023/test-channel-name.png"),
+            pytest.param("19520605070023/test-channel-name.png"),
+        ],
     )
-    @patch(
-        "operationsgateway_api.src.config.Config.config.echo.access_key",
-        config_echo_access_key,
-    )
-    @patch(
-        "operationsgateway_api.src.config.Config.config.echo.secret_key",
-        config_echo_secret_key,
-    )
-    @patch(
-        "operationsgateway_api.src.config.Config.config.echo.bucket_name",
-        config_image_bucket_name,
-    )
-    @patch("boto3.resource")
-    @patch(
-        "operationsgateway_api.src.records.echo_interface.EchoInterface"
-        ".upload_file_object",
-    )
-    def test_valid_upload_image(self, mock_upload_file_object, _):
+    @pytest.mark.asyncio
+    async def test_valid_upload_image(
+        self,
+        bit_depth: int,
+        path: str,
+        remove_test_objects: None,
+    ):
         test_image = Image(
             ImageModel(
-                path=self.test_image_path,
-                data=np.ones(shape=(300, 300), dtype=np.int8),
+                path=path,
+                data=np.ones(shape=(300, 300), dtype=np.uint8),
+                bit_depth=bit_depth,
             ),
         )
-        Image.upload_image(test_image)
+        response = Image.upload_image(test_image)
 
-        assert mock_upload_file_object.call_count == 1
+        assert response is None
 
-        assert len(mock_upload_file_object.call_args.args) == 2
-        assert isinstance(mock_upload_file_object.call_args.args[0], BytesIO)
-        assert (
-            mock_upload_file_object.call_args.args[1]
-            == f"images/{self.test_image_path}"
+        bytes_io = await Image.get_image(
+            record_id="19520605070023",
+            channel_name="test-channel-name",
+            original_image=True,
+            lower_level=0,
+            upper_level=255,
+            limit_bit_depth=8,
+            colourmap_name=None,
         )
+        assert isinstance(bytes_io, BytesIO)
+
+        uploaded_bytes = bytes_io.getvalue()
+        s_bit_offset = uploaded_bytes.find(b"sBIT")
+        if bit_depth is None:
+            assert s_bit_offset == -1
+        else:
+            assert s_bit_offset != -1
+            s_bit = uploaded_bytes[s_bit_offset + 4 : s_bit_offset + 5]
+            assert int.from_bytes(s_bit, byteorder="big") == bit_depth
 
     @patch(
         "operationsgateway_api.src.config.Config.config.echo.url",
@@ -233,8 +234,8 @@ class TestImage:
     def test_invalid_upload_image(self, _, __):
         test_image = Image(
             ImageModel(
-                path=self.test_image_path,
-                data=np.ones(shape=(300, 300), dtype=np.int8),
+                path="test/image/path.png",
+                data=np.ones(shape=(300, 300), dtype=np.uint8),
             ),
         )
         with pytest.raises(ImageError):
@@ -282,12 +283,13 @@ class TestImage:
                 return_value=self._get_bytes_of_image(expected_image_filename),
             ):
                 test_image = await Image.get_image(
-                    "test_record_id",
-                    "test_channel_name",
-                    original_image_flag,
-                    0,
-                    255,
-                    "jet",
+                    record_id="test_record_id",
+                    channel_name="test_channel_name",
+                    original_image=original_image_flag,
+                    lower_level=0,
+                    upper_level=255,
+                    limit_bit_depth=8,
+                    colourmap_name="jet",
                 )
 
             assert (
@@ -334,14 +336,207 @@ class TestImage:
         ):
             with pytest.raises(expected_exception):
                 await Image.get_image(
-                    "test_record_id",
-                    "test_channel_name",
-                    True,
-                    0,
-                    255,
-                    "jet",
+                    record_id="test_record_id",
+                    channel_name="test_channel_name",
+                    original_image=True,
+                    lower_level=0,
+                    upper_level=255,
+                    limit_bit_depth=8,
+                    colourmap_name="jet",
                 )
 
-    def test_get_relative_path(self):
-        test_path = Image.get_relative_path("20220408165857", "N_INP_NF_IMAGE")
-        assert test_path == "20220408165857/N_INP_NF_IMAGE.png"
+    @pytest.mark.parametrize(
+        ["use_subdirectories", "path"],
+        [
+            pytest.param(False, "20220408165857/N_INP_NF_IMAGE.png"),
+            pytest.param(True, "2022/04/08/165857/N_INP_NF_IMAGE.png"),
+        ],
+    )
+    def test_get_relative_path(self, use_subdirectories: bool, path: str):
+        test_path = Image.get_relative_path(
+            "20220408165857",
+            "N_INP_NF_IMAGE",
+            use_subdirectories=use_subdirectories,
+        )
+        assert test_path == path
+
+    @pytest.mark.parametrize(
+        ["data", "bit_depth", "record_tuples", "dtype", "value"],
+        [
+            pytest.param(
+                np.ones(1, np.uint8) * 255,
+                0,
+                [],
+                np.uint8,
+                0,
+                id="Expect to shift up by 8 bits, 1111 1111 -> 0000 0000",
+            ),
+            pytest.param(
+                np.ones(1, np.uint16) * 65535,
+                0,
+                [
+                    (
+                        "root",
+                        logging.WARNING,
+                        (
+                            "Specified bit depth is lower than actual bit depth with "
+                            "dtype of uint16, only data in the 0 least significant "
+                            "bits will be kept"
+                        ),
+                    ),
+                ],
+                np.uint8,
+                0,
+                id=(
+                    "Expect to shift up by 8 bits, 1111 1111 1111 1111 -> 0000 0000, "
+                    "and warn only lower bits are kept"
+                ),
+            ),
+            pytest.param(
+                np.ones(1, np.uint8) * 255,
+                6,
+                [],
+                np.uint8,
+                252,
+                id="Expect to shift up by 2 bits, 1111 1111 -> 1111 1100",
+            ),
+            pytest.param(
+                np.ones(1, np.uint16) * 65535,
+                6,
+                [
+                    (
+                        "root",
+                        logging.WARNING,
+                        (
+                            "Specified bit depth is lower than actual bit depth with "
+                            "dtype of uint16, only data in the 6 least significant "
+                            "bits will be kept"
+                        ),
+                    ),
+                ],
+                np.uint8,
+                252,
+                id=(
+                    "Expect to shift up by 2 bits, 1111 1111 1111 1111 -> 1111 1100, "
+                    "and warn only lower bits are kept"
+                ),
+            ),
+            pytest.param(
+                np.ones(1, np.uint8) * 255,
+                8,
+                [],
+                np.uint8,
+                255,
+                id="Expect no change",
+            ),
+            pytest.param(
+                np.ones(1, np.uint16) * 255,
+                8,
+                [
+                    (
+                        "root",
+                        logging.WARNING,
+                        (
+                            "Specified bit depth is lower than actual bit depth with "
+                            "dtype of uint16, only data in the 8 least significant "
+                            "bits will be kept"
+                        ),
+                    ),
+                ],
+                np.uint8,
+                255,
+                id="Expect no change, and warn that only lower bits are kept",
+            ),
+            pytest.param(
+                np.ones(1, np.uint8) * 255,
+                12,
+                [],
+                np.uint16,
+                4080,
+                id="Expect to shift up 4 bits, 1111 1111 -> 0000 1111 1111 0000",
+            ),
+            pytest.param(
+                np.ones(1, np.uint16) * 65535,
+                12,
+                [],
+                np.uint16,
+                65520,
+                id=(
+                    "Expect to shift up by 4 bits, "
+                    "1111 1111 1111 1111 -> 1111 1111 1111 0000"
+                ),
+            ),
+            pytest.param(
+                np.ones(1, np.uint8) * 255,
+                16,
+                [],
+                np.uint16,
+                255,
+                id="Expect no change",
+            ),
+            pytest.param(
+                np.ones(1, np.uint16) * 65535,
+                16,
+                [],
+                np.uint16,
+                65535,
+                id="Expect no change",
+            ),
+            pytest.param(
+                np.ones(1, np.uint8) * 255,
+                24,
+                [
+                    (
+                        "root",
+                        logging.WARNING,
+                        (
+                            "Specified bit depth is higher than the max supported "
+                            "depth of 16, only data in the 16 most significant bits "
+                            "will be kept"
+                        ),
+                    ),
+                ],
+                np.uint16,
+                0,
+                id=(
+                    "Expect to shift down by 8 bits, 1111 1111 -> 0000 0000, "
+                    "and warn only upper bits are kept"
+                ),
+            ),
+            pytest.param(
+                np.ones(1, np.uint16) * 65535,
+                24,
+                [
+                    (
+                        "root",
+                        logging.WARNING,
+                        (
+                            "Specified bit depth is higher than the max supported "
+                            "depth of 16, only data in the 16 most significant bits "
+                            "will be kept"
+                        ),
+                    ),
+                ],
+                np.uint16,
+                255,
+                id=(
+                    "Expect to shift down by 8 bits, 1111 1111 1111 1111 -> "
+                    "0000 0000 1111 1111, and warn only upper bits are kept"
+                ),
+            ),
+        ],
+    )
+    def test_bit_depth(
+        self,
+        data: np.ndarray,
+        bit_depth: int,
+        record_tuples: "list[tuple[str, int, str]]",
+        dtype: type,
+        value: int,
+        caplog,
+    ):
+        image_model = ImageModel(path="", data=data, bit_depth=bit_depth)
+        image = Image(image_model)
+        assert caplog.record_tuples == record_tuples
+        assert image.image.data.dtype == dtype
+        assert image.image.data[0] == value

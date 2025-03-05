@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "a928db1b-3993-4981-ae2d-aefe3c697d0d",
+		"_postman_id": "fa28d10a-2892-4814-b257-65fb06897008",
 		"name": "OperationsGateway API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "7069916"
@@ -963,6 +963,11 @@
 									"disabled": true
 								},
 								{
+									"key": "limit_bit_depth",
+									"value": "8",
+									"disabled": true
+								},
+								{
 									"key": "colourmap_name",
 									"value": "jet_r",
 									"disabled": true
@@ -970,6 +975,65 @@
 								{
 									"key": "functions",
 									"value": "{\"name\": \"a\", \"expression\": \"CM-202-CVC-CAM-1 %2B 1280\"}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get 12 bit image",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/images/20230606120000/CM-202-CVC-CAM-1?lower_level=512&upper_level=1023&limit_bit_depth=12&colourmap_name=jet_r",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"images",
+								"20230606120000",
+								"CM-202-CVC-CAM-1"
+							],
+							"query": [
+								{
+									"key": "original_image",
+									"value": "true",
+									"disabled": true
+								},
+								{
+									"key": "lower_level",
+									"value": "512",
+									"description": "Value relative to a 12 bit max of 4095"
+								},
+								{
+									"key": "upper_level",
+									"value": "1023",
+									"description": "Value relative to a 12 bit max of 4095"
+								},
+								{
+									"key": "limit_bit_depth",
+									"value": "12"
+								},
+								{
+									"key": "colourmap_name",
+									"value": "jet_r"
+								},
+								{
+									"key": "functions",
+									"value": "{\"name\": \"a\", \"expression\": \"CM-202-CVC-CAM-1 %2B 1280\"}",
+									"disabled": true
 								}
 							]
 						}
@@ -1051,6 +1115,11 @@
 								{
 									"key": "upper_level",
 									"value": "175",
+									"disabled": true
+								},
+								{
+									"key": "limit_bit_depth",
+									"value": "8",
 									"disabled": true
 								},
 								{
@@ -1786,6 +1855,11 @@
 								{
 									"key": "upper_level",
 									"value": "15",
+									"disabled": true
+								},
+								{
+									"key": "limit_bit_depth",
+									"value": "8",
 									"disabled": true
 								},
 								{

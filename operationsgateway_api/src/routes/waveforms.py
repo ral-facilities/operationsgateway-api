@@ -8,6 +8,7 @@ from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.error_handling import endpoint_error_handling
+from operationsgateway_api.src.models import PartialRecordModel
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.waveform import Waveform
@@ -60,20 +61,21 @@ async def get_waveform_by_id(
             if function_dict["name"] == channel_name:
                 log.info("Getting waveform from function for record ID: %s", record_id)
 
-                record = {"_id": record_id}
+                record = PartialRecordModel(_id=record_id)
                 colourmap_name = await Image.get_preferred_colourmap(access_token)
                 await Record.apply_functions(
-                    record,
-                    functions,
-                    False,
-                    0,
-                    255,
-                    colourmap_name,
+                    record=record,
+                    functions=functions,
+                    original_image=False,
+                    lower_level=0,
+                    upper_level=255,
+                    limit_bit_depth=8,  # Limits hardcoded to 8 bit
+                    colourmap_name=colourmap_name,
                     return_thumbnails=False,
                 )
 
-                return record["channels"][channel_name]["data"]
+                return record.channels[channel_name].data
 
-    waveform_path = Waveform.get_relative_path(record_id, channel_name)
-    log.info("Getting waveform by path: %s", waveform_path)
-    return Waveform.get_waveform(waveform_path)
+    msg = "Getting waveform by record_id, channel_name: %s, %s"
+    log.info(msg, record_id, channel_name)
+    return Waveform.get_waveform(record_id, channel_name)

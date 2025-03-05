@@ -1,7 +1,7 @@
 import numpy as np
 
 from operationsgateway_api.src.functions.builtins.builtin import Builtin
-from operationsgateway_api.src.functions.waveform_variable import WaveformVariable
+from operationsgateway_api.src.functions.variable_models import WaveformVariable
 
 
 class Integrate(Builtin):
@@ -25,6 +25,8 @@ class Integrate(Builtin):
     @staticmethod
     def evaluate(argument: "WaveformVariable | np.ndarray") -> float:
         """
+        Integrate a waveform or image. Errors if scalar provided.
+
         Waveform:
         First, applies smoothing by taking weighted nearest and next-nearest
         neighbour contributions to  y values whose difference from their neighbours
