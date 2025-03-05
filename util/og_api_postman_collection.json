@@ -2135,14 +2135,7 @@
 					"name": "Get Maintenance",
 					"request": {
 						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{og-access-token}}",
-									"type": "string"
-								}
-							]
+							"type": "noauth"
 						},
 						"method": "GET",
 						"header": [],
@@ -2195,28 +2188,49 @@
 					"response": []
 				},
 				{
-					"name": "Get Scheduled Maintenance",
+					"name": "Set Maintenance failure",
 					"request": {
 						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{og-access-token}}",
-									"type": "string"
-								}
-							]
+							"type": "noauth"
 						},
-						"method": "GET",
+						"method": "POST",
 						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"show\": true,\r\n    \"message\": \"message\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
 						"url": {
-							"raw": "{{og-api}}/maintenance/scheduled",
+							"raw": "{{og-api}}/maintenance",
 							"host": [
 								"{{og-api}}"
 							],
 							"path": [
-								"maintenance",
-								"scheduled"
+								"maintenance"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Scheduled Maintenance",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/scheduled_maintenance",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"scheduled_maintenance"
 							]
 						}
 					},
@@ -2247,13 +2261,41 @@
 							}
 						},
 						"url": {
-							"raw": "{{og-api}}/maintenance/scheduled",
+							"raw": "{{og-api}}/scheduled_maintenance",
 							"host": [
 								"{{og-api}}"
 							],
 							"path": [
-								"maintenance",
-								"scheduled"
+								"scheduled_maintenance"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Set Scheduled Maintenance failure",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"show\": true,\r\n    \"message\": \"message\",\r\n    \"severity\": \"warning\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{og-api}}/scheduled_maintenance",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"scheduled_maintenance"
 							]
 						}
 					},
