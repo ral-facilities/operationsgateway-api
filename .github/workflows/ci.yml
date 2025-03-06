@@ -166,62 +166,8 @@ jobs:
       - name: Run Nox lint session
         run: nox -s lint
 
+      - name: Run Nox black session
+        run: nox -s black -- --check --diff
 
-#
-#
-#  formatting:
-#    runs-on: ubuntu-latest
-#    name: Code Formatting
-#    steps:
-#      - name: Setup Python
-#        uses: actions/setup-python@v4
-#        with:
-#          python-version: "3.11"
-#      - name: Checkout OperationsGateway API
-#        uses: actions/checkout@v3
-#
-#      - name: Load Pip cache
-#        uses: actions/cache@v3
-#        with:
-#          path: ~/.cache/pip
-#          key: ${{ runner.os }}-pip-3.11-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
-#      - name: Install Poetry & Nox
-#        run: pip install -r .github/ci_requirements.txt
-#
-#      - name: Load Poetry cache for Nox black session
-#        uses: actions/cache@v3
-#        with:
-#          path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/black*
-#          key: ${{ runner.os }}-poetry-nox-black-3.11-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
-#
-#      - name: Run Nox black session
-#        run: nox -s black -- --check --diff
-#
-#
-#  safety:
-#    runs-on: ubuntu-latest
-#    name: Dependency Safety
-#    steps:
-#      - name: Setup Python
-#        uses: actions/setup-python@v4
-#        with:
-#          python-version: "3.11"
-#      - name: Checkout OperationsGateway API
-#        uses: actions/checkout@v3
-#
-#      - name: Load Pip cache
-#        uses: actions/cache@v3
-#        with:
-#          path: ~/.cache/pip
-#          key: ${{ runner.os }}-pip-3.11-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
-#      - name: Install Poetry & Nox
-#        run: pip install -r .github/ci_requirements.txt
-#
-#      - name: Load Poetry cache for Nox safety session
-#        uses: actions/cache@v3
-#        with:
-#          path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/safety*
-#          key: ${{ runner.os }}-poetry-nox-safety-3.11-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
-#
-#      - name: Run Nox safety session
-#        run: nox -s safety
+      - name: Run Safety Scan
+        run: nox -s safty
