@@ -143,6 +143,11 @@ jobs:
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
+      - name: Install system dependencies for python-ldap
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsasl2-dev libldap2-dev libssl-dev
+
       - name: Install Poetry
         run: pip install poetry
 
@@ -156,10 +161,11 @@ jobs:
         run: poetry install --without simulated-data
 
       - name: Install Nox
-        run: poetry run pip install nox  # Ensures Nox is installed within Poetry’s environment
+        run: poetry run pip install nox
 
       - name: Run Nox lint session
         run: poetry run nox -s lint
+
 
 #
 #
