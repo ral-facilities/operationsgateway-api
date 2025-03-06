@@ -8,7 +8,8 @@ code_locations = "operationsgateway_api", "test", "noxfile.py", "util"
 def black(session):
     # Use Poetry’s existing virtual environment
     session.env["POETRY_VIRTUALENVS_CREATE"] = "false"
-    # The dependencies should already be installed, but explicitly setting in case they're not
+    # The dependencies should already be installed,
+    # but explicitly setting in case they're not
     session.run("poetry", "install", "--without", "simulated-data", external=True)
     args = session.posargs
     session.run("poetry", "run", "black", *code_locations, *args, external=True)
