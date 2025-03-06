@@ -139,25 +139,28 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
+
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
-      - name: Load Pip cache
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-3.11-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
-      - name: Install Poetry & Nox
-        run: pip install -r .github/ci_requirements.txt
+      - name: Install Poetry
+        run: pip install poetry
 
-      - name: Load Poetry cache for Nox lint session
+      - name: Load Poetry cache
         uses: actions/cache@v3
         with:
-          path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/lint*
-          key: ${{ runner.os }}-poetry-nox-lint-3.11-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-3.11-${{ hashFiles('poetry.lock') }}
+
+      - name: Install dependencies
+        run: poetry install --without simulated-data
+
+      - name: Install Nox
+        run: poetry run pip install nox  # Ensures Nox is installed within Poetry’s environment
 
       - name: Run Nox lint session
-        run: nox -s lint
+        run: poetry run nox -s lint
+
 
 
   formatting:
