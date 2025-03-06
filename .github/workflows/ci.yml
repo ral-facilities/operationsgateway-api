@@ -26,14 +26,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libsasl2-dev libldap2-dev libssl-dev
 
-      - name: Install Poetry
-        run: pip install poetry
+      - name: Install Poetry & Nox
+        run: pip install poetry nox
 
       - name: Ensure Poetry Uses Python 3.11
         run: poetry env use python3.11
-
-      - name: Install Nox
-        run: pip install nox
 
       - name: Load Poetry cache
         id: cache-poetry
@@ -44,7 +41,8 @@ jobs:
           restore-keys: poetry-${{ runner.os }}-3.11-
 
       - name: Install dependencies
-        run: poetry install --without simulated-data
+        run: poetry install --without simulated-data --no-interaction
+
 
   lint-format:
     runs-on: ubuntu-latest
@@ -65,6 +63,7 @@ jobs:
           nox -s black -- --check --diff
           nox -s lint
 
+
   safety:
     runs-on: ubuntu-latest
     needs: setup
@@ -81,3 +80,73 @@ jobs:
 
       - name: Run Safety Check
         run: nox -s safety
+
+
+  tests:
+    runs-on: ubuntu-24.04
+    needs: setup
+    name: Python 3.11 Tests
+    steps:
+      - name: Checkout OperationsGateway API
+        uses: actions/checkout@v3
+
+      - name: Load Poetry cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-3.11-${{ hashFiles('poetry.lock') }}
+
+      # Install & Start MongoDB
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.10.0
+        with:
+          mongodb-version: '7.0'
+
+      # Setup minio and create bucket
+      - name: Setup MinIO
+        run: |
+          docker run -d -p 9000:9000 --name minio \
+                     -e "MINIO_ACCESS_KEY=minioadmin" \
+                     -e "MINIO_SECRET_KEY=minioadmin" \
+                     -v /tmp/data:/data \
+                     -v /tmp/config:/root/.minio \
+                     minio/minio server /data
+          export AWS_ACCESS_KEY_ID=minioadmin
+          export AWS_SECRET_ACCESS_KEY=minioadmin
+          export AWS_EC2_METADATA_DISABLED=true
+          aws --endpoint-url http://127.0.0.1:9000/ s3 mb s3://og-actions-test
+
+      - name: Setup Logging & Config
+        run: |
+          cp .github/ci_config.yml operationsgateway_api/config.yml
+          cp operationsgateway_api/logging.ini.example operationsgateway_api/logging.ini
+          touch "$GITHUB_WORKSPACE/logs.log"
+
+      - name: Create SSH Keys for Auth
+        run: |
+          echo "$SSH_KEY_PRIVATE" > /home/runner/work/operationsgateway-api/id_rsa
+          echo "$SSH_KEY_PUBLIC" > /home/runner/work/operationsgateway-api/id_rsa.pub
+          chmod 600 /home/runner/work/operationsgateway-api/id_rsa
+        env:
+          SSH_KEY_PRIVATE: ${{secrets.SSH_PRIVATE_KEY_FOR_AUTH_OPENSSH}}
+          SSH_KEY_PUBLIC: ${{secrets.SSH_PUBLIC_KEY_FOR_AUTH_OPENSSH}}
+
+      - name: Configure Echo Keys
+        run: |
+          yq -i ".echo.access_key = \"$ECHO_S3_ACCESS_KEY\"" .github/ci_ingest_echo_config.yml
+          yq -i ".echo.secret_key = \"$ECHO_S3_SECRET_KEY\"" .github/ci_ingest_echo_config.yml
+          cp .github/ci_ingest_echo_config.yml util/realistic_data/config.yml
+        env:
+          ECHO_S3_ACCESS_KEY: ${{secrets.ECHO_S3_ACCESS_KEY}}
+          ECHO_S3_SECRET_KEY: ${{secrets.ECHO_S3_SECRET_KEY}}
+
+      - name: Run Echo Ingest Script
+        run: poetry run python util/realistic_data/ingest_echo_data.py
+
+      - name: Run Nox Tests
+        run: nox -s tests -- --cov=operationsgateway_api --cov-report=xml
+
+      - name: Upload Coverage Report
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
