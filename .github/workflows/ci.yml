@@ -72,9 +72,6 @@ jobs:
       - name: Install Poetry
         run: pip install poetry
 
-      - name: Ensure Python 3.11 is Used
-        run: poetry env use python3.11
-
       - name: Install Nox
         run: pip install nox
 
