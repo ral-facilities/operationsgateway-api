@@ -7,6 +7,47 @@ on:
       - main
 
 jobs:
+  lint-black-safety:
+    runs-on: ubuntu-latest
+    name: Lint-Black-Safety
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Checkout OperationsGateway API
+        uses: actions/checkout@v3
+
+      - name: Install system dependencies for python-ldap
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsasl2-dev libldap2-dev libssl-dev
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Load Poetry cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-3.11-${{ hashFiles('poetry.lock') }}
+
+      - name: Install dependencies
+        run: poetry install --without simulated-data
+
+      - name: Install Nox
+        run: pip install nox
+
+      - name: Run Nox lint session
+        run: nox -s lint
+
+      - name: Run Nox black session
+        run: nox -s black -- --check --diff
+
+      - name: Run Safety Scan
+        run: nox -s safety
+
   tests:
     strategy:
       fail-fast: false
@@ -123,44 +164,3 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-
-  lint-black-safety:
-    runs-on: ubuntu-latest
-    name: Lint-Black-Safety
-    steps:
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-
-      - name: Checkout OperationsGateway API
-        uses: actions/checkout@v3
-
-      - name: Install system dependencies for python-ldap
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libsasl2-dev libldap2-dev libssl-dev
-
-      - name: Install Poetry
-        run: pip install poetry
-
-      - name: Load Poetry cache
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pypoetry
-          key: ${{ runner.os }}-poetry-3.11-${{ hashFiles('poetry.lock') }}
-
-      - name: Install dependencies
-        run: poetry install --without simulated-data
-
-      - name: Install Nox
-        run: pip install nox
-
-      - name: Run Nox lint session
-        run: nox -s lint
-
-      - name: Run Nox black session
-        run: nox -s black -- --check --diff
-
-      - name: Run Safety Scan
-        run: nox -s safety
