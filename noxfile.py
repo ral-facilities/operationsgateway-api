@@ -6,6 +6,8 @@ code_locations = "operationsgateway_api", "test", "noxfile.py", "util"
 
 @nox.session(reuse_venv=True)
 def black(session):
+    session.env["POETRY_VIRTUALENVS_CREATE"] = "false"
+    session.run("poetry", "install", "--without", "simulated-data", external=True)
     args = session.posargs
     session.run("poetry", "run", "black", *code_locations, *args, external=True)
 
