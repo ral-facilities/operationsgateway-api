@@ -17,7 +17,7 @@ def lint(session):
     # Use Poetry’s existing virtual environment
     session.env["POETRY_VIRTUALENVS_CREATE"] = "false"
     # Ensure dependencies are installed
-    session.run("poetry", "install", "--with", "dev", external=True)
+    session.run("poetry", "install", "--without", "simulated-data", external=True)
     # Run flake8 using Poetry’s virtual environment
     session.run("poetry", "run", "flake8", *args, external=True)
 
