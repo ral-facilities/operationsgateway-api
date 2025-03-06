@@ -131,7 +131,7 @@ jobs:
 #          token: ${{ secrets.CODECOV_TOKEN }}
 #
 
-  linting:
+  lint-black-safety:
     runs-on: ubuntu-latest
     name: Code Linting
     steps:
@@ -170,4 +170,4 @@ jobs:
         run: nox -s black -- --check --diff
 
       - name: Run Safety Scan
-        run: nox -s safty
+        run: nox -s safety
