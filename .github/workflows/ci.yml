@@ -30,7 +30,7 @@ jobs:
         run: pip install poetry
 
       - name: Ensure Poetry Uses Python 3.11
-          run: poetry env use python3.11
+        run: poetry env use python3.11
 
       - name: Install Nox
         run: pip install nox
