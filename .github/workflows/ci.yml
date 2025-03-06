@@ -52,9 +52,6 @@ jobs:
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
-      - name: Install Nox
-        run: pip install nox
-
       - name: Load Poetry cache
         uses: actions/cache@v3
         with:
@@ -90,22 +87,17 @@ jobs:
     needs: setup
     name: Python 3.11 Tests
     steps:
-      - name: Checkout OperationsGateway API
-        uses: actions/checkout@v3
-
       - name: Load Poetry cache
         uses: actions/cache@v3
         with:
           path: ~/.cache/pypoetry
           key: poetry-${{ runner.os }}-3.11-${{ hashFiles('poetry.lock') }}
 
-      # Install & Start MongoDB
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.10.0
         with:
           mongodb-version: '7.0'
 
-      # Setup minio and create bucket
       - name: Setup MinIO
         run: |
           docker run -d -p 9000:9000 --name minio \
@@ -119,7 +111,7 @@ jobs:
           export AWS_EC2_METADATA_DISABLED=true
           aws --endpoint-url http://127.0.0.1:9000/ s3 mb s3://og-actions-test
 
-      - name: Setup Logging & Config
+      - name: Setup Configs
         run: |
           cp .github/ci_config.yml operationsgateway_api/config.yml
           cp operationsgateway_api/logging.ini.example operationsgateway_api/logging.ini
