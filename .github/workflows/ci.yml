@@ -120,7 +120,7 @@ jobs:
 
   linting:
     runs-on: ubuntu-latest
-    name: Code Lint
+    name: Code Linting
     steps:
       - name: Setup Python
         uses: actions/setup-python@v4
