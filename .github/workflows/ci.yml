@@ -19,20 +19,14 @@ jobs:
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
-      - name: Install Poetry
-        run: pip install poetry
+      - name: Install Poetry & Nox
+        run: pip install -r .github/ci_requirements.txt
 
       - name: Load Poetry cache
         uses: actions/cache@v3
         with:
           path: ~/.cache/pypoetry
           key: poetry-${{ runner.os }}-3.11-${{ hashFiles('poetry.lock') }}
-
-      - name: Install dependencies
-        run: poetry install --without simulated-data
-
-      - name: Install Nox
-        run: pip install nox
 
       - name: Run Nox lint session
         run: nox -s lint
@@ -49,13 +43,8 @@ jobs:
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
-      - name: Install system dependencies for python-ldap
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libsasl2-dev libldap2-dev libssl-dev
-
-      - name: Install Poetry
-        run: pip install poetry
+      - name: Install Poetry & Nox
+        run: pip install -r .github/ci_requirements.txt
 
       - name: Load Poetry cache
         uses: actions/cache@v3
@@ -65,9 +54,6 @@ jobs:
 
       - name: Install dependencies
         run: poetry install --without simulated-data
-
-      - name: Install Nox
-        run: pip install nox
 
       - name: Run Nox black session
         run: nox -s black -- --check --diff
@@ -84,13 +70,8 @@ jobs:
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
-      - name: Install system dependencies for python-ldap
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libsasl2-dev libldap2-dev libssl-dev
-
-      - name: Install Poetry
-        run: pip install poetry
+      - name: Install Poetry & Nox
+        run: pip install -r .github/ci_requirements.txt
 
       - name: Load Poetry cache
         uses: actions/cache@v3
@@ -100,9 +81,6 @@ jobs:
 
       - name: Install dependencies
         run: poetry install --without simulated-data
-
-      - name: Install Nox
-        run: pip install nox
 
       - name: Run Safety Scan
         run: nox -s safety
