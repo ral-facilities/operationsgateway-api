@@ -8,7 +8,7 @@ code_locations = "operationsgateway_api", "test", "noxfile.py", "util"
 @nox.session(reuse_venv=True)
 def black(session):
     args = session.posargs
-    session.run("black", *code_locations, *args, external=True)
+    session.run("poetry", "run", "black", *code_locations, *args, external=True)
 
 
 @nox.session(reuse_venv=True)
