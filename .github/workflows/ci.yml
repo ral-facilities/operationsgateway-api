@@ -161,10 +161,10 @@ jobs:
         run: poetry install --without simulated-data
 
       - name: Install Nox
-        run: poetry run pip install nox
+        run: pip install nox
 
       - name: Run Nox lint session
-        run: poetry run nox -s lint
+        run: nox -s lint
 
 
 #
