@@ -129,9 +129,6 @@ jobs:
           path: ~/.cache/pypoetry
           key: ${{ runner.os }}-poetry-3.11-${{ hashFiles('poetry.lock') }}
 
-      - name: Install dependencies
-        run: poetry install --without simulated-data
-
       # Setup minio and create bucket
       - name: Setup minio
         run: |
