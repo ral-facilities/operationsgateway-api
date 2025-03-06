@@ -1,7 +1,6 @@
 import nox
 
-# Separating Black away from the rest of the sessions
-nox.options.sessions = "lint", "safety", "tests"
+nox.options.sessions = "black", "lint", "safety", "tests"
 code_locations = "operationsgateway_api", "test", "noxfile.py", "util"
 
 
