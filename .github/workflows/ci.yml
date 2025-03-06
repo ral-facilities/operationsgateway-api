@@ -52,9 +52,6 @@ jobs:
           path: ~/.cache/pypoetry
           key: poetry-${{ runner.os }}-3.11-${{ hashFiles('poetry.lock') }}
 
-      - name: Install dependencies
-        run: poetry install --without simulated-data
-
       - name: Run Nox black session
         run: nox -s black -- --check --diff
 
@@ -78,9 +75,6 @@ jobs:
         with:
           path: ~/.cache/pypoetry
           key: poetry-${{ runner.os }}-3.11-${{ hashFiles('poetry.lock') }}
-
-      - name: Install dependencies
-        run: poetry install --without simulated-data
 
       - name: Run Safety Scan
         run: nox -s safety
@@ -106,11 +100,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libsasl2-dev libldap2-dev libssl-dev
 
-      - name: Install Poetry
-        run: pip install poetry
-
-      - name: Install Nox
-        run: pip install nox
+      - name: Install Poetry & Nox
+        run: pip install -r .github/ci_requirements.txt
 
       # Install and start MongoDB
       - name: Start MongoDB
