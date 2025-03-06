@@ -7,78 +7,6 @@ on:
       - main
 
 jobs:
-  linting:
-    runs-on: ubuntu-latest
-    name: Lint
-    steps:
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-
-      - name: Checkout OperationsGateway API
-        uses: actions/checkout@v3
-
-      - name: Install Poetry & Nox
-        run: pip install -r .github/ci_requirements.txt
-
-      - name: Load Poetry cache
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pypoetry
-          key: poetry-${{ runner.os }}-3.11-${{ hashFiles('poetry.lock') }}
-
-      - name: Run Nox lint session
-        run: nox -s lint
-
-  black:
-    runs-on: ubuntu-latest
-    name: Black
-    steps:
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-
-      - name: Checkout OperationsGateway API
-        uses: actions/checkout@v3
-
-      - name: Install Poetry & Nox
-        run: pip install -r .github/ci_requirements.txt
-
-      - name: Load Poetry cache
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pypoetry
-          key: poetry-${{ runner.os }}-3.11-${{ hashFiles('poetry.lock') }}
-
-      - name: Run Nox black session
-        run: nox -s black -- --check --diff
-
-  safety:
-    runs-on: ubuntu-latest
-    name: Safety
-    steps:
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-
-      - name: Checkout OperationsGateway API
-        uses: actions/checkout@v3
-
-      - name: Install Poetry & Nox
-        run: pip install -r .github/ci_requirements.txt
-
-      - name: Load Poetry cache
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pypoetry
-          key: poetry-${{ runner.os }}-3.11-${{ hashFiles('poetry.lock') }}
-
-      - name: Run Safety Scan
-        run: nox -s safety
-
   tests:
     strategy:
       fail-fast: false
@@ -189,3 +117,75 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+  linting:
+    runs-on: ubuntu-latest
+    name: Code Lint
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Checkout OperationsGateway API
+        uses: actions/checkout@v3
+
+      - name: Install Poetry & Nox
+        run: pip install -r .github/ci_requirements.txt
+
+      - name: Load Poetry cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-3.11-${{ hashFiles('poetry.lock') }}
+
+      - name: Run Nox lint session
+        run: nox -s lint
+
+  formatting:
+    runs-on: ubuntu-latest
+    name: Black Formatting
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Checkout OperationsGateway API
+        uses: actions/checkout@v3
+
+      - name: Install Poetry & Nox
+        run: pip install -r .github/ci_requirements.txt
+
+      - name: Load Poetry cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-3.11-${{ hashFiles('poetry.lock') }}
+
+      - name: Run Nox black session
+        run: nox -s black -- --check --diff
+
+  safety:
+    runs-on: ubuntu-latest
+    name: Dependency Safety
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Checkout OperationsGateway API
+        uses: actions/checkout@v3
+
+      - name: Install Poetry & Nox
+        run: pip install -r .github/ci_requirements.txt
+
+      - name: Load Poetry cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-3.11-${{ hashFiles('poetry.lock') }}
+
+      - name: Run Safety Scan
+        run: nox -s safety
