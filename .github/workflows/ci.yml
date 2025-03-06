@@ -26,6 +26,9 @@ jobs:
       - name: Install Poetry
         run: pip install poetry
 
+      - name: Ensure Python 3.11 is Used
+        run: poetry env use python3.11
+
       - name: Install Nox
         run: pip install nox
 
@@ -112,7 +115,6 @@ jobs:
       - name: Run Echo Ingest script
         run: poetry run python util/realistic_data/ingest_echo_data.py
 
-
       # Run Nox tests session, saves and uploads a coverage report to codecov
       - name: Run Nox tests session
         run: nox -s tests -- --cov=operationsgateway_api --cov-report=xml
@@ -121,7 +123,6 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-
 
   lint-black-safety:
     runs-on: ubuntu-latest
