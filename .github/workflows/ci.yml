@@ -17,17 +17,17 @@ jobs:
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
       # Install dependencies of python-ldap
       - name: Install python-ldap dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libsasl2-dev libldap2-dev libssl-dev
 
-      # Setup Python and environment dependencies (via cache)
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
       - name: Load Pip cache
         uses: actions/cache@v3
         with:
@@ -51,7 +51,6 @@ jobs:
           echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
           sudo apt-get update
           sudo apt-get install -y mongodb-database-tools
-
       # Read the database name from the config file and store it in an environment variable
       - name: Get database name from ci_config.yml
         run: echo "DATABASE_NAME=$(grep database_name .github/ci_config.yml | cut -d ':' -f 2 | tr -d '[:space:]')" >> $GITHUB_ENV
@@ -60,10 +59,8 @@ jobs:
       - name: Load Poetry cache
         uses: actions/cache@v3
         with:
-          path: ~/.cache/pypoetry/virtualenvs
-          key: ${{ runner.os }}-poetry-3.11-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
-      - name: Install dependencies
-        run: poetry install --without simulated-data
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-3.11-${{ hashFiles('poetry.lock') }}
 
       # Setup minio and create bucket
       - name: Setup minio
@@ -78,11 +75,12 @@ jobs:
           export AWS_SECRET_ACCESS_KEY=minioadmin
           export AWS_EC2_METADATA_DISABLED=true
           aws --endpoint-url http://127.0.0.1:9000/ s3 mb s3://og-actions-test
-
       - name: Move CI config.yml to correct place
         run: cp .github/ci_config.yml operationsgateway_api/config.yml
+
       - name: Setup logging configuration
         run: cp operationsgateway_api/logging.ini.example operationsgateway_api/logging.ini
+
       - name: Create log file
         run: touch "$GITHUB_WORKSPACE/logs.log"
 
@@ -116,20 +114,14 @@ jobs:
       - name: Run Echo Ingest script
         run: poetry run python util/realistic_data/ingest_echo_data.py
 
-      - name: Load Poetry cache for Nox tests session
-        uses: actions/cache@v3
-        with:
-          path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/tests*
-          key: ${{ runner.os }}-poetry-nox-tests-3.11-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
-
       # Run Nox tests session, saves and uploads a coverage report to codecov
       - name: Run Nox tests session
-        run: nox -p 3.11 -s tests -- --cov=operationsgateway_api --cov-report=xml
+        run: nox -s tests -- --cov=operationsgateway_api --cov-report=xml
+
       - name: Upload code coverage report
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-
 
   linting:
     runs-on: ubuntu-latest
@@ -139,6 +131,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
+
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
@@ -150,24 +143,24 @@ jobs:
       - name: Install Poetry & Nox
         run: pip install -r .github/ci_requirements.txt
 
-      - name: Load Poetry cache for Nox lint session
+      - name: Load Poetry cache
         uses: actions/cache@v3
         with:
-          path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/lint*
-          key: ${{ runner.os }}-poetry-nox-lint-3.11-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-3.11-${{ hashFiles('poetry.lock') }}
 
       - name: Run Nox lint session
         run: nox -s lint
 
-
   formatting:
     runs-on: ubuntu-latest
-    name: Code Formatting
+    name: Black Formatting
     steps:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
+
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
@@ -179,15 +172,14 @@ jobs:
       - name: Install Poetry & Nox
         run: pip install -r .github/ci_requirements.txt
 
-      - name: Load Poetry cache for Nox black session
+      - name: Load Poetry cache
         uses: actions/cache@v3
         with:
-          path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/black*
-          key: ${{ runner.os }}-poetry-nox-black-3.11-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-3.11-${{ hashFiles('poetry.lock') }}
 
       - name: Run Nox black session
         run: nox -s black -- --check --diff
-
 
   safety:
     runs-on: ubuntu-latest
@@ -197,6 +189,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
+
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
@@ -208,11 +201,11 @@ jobs:
       - name: Install Poetry & Nox
         run: pip install -r .github/ci_requirements.txt
 
-      - name: Load Poetry cache for Nox safety session
+      - name: Load Poetry cache
         uses: actions/cache@v3
         with:
-          path: /home/runner/work/operationsgateway-api/operationsgateway-api/.nox/safety*
-          key: ${{ runner.os }}-poetry-nox-safety-3.11-${{ env.pythonLocation }}-${{ hashFiles('poetry.lock') }}
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-3.11-${{ hashFiles('poetry.lock') }}
 
-      - name: Run Nox safety session
+      - name: Run Safety Scan
         run: nox -s safety

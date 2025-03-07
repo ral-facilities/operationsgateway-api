@@ -13,7 +13,8 @@ The following instructions will detail how to get a development instance up and 
 ## Prerequisites
 
 1) Local development on Windows or Mac can be challenging because they lack the Linux libraries required by the API. Since the API is designed to run in a Python 3.11 environment on a Rocky 9 Linux machine, it’s best to use a Rocky 9 development VM to closely mirror the production setup.
-2) One of the dependencies used in this API [(`epac-data-sim`)](https://github.com/CentralLaserFacility/EPAC-DataSim) is a private repository, so the appropriate permissions and SSH keys need to be set up. Guidance for setting up SSH keys for the Rocky 9 VM can be found [here](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent?platform=linux).
+2) You'll need a developer bucket in echo to use the test script to prefill echo, and a local database, with data.
+3) One of the dependencies used in this API [(`epac-data-sim`)](https://github.com/CentralLaserFacility/EPAC-DataSim) is a private repository, so the appropriate permissions and SSH keys need to be set up. Guidance for setting up SSH keys for the Rocky 9 VM can be found [here](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent?platform=linux).
 
 
 ## Environment Setup
@@ -45,6 +46,8 @@ cd operationsgateway-api
 poetry env use python3.11
 # Install the dependencies
 poetry install
+# If you don't need the simulated data, or don't have access to the epac repo...
+poetry install --without simulated-data
 ```
 
 ### MongoDB:
