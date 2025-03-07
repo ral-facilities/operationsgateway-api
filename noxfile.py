@@ -40,7 +40,7 @@ def safety(session):
     )
 
 
-@nox.session(python=["3.11"], reuse_venv=True)
+@nox.session(python=False)
 def tests(session):
     args = session.posargs
     session.env["POETRY_VIRTUALENVS_CREATE"] = "false"
