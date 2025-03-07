@@ -1,7 +1,7 @@
 from datetime import datetime
 import logging
 from tempfile import SpooledTemporaryFile
-from typing import List, Tuple
+from typing import Any, Literal
 
 import h5py
 from pydantic import ValidationError
@@ -17,12 +17,16 @@ from operationsgateway_api.src.models import (
     RecordModel,
     ScalarChannelMetadataModel,
     ScalarChannelModel,
+    VectorChannelMetadataModel,
+    VectorChannelModel,
+    VectorModel,
     WaveformChannelMetadataModel,
     WaveformChannelModel,
     WaveformModel,
 )
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.ingestion.channel_checks import ChannelChecks
+from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
 
 
@@ -34,6 +38,7 @@ class HDFDataHandler:
         "scalar": ["data"],
         "image": ["data"],
         "waveform": ["x", "y"],
+        "vector": ["data"],
     }
 
     def __init__(self, hdf_temp_file: SpooledTemporaryFile) -> None:
@@ -45,10 +50,17 @@ class HDFDataHandler:
         self.channels = {}
         self.waveforms = []
         self.images = []
+        self.vectors = []
 
     async def extract_data(
         self,
-    ) -> Tuple[RecordModel, List[WaveformModel], List[ImageModel]]:
+    ) -> tuple[
+        RecordModel,
+        list[WaveformModel],
+        list[ImageModel],
+        list[VectorModel],
+        list[dict[str, str]],
+    ]:
         """
         Extract data from a HDF file that is formatted in the OperationsGateway data
         structure format. Metadata of the shot, channel data and its metadata is
@@ -92,7 +104,13 @@ class HDFDataHandler:
         except ValidationError as exc:
             raise ModelError(str(exc)) from exc
 
-        return record, self.waveforms, self.images, self.internal_failed_channel
+        return (
+            record,
+            self.waveforms,
+            self.images,
+            self.vectors,
+            self.internal_failed_channel,
+        )
 
     def _unexpected_attribute(self, channel_type, value):
         """
@@ -233,6 +251,46 @@ class HDFDataHandler:
         except ValidationError as exc:
             raise ModelError(str(exc)) from exc
 
+    def _extract_vector(
+        self,
+        internal_failed_channel: list[dict[str, str]],
+        channel_name: str,
+        channel_metadata: dict,
+        value: Any,
+    ) -> tuple[VectorChannelModel, Literal[False]] | tuple[None, list[dict[str, str]]]:
+        """
+        Extract data for a vector in the HDF file and place the data into
+        relevant Pydantic models.
+        """
+        relative_path = Vector.get_relative_path(self.record_id, channel_name)
+
+        if self._unexpected_attribute("vector", value):
+            internal_failed_channel.append(
+                {channel_name: "unexpected group or dataset in channel group"},
+            )
+            return None, internal_failed_channel
+
+        try:
+            metadata = VectorChannelMetadataModel(**channel_metadata)
+            channel = VectorChannelModel(
+                metadata=metadata,
+                vector_path=relative_path,
+            )
+            model = VectorModel(
+                path=relative_path,
+                data=value["data"],
+            )
+            self.vectors.append(model)
+
+            return channel, False
+        except KeyError:
+            internal_failed_channel.append(
+                {channel_name: "data attribute is missing"},
+            )
+            return None, internal_failed_channel
+        except ValidationError as exc:
+            raise ModelError(str(exc)) from exc
+
     async def extract_channels(self) -> None:
         """
         Extract data from each data channel in the HDF file and place the data into
@@ -294,13 +352,35 @@ class HDFDataHandler:
                     internal_failed_channel = fail
                     continue
 
+            elif value.attrs["channel_dtype"] == "vector":
+                channel, fail = self._extract_vector(
+                    internal_failed_channel,
+                    channel_name,
+                    channel_metadata,
+                    value,
+                )
+                if fail:
+                    internal_failed_channel = fail
+                    continue
+
             # Put channels into a dictionary to give a good structure to query them in
             # the database
             self.channels[channel_name] = channel
         self.internal_failed_channel = internal_failed_channel
 
     @staticmethod
-    def _update_data(checker_response, record_data, images, waveforms):
+    def _update_data(
+        checker_response: dict[str, Any],
+        record_data: RecordModel,
+        images: list[ImageModel],
+        waveforms: list[WaveformModel],
+        vectors: list[VectorModel],
+    ) -> tuple[
+        RecordModel,
+        list[ImageModel],
+        list[WaveformModel],
+        list[VectorModel],
+    ]:
         for key in checker_response["rejected_channels"].keys():
             try:
                 channel = record_data.channels[key]
@@ -312,15 +392,26 @@ class HDFDataHandler:
                 for image in images:
                     if image.path == channel_image_path:
                         images.remove(image)
-                del record_data.channels[key]
 
             elif channel.metadata.channel_dtype == "waveform":
                 channel_waveform_path = channel.waveform_path
                 for waveform in waveforms:
                     if waveform.path == channel_waveform_path:
                         waveforms.remove(waveform)
-                del record_data.channels[key]
 
-            else:
-                del record_data.channels[key]
-        return record_data, images, waveforms
+            elif channel.metadata.channel_dtype == "vector":
+                HDFDataHandler.remove_channel(vectors, channel.vector_path)
+
+            del record_data.channels[key]
+
+        return record_data, images, waveforms, vectors
+
+    @staticmethod
+    def remove_channel(
+        models: list[ImageModel] | list[WaveformModel] | list[VectorModel],
+        path: str,
+    ) -> None:
+        """Removes the model from models with the specified path, if found."""
+        for model in models:
+            if model.path == path:
+                return models.remove(model)
