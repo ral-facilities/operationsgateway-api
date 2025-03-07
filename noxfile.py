@@ -15,7 +15,7 @@ def black(session):
     session.run("poetry", "run", "black", *code_locations, *args, external=True)
 
 
-@nox.session(reuse_venv=True)
+@nox.session(python=False)
 def lint(session):
     args = session.posargs or code_locations
     session.env["POETRY_VIRTUALENVS_CREATE"] = "false"
