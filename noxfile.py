@@ -23,7 +23,7 @@ def lint(session):
     session.run("poetry", "run", "flake8", *args, external=True)
 
 
-@nox.session(reuse_venv=True)
+@nox.session(python=False)
 def safety(session):
     session.env["POETRY_VIRTUALENVS_CREATE"] = "false"
     session.run("poetry", "install", "--without", "simulated-data", external=True)
