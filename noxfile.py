@@ -4,7 +4,7 @@ nox.options.sessions = "black", "lint", "safety", "tests"
 code_locations = "operationsgateway_api", "test", "noxfile.py", "util"
 
 
-@nox.session(reuse_venv=True)
+@nox.session(python=False)
 def black(session):
     # Use Poetry’s existing virtual environment
     session.env["POETRY_VIRTUALENVS_CREATE"] = "false"
