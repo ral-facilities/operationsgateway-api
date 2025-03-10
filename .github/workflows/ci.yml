@@ -17,16 +17,16 @@ jobs:
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-
       # Install dependencies of python-ldap
       - name: Install python-ldap dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libsasl2-dev libldap2-dev libssl-dev
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
 
       - name: Load Pip cache
         uses: actions/cache@v3
@@ -51,6 +51,7 @@ jobs:
           echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
           sudo apt-get update
           sudo apt-get install -y mongodb-database-tools
+
       # Read the database name from the config file and store it in an environment variable
       - name: Get database name from ci_config.yml
         run: echo "DATABASE_NAME=$(grep database_name .github/ci_config.yml | cut -d ':' -f 2 | tr -d '[:space:]')" >> $GITHUB_ENV
@@ -61,6 +62,8 @@ jobs:
         with:
           path: ~/.cache/pypoetry
           key: ${{ runner.os }}-poetry-3.11-${{ hashFiles('poetry.lock') }}
+      - name: Install dependencies
+        run: poetry install --without simulated-data
 
       # Setup minio and create bucket
       - name: Setup minio
@@ -132,6 +135,12 @@ jobs:
         with:
           python-version: "3.11"
 
+      # Install dependencies of python-ldap
+      - name: Install python-ldap dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsasl2-dev libldap2-dev libssl-dev
+
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
@@ -161,6 +170,12 @@ jobs:
         with:
           python-version: "3.11"
 
+      # Install dependencies of python-ldap
+      - name: Install python-ldap dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsasl2-dev libldap2-dev libssl-dev
+
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
 
@@ -189,6 +204,12 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
+
+      # Install dependencies of python-ldap
+      - name: Install python-ldap dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsasl2-dev libldap2-dev libssl-dev
 
       - name: Checkout OperationsGateway API
         uses: actions/checkout@v3
