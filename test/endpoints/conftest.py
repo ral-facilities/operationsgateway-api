@@ -112,7 +112,7 @@ async def remove_experiment_fixture():
 
 
 @pytest_asyncio.fixture(scope="function")
-async def data_for_delete_records():
+async def record_for_delete_records():
     record_id = "19000000000011"
     test_record = {
         "_id": record_id,
@@ -142,25 +142,51 @@ async def data_for_delete_records():
     record_instance = Record(test_record)
     await record_instance.insert()
 
-    echo = EchoInterface()
-    with open("test/images/original_image.png", "rb") as f:
-        echo.upload_file_object(
-            f,
-            f"{Image.echo_prefix}/{record_id}/test-image-channel-id.png",
-        )
-    waveform = Waveform(WaveformModel(x=[1.0, 2.0, 3.0], y=[1.0, 2.0, 3.0]))
-    waveform_bytes = waveform.to_json()
-    echo.upload_file_object(
-        waveform_bytes,
-        f"{Waveform.echo_prefix}/{record_id}/test-waveform-channel-id.json",
-    )
-
-    yield
+    yield record_id
 
     await Record.delete_record(record_id)
-    echo.delete_file_object(
-        f"{Image.echo_prefix}/{record_id}/test-image-channel-id.png",
+
+
+@pytest_asyncio.fixture(scope="function")
+async def data_for_delete_records(record_for_delete_records: str):
+    echo = EchoInterface()
+    image_file = "test-image-channel-id.png"
+    image_path = f"{Image.echo_prefix}/{record_for_delete_records}/{image_file}"
+    with open("test/images/original_image.png", "rb") as f:
+        echo.upload_file_object(f, image_path)
+
+    waveform = Waveform(WaveformModel(x=[1.0, 2.0, 3.0], y=[1.0, 2.0, 3.0]))
+    waveform_bytes = waveform.to_json()
+    waveform_file = "test-waveform-channel-id.json"
+    waveform_path = (
+        f"{Waveform.echo_prefix}/{record_for_delete_records}/{waveform_file}"
     )
-    echo.delete_file_object(
-        f"{Waveform.echo_prefix}/{record_id}/test-waveform-channel-id.json",
-    )
+    echo.upload_file_object(waveform_bytes, waveform_path)
+
+    yield record_for_delete_records
+
+    await Record.delete_record(record_for_delete_records)
+    echo.delete_file_object(image_path)
+    echo.delete_file_object(waveform_path)
+
+
+@pytest_asyncio.fixture(scope="function")
+async def data_for_delete_records_subdirectories(record_for_delete_records: str):
+    echo = EchoInterface()
+    subdirectories = EchoInterface.format_record_id(record_for_delete_records)
+    image_file = "test-image-channel-id.png"
+    image_path = f"{Image.echo_prefix}/{subdirectories}/{image_file}"
+    with open("test/images/original_image.png", "rb") as f:
+        echo.upload_file_object(f, image_path)
+
+    waveform = Waveform(WaveformModel(x=[1.0, 2.0, 3.0], y=[1.0, 2.0, 3.0]))
+    waveform_bytes = waveform.to_json()
+    waveform_file = "test-waveform-channel-id.json"
+    waveform_path = f"{Waveform.echo_prefix}/{subdirectories}/{waveform_file}"
+    echo.upload_file_object(waveform_bytes, waveform_path)
+
+    yield record_for_delete_records
+
+    await Record.delete_record(record_for_delete_records)
+    echo.delete_file_object(image_path)
+    echo.delete_file_object(waveform_path)
