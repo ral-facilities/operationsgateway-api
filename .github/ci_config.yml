@@ -20,6 +20,8 @@ nullable_images:
 waveforms:
   thumbnail_size: [100, 100]
   line_width: 0.3
+vectors:
+  thumbnail_size: [100, 100]
 echo:
   url: http://127.0.0.1:9000
   username: operationsgateway

@@ -84,7 +84,6 @@ class EchoInterface:
     def head_object(self, object_path: str) -> bool:
         """
         https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/head_object.html
-
         Uses the head operation to check the existence of an object without downloading
         it.
         """

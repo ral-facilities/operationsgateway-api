@@ -20,12 +20,16 @@ from operationsgateway_api.src.models import (
     RecordModel,
     ScalarChannelMetadataModel,
     ScalarChannelModel,
+    VectorChannelMetadataModel,
+    VectorChannelModel,
+    VectorModel,
     WaveformChannelMetadataModel,
     WaveformChannelModel,
     WaveformModel,
 )
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.ingestion.channel_checks import ChannelChecks
+from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
 
 
@@ -38,6 +42,7 @@ class HDFDataHandler:
         "image": ["data"],
         "nullable_image": ["data"],
         "waveform": ["x", "y"],
+        "vector": ["data"],
     }
 
     def __init__(self, hdf_temp_file: SpooledTemporaryFile) -> None:
@@ -50,6 +55,7 @@ class HDFDataHandler:
         self.waveforms = []
         self.images = []
         self.nullable_images = []
+        self.vectors = []
 
     async def extract_data(
         self,
@@ -58,6 +64,7 @@ class HDFDataHandler:
         list[WaveformModel],
         list[ImageModel],
         list[NullableImageModel],
+        list[VectorModel],
         list[dict[str, str]],
     ]:
         """
@@ -108,6 +115,7 @@ class HDFDataHandler:
             self.waveforms,
             self.images,
             self.nullable_images,
+            self.vectors,
             self.internal_failed_channel,
         )
 
@@ -293,6 +301,46 @@ class HDFDataHandler:
         except ValidationError as exc:
             raise ModelError(str(exc)) from exc
 
+    def _extract_vector(
+        self,
+        internal_failed_channel: list[dict[str, str]],
+        channel_name: str,
+        channel_metadata: dict,
+        value: Any,
+    ) -> tuple[VectorChannelModel, Literal[False]] | tuple[None, list[dict[str, str]]]:
+        """
+        Extract data for a vector in the HDF file and place the data into
+        relevant Pydantic models.
+        """
+        relative_path = Vector.get_relative_path(self.record_id, channel_name)
+
+        if self._unexpected_attribute("vector", value):
+            internal_failed_channel.append(
+                {channel_name: "unexpected group or dataset in channel group"},
+            )
+            return None, internal_failed_channel
+
+        try:
+            metadata = VectorChannelMetadataModel(**channel_metadata)
+            channel = VectorChannelModel(
+                metadata=metadata,
+                vector_path=relative_path,
+            )
+            model = VectorModel(
+                path=relative_path,
+                data=value["data"],
+            )
+            self.vectors.append(model)
+
+            return channel, False
+        except KeyError:
+            internal_failed_channel.append(
+                {channel_name: "data attribute is missing"},
+            )
+            return None, internal_failed_channel
+        except ValidationError as exc:
+            raise ModelError(str(exc)) from exc
+
     async def extract_channels(self) -> None:
         """
         Extract data from each data channel in the HDF file and place the data into
@@ -365,6 +413,17 @@ class HDFDataHandler:
                     internal_failed_channel = fail
                     continue
 
+            elif value.attrs["channel_dtype"] == "vector":
+                channel, fail = self._extract_vector(
+                    internal_failed_channel,
+                    channel_name,
+                    channel_metadata,
+                    value,
+                )
+                if fail:
+                    internal_failed_channel = fail
+                    continue
+
             # Put channels into a dictionary to give a good structure to query them in
             # the database
             self.channels[channel_name] = channel
@@ -377,11 +436,13 @@ class HDFDataHandler:
         images: list[ImageModel],
         nullable_images: list[NullableImageModel],
         waveforms: list[WaveformModel],
+        vectors: list[VectorModel],
     ) -> tuple[
         RecordModel,
         list[ImageModel],
         list[NullableImageModel],
         list[WaveformModel],
+        list[VectorModel],
     ]:
         for key in checker_response["rejected_channels"].keys():
             try:
@@ -395,6 +456,8 @@ class HDFDataHandler:
                 HDFDataHandler.remove_channel(nullable_images, channel.image_path)
             elif channel.metadata.channel_dtype == "waveform":
                 HDFDataHandler.remove_channel(waveforms, channel.waveform_path)
+            elif channel.metadata.channel_dtype == "vector":
+                HDFDataHandler.remove_channel(vectors, channel.vector_path)
 
             del record_data.channels[key]
 

@@ -1,4 +1,5 @@
 import logging
+from types import NoneType
 from typing import Any, Dict, List
 
 import numpy as np
@@ -12,6 +13,8 @@ from operationsgateway_api.src.models import (
     NullableImageChannelMetadataModel,
     NullableImageModel,
     ScalarChannelMetadataModel,
+    VectorChannelMetadataModel,
+    VectorModel,
     WaveformChannelMetadataModel,
     WaveformModel,
 )
@@ -27,6 +30,7 @@ class ChannelChecks:
         ingested_waveforms=None,
         ingested_images=None,
         ingested_nullable_images=None,
+        ingested_vectors=None,
         internal_failed_channels=None,
     ):
         """
@@ -38,6 +42,7 @@ class ChannelChecks:
         self.ingested_waveforms = ingested_waveforms or []
         self.ingested_images = ingested_images or []
         self.ingested_nullable_images = ingested_nullable_images or []
+        self.ingested_vectors = ingested_vectors or []
         self.internal_failed_channels = internal_failed_channels or []
 
         self.supported_channel_types = [
@@ -46,6 +51,7 @@ class ChannelChecks:
             "nullable_image",
             "rgb-image",
             "waveform",
+            "vector",
         ]
 
     def set_channels(self, manifest) -> None:
@@ -73,7 +79,7 @@ class ChannelChecks:
             for response in internal_failed_channel:
                 for reason in response.values():
                     for accepted_reason in accept_list:
-                        if reason == accepted_reason:
+                        if reason.startswith(accepted_reason):
                             rejected_channels.append(response)
         return rejected_channels
 
@@ -137,9 +143,9 @@ class ChannelChecks:
 
     @staticmethod
     def _find_path(
-        ingested_list: list[ImageModel | NullableImageModel | WaveformModel],
+        ingested_list: list[ImageModel | NullableImageModel | WaveformModel | VectorModel],
         path: str,
-    ) -> ImageModel | NullableImageModel | WaveformModel | None:
+    ) -> ImageModel | NullableImageModel | WaveformModel | VectorModel | None:
         """
         Returns the model from ingested_list with the specified path, or None if not
         found.
@@ -202,6 +208,18 @@ class ChannelChecks:
                     rejected_channels.append(
                         {key: "y attribute must be a list of floats"},
                     )
+
+            elif value.metadata.channel_dtype == "vector":
+                vector = ChannelChecks._find_path(
+                    ingested_list=self.ingested_vectors,
+                    path=value.vector_path,
+                )
+                if not (
+                    isinstance(vector.data, list)
+                    and all(isinstance(e, float) for e in vector.data)
+                ):
+                    message = "data attribute has wrong datatype, should be list[float]"
+                    rejected_channels.append({key: message})
 
         rejected_channels = self._merge_internal_failed(
             rejected_channels,
@@ -378,6 +396,108 @@ class ChannelChecks:
 
         return rejected_channels
 
+    @staticmethod
+    def _ensure_dict(possible_model: dict | BaseModel) -> dict:
+        """
+        If possible_model isn't a dict, calls model_dump so that a dict is always
+        returned.
+        """
+        if not isinstance(possible_model, dict):
+            return possible_model.model_dump()
+        else:
+            return possible_model
+
+    @staticmethod
+    def _check_type(
+        channel_name: str,
+        attribute_name: str,
+        value_dict: dict[str, Any],
+        rejected_channels: list[dict[str, str]],
+        accepted_types: tuple[type],
+    ) -> Any:
+        """
+        Modifies rejected_channels in place with a new message if attribute name is
+        specified and the value is not of one of the accepted_types or NoneType.
+        """
+        if attribute_name in value_dict:
+            attribute = value_dict[attribute_name]
+            if not isinstance(attribute, (NoneType, *accepted_types)):
+                message = f"{attribute_name} attribute has wrong datatype"
+                rejected_channels.append({channel_name: message})
+
+            return attribute
+
+    @staticmethod
+    def _check_str(
+        channel_name: str,
+        attribute_name: str,
+        value_dict: dict[str, Any],
+        rejected_channels: list[dict[str, str]],
+    ) -> None:
+        """
+        Modifies rejected_channels in place with a new message if attribute name is
+        specified and the value is not a str.
+        """
+        ChannelChecks._check_type(
+            channel_name,
+            attribute_name,
+            value_dict,
+            rejected_channels,
+            (str,),
+        )
+
+    @staticmethod
+    def _check_list(
+        channel_name: str,
+        attribute_name: str,
+        value_dict: dict[str, Any],
+        rejected_channels: list[dict[str, str]],
+        element_type: type,
+        length: int,
+    ) -> None:
+        """
+        Modifies rejected_channels in place with a new message if attribute name is
+        specified and the value is not a list. All elements in the list are checked
+        against element_type, and it must have the specified length.
+        """
+        attribute = ChannelChecks._check_type(
+            channel_name,
+            attribute_name,
+            value_dict,
+            rejected_channels,
+            (list,),
+        )
+        if not all(isinstance(e, element_type) for e in attribute):
+            message = f"{attribute_name} attribute has wrong datatype"
+            rejected_channels.append({channel_name: message})
+        if len(attribute) != length:
+            message = f"{attribute_name} attribute has wrong length"
+            rejected_channels.append({channel_name: message})
+
+    @classmethod
+    def vector_metadata_checks(
+        cls,
+        key: str,
+        value_dict: dict | VectorChannelMetadataModel,
+        rejected_channels: list[dict[str, str]],
+        length: int,
+    ) -> list[dict[str, str]]:
+        value_dict = ChannelChecks._ensure_dict(value_dict)
+        ChannelChecks._check_str(
+            channel_name=key,
+            attribute_name="units",
+            value_dict=value_dict,
+            rejected_channels=rejected_channels,
+        )
+        ChannelChecks._check_list(
+            key,
+            "labels",
+            value_dict,
+            rejected_channels,
+            str,
+            length,
+        )
+
     def optional_dtype_checks(self):
         """
         Checks if the optional attributes of each channel has the correct datatype
@@ -417,6 +537,18 @@ class ChannelChecks:
                     key,
                     value.metadata,
                     rejected_channels,
+                )
+
+            elif value.metadata.channel_dtype == "vector":
+                vector = ChannelChecks._find_path(
+                    ingested_list=self.ingested_vectors,
+                    path=value.vector_path,
+                )
+                rejected_channels = self.vector_metadata_checks(
+                    key,
+                    value.metadata,
+                    rejected_channels,
+                    len(vector.data),
                 )
 
         return rejected_channels

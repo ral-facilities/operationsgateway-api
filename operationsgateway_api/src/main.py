@@ -31,6 +31,7 @@ from operationsgateway_api.src.routes import (
     sessions,
     user_preferences,
     users,
+    vectors,
     waveforms,
 )
 
@@ -129,6 +130,7 @@ add_router_to_app(nullable_images.router)
 add_router_to_app(ingest_data.router)
 add_router_to_app(records.router)
 add_router_to_app(waveforms.router)
+add_router_to_app(vectors.router)
 add_router_to_app(auth.router)
 add_router_to_app(channels.router)
 add_router_to_app(experiments.router)

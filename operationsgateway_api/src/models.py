@@ -80,6 +80,11 @@ class WaveformModel(BaseModel):
             return value
 
 
+class VectorModel(BaseModel):
+    path: str | Any | None = Field(exclude=True)
+    data: list[float] | Any | None
+
+
 class ImageChannelMetadataModel(BaseModel):
     channel_dtype: Literal[ChannelDtype.IMAGE] | Any | None = ChannelDtype.IMAGE
     exposure_time_s: Optional[Union[float, Any]] = None
@@ -155,6 +160,18 @@ class WaveformChannelModel(BaseModel):
     waveform_path: Optional[Union[str, Any]]
 
 
+class VectorChannelMetadataModel(BaseModel):
+    channel_dtype: Literal["vector"] | Any | None = "vector"
+    units: str | Any | None = None
+    labels: list[str] | Any | None = None
+
+
+class VectorChannelModel(BaseModel):
+    metadata: VectorChannelMetadataModel
+    thumbnail: bytes | Any | None = None
+    vector_path: str | Any | None = None
+
+
 class RecordMetadataModel(BaseModel):
     epac_ops_data_version: Optional[Any] = None
     shotnum: Optional[int] = None
@@ -171,7 +188,8 @@ class RecordModel(BaseModel):
         ImageChannelModel
         | NullableImageChannelModel
         | ScalarChannelModel
-        | WaveformChannelModel,
+        | WaveformChannelModel
+        | VectorChannelModel,
     ]
 
 
@@ -241,7 +259,7 @@ class ChannelModel(BaseModel):
 
     name: str
     path: str
-    type_: Literal["scalar", "image", "nullable_image", "waveform"] | None = Field(
+    type_: Literal["scalar", "image", "nullable_image", "waveform", "vector"] | None = Field(
         None,
         alias="type",
     )

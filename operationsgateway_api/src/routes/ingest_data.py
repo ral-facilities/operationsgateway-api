@@ -20,6 +20,7 @@ from operationsgateway_api.src.records.ingestion.partial_import_checks import (
 from operationsgateway_api.src.records.ingestion.record_checks import RecordChecks
 from operationsgateway_api.src.records.nullable_image import NullableImage
 from operationsgateway_api.src.records.record import Record
+from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
 
 
@@ -56,6 +57,7 @@ async def submit_hdf(
         waveforms,
         images,
         nullable_images,
+        vectors,
         internal_failed_channel,
     ) = await hdf_handler.extract_data()
 
@@ -73,6 +75,7 @@ async def submit_hdf(
         ingested_waveforms=waveforms,
         ingested_images=images,
         ingested_nullable_images=nullable_images,
+        ingested_vectors=vectors,
         internal_failed_channels=internal_failed_channel,
     )
     manifest = await ChannelManifest.get_most_recent_manifest()
@@ -88,12 +91,13 @@ async def submit_hdf(
 
     checker_response["warnings"] = list(warning) if warning else []
 
-    record_data, images, nullable_images, waveforms = HDFDataHandler._update_data(
+    record_data, images, nullable_images, waveforms, vectors = HDFDataHandler._update_data(
         checker_response,
         record_data,
         images,
         nullable_images,
         waveforms,
+        vectors=vectors,
     )
 
     record = Record(record_data)
@@ -146,10 +150,22 @@ async def submit_hdf(
         pool.close()
         nullable_image_instances = None
 
+    log.debug("Processing vectors")
+    failed_vector_uploads = []
+    for vector_model in vectors:
+        vector = Vector(vector_model)
+        failed_upload = vector.insert_vector()  # Returns channel name if failed
+        # if the upload to echo fails, don't process any further
+        if failed_upload:
+            failed_vector_uploads.append(failed_upload)
+        else:
+            vector.create_thumbnail()
+            record.store_thumbnail(vector)  # in the record not echo
+
     # Combine failed channels from waveforms and images and remove them from the record
     # Update the channel checker to reflect failed uploads
     all_failed_upload_channels = (
-        failed_waveform_uploads + failed_image_uploads + failed_nullable_image_uploads
+        failed_waveform_uploads + failed_image_uploads + failed_nullable_image_uploads + failed_vector_uploads
     )
     for channel in all_failed_upload_channels:
         record.remove_channel(channel)
@@ -190,6 +206,7 @@ async def submit_hdf(
         nullable_images = []
         hdf_handler.images = []
         hdf_handler.nullable_images = []
+        hdf_handler.vectors = []
         hdf_handler = None
         channel_checker = None
         waveforms = None

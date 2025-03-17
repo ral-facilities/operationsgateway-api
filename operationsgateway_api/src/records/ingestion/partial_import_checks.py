@@ -5,11 +5,13 @@ from operationsgateway_api.src.models import (
     ImageChannelModel,
     NullableImageChannelModel,
     RecordModel,
+    VectorChannelModel,
     WaveformChannelModel,
 )
 from operationsgateway_api.src.records.echo_interface import EchoInterface
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.nullable_image import NullableImage
+from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
 
 
@@ -118,6 +120,9 @@ class PartialImportChecks:
                     object_stored = self.echo.head_object(path)
                 elif isinstance(channel_model, WaveformChannelModel):
                     path = Waveform.get_full_path(channel_model.waveform_path)
+                    object_stored = self.echo.head_object(path)
+                elif isinstance(channel_model, VectorChannelModel):
+                    path = Vector.get_full_path(channel_model.vector_path)
                     object_stored = self.echo.head_object(path)
                 else:
                     object_stored = True

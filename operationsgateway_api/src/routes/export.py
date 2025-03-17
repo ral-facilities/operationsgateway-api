@@ -109,6 +109,14 @@ async def export_records(
         False,
         description="Whether to export rendered images of the waveforms",
     ),
+    export_vector_csvs: bool = Query(
+        True,
+        description="Whether to export the vectors in CSV files",
+    ),
+    export_vector_images: bool = Query(
+        False,
+        description="Whether to export images of the vectors",
+    ),
 ):
     """
     Export the specified data to a file for download.
@@ -164,6 +172,8 @@ async def export_records(
         export_nullable_images,
         export_waveform_csvs,
         export_waveform_images,
+        export_vector_csvs=export_vector_csvs,
+        export_vector_images=export_vector_images,
     )
 
     await export_handler.process_records()
