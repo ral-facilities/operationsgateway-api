@@ -5,6 +5,10 @@ venv/
 *.log.*
 config.yml*
 !config.yml.example
+schedulued_maintenance.yml*
+!schedulued_maintenance.yml.example
+maintenance.yml*
+!maintenance.yml.example
 .vscode/
 .nox/
 .python-version

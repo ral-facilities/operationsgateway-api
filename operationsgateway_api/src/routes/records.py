@@ -286,9 +286,17 @@ async def delete_record_by_id(
 
     await Record.delete_record(id_)
     echo = EchoInterface()
+    # In principle historic data might be in the old directory format on Echo, so delete
+    # in both locations
+    sub_directories = EchoInterface.format_record_id(record_id=id_)
+    directory = EchoInterface.format_record_id(record_id=id_, use_subdirectories=False)
+
     log.info("Deleting waveforms for record ID '%s'", id_)
-    echo.delete_directory(f"{Waveform.echo_prefix}/{id_}/")
+    echo.delete_directory(f"{Waveform.echo_prefix}/{sub_directories}/")
+    echo.delete_directory(f"{Waveform.echo_prefix}/{directory}/")
+
     log.info("Deleting images for record ID '%s'", id_)
-    echo.delete_directory(f"{Image.echo_prefix}/{id_}/")
+    echo.delete_directory(f"{Image.echo_prefix}/{sub_directories}/")
+    echo.delete_directory(f"{Image.echo_prefix}/{directory}/")
 
     return Response(status_code=HTTPStatus.NO_CONTENT.value)
