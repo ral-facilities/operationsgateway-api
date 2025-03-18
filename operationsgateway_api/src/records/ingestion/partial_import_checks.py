@@ -2,15 +2,15 @@ import logging
 
 from operationsgateway_api.src.exceptions import RejectRecordError
 from operationsgateway_api.src.models import (
+    FloatImageChannelModel,
     ImageChannelModel,
-    NullableImageChannelModel,
     RecordModel,
     VectorChannelModel,
     WaveformChannelModel,
 )
 from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
-from operationsgateway_api.src.records.nullable_image import NullableImage
 from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
 
@@ -115,8 +115,8 @@ class PartialImportChecks:
                 if isinstance(channel_model, ImageChannelModel):
                     path = Image.get_full_path(channel_model.image_path)
                     object_stored = self.echo.head_object(path)
-                elif isinstance(channel_model, NullableImageChannelModel):
-                    path = NullableImage.get_full_path(channel_model.image_path)
+                elif isinstance(channel_model, FloatImageChannelModel):
+                    path = FloatImage.get_full_path(channel_model.image_path)
                     object_stored = self.echo.head_object(path)
                 elif isinstance(channel_model, WaveformChannelModel):
                     path = Waveform.get_full_path(channel_model.waveform_path)

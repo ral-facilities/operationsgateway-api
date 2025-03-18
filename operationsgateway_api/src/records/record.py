@@ -42,8 +42,9 @@ from operationsgateway_api.src.models import (
 )
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
+from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
-from operationsgateway_api.src.records.nullable_image import NullableImage
+from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
 
 
@@ -66,10 +67,10 @@ class Record:
         else:
             raise RecordError("RecordModel or dictionary not passed to Record init")
 
-    def store_thumbnail(self, data: Image | NullableImage | Waveform) -> None:
+    def store_thumbnail(self, data: Image | FloatImage | Waveform | Vector) -> None:
         """
-        Extract a thumbnail from a given image or waveform and store it in the record
-        object so it can be inserted in the database as part of the record
+        Extract a thumbnail from a given image, vector or waveform and store it in the
+        record object so it can be inserted in the database as part of the record
         """
         channel_name = data.get_channel_name_from_path()
         self.record.channels[channel_name].thumbnail = data.thumbnail
@@ -300,7 +301,7 @@ class Record:
         lower_level: int,
         upper_level: int,
         colourmap_name: str,
-        nullable_colourmap_name: str,
+        float_colourmap_name: str,
     ) -> None:
         """
         Apply false colour to any greyscale image thumbnails in the record.
@@ -328,11 +329,11 @@ class Record:
                         colourmap_name,
                     )
                     value.thumbnail = base64.b64encode(thumbnail_bytes.getvalue())
-                elif channel_dtype == "nullable_image":
+                elif channel_dtype == "float_image":
                     thumbnail_bytes = (
-                        FalseColourHandler.apply_false_colour_to_b64_nullable_img(
+                        FalseColourHandler.apply_false_colour_to_b64_float_img(
                             b64_thumbnail_str,
-                            nullable_colourmap_name,
+                            float_colourmap_name,
                         )
                     )
                     value.thumbnail = base64.b64encode(thumbnail_bytes.getvalue())

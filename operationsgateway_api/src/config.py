@@ -39,7 +39,7 @@ class ImagesConfig(BaseModel):
     preferred_colour_map_pref_name: StrictStr
 
 
-class NullableImagesConfig(BaseModel):
+class FloatImagesConfig(BaseModel):
     thumbnail_size: tuple[int, int]
     default_colour_map: StrictStr
     upload_image_threads: StrictInt
@@ -126,7 +126,7 @@ class APIConfig(BaseModel):
     auth: AuthConfig
     experiments: ExperimentsConfig
     images: ImagesConfig
-    nullable_images: NullableImagesConfig
+    float_images: FloatImagesConfig
     waveforms: WaveformsConfig
     vectors: VectorsConfig
     echo: EchoConfig

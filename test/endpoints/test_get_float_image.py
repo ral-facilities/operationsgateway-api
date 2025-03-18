@@ -1,7 +1,11 @@
+import io
+
 from fastapi.testclient import TestClient
+import imagehash
+from PIL import Image
 import pytest
 
-from test.conftest import set_preferred_colourmap, unset_preferred_colourmap
+from test.conftest import set_preferred_float_colourmap, unset_preferred_float_colourmap
 
 
 class TestGetImage:
@@ -15,37 +19,39 @@ class TestGetImage:
         ],
         [
             pytest.param(
-                "record_id",
-                "channel_name",
+                "20230605080300",
+                "CM-202-CVC-WFS",
                 False,
                 None,
-                "8000000000000000",
+                "9b326c6930cf6798",
                 id="Original image",
             ),
             pytest.param(
-                "record_id",
-                "channel_name",
+                "20230605080300",
+                "CM-202-CVC-WFS",
                 True,
                 None,
-                "8000000000000000",
+                "966939966562b665",
                 id="Image using user's preferred colourmap",
             ),
             pytest.param(
-                "record_id",
-                "channel_name",
+                "20230605080300",
+                "CM-202-CVC-WFS",
                 False,
                 "berlin",
-                "8000000000000000",
+                "96493996656ab665",
                 id="Image with all false colour params specified",
             ),
             pytest.param(
-                "record_id",
-                "channel_name",
+                "20230605080300",
+                "CM-202-CVC-WFS",
                 True,
                 "berlin",
-                "8000000000000000",
-                id="Image with all false colour params specified (ignoring "
-                "user's pref)",
+                "96493996656ab665",
+                id=(
+                    "Image with all false colour params specified (ignoring "
+                    "user's pref)"
+                ),
             ),
         ],
     )
@@ -59,7 +65,11 @@ class TestGetImage:
         colourmap_name: str,
         expected_image_phash: str,
     ) -> None:
-        set_preferred_colourmap(test_app, login_and_get_token, use_preferred_colourmap)
+        set_preferred_float_colourmap(
+            test_app,
+            login_and_get_token,
+            use_preferred_colourmap,
+        )
 
         query_string = ""
         query_params_array = []
@@ -70,21 +80,19 @@ class TestGetImage:
             query_string = "?" + "&".join(query_params_array)
 
         test_response = test_app.get(
-            f"/images/nullable/{record_id}/{channel_name}{query_string}",
+            f"/images/float/{record_id}/{channel_name}{query_string}",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
 
-        unset_preferred_colourmap(
+        unset_preferred_float_colourmap(
             test_app,
             login_and_get_token,
             use_preferred_colourmap,
         )
 
-        # TODO Cannot actually assert anything useful until we have simulated data from
-        # EPAC
-        # assert test_response.status_code == 200, test_response.content.decode()
-        # bytes_image = test_response.content
-        # img = Image.open(io.BytesIO(bytes_image))
-        # image_checksum = str(imagehash.phash(img))
-        # assert expected_image_phash == image_checksum
-        assert test_response.status_code == 404, test_response.content.decode()
+        assert test_response.status_code == 200, test_response.content.decode()
+        bytes_image = test_response.content
+        img = Image.open(io.BytesIO(bytes_image))
+        image_checksum = str(imagehash.phash(img))
+        img.save(image_checksum + ".png")
+        assert expected_image_phash == image_checksum

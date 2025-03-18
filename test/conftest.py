@@ -117,6 +117,25 @@ def set_preferred_colourmap(test_app: TestClient, auth_token: str, do_it: bool):
         )
 
 
+def set_preferred_float_colourmap(test_app: TestClient, auth_token: str, do_it: bool):
+    """
+    Set the preferred float colour map via the user preferences endpoint.
+    Note that the 'do_it' argument allows the method to be called by all iterations of
+    a test run even where it is set to false and the preference should not be set.
+    """
+    if do_it:
+        test_app.post(
+            "/users/preferences",
+            content=json.dumps(
+                {
+                    "name": FalseColourHandler.preferred_float_colour_map_pref_name,
+                    "value": "vanimo",
+                },
+            ),
+            headers={"Authorization": f"Bearer {auth_token}"},
+        )
+
+
 def unset_preferred_colourmap(test_app: TestClient, auth_token: str, do_it: bool):
     """
     Unset the preferred colour map via the user preferences endpoint.
@@ -124,5 +143,16 @@ def unset_preferred_colourmap(test_app: TestClient, auth_token: str, do_it: bool
     if do_it:
         test_app.delete(
             f"/users/preferences/{FalseColourHandler.preferred_colour_map_pref_name}",
+            headers={"Authorization": f"Bearer {auth_token}"},
+        )
+
+
+def unset_preferred_float_colourmap(test_app: TestClient, auth_token: str, do_it: bool):
+    """
+    Unset the preferred float colour map via the user preferences endpoint.
+    """
+    if do_it:
+        test_app.delete(
+            f"/users/preferences/{FalseColourHandler.preferred_float_colour_map_pref_name}",
             headers={"Authorization": f"Bearer {auth_token}"},
         )

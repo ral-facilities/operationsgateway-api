@@ -246,7 +246,7 @@ class TestRecord:
             lower_level=2,
             upper_level=3,
             colourmap_name="test",
-            nullable_colourmap_name="bwr",
+            float_colourmap_name="bwr",
         )
 
     @pytest.mark.asyncio

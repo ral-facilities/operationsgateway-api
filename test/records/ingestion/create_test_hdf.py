@@ -2,9 +2,10 @@ import h5py
 import numpy as np
 
 from operationsgateway_api.src.models import (
+    FloatImageModel,
     ImageModel,
-    NullableImageModel,
     RecordModel,
+    VectorModel,
     WaveformModel,
 )
 from operationsgateway_api.src.records.ingestion.hdf_handler import HDFDataHandler
@@ -73,7 +74,8 @@ async def create_test_hdf_file(  # noqa: C901
     RecordModel,
     list[WaveformModel],
     list[ImageModel],
-    list[NullableImageModel],
+    list[FloatImageModel],
+    list[VectorModel],
     list[dict[str, str]],
 ]:
     """
@@ -204,6 +206,64 @@ async def create_test_hdf_file(  # noqa: C901
         pm_201_fe_cam_2.attrs.create("y_pixel_units", "µm")
         data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.uint16)
         pm_201_fe_cam_2.create_dataset("data", data=data)
+
+        cm_202_cvc_wfs = record.create_group("CM-202-CVC-WFS")
+        cm_202_cvc_wfs.attrs.create("channel_dtype", "float_image")
+        cm_202_cvc_wfs.attrs.create("x_pixel_size", 100)
+        cm_202_cvc_wfs.attrs.create("x_pixel_units", "µm")
+        cm_202_cvc_wfs.attrs.create("y_pixel_size", 100)
+        cm_202_cvc_wfs.attrs.create("y_pixel_units", "µm")
+        data = np.ones((100, 100), dtype=np.float64)
+        cm_202_cvc_wfs.create_dataset("data", data=data)
+
+        cm_202_cvc_wfs_coef = record.create_group("CM-202-CVC-WFS-COEF")
+        cm_202_cvc_wfs_coef.attrs.create("channel_dtype", "vector")
+        labels = [
+            "Tilt X",
+            "Tilt Y",
+            "Defocus",
+            "Astigmatism",
+            "Oblique astigmatism",
+            "Coma Y",
+            "Coma X",
+            "Trefoil",
+            "Oblique trefoil",
+            "Spherical",
+            "Z_4^2",
+            "Z_4^-2",
+            "Z_4^4",
+            "Z_4^-4",
+            "Z_5^1",
+            "Z_5^-1",
+            "Z_5^3",
+            "Z_5^-3",
+            "Z_5^5",
+            "Z_5^-5"
+        ]
+        cm_202_cvc_wfs_coef.attrs.create("labels", labels)
+        data = [
+            5.639372695195284,
+            5.587336765253104,
+            1.826101240997037,
+            2.521215679028282,
+            -2.980784658113992,
+            -2.279530101757219,
+            0.8275213451146765,
+            -0.2507684324157028,
+            -1.3952389582428177,
+            -0.925578472683586,
+            0.5665629489813115,
+            0.6252987786682547,
+            0.16671172514266414,
+            0.0724989856677573,
+            0.18313006266485013,
+            0.26288446058591775,
+            -0.03412582732888118,
+            0.1467799869560521,
+            0.16014661721357387,
+            0.10650232684232015,
+        ]
+        cm_202_cvc_wfs_coef.create_dataset("data", data=np.array(data))
 
         pm_201_fe_cam_2_ceny = record.create_group("PM-201-FE-CAM-2-CENY")
         if (

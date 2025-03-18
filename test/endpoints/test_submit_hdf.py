@@ -74,6 +74,54 @@ def create_integration_test_hdf(fails=None, generic_fail=None):
         else:
             pm_201_hj_pd.create_dataset("y", data=y)
 
+        cm_202_cvc_wfs_coef = record.create_group("CM-202-CVC-WFS-COEF")
+        cm_202_cvc_wfs_coef.attrs.create("channel_dtype", "vector")
+        labels = [
+            "Tilt X",
+            "Tilt Y",
+            "Defocus",
+            "Astigmatism",
+            "Oblique astigmatism",
+            "Coma Y",
+            "Coma X",
+            "Trefoil",
+            "Oblique trefoil",
+            "Spherical",
+            "Z_4^2",
+            "Z_4^-2",
+            "Z_4^4",
+            "Z_4^-4",
+            "Z_5^1",
+            "Z_5^-1",
+            "Z_5^3",
+            "Z_5^-3",
+            "Z_5^5",
+            "Z_5^-5"
+        ]
+        cm_202_cvc_wfs_coef.attrs.create("labels", labels)
+        data = [
+            5.639372695195284,
+            5.587336765253104,
+            1.826101240997037,
+            2.521215679028282,
+            -2.980784658113992,
+            -2.279530101757219,
+            0.8275213451146765,
+            -0.2507684324157028,
+            -1.3952389582428177,
+            -0.925578472683586,
+            0.5665629489813115,
+            0.6252987786682547,
+            0.16671172514266414,
+            0.0724989856677573,
+            0.18313006266485013,
+            0.26288446058591775,
+            -0.03412582732888118,
+            0.1467799869560521,
+            0.16014661721357387,
+            0.10650232684232015,
+        ]
+        cm_202_cvc_wfs_coef.create_dataset("data", data=np.array(data))
 
 class TestSubmitHDF:
     @pytest.mark.asyncio
@@ -98,6 +146,8 @@ class TestSubmitHDF:
             "message": "Added as 20200407142816",
             "response": {
                 "accepted_channels": [
+                    "CM-202-CVC-WFS",
+                    "CM-202-CVC-WFS-COEF",
                     "PM-201-FE-CAM-1",
                     "PM-201-FE-CAM-2",
                     "PM-201-FE-CAM-2-CENX",
@@ -151,6 +201,8 @@ class TestSubmitHDF:
             "response": {
                 "accepted_channels": [],
                 "rejected_channels": {
+                    "CM-202-CVC-WFS": channel_present_message,
+                    "CM-202-CVC-WFS-COEF": channel_present_message,
                     "PM-201-FE-CAM-1": channel_present_message,
                     "PM-201-FE-CAM-2": channel_present_message,
                     "PM-201-FE-CAM-2-CENX": channel_present_message,
@@ -270,7 +322,7 @@ class TestSubmitHDF:
         expected_response = {
             "message": "Added as 20200407142816",
             "response": {
-                "accepted_channels": [],
+                "accepted_channels": ["CM-202-CVC-WFS-COEF"],
                 "rejected_channels": {
                     "FALSE_IMAGE": [
                         "Channel name is not recognised (does not appear in manifest)",
@@ -322,6 +374,9 @@ class TestSubmitHDF:
             "response": {
                 "accepted_channels": ["PM-201-TJ-CAM-2-FWHMY"],
                 "rejected_channels": {
+                    "CM-202-CVC-WFS-COEF": (
+                        "Channel is already present in existing record"
+                    ),
                     "PM-201-FE-CAM-2": [
                         "data attribute has wrong datatype, should be ndarray",
                         "data attribute has wrong datatype, should be uint16 or uint8",
@@ -365,12 +420,9 @@ class TestSubmitHDF:
                 "response": {
                     "accepted_channels": ["PM-201-TJ-CAM-2-FWHMY"],
                     "rejected_channels": {
-                        "PM-201-FE-CAM-2": [
-                            "Upload to Echo failed",
-                        ],
-                        "PM-201-HJ-PD": [
-                            "Upload to Echo failed",
-                        ],
+                        "CM-202-CVC-WFS-COEF": ["Upload to Echo failed"],
+                        "PM-201-FE-CAM-2": ["Upload to Echo failed"],
+                        "PM-201-HJ-PD": ["Upload to Echo failed"],
                     },
                     "warnings": [],
                 },
@@ -477,9 +529,8 @@ class TestSubmitHDF:
                 "response": {
                     "accepted_channels": ["PM-201-HJ-PD", "PM-201-TJ-CAM-2-FWHMY"],
                     "rejected_channels": {
-                        "PM-201-FE-CAM-2": [
-                            "Upload to Echo failed",
-                        ],
+                        "CM-202-CVC-WFS-COEF": ["Upload to Echo failed"],
+                        "PM-201-FE-CAM-2": ["Upload to Echo failed"],
                     },
                     "warnings": [],
                 },

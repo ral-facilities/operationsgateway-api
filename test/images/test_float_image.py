@@ -12,8 +12,8 @@ from operationsgateway_api.src.exceptions import (
     ImageError,
     ImageNotFoundError,
 )
-from operationsgateway_api.src.models import NullableImageModel
-from operationsgateway_api.src.records.nullable_image import NullableImage
+from operationsgateway_api.src.models import FloatImageModel
+from operationsgateway_api.src.records.float_image import FloatImage
 
 
 class TestImage:
@@ -23,7 +23,7 @@ class TestImage:
     config_image_bucket_name = "MyTestBucket"
     path = "test/image/path.png"
     data = np.array([[np.nan, 1], [-0.5, 0]], dtype=np.float32)
-    model = NullableImageModel(path=path, data=data)
+    model = FloatImageModel(path=path, data=data)
     stored_bytes = (
         b"PK\x03\x04-\x00\x00\x00\x08\x00\x00\x00!\x00*\x8ch\xc8\xff\xff\xff\xff\xff"
         b"\xff\xff\xff\t\x00\x14\x00arr_0.npy\x01\x00\x10\x00\x90\x00\x00\x00\x00\x00"
@@ -52,7 +52,7 @@ class TestImage:
         ],
     )
     def test_create_thumbnail(self, data: np.ndarray, phash: str):
-        test_image = NullableImage(NullableImageModel(path=self.path, data=data))
+        test_image = FloatImage(FloatImageModel(path=self.path, data=data))
         test_image.create_thumbnail()
         bytes_thumbnail = base64.b64decode(test_image.thumbnail)
         img = Image.open(BytesIO(bytes_thumbnail))
@@ -82,17 +82,15 @@ class TestImage:
         ".upload_file_object",
     )
     def test_valid_upload_image(self, mock_upload_file_object, _):
-        test_image = NullableImage(self.model)
-        NullableImage.upload_image(test_image)
+        test_image = FloatImage(self.model)
+        FloatImage.upload_image(test_image)
 
         assert mock_upload_file_object.call_count == 1
 
         assert len(mock_upload_file_object.call_args.args) == 2
         uploaded_bytes_io = mock_upload_file_object.call_args.args[0]
         assert isinstance(uploaded_bytes_io, BytesIO)
-        assert (
-            mock_upload_file_object.call_args.args[1] == f"nullable_images/{self.path}"
-        )
+        assert mock_upload_file_object.call_args.args[1] == f"float_images/{self.path}"
 
     @patch(
         "operationsgateway_api.src.config.Config.config.echo.url",
@@ -116,8 +114,8 @@ class TestImage:
         side_effect=EchoS3Error("Mocked Exception"),
     )
     def test_invalid_upload_image(self, _, __):
-        test_image = NullableImage(self.model)
-        response = NullableImage.upload_image(test_image)
+        test_image = FloatImage(self.model)
+        response = FloatImage.upload_image(test_image)
         assert response == "path"
 
     @pytest.mark.asyncio
@@ -144,7 +142,7 @@ class TestImage:
             ".download_file_object",
             return_value=BytesIO(self.stored_bytes),
         ):
-            test_image = await NullableImage.get_image(
+            test_image = await FloatImage.get_image(
                 record_id="test_record_id",
                 channel_name="test_channel_name",
                 colourmap_name="bwr",
@@ -191,7 +189,7 @@ class TestImage:
             return_value=record_count,
         ):
             with pytest.raises(expected_exception):
-                await NullableImage.get_image(
+                await FloatImage.get_image(
                     record_id="test_record_id",
                     channel_name="test_channel_name",
                     colourmap_name="bwr",

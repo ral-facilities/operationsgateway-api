@@ -46,12 +46,17 @@ class Vector:
             raise VectorError(msg) from exc
 
     @staticmethod
-    def get_relative_path(record_id: str, channel_name: str) -> str:
+    def get_relative_path(
+        record_id: str,
+        channel_name: str,
+        use_subdirectories: bool = True,
+    ) -> str:
         """
         Returns a relative path given a record id and channel name. The path is relative
         to the base directory.
         """
-        return f"{record_id}/{channel_name}"
+        directories = EchoInterface.format_record_id(record_id, use_subdirectories)
+        return f"{directories}/{channel_name}.json"
 
     @staticmethod
     def get_full_path(relative_path: str) -> str:
@@ -67,7 +72,7 @@ class Vector:
         """
         return self.vector.path.split("/")[-1].split(".json")[0]
 
-    def insert_vector(self) -> str | None:
+    def insert(self) -> str | None:
         """
         Upload the bytes of this vector to storage. Returns the channel name if the
         upload fails.
@@ -81,10 +86,7 @@ class Vector:
         except EchoS3Error:
             # Extract the channel name and propagate it
             channel_name = self.get_channel_name_from_path()
-            log.exception(
-                "Failed to upload vector for channel '%s'",
-                channel_name,
-            )
+            log.exception("Failed to upload vector for channel '%s'", channel_name)
             return channel_name
 
     def create_thumbnail(self) -> None:

@@ -43,4 +43,4 @@ async def get_vector_by_id(
     """
     msg = "Getting vector by record_id, channel_name: %s, %s"
     log.info(msg, record_id, channel_name)
-    return Vector.get_vector(record_id, channel_name)
+    return await Vector.get_vector(record_id, channel_name)
