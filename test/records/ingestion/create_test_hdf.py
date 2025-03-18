@@ -238,7 +238,7 @@ async def create_test_hdf_file(  # noqa: C901
             "Z_5^3",
             "Z_5^-3",
             "Z_5^5",
-            "Z_5^-5"
+            "Z_5^-5",
         ]
         cm_202_cvc_wfs_coef.attrs.create("labels", labels)
         data = [

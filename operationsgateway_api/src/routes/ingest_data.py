@@ -42,7 +42,11 @@ def _update_checker_response(
     checker_response["rejected_channels"][channel].append("Upload to Echo failed")
 
 
-def _insert(entity: Waveform | Vector, failed_uploads: list[str], record: Record,) -> None:
+def _insert(
+    entity: Waveform | Vector,
+    failed_uploads: list[str],
+    record: Record,
+) -> None:
     failed_upload = entity.insert()  # Returns channel name if failed
     if failed_upload:
         # if the upload to echo fails, don't process the any further

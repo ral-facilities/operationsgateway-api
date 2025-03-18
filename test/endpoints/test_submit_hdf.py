@@ -96,7 +96,7 @@ def create_integration_test_hdf(fails=None, generic_fail=None):
             "Z_5^3",
             "Z_5^-3",
             "Z_5^5",
-            "Z_5^-5"
+            "Z_5^-5",
         ]
         cm_202_cvc_wfs_coef.attrs.create("labels", labels)
         data = [
@@ -122,6 +122,7 @@ def create_integration_test_hdf(fails=None, generic_fail=None):
             0.10650232684232015,
         ]
         cm_202_cvc_wfs_coef.create_dataset("data", data=np.array(data))
+
 
 class TestSubmitHDF:
     @pytest.mark.asyncio

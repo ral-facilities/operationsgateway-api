@@ -6,8 +6,8 @@ from zipfile import ZipFile
 from fastapi import Response
 from fastapi.testclient import TestClient
 import imagehash
-from PIL import Image
 import numpy as np
+from PIL import Image
 import pytest
 
 from test.conftest import (
@@ -861,9 +861,21 @@ class TestExport:
         )
         TestExport.compile_get_params(get_params, "export_images", export_images)
         TestExport.compile_get_params(get_params, "export_scalars", export_scalars)
-        TestExport.compile_get_params(get_params, "export_float_images", export_float_images,)
-        TestExport.compile_get_params(get_params, "export_vector_images", export_vector_images,)
-        TestExport.compile_get_params(get_params, "export_vector_csvs", export_vector_csvs,)
+        TestExport.compile_get_params(
+            get_params,
+            "export_float_images",
+            export_float_images,
+        )
+        TestExport.compile_get_params(
+            get_params,
+            "export_vector_images",
+            export_vector_images,
+        )
+        TestExport.compile_get_params(
+            get_params,
+            "export_vector_csvs",
+            export_vector_csvs,
+        )
         TestExport.compile_get_params(get_params, "lower_level", lower_level)
         TestExport.compile_get_params(get_params, "upper_level", upper_level)
         TestExport.compile_get_params(get_params, "colourmap_name", colourmap_name)

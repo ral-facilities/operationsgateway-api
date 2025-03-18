@@ -463,7 +463,12 @@ class HDFDataHandler:
 
     @staticmethod
     def remove_channel(
-        models: list[ImageModel] | list[FloatImageModel] | list[WaveformModel] | list[VectorModel],
+        models: (
+            list[ImageModel]
+            | list[FloatImageModel]
+            | list[WaveformModel]
+            | list[VectorModel]
+        ),
         path: str,
     ) -> None:
         """Removes the model from models with the specified path, if found."""
