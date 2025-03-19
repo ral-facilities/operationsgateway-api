@@ -6,6 +6,7 @@ from zipfile import ZipFile
 from fastapi import Response
 from fastapi.testclient import TestClient
 import imagehash
+import numpy as np
 from PIL import Image
 import pytest
 
@@ -16,10 +17,26 @@ from test.conftest import (
 
 class TestExport:
     @pytest.mark.parametrize(
-        "conditions, skip, limit, order, projection, "
-        "export_waveform_images, export_waveform_csvs, export_images, export_scalars, "
-        "lower_level, upper_level, colourmap_name, "
-        "expected_filename, expected_filepath, zip_contents_dict",
+        [
+            "conditions",
+            "skip",
+            "limit",
+            "order",
+            "projection",
+            "export_waveform_images",
+            "export_waveform_csvs",
+            "export_images",
+            "export_scalars",
+            "export_float_images",
+            "export_vector_images",
+            "export_vector_csvs",
+            "lower_level",
+            "upper_level",
+            "colourmap_name",
+            "expected_filename",
+            "expected_filepath",
+            "zip_contents_dict",
+        ],
         [
             pytest.param(
                 {
@@ -45,6 +62,9 @@ class TestExport:
                     "metadata.epac_ops_data_version",
                     "channels.FE-204-PSO-EM.data",
                 ],
+                None,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -85,6 +105,9 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
+                None,
+                None,
                 "20230605080000_to_20230605120000.csv",
                 "export/20230605080000_to_20230605120000_desc.csv",
                 None,
@@ -111,6 +134,9 @@ class TestExport:
                     "metadata.epac_ops_data_version",
                     "channels.FE-204-PSO-EM.data",
                 ],
+                None,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -145,6 +171,9 @@ class TestExport:
                     "channels.FE-204-PSO-EM.data",
                     "channels.FE-204-PSO-CAM-1",
                 ],
+                None,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -192,6 +221,9 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
+                None,
+                None,
                 "20230605070600_to_20230605120000.csv",
                 "export/20230605070600_to_20230605120000.csv",
                 None,
@@ -219,6 +251,9 @@ class TestExport:
                     "channels.FE-204-PSO-EM.data",
                     "channels.FE-204-PSO-CAM-1",
                 ],
+                None,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -263,6 +298,9 @@ class TestExport:
                     "channels.FE-204-PSO-CAM-1",
                     "channels.FE-204-PSO-P1-SP",
                 ],
+                None,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -319,6 +357,9 @@ class TestExport:
                     "channels.FE-204-PSO-P1-SP",
                 ],
                 True,  # export_waveform_images - request these
+                None,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -383,6 +424,9 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
+                None,
+                None,
                 "20230605080000_to_20230605120000.zip",
                 None,
                 {
@@ -430,6 +474,9 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
+                None,
+                None,
                 "20230605080000_to_20230605120000.zip",
                 None,
                 {
@@ -471,6 +518,9 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
+                None,
+                None,
                 "20230605080000_to_20230605120000.zip",
                 None,
                 {
@@ -485,6 +535,41 @@ class TestExport:
                 id="Zip export of main CSV and images but no waveform CSVs",
             ),
             pytest.param(
+                {"_id": {"$in": ["20230605080300"]}},
+                0,
+                10,
+                "metadata.shotnum ASC",
+                [
+                    "metadata.shotnum",
+                    "metadata.timestamp",
+                    "metadata.epac_ops_data_version",
+                    "channels.FE-204-PSO-EM.data",
+                    "channels.FE-204-NSS-WFS",
+                    "channels.FE-204-NSS-WFS-COEF",
+                ],
+                None,
+                None,
+                None,
+                None,
+                True,
+                True,
+                True,
+                None,
+                None,
+                None,
+                "20230605080300.zip",
+                None,
+                {
+                    "20230605080300.csv": "export/20230605080300_asc.csv",
+                    "20230605080300_FE-204-NSS-WFS.npz": (500, 680),
+                    "20230605080300_FE-204-NSS-WFS-COEF.csv": (
+                        "export/20230605080300_FE-204-NSS-WFS-COEF.csv"
+                    ),
+                    "20230605080300_FE-204-NSS-WFS-COEF.png": "9f87e03838c77c38",
+                },
+                id="Zip export of main CSV and float images",
+            ),
+            pytest.param(
                 {"_id": {"$in": ["20230605080000"]}},
                 0,
                 10,
@@ -495,6 +580,9 @@ class TestExport:
                     "metadata.epac_ops_data_version",
                     "channels.FE-204-PSO-EM.data",
                 ],
+                None,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -519,6 +607,9 @@ class TestExport:
                     "channels.FE-204-PSO-EM.data",
                     "channels.FE-204-PSO-CAM-1",
                 ],
+                None,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -557,6 +648,9 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
+                None,
+                None,
                 "20230605080000_to_20230605120000_FE-204-PSO-EM.csv",
                 "export/20230605080000_to_20230605120000_FE-204-PSO-EM.csv",
                 None,
@@ -568,6 +662,9 @@ class TestExport:
                 None,
                 None,
                 ["channels.FE-204-PSO-CAM-1"],
+                None,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -598,6 +695,9 @@ class TestExport:
                 10,
                 "metadata.shotnum ASC",
                 ["_id"],
+                None,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -640,6 +740,9 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
+                None,
+                None,
                 "20230605080000_to_20230605120000.csv",
                 "export/20230605080000_to_20230605120000_asc_incl_id.csv",
                 None,
@@ -670,6 +773,9 @@ class TestExport:
                     "channels.image",
                 ],
                 True,  # export_waveform_images - request these
+                None,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -722,6 +828,9 @@ class TestExport:
         export_waveform_csvs,
         export_images,
         export_scalars,
+        export_float_images: bool,
+        export_vector_images: bool,
+        export_vector_csvs: bool,
         lower_level,
         upper_level,
         colourmap_name,
@@ -752,6 +861,21 @@ class TestExport:
         )
         TestExport.compile_get_params(get_params, "export_images", export_images)
         TestExport.compile_get_params(get_params, "export_scalars", export_scalars)
+        TestExport.compile_get_params(
+            get_params,
+            "export_float_images",
+            export_float_images,
+        )
+        TestExport.compile_get_params(
+            get_params,
+            "export_vector_images",
+            export_vector_images,
+        )
+        TestExport.compile_get_params(
+            get_params,
+            "export_vector_csvs",
+            export_vector_csvs,
+        )
         TestExport.compile_get_params(get_params, "lower_level", lower_level)
         TestExport.compile_get_params(get_params, "upper_level", upper_level)
         TestExport.compile_get_params(get_params, "colourmap_name", colourmap_name)
@@ -893,12 +1017,17 @@ class TestExport:
                         filepath_or_hash,
                         zip_file.open(filename_in_zip).read().decode(),
                     )
-                else:
+                elif filename_in_zip.endswith(".png"):
                     # this is an image so it needs a perceptual hash generating and
                     # comparing with what is expected
                     image = Image.open(zip_file.open(filename_in_zip))
                     phash = str(imagehash.phash(image))
-                    assert filepath_or_hash == phash, f"Difference in {filename_in_zip}"
+                    assert filepath_or_hash == phash
+                elif filename_in_zip.endswith(".npz"):
+                    array = np.load(zip_file.open(filename_in_zip))["arr_0"]
+                    assert array.shape == filepath_or_hash
+                else:
+                    raise ValueError(f"Unexpected file extension for {filename_in_zip}")
             # diff the expected file list with that found in the zip
             # to check that all expected files were present
             files_diff = [

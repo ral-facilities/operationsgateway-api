@@ -1,7 +1,9 @@
 import numpy as np
+from pydantic import BaseModel
 import pytest
 
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
+from operationsgateway_api.src.models import ScalarChannelMetadataModel
 from operationsgateway_api.src.records.ingestion.channel_checks import ChannelChecks
 from test.records.ingestion.create_test_hdf import create_test_hdf_file
 
@@ -14,6 +16,8 @@ def create_channel_response(responses, extra=None, channels=False):
     """
     model_response = {
         "accepted_channels": [
+            "CM-202-CVC-WFS",
+            "CM-202-CVC-WFS-COEF",
             "PM-201-FE-CAM-1",
             "PM-201-FE-CAM-2",
             "PM-201-FE-CAM-2-CENX",
@@ -56,20 +60,8 @@ def create_channel_response(responses, extra=None, channels=False):
 class TestChannel:
     @pytest.mark.asyncio
     async def test_channel_checks_success(self, remove_hdf_file):
-        (
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
-        ) = await create_test_hdf_file()
-
-        channel_checker = ChannelChecks(
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
-        )
-
+        hdf_tuple = await create_test_hdf_file()
+        channel_checker = ChannelChecks(*hdf_tuple)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
         async_functions = [
@@ -91,6 +83,8 @@ class TestChannel:
 
         assert await channel_checker.channel_checks() == {
             "accepted_channels": [
+                "CM-202-CVC-WFS",
+                "CM-202-CVC-WFS-COEF",
                 "PM-201-FE-CAM-1",
                 "PM-201-FE-CAM-2",
                 "PM-201-FE-CAM-2-CENX",
@@ -192,19 +186,8 @@ class TestChannel:
     )
     @pytest.mark.asyncio
     async def test_channel_dtype_fail(self, remove_hdf_file, altered_channel, response):
-        (
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
-        ) = await create_test_hdf_file(channel_dtype=altered_channel)
-
-        channel_checker = ChannelChecks(
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
-        )
+        hdf_tuple = await create_test_hdf_file(channel_dtype=altered_channel)
+        channel_checker = ChannelChecks(*hdf_tuple)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
@@ -367,26 +350,13 @@ class TestChannel:
         extra,
     ):
         if required_attributes == "double_waveform":
-            (
-                record_data,
-                waveforms,
-                images,
-                internal_failed_channel,
-            ) = await create_test_hdf_file(channel_name=["waveform"])
+            hdf_tuple = await create_test_hdf_file(channel_name=["waveform"])
         else:
-            (
-                record_data,
-                waveforms,
-                images,
-                internal_failed_channel,
-            ) = await create_test_hdf_file(required_attributes=required_attributes)
+            hdf_tuple = await create_test_hdf_file(
+                required_attributes=required_attributes,
+            )
 
-        channel_checker = ChannelChecks(
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
-        )
+        channel_checker = ChannelChecks(*hdf_tuple)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
@@ -513,19 +483,8 @@ class TestChannel:
         optional_attributes,
         response,
     ):
-        (
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
-        ) = await create_test_hdf_file(optional_attributes=optional_attributes)
-
-        channel_checker = ChannelChecks(
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
-        )
+        hdf_tuple = await create_test_hdf_file(optional_attributes=optional_attributes)
+        channel_checker = ChannelChecks(*hdf_tuple)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
@@ -661,19 +620,8 @@ class TestChannel:
         response,
         extra,
     ):
-        (
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
-        ) = await create_test_hdf_file(required_attributes=required_attributes)
-
-        channel_checker = ChannelChecks(
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
-        )
+        hdf_tuple = await create_test_hdf_file(required_attributes=required_attributes)
+        channel_checker = ChannelChecks(*hdf_tuple)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
@@ -805,19 +753,10 @@ class TestChannel:
         unrecognised_attribute,
         response,
     ):
-        (
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
-        ) = await create_test_hdf_file(unrecognised_attribute=unrecognised_attribute)
-
-        channel_checker = ChannelChecks(
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
+        hdf_tuple = await create_test_hdf_file(
+            unrecognised_attribute=unrecognised_attribute,
         )
+        channel_checker = ChannelChecks(*hdf_tuple)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
@@ -885,19 +824,8 @@ class TestChannel:
         channel_name,
         response,
     ):
-        (
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
-        ) = await create_test_hdf_file(channel_name=channel_name)
-
-        channel_checker = ChannelChecks(
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
-        )
+        hdf_tuple = await create_test_hdf_file(channel_name=channel_name)
+        channel_checker = ChannelChecks(*hdf_tuple)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
@@ -1003,12 +931,7 @@ class TestChannel:
         channels_check,
         response,
     ):
-        (
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
-        ) = await create_test_hdf_file(
+        hdf_tuple = await create_test_hdf_file(
             channel_dtype=channel_dtype,
             required_attributes=required_attributes,
             optional_attributes=optional_attributes,
@@ -1016,13 +939,7 @@ class TestChannel:
             channel_name=channel_name,
             channels_check=channels_check,
         )
-
-        channel_checker = ChannelChecks(
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
-        )
+        channel_checker = ChannelChecks(*hdf_tuple)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
@@ -1088,21 +1005,21 @@ class TestChannel:
         test_type,
         response,
     ):
-        (
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
-        ) = await create_test_hdf_file(test_type=test_type)
-
-        channel_checker = ChannelChecks(
-            record_data,
-            waveforms,
-            images,
-            internal_failed_channel,
-        )
+        hdf_tuple = await create_test_hdf_file(test_type=test_type)
+        channel_checker = ChannelChecks(*hdf_tuple)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
         channel_response = create_channel_response(response)
         assert await channel_checker.channel_checks() == channel_response
+
+    @pytest.mark.parametrize(
+        ["possible_model"],
+        [
+            pytest.param({}),
+            pytest.param(ScalarChannelMetadataModel(channel_dtype="scalar")),
+        ],
+    )
+    def test_ensure_dict(self, possible_model: dict | BaseModel):
+        ensured_dict = ChannelChecks._ensure_dict(possible_model)
+        assert isinstance(ensured_dict, dict)

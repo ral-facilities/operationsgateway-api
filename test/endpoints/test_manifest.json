@@ -588,6 +588,38 @@
       "units": "µm",
       "type": "scalar"
     },
+    "TS-202-TSM-WFS-COEF": {
+      "name": "Amplifier output wavefront coefficients",
+      "path": "/TS-202/TSM",
+      "labels": [
+        "Tilt X",
+        "Tilt Y",
+        "Defocus",
+        "Astigmatism",
+        "Oblique astigmatism",
+        "Coma Y",
+        "Coma X",
+        "Trefoil",
+        "Oblique trefoil",
+        "Spherical",
+        "Z_4^2",
+        "Z_4^-2",
+        "Z_4^4",
+        "Z_4^-4",
+        "Z_5^1",
+        "Z_5^-1",
+        "Z_5^3",
+        "Z_5^-3",
+        "Z_5^5",
+        "Z_5^-5"
+      ],
+      "type": "vector"
+    },
+    "TS-202-TSM-WFS": {
+      "name": "Amplifier output wavefront image",
+      "path": "/TS-202/TSM",
+      "type": "float_image"
+    },
     "TS-202-DUMMY1-CAM-1": {
       "name": "TS-202 dummy 1 NF",
       "path": "/TS-202/DUMMY1",
@@ -912,6 +944,16 @@
       "units": "µm",
       "type": "scalar"
     },
+    "FE-204-NSS-WFS-COEF": {
+      "name": "Stretcher output big wavefront coefficients",
+      "path": "/FE-204/NSS",
+      "type": "vector"
+    },
+    "FE-204-NSS-WFS": {
+      "name": "Stretcher output big wavefront image",
+      "path": "/FE-204/NSS",
+      "type": "float_image"
+    },
     "FE-204-NSO-P1-CAM-1": {
       "name": "ns OPCPA pass 1 NF",
       "path": "/FE-204/NSO/P1",
@@ -1192,6 +1234,38 @@
       "units": "µm",
       "type": "scalar"
     },
+    "FE-204-LT-WFS-COEF": {
+      "name": "Front-end output wavefront coefficients",
+      "path": "/FE-204/LT",
+      "labels": [
+        "Tilt X",
+        "Tilt Y",
+        "Defocus",
+        "Astigmatism",
+        "Oblique astigmatism",
+        "Coma Y",
+        "Coma X",
+        "Trefoil",
+        "Oblique trefoil",
+        "Spherical",
+        "Z_4^2",
+        "Z_4^-2",
+        "Z_4^4",
+        "Z_4^-4",
+        "Z_5^1",
+        "Z_5^-1",
+        "Z_5^3",
+        "Z_5^-3",
+        "Z_5^5",
+        "Z_5^-5"
+      ],
+      "type": "vector"
+    },
+    "FE-204-LT-WFS": {
+      "name": "Front-end output wavefront image",
+      "path": "/FE-204/LT",
+      "type": "float_image"
+    },
     "CM-202-CVC-P0-CAM-1": {
       "name": "Compressor input NF",
       "path": "/CM-202/CVC/P0",
@@ -1280,6 +1354,38 @@
       "notation": "normal",
       "units": "µm",
       "type": "scalar"
+    },
+    "CM-202-CVC-WFS-COEF": {
+      "name": "Compressor output wavefront coefficients",
+      "path": "/CM-202/CVC",
+      "labels": [
+        "Tilt X",
+        "Tilt Y",
+        "Defocus",
+        "Astigmatism",
+        "Oblique astigmatism",
+        "Coma Y",
+        "Coma X",
+        "Trefoil",
+        "Oblique trefoil",
+        "Spherical",
+        "Z_4^2",
+        "Z_4^-2",
+        "Z_4^4",
+        "Z_4^-4",
+        "Z_5^1",
+        "Z_5^-1",
+        "Z_5^3",
+        "Z_5^-3",
+        "Z_5^5",
+        "Z_5^-5"
+      ],
+      "type": "vector"
+    },
+    "CM-202-CVC-WFS": {
+      "name": "Compressor output wavefront image",
+      "path": "/CM-202/CVC",
+      "type": "float_image"
     },
     "EA1-001-LM-CAM-1": {
       "name": "EA1 input leakage NF",

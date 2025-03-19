@@ -686,6 +686,24 @@
 									"value": "{\"name\": \"image_reductive\", \"expression\": \"mean(FE-204-NSO-P1-CAM-1)\"}",
 									"description": "Reductive function on an image channel",
 									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"_id\": {\"$eq\": \"20230605080300\"}}",
+									"description": "Shot number containing wavefront channels",
+									"disabled": true
+								},
+								{
+									"key": "projection",
+									"value": "channels.CM-202-CVC-WFS",
+									"description": "Float image channel",
+									"disabled": true
+								},
+								{
+									"key": "projection",
+									"value": "channels.FE-204-NSS-WFS-COEF",
+									"description": "Vector channel",
+									"disabled": true
 								}
 							]
 						}
@@ -1155,6 +1173,48 @@
 							"path": [
 								"images",
 								"colourmap_names"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Float images",
+			"item": [
+				{
+					"name": "Get float image",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/images/float/20230605080300/CM-202-CVC-WFS",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"images",
+								"float",
+								"20230605080300",
+								"CM-202-CVC-WFS"
+							],
+							"query": [
+								{
+									"key": "colourmap_name",
+									"value": "berlin",
+									"disabled": true
+								}
 							]
 						}
 					},
@@ -1730,6 +1790,40 @@
 									"key": "functions",
 									"value": "{\"name\": \"a\", \"expression\": \"CM-202-CVC-SP - 737\"}"
 								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Vectors",
+			"item": [
+				{
+					"name": "Get vector",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/vectors/20230605080300/CM-202-CVC-WFS-COEF",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"vectors",
+								"20230605080300",
+								"CM-202-CVC-WFS-COEF"
 							]
 						}
 					},

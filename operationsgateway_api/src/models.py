@@ -45,7 +45,9 @@ default_exclude_field = Field(None, exclude=True)
 
 class ChannelDtype(StrEnum):
     IMAGE = "image"
+    FLOAT_IMAGE = "float_image"
     WAVEFORM = "waveform"
+    VECTOR = "vector"
     SCALAR = "scalar"
 
 
@@ -53,6 +55,12 @@ class ImageModel(BaseModel):
     path: Optional[Union[str, Any]]
     data: Optional[Union[np.ndarray, Any]]
     bit_depth: Optional[Union[int, Any]] = None
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
+class FloatImageModel(BaseModel):
+    path: str | Any | None
+    data: np.ndarray | Any | None
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
@@ -68,6 +76,18 @@ class WaveformModel(BaseModel):
 
     @field_validator("x", "y", mode="before")
     def encode_values(cls, value):  # noqa: N805
+        if isinstance(value, np.ndarray):
+            return list(value)
+        else:
+            return value
+
+
+class VectorModel(BaseModel):
+    path: str | Any | None = default_exclude_field
+    data: list[float] | Any | None
+
+    @field_validator("data", mode="before")
+    def validate_data(cls, value):  # noqa: N805
         if isinstance(value, np.ndarray):
             return list(value)
         else:
@@ -113,6 +133,22 @@ class ImageChannelModel(BaseModel):
     thumbnail: Optional[Union[bytes, Any]] = None
 
 
+class FloatImageChannelMetadataModel(BaseModel):
+    channel_dtype: Literal[ChannelDtype.FLOAT_IMAGE] | Any | None = (
+        ChannelDtype.FLOAT_IMAGE
+    )
+    x_pixel_size: float | Any | None = None
+    x_pixel_units: str | Any | None = None
+    y_pixel_size: float | Any | None = None
+    y_pixel_units: str | Any | None = None
+
+
+class FloatImageChannelModel(BaseModel):
+    metadata: FloatImageChannelMetadataModel
+    image_path: str | Any | None
+    thumbnail: bytes | Any | None = None
+
+
 class ScalarChannelMetadataModel(BaseModel):
     channel_dtype: Literal[ChannelDtype.SCALAR] | Any | None = ChannelDtype.SCALAR
     units: Optional[Union[str, Any]] = None
@@ -135,6 +171,25 @@ class WaveformChannelModel(BaseModel):
     waveform_path: Optional[Union[str, Any]]
 
 
+class VectorChannelMetadataModel(BaseModel):
+    channel_dtype: Literal[ChannelDtype.VECTOR] | Any | None = ChannelDtype.VECTOR
+    units: str | Any | None = None
+    labels: list[str] | Any | None = None
+
+    @field_validator("labels", mode="before")
+    def validate_labels(cls, value):  # noqa: N805
+        if isinstance(value, np.ndarray):
+            return list(value)
+        else:
+            return value
+
+
+class VectorChannelModel(BaseModel):
+    metadata: VectorChannelMetadataModel
+    thumbnail: bytes | Any | None = None
+    vector_path: str | Any | None = None
+
+
 class RecordMetadataModel(BaseModel):
     epac_ops_data_version: Optional[Any] = None
     shotnum: Optional[int] = None
@@ -146,10 +201,23 @@ class RecordMetadataModel(BaseModel):
 class RecordModel(BaseModel):
     id_: str = Field(alias="_id")
     metadata: RecordMetadataModel
-    channels: dict[str, ImageChannelModel | ScalarChannelModel | WaveformChannelModel]
+    channels: dict[
+        str,
+        ImageChannelModel
+        | FloatImageChannelModel
+        | ScalarChannelModel
+        | WaveformChannelModel
+        | VectorChannelModel,
+    ]
 
 
 class PartialImageChannelModel(ImageChannelModel):
+    metadata: ImageChannelMetadataModel | None = None
+    image_path: str | None = None
+    thumbnail: bytes | None = None
+
+
+class PartialFloatImageChannelModel(FloatImageChannelModel):
     metadata: ImageChannelMetadataModel | None = None
     image_path: str | None = None
     thumbnail: bytes | None = None
@@ -167,7 +235,10 @@ class PartialWaveformChannelModel(WaveformChannelModel):
 
 
 PartialChannelModel = (
-    PartialImageChannelModel | PartialScalarChannelModel | PartialWaveformChannelModel
+    PartialImageChannelModel
+    | PartialFloatImageChannelModel
+    | PartialScalarChannelModel
+    | PartialWaveformChannelModel
 )
 PartialChannels = dict[str, PartialChannelModel]
 
@@ -206,7 +277,10 @@ class ChannelModel(BaseModel):
 
     name: str
     path: str
-    type_: Optional[Literal["scalar", "image", "waveform"]] = Field(None, alias="type")
+    type_: ChannelDtype | None = Field(
+        None,
+        alias="type",
+    )
 
     # Should the value be displayed as it is stored or be shown in x10^n format
     notation: Optional[Literal["scientific", "normal"]] = None
@@ -217,6 +291,8 @@ class ChannelModel(BaseModel):
 
     x_units: Optional[str] = None
     y_units: Optional[str] = None
+
+    labels: list[str] | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -229,6 +305,16 @@ class ChannelModel(BaseModel):
         if not values.data["type_"] == "waveform":
             raise ChannelManifestError(
                 "Only waveform channels should contain waveform channel metadata."
+                f" Invalid channel is called: {values.data['name']}",
+            )
+        else:
+            return v
+
+    @field_validator("labels")
+    def check_vector_channel(cls, v, values):  # noqa: N805
+        if not values.data["type_"] == ChannelDtype.VECTOR:
+            raise ChannelManifestError(
+                "Only vector channels should contain waveform channel metadata."
                 f" Invalid channel is called: {values.data['name']}",
             )
         else:

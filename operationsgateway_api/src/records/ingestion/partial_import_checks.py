@@ -1,13 +1,17 @@
 import logging
 
-from operationsgateway_api.src.exceptions import EchoS3Error, RejectRecordError
+from operationsgateway_api.src.exceptions import RejectRecordError
 from operationsgateway_api.src.models import (
+    FloatImageChannelModel,
     ImageChannelModel,
     RecordModel,
+    VectorChannelModel,
     WaveformChannelModel,
 )
 from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
 
 
@@ -87,7 +91,10 @@ class PartialImportChecks:
             )
             raise RejectRecordError("inconsistent metadata")
 
-    def channel_checks(self):
+    def channel_checks(
+        self,
+        channel_dict: dict[str, list[str] | dict[str, str]],
+    ) -> dict[str, list[str] | dict[str, str]]:
         """
         Checks if any of the incoming channels exist in the stored record. If the
         channels exist, they're rejected, otherwise they become an accepted channel.
@@ -107,10 +114,16 @@ class PartialImportChecks:
             if channel_name in stored_channels:
                 if isinstance(channel_model, ImageChannelModel):
                     path = Image.get_full_path(channel_model.image_path)
-                    object_stored = self._is_image_or_waveform_stored(path)
+                    object_stored = self.echo.head_object(path)
+                elif isinstance(channel_model, FloatImageChannelModel):
+                    path = FloatImage.get_full_path(channel_model.image_path)
+                    object_stored = self.echo.head_object(path)
                 elif isinstance(channel_model, WaveformChannelModel):
                     path = Waveform.get_full_path(channel_model.waveform_path)
-                    object_stored = self._is_image_or_waveform_stored(path)
+                    object_stored = self.echo.head_object(path)
+                elif isinstance(channel_model, VectorChannelModel):
+                    path = Vector.get_full_path(channel_model.vector_path)
+                    object_stored = self.echo.head_object(path)
                 else:
                     object_stored = True
                 if object_stored:
@@ -122,22 +135,13 @@ class PartialImportChecks:
             else:
                 accepted_channels.append(channel_name)
 
-        channel_response = {
+        log.info("existent record found")
+        for key, value in channel_dict["rejected_channels"].items():
+            rejected_channels[key] = value
+            if key in accepted_channels:
+                accepted_channels.remove(key)
+
+        return {
             "accepted_channels": accepted_channels,
             "rejected_channels": rejected_channels,
         }
-
-        return channel_response
-
-    def _is_image_or_waveform_stored(self, path: str) -> bool:
-        """
-        Searches for an image or waveform on Echo and returns whether the file is
-        present or not
-        """
-
-        try:
-            self.echo.download_file_object(path)
-        except EchoS3Error:
-            return False
-
-        return True

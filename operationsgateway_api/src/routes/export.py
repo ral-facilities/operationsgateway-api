@@ -97,6 +97,10 @@ async def export_records(
         True,
         description="Whether to export the images for image channels",
     ),
+    export_float_images: Optional[bool] = Query(
+        True,
+        description="Whether to export float image channels",
+    ),
     export_waveform_csvs: Optional[bool] = Query(
         True,
         description="Whether to export the waveforms in CSV files",
@@ -104,6 +108,14 @@ async def export_records(
     export_waveform_images: Optional[bool] = Query(
         False,
         description="Whether to export rendered images of the waveforms",
+    ),
+    export_vector_csvs: bool = Query(
+        True,
+        description="Whether to export the vectors in CSV files",
+    ),
+    export_vector_images: bool = Query(
+        False,
+        description="Whether to export images of the vectors",
     ),
 ):
     """
@@ -157,8 +169,11 @@ async def export_records(
         functions,
         export_scalars,
         export_images,
+        export_float_images,
         export_waveform_csvs,
         export_waveform_images,
+        export_vector_csvs=export_vector_csvs,
+        export_vector_images=export_vector_images,
     )
 
     await export_handler.process_records()

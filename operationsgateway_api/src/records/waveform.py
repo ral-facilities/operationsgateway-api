@@ -36,7 +36,7 @@ class Waveform:
         b.seek(0)
         return b
 
-    def insert_waveform(self) -> Optional[str]:
+    def insert(self) -> Optional[str]:
         """
         Store the waveform from this object in Echo
         """

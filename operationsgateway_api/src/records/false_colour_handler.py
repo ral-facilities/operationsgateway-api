@@ -21,23 +21,36 @@ log = logging.getLogger()
 
 class FalseColourHandler:
     default_colour_map_name = Config.config.images.default_colour_map
+    default_float_colour_map_name = Config.config.float_images.default_colour_map
     colourbar_height_pixels = Config.config.images.colourbar_height_pixels
     preferred_colour_map_pref_name = Config.config.images.preferred_colour_map_pref_name
+    preferred_float_colour_map_pref_name = (
+        Config.config.float_images.preferred_colour_map_pref_name
+    )
     colourmap_names = ColourmapMapping.get_colourmap_mappings()
 
     @staticmethod
-    async def get_preferred_colourmap(
-        username: str,
-    ) -> str:
+    async def get_preferred_colourmap(username: str) -> str:
         """
         Check whether the user has stored a preference for which colour map they prefer
         to use. Return the value if they have, otherwise return None.
         """
         try:
-            return await UserPreferences.get(
-                username,
-                FalseColourHandler.preferred_colour_map_pref_name,
-            )
+            pref_name = FalseColourHandler.preferred_colour_map_pref_name
+            return await UserPreferences.get(username, pref_name)
+        except MissingAttributeError:
+            return None
+
+    @staticmethod
+    async def get_preferred_float_colourmap(username: str) -> str:
+        """
+        Check whether the user has stored a preference for which colour map they prefer
+        to use for float images. Return the value if they have, otherwise return
+        None.
+        """
+        try:
+            pref_name = FalseColourHandler.preferred_float_colour_map_pref_name
+            return await UserPreferences.get(username, pref_name)
         except MissingAttributeError:
             return None
 
@@ -92,6 +105,29 @@ class FalseColourHandler:
         )
 
     @staticmethod
+    def apply_false_colour_to_b64_float_img(
+        base64_image: str,
+        colourmap_name: str,
+    ) -> BytesIO:
+        """
+        Apply false colour to a float image provided as a base 64 string. This is how
+        the thumbnails are stored in the database.
+
+        Null values are tracked by an alpha channel value of 0, so need to extract the
+        already normalised L channel and apply colour to whilst persisting alpha.
+        """
+        img_src = PILImage.open(BytesIO(base64.b64decode(base64_image)))
+        image_array = np.array(img_src)
+        values = image_array[:, :, 0]
+        alpha = image_array[:, :, 1]
+        colourmap = plt.cm.get_cmap(colourmap_name)
+        mapped_array = colourmap(values, alpha=alpha, bytes=True)
+        converted_image_bytes = BytesIO()
+        plt.imsave(converted_image_bytes, mapped_array)
+
+        return converted_image_bytes
+
+    @staticmethod
     def apply_false_colour(
         image_array: np.ndarray,
         storage_bit_depth: int,
@@ -127,6 +163,36 @@ class FalseColourHandler:
             image_array,
             vmin=vmin,
             vmax=vmax,
+            cmap=colourmap_name,
+        )
+        return converted_image_bytes
+
+    @staticmethod
+    def apply_false_colour_float(
+        image_array: np.ndarray,
+        absolute_max: float,
+        colourmap_name: str,
+    ) -> BytesIO:
+        """
+        Apply false colour to a float image provided as a numpy array. To preserve
+        position of 0 at the centre of the colourmap, the absolute_max pixel value is
+        used to set both vmin and vmax.
+        """
+        if colourmap_name is None:
+            colourmap_name = FalseColourHandler.default_float_colour_map_name
+        if not ColourmapMapping.is_colourmap_available(
+            FalseColourHandler.colourmap_names,
+            colourmap_name,
+        ):
+            msg = f"{colourmap_name} is not a valid colour map name"
+            raise QueryParameterError(msg)
+
+        converted_image_bytes = BytesIO()
+        plt.imsave(
+            converted_image_bytes,
+            image_array,
+            vmin=-absolute_max,
+            vmax=absolute_max,
             cmap=colourmap_name,
         )
         return converted_image_bytes

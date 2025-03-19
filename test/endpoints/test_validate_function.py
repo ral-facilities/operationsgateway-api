@@ -140,8 +140,8 @@ class TestValidateFunction:
                     {"name": "a", "expression": "b + c"},
                 ],
                 (
-                    "Error at index 2: Operation between types ['image', 'waveform'] "
-                    "not supported"
+                    "Error at index 2: Operation between types [<ChannelDtype.IMAGE: "
+                    "'image'>, <ChannelDtype.WAVEFORM: 'waveform'>] not supported"
                 ),
                 id="Unsupported operands",
             ),

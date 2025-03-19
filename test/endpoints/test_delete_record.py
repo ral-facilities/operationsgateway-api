@@ -3,8 +3,10 @@ import pytest
 
 from operationsgateway_api.src.exceptions import MissingDocumentError
 from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.record import Record
+from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
 
 
@@ -39,6 +41,16 @@ class TestDeleteRecordById:
         )
         assert list(image_query) == []
 
+        vector_query = echo.bucket.objects.filter(
+            Prefix=f"{Vector.echo_prefix}/{record_id}/",
+        )
+        assert list(vector_query) == []
+
+        float_image_query = echo.bucket.objects.filter(
+            Prefix=f"{FloatImage.echo_prefix}/{record_id}/",
+        )
+        assert list(float_image_query) == []
+
     @pytest.mark.asyncio
     async def test_delete_record_subdirectories_success(
         self,
@@ -70,3 +82,13 @@ class TestDeleteRecordById:
             Prefix=f"{Image.echo_prefix}/{subdirectories}/",
         )
         assert list(image_query) == []
+
+        vector_query = echo.bucket.objects.filter(
+            Prefix=f"{Vector.echo_prefix}/{subdirectories}/",
+        )
+        assert list(vector_query) == []
+
+        float_image_query = echo.bucket.objects.filter(
+            Prefix=f"{FloatImage.echo_prefix}/{subdirectories}/",
+        )
+        assert list(float_image_query) == []
