@@ -341,7 +341,7 @@ class ChannelChecks:
             attribute_name,
             value_dict,
             rejected_channels,
-            (list, np.ndarray,),
+            (list, np.ndarray),
         )
         if attribute is not None:
             if not all(isinstance(e, element_type) for e in attribute):
