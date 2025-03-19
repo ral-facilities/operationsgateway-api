@@ -23,7 +23,7 @@ class TestGetRecords:
                 "metadata.shotnum ASC",
                 None,
                 False,
-                [353, 358],
+                [353, 361],
                 [],
                 [
                     {"TS-202-TSM-P1-CAM-2-CENX": 3.0393419803062542},
@@ -133,7 +133,7 @@ class TestGetRecords:
                 "metadata.shotnum ASC",
                 None,
                 True,
-                [353, 358],
+                [353, 361],
                 [],
                 [
                     {"TS-202-TSM-P1-CAM-2-CENX": 3.0393419803062542},
@@ -148,7 +148,7 @@ class TestGetRecords:
                 "metadata.shotnum ASC",
                 None,
                 False,
-                [354, 359],
+                [354, 362],
                 [{"name": "test", "expression": "1"}],
                 [
                     {"TS-202-TSM-P1-CAM-2-CENX": 3.0393419803062542, "test": 1},
@@ -163,7 +163,7 @@ class TestGetRecords:
                 "metadata.shotnum ASC",
                 None,
                 False,
-                [354, 359],
+                [354, 362],
                 [{"name": "test", "expression": "CM-202-CVC-SP - 700"}],
                 [
                     {"test": "bab14eb3d04eb04e"},
@@ -178,7 +178,7 @@ class TestGetRecords:
                 "metadata.shotnum ASC",
                 None,
                 False,
-                [354, 359],
+                [354, 362],
                 [{"name": "test", "expression": "FE-204-NSO-P1-CAM-1 - 700"}],
                 [
                     {"test": "c73b39c0c00fcc7e"},
