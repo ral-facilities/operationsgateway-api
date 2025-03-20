@@ -9,7 +9,7 @@ app:
   maintenance_file: operationsgateway_api/maintenance.json.example
   scheduled_maintenance_file: operationsgateway_api/scheduled_maintenance.json.example
 healthcheck:
-# Defines the username & password needed for a script that checks the api is working
+  # Defines the username & password needed for a script that checks the api is working
   username: username
   password: password
 images:
