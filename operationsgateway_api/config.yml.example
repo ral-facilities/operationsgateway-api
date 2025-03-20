@@ -8,6 +8,10 @@ app:
   url_prefix: ""
   maintenance_file: operationsgateway_api/maintenance.json.example
   scheduled_maintenance_file: operationsgateway_api/scheduled_maintenance.json.example
+healthcheck:
+  # Defines the username & password needed for a script that checks the api is working
+  username: username
+  password: password
 images:
   # Thumbnail sizes should only ever be two element lists, of a x, y resolution
   thumbnail_size: [50, 50]
