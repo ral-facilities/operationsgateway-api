@@ -3,11 +3,12 @@ import logging
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.config import Config
+from operationsgateway_api.src.error_handling import endpoint_error_handling
 
 log = logging.getLogger()
 router = APIRouter()
+
 
 @router.get(
     "/version",

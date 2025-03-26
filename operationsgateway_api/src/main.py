@@ -30,8 +30,8 @@ from operationsgateway_api.src.routes import (
     sessions,
     user_preferences,
     users,
-    waveforms,
     version,
+    waveforms,
 )
 
 
