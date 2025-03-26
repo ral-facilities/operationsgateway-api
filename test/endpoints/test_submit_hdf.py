@@ -379,8 +379,8 @@ class TestSubmitHDF:
                         "Channel is already present in existing record"
                     ),
                     "PM-201-FE-CAM-2": [
-                        "data attribute has wrong datatype, should be ndarray",
-                        "data attribute has wrong datatype, should be uint16 or uint8",
+                        "data has wrong datatype, should be ndarray",
+                        "data has wrong datatype, should be uint16 or uint8",
                     ],
                     "PM-201-HJ-PD": "Channel is already present in existing record",
                 },
