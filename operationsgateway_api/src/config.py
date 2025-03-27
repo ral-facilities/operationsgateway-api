@@ -23,6 +23,7 @@ class App(BaseModel):
     host: Optional[StrictStr] = None
     port: Optional[StrictInt] = None
     reload: Optional[StrictBool] = None
+    version: StrictStr
     url_prefix: StrictStr
     maintenance_file: FilePath
     scheduled_maintenance_file: FilePath
