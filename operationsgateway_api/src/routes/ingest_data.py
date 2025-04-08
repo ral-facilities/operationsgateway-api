@@ -10,6 +10,7 @@ from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.error_handling import endpoint_error_handling
+from operationsgateway_api.src.models import SubmitHDFResponse
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.ingestion.channel_checks import ChannelChecks
 from operationsgateway_api.src.records.ingestion.file_checks import FileChecks
@@ -20,7 +21,10 @@ from operationsgateway_api.src.records.ingestion.partial_import_checks import (
 from operationsgateway_api.src.records.ingestion.record_checks import RecordChecks
 from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.waveform import Waveform
-
+from operationsgateway_api.src.routes.ingest_data_example_responses import (
+    example_created_response_with_warning,
+    example_updated_response,
+)
 
 log = logging.getLogger()
 router = APIRouter()
@@ -32,6 +36,19 @@ AuthoriseRoute = Annotated[str, Depends(authorise_route)]
     summary="Submit a HDF file for ingestion into MongoDB",
     response_description="ID of the record document that has been inserted/updated",
     tags=["Ingestion"],
+    response_model=SubmitHDFResponse,
+    responses={
+        201: {
+            "description": "Created and inserted new record with warning",
+            "content": {
+                "application/json": {"example": example_created_response_with_warning},
+            },
+        },
+        200: {
+            "description": "Updated existing record",
+            "content": {"application/json": {"example": example_updated_response}},
+        },
+    },
 )
 @endpoint_error_handling
 async def submit_hdf(
