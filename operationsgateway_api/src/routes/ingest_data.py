@@ -49,6 +49,7 @@ async def submit_hdf(
     log.info("Submitting CLF data in HDF file to be processed then stored in MongoDB")
     log.debug("Filename: %s, Content: %s", file.filename, file.content_type)
 
+    warnings = []
     hdf_handler = HDFDataHandler(file.file)
     (
         record_data,
@@ -62,6 +63,9 @@ async def submit_hdf(
 
     file_checker = FileChecks(record_data)
     warning = file_checker.epac_data_version_checks()
+    if warning:
+        warnings.append(warning)
+
     record_checker = RecordChecks(record_data)
     record_checker.active_area_checks()
     record_checker.optional_metadata_checks()
@@ -99,7 +103,7 @@ async def submit_hdf(
     else:
         checker_response = channel_dict
 
-    checker_response["warnings"] = list(warning) if warning else []
+    checker_response["warnings"] = warnings
 
     record_data, images, waveforms = HDFDataHandler._update_data(
         checker_response,
