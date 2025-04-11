@@ -524,3 +524,33 @@ class TestSubmitHDF:
             assert test_response.status_code == 500
 
             assert test_response.json() == {"detail": "Database error"}
+
+    @pytest.mark.asyncio
+    async def test_ingest_warning_on_incorrect_minor_version(
+        self,
+        reset_record_storage,
+        test_app: TestClient,
+        login_and_get_token,
+    ):
+        _ = await create_test_hdf_file()
+
+        # Open and modify to an incorrect version number
+        with h5py.File("test.h5", "a") as f:
+            f.attrs.modify("epac_ops_data_version", "1.9")
+
+        test_file = "test.h5"
+        files = {"file": (test_file, open(test_file, "rb"))}
+
+        test_response = test_app.post(
+            "/submit/hdf",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+            files=files,
+        )
+
+        assert test_response.status_code == 201
+
+        response_json = test_response.json()
+        assert (
+            "File minor version number too high (expected <=1)"
+            in response_json["response"]["warnings"]
+        )
