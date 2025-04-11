@@ -37,7 +37,7 @@ class TestWaveform:
         remove_test_objects,
     ):
         waveform_instance = Waveform(test_waveform)
-        response = waveform_instance.insert_waveform()
+        response = waveform_instance.insert()
         assert response is None
 
         waveform = Waveform.get_waveform("19520605070023", "test-channel-name")

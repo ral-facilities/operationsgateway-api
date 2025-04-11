@@ -8,21 +8,19 @@ from test.records.ingestion.create_test_hdf import create_test_hdf_file
 class TestFile:
     @pytest.mark.asyncio
     async def test_file_checks_pass(self, remove_hdf_file):
-        record_data, _, _, _ = await create_test_hdf_file()
-        file_checker = FileChecks(record_data)
+        hdf_tuple = await create_test_hdf_file()
+        file_checker = FileChecks(hdf_tuple[0])
 
         file_checker.epac_data_version_checks()
 
     @pytest.mark.asyncio
     async def test_minor_version_too_high(self, remove_hdf_file):
-        record_data, _, _, _ = await create_test_hdf_file(
-            data_version=["1.4", "exists"],
-        )
-        file_checker = FileChecks(record_data)
+        hdf_tuple = await create_test_hdf_file(data_version=["1.4", "exists"])
+        file_checker = FileChecks(hdf_tuple[0])
 
         assert (
             file_checker.epac_data_version_checks()
-            == "File minor version number too high (expected <=1)"
+            == "File minor version number too high (expected <=2)"
         )
 
     @pytest.mark.parametrize(
@@ -52,8 +50,8 @@ class TestFile:
         match,
         remove_hdf_file,
     ):
-        record_data, _, _, _ = await create_test_hdf_file(data_version=data_version)
-        file_checker = FileChecks(record_data)
+        hdf_tuple = await create_test_hdf_file(data_version=data_version)
+        file_checker = FileChecks(hdf_tuple[0])
 
         with pytest.raises(RejectFileError, match=match):
             file_checker.epac_data_version_checks()

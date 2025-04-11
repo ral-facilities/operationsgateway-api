@@ -10,7 +10,7 @@ class TestCountRecords:
         [
             pytest.param(
                 {},
-                400,
+                401,
                 id="No conditions",
             ),
             pytest.param(

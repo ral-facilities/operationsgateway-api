@@ -36,11 +36,11 @@ class TestRecordChecks:
         active_experiment,
         remove_hdf_file,
     ):
-        record_data, _, _, _ = await create_test_hdf_file(
+        hdf_tuple = await create_test_hdf_file(
             shotnum=shotnum,
             active_experiment=active_experiment,
         )
-        record_checker = RecordChecks(record_data)
+        record_checker = RecordChecks(hdf_tuple[0])
 
         record_checker.active_area_checks()
         record_checker.optional_metadata_checks()
@@ -102,18 +102,18 @@ class TestRecordChecks:
     ):
         if test == "other":
             with pytest.raises(ModelError):
-                record_data, _, _, _ = await create_test_hdf_file(
+                hdf_tuple = await create_test_hdf_file(
                     active_area=active_area,
                     shotnum=shotnum,
                     active_experiment=active_experiment,
                 )
         else:
-            record_data, _, _, _ = await create_test_hdf_file(
+            hdf_tuple = await create_test_hdf_file(
                 active_area=active_area,
                 shotnum=shotnum,
                 active_experiment=active_experiment,
             )
-            record_checker = RecordChecks(record_data)
+            record_checker = RecordChecks(hdf_tuple[0])
 
             with pytest.raises(RejectRecordError, match=match):
                 if test == "timestamp":
