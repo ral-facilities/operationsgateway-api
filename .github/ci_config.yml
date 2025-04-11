@@ -3,7 +3,6 @@ app:
   port: 8000
   # API will auto-reload when changes on code files are detected
   reload: true
-  version: "test version" # This gets replaced with the real hash version through the Ansible deployment
   url_prefix: ""
   maintenance_file: operationsgateway_api/maintenance.json.example
   scheduled_maintenance_file: operationsgateway_api/scheduled_maintenance.json.example
