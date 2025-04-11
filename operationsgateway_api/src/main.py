@@ -32,6 +32,7 @@ from operationsgateway_api.src.routes import (
     user_preferences,
     users,
     vectors,
+    version,
     waveforms,
 )
 
@@ -141,6 +142,7 @@ add_router_to_app(users.router)
 add_router_to_app(functions.router)
 add_router_to_app(filters.router)
 add_router_to_app(maintenance.router)
+add_router_to_app(version.router)
 
 log.debug("ROUTE_MAPPINGS contents:")
 for item in ROUTE_MAPPINGS.items():
