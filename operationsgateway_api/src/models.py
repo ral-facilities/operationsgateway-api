@@ -234,11 +234,18 @@ class PartialWaveformChannelModel(WaveformChannelModel):
     waveform_path: str | None = None
 
 
+class PartialVectorChannelModel(VectorChannelModel):
+    metadata: VectorChannelMetadataModel | None = None
+    thumbnail: bytes | None = None
+    vector_path: str | None = None
+
+
 PartialChannelModel = (
     PartialImageChannelModel
     | PartialFloatImageChannelModel
     | PartialScalarChannelModel
     | PartialWaveformChannelModel
+    | PartialVectorChannelModel
 )
 PartialChannels = dict[str, PartialChannelModel]
 
