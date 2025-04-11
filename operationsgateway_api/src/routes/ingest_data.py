@@ -39,6 +39,7 @@ AuthoriseRoute = Annotated[str, Depends(authorise_route)]
     response_model=SubmitHDFResponse,
     responses={
         201: {
+            "model": SubmitHDFResponse,
             "description": "Created and inserted new record with warning",
             "content": {
                 "application/json": {"example": example_created_response_with_warning},
