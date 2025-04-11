@@ -129,6 +129,12 @@ class WaveformError(ApiError):
         self.status_code = 500
 
 
+class VectorError(ApiError):
+    def __init__(self, msg="Vector error", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 500
+
+
 class UserError(ApiError):
     def __init__(self, msg="User error", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)
