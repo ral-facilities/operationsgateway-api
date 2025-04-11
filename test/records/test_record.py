@@ -135,7 +135,7 @@ class TestRecord:
 
         with pytest.raises(
             AttributeError,
-            match="'str' object has no attribute 'thumbnail",
+            match="'str' object has no attribute 'get_channel_name_from_path'",
         ):
             record_instance.store_thumbnail("test_image")
 
@@ -246,6 +246,7 @@ class TestRecord:
             lower_level=2,
             upper_level=3,
             colourmap_name="test",
+            float_colourmap_name="bwr",
         )
 
     @pytest.mark.asyncio

@@ -47,11 +47,11 @@ class FileChecks:
                     raise RejectFileError(
                         "epac_ops_data_version major version was not 1",
                     )
-                if int(epac_numbers[1]) > 1:
+                if int(epac_numbers[1]) > 2:
                     log.warning(
                         "epac_ops_data_version minor version: %s",
                         epac_numbers[1],
                     )
-                    return "File minor version number too high (expected <=1)"
+                    return "File minor version number too high (expected <=2)"
         else:
             raise RejectFileError("epac_ops_data_version does not exist")
