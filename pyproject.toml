@@ -1,9 +1,13 @@
 [tool.poetry]
 name = "operationsgateway-api"
-version = "0.1.0"
+version = "0.4.0"
 description = ""
 readme = "README.md"
-authors = ["Matthew Richards <matthew.richards@stfc.ac.uk>"]
+authors = [
+    "Matthew Richards <matthew.richards@stfc.ac.uk>",
+    "Patrick Austin <patrick.austin@stfc.ac.uk>",
+    "Alexander Kemp <matthew.richards@stfc.ac.uk>"
+]
 
 [tool.poetry.dependencies]
 # Note that python3.12 is only compatible with scipy>=1.11.3
@@ -52,7 +56,7 @@ flake8-comprehensions = "^3.3.0"
 flake8-import-order = "^0.18.1"
 flake8-logging-format = "^0.6.0"
 pep8-naming = "^0.12.1"
-safety = "^2.3.1"
+safety = "^3.3.1"
 pytest = "^7.2.0"
 requests = "2.32.2"
 pytest-cov = "^3.0.0"

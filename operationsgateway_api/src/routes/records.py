@@ -14,6 +14,7 @@ from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import QueryParameterError
 from operationsgateway_api.src.models import PartialRecordModel
 from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.record import Record as Record
 from operationsgateway_api.src.records.vector import Vector
@@ -78,6 +79,11 @@ async def get_records(
         description="The name of the matplotlib colour map to apply to the image"
         " thumbnails",
     ),
+    float_colourmap_name: Optional[str] = Query(
+        None,
+        description="The name of the matplotlib colour map to apply to float image"
+        " thumbnails",
+    ),
     functions: Optional[List[Json]] = Query(
         None,
         description="Functions to evaluate on the record data being returned",
@@ -114,6 +120,7 @@ async def get_records(
                 lower_level,
                 upper_level,
                 colourmap_name,
+                float_colourmap_name,
                 vector_skip=vector_skip,
                 vector_limit=vector_limit,
             )
@@ -228,6 +235,11 @@ async def get_record_by_id(
         description="The name of the matplotlib colour map to apply to the image"
         " thumbnails",
     ),
+    float_colourmap_name: Optional[str] = Query(
+        None,
+        description="The name of the matplotlib colour map to apply to float image"
+        " thumbnails",
+    ),
 ) -> PartialRecordModel:
     """
     Get a single record by its ID. The `conditions` query parameter exists but a
@@ -249,6 +261,7 @@ async def get_record_by_id(
             lower_level,
             upper_level,
             colourmap_name,
+            float_colourmap_name,
             vector_skip=vector_skip,
             vector_limit=vector_limit,
         )
@@ -281,9 +294,25 @@ async def delete_record_by_id(
 
     await Record.delete_record(id_)
     echo = EchoInterface()
+    # In principle historic data might be in the old directory format on Echo, so delete
+    # in both locations
+    sub_directories = EchoInterface.format_record_id(record_id=id_)
+    directory = EchoInterface.format_record_id(record_id=id_, use_subdirectories=False)
+
     log.info("Deleting waveforms for record ID '%s'", id_)
-    echo.delete_directory(f"{Waveform.echo_prefix}/{id_}/")
+    echo.delete_directory(f"{Waveform.echo_prefix}/{sub_directories}/")
+    echo.delete_directory(f"{Waveform.echo_prefix}/{directory}/")
+
     log.info("Deleting images for record ID '%s'", id_)
-    echo.delete_directory(f"{Image.echo_prefix}/{id_}/")
+    echo.delete_directory(f"{Image.echo_prefix}/{sub_directories}/")
+    echo.delete_directory(f"{Image.echo_prefix}/{directory}/")
+
+    log.info("Deleting vectors for record ID '%s'", id_)
+    echo.delete_directory(f"{Vector.echo_prefix}/{sub_directories}/")
+    echo.delete_directory(f"{Vector.echo_prefix}/{directory}/")
+
+    log.info("Deleting float images for record ID '%s'", id_)
+    echo.delete_directory(f"{FloatImage.echo_prefix}/{sub_directories}/")
+    echo.delete_directory(f"{FloatImage.echo_prefix}/{directory}/")
 
     return Response(status_code=HTTPStatus.NO_CONTENT.value)

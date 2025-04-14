@@ -14,6 +14,7 @@ from operationsgateway_api.src.models import (
     PartialWaveformChannelModel,
     WaveformChannelMetadataModel,
 )
+from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.vector import Vector
@@ -38,6 +39,7 @@ class ExportHandler:
         functions: "list[dict[str, str]]",
         export_scalars: bool,
         export_images: bool,
+        export_float_images: bool,
         export_waveform_csvs: bool,
         export_waveform_images: bool,
         export_vector_csvs: bool,
@@ -55,6 +57,7 @@ class ExportHandler:
         self.colourmap_name = colourmap_name
         self.export_scalars = export_scalars
         self.export_images = export_images
+        self.export_float_images = export_float_images
         self.export_waveform_csvs = export_waveform_csvs
         self.export_waveform_images = export_waveform_images
         self.export_vector_csvs = export_vector_csvs
@@ -195,7 +198,7 @@ class ExportHandler:
                 # image and waveform data will be exported to separate files so will not
                 # have values put in the main csv file
                 channel_type = self._get_channel_type(channel_name)
-                if channel_type not in ["image", "waveform", "vector"]:
+                if channel_type not in ["image", "float_image", "waveform", "vector"]:
                     line = self._add_value_to_csv_line(line, channel_name)
             else:
                 # this must be a "metadata" channel
@@ -247,6 +250,9 @@ class ExportHandler:
         if channel_type == "image":
             log.info("Channel %s is an image", channel_name)
             await self._add_image_to_zip(channels, record_id, channel_name)
+        elif channel_type == "float_image":
+            log.info("Channel %s is a float image", channel_name)
+            await self._add_float_image_to_zip(channels, record_id, channel_name)
         # process a waveform channel
         elif channel_type == "waveform":
             log.info("Channel %s is a waveform", channel_name)
@@ -262,6 +268,7 @@ class ExportHandler:
         elif channel_type == "vector":
             log.info("Channel %s is a vector", channel_name)
             labels = None
+            channel = channels[channel_name]
             if "metadata" in channel and "labels" in channel["metadata"]:
                 labels = channel["metadata"]["labels"]
             await self._add_vector_to_zip(channels, record_id, channel_name, labels)
@@ -321,6 +328,35 @@ class ExportHandler:
         except Exception:
             self.errors_file_in_memory.write(
                 f"Could not find image for {record_id} {channel_name}\n",
+            )
+
+    async def _add_float_image_to_zip(
+        self,
+        channels: PartialChannels,
+        record_id: str,
+        channel_name: str,
+    ) -> None:
+        """
+        Get a float image from Echo and add it to the zip file being created for
+        download.
+        """
+        if not self.export_float_images or channel_name not in channels:
+            return
+
+        log.info("Getting float image to add to zip: %s %s", record_id, channel_name)
+        try:
+            storage_bytes = await FloatImage.get_storage_bytes(
+                record_id,
+                channel_name,
+            )
+            self.zip_file.writestr(
+                f"{record_id}_{channel_name}.npz",
+                storage_bytes.getvalue(),
+            )
+            self._check_zip_file_size()
+        except Exception:
+            self.errors_file_in_memory.write(
+                f"Could not find float image for {record_id} {channel_name}\n",
             )
 
     async def _add_waveform_to_zip(
@@ -408,10 +444,7 @@ class ExportHandler:
                 channel_name,
             )
             try:
-                # TODO functions support?
-                vector_model = await Vector.get_vector(
-                    Vector.get_relative_path(record_id, channel_name),
-                )
+                vector_model = await Vector.get_vector(record_id, channel_name)
             except Exception:
                 self.errors_file_in_memory.write(
                     f"Could not find vector for {record_id} {channel_name}\n",

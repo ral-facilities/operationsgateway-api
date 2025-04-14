@@ -10,6 +10,10 @@ from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.constants import DATA_DATETIME_FORMAT, ID_DATETIME_FORMAT
 from operationsgateway_api.src.exceptions import HDFDataExtractionError, ModelError
 from operationsgateway_api.src.models import (
+    ChannelManifestModel,
+    FloatImageChannelMetadataModel,
+    FloatImageChannelModel,
+    FloatImageModel,
     ImageChannelMetadataModel,
     ImageChannelModel,
     ImageModel,
@@ -24,6 +28,7 @@ from operationsgateway_api.src.models import (
     WaveformChannelModel,
     WaveformModel,
 )
+from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.ingestion.channel_checks import ChannelChecks
 from operationsgateway_api.src.records.vector import Vector
@@ -37,6 +42,7 @@ class HDFDataHandler:
     acceptable_datasets = {
         "scalar": ["data"],
         "image": ["data"],
+        "float_image": ["data"],
         "waveform": ["x", "y"],
         "vector": ["data"],
     }
@@ -50,6 +56,7 @@ class HDFDataHandler:
         self.channels = {}
         self.waveforms = []
         self.images = []
+        self.float_images = []
         self.vectors = []
 
     async def extract_data(
@@ -58,6 +65,7 @@ class HDFDataHandler:
         RecordModel,
         list[WaveformModel],
         list[ImageModel],
+        list[FloatImageModel],
         list[VectorModel],
         list[dict[str, str]],
     ]:
@@ -108,6 +116,7 @@ class HDFDataHandler:
             record,
             self.waveforms,
             self.images,
+            self.float_images,
             self.vectors,
             self.internal_failed_channel,
         )
@@ -148,6 +157,49 @@ class HDFDataHandler:
                 bit_depth=metadata.bit_depth,
             )
             self.images.append(image_model)
+
+            return channel, False
+        except KeyError:
+            internal_failed_channel.append(
+                {channel_name: "data attribute is missing"},
+            )
+            return None, internal_failed_channel
+        except ValidationError as exc:
+            raise ModelError(str(exc)) from exc
+
+    def _extract_float_image(
+        self,
+        internal_failed_channel: list[dict[str, str]],
+        channel_name: str,
+        channel_metadata: dict,
+        value: Any,
+    ) -> (
+        tuple[FloatImageChannelModel, Literal[False]]
+        | tuple[None, list[dict[str, str]]]
+    ):
+        """
+        Extract data for float images in the HDF file and place the data into
+        relevant Pydantic models as well as performing float image specific checks.
+        """
+        image_path = FloatImage.get_relative_path(self.record_id, channel_name)
+
+        if self._unexpected_attribute("float_image", value):
+            internal_failed_channel.append(
+                {channel_name: "unexpected group or dataset in channel group"},
+            )
+            return None, internal_failed_channel
+
+        try:
+            metadata = FloatImageChannelMetadataModel(**channel_metadata)
+            channel = FloatImageChannelModel(
+                metadata=metadata,
+                image_path=image_path,
+            )
+            image_model = FloatImageModel(
+                path=image_path,
+                data=value["data"][()],
+            )
+            self.float_images.append(image_model)
 
             return channel, False
         except KeyError:
@@ -278,7 +330,7 @@ class HDFDataHandler:
             )
             model = VectorModel(
                 path=relative_path,
-                data=value["data"],
+                data=value["data"][()],
             )
             self.vectors.append(model)
 
@@ -291,81 +343,88 @@ class HDFDataHandler:
         except ValidationError as exc:
             raise ModelError(str(exc)) from exc
 
+    async def _extract_channel(
+        self,
+        channel_name: str,
+        value: Any,
+        manifest: ChannelManifestModel,
+        internal_failed_channel: list[dict[str, str]],
+    ) -> list[dict[str, str]]:
+        channel_metadata = dict(value.attrs)
+        channel_checks = ChannelChecks(
+            ingested_record={channel_name: channel_metadata},
+        )
+        channel_checks.set_channels(manifest)
+        response = await channel_checks.channel_dtype_checks()
+        if response != []:
+            internal_failed_channel.extend(response)
+            return internal_failed_channel
+        elif value.attrs["channel_dtype"] == "image":
+            channel, fail = self._extract_image(
+                internal_failed_channel,
+                channel_name,
+                channel_metadata,
+                value,
+            )
+        elif value.attrs["channel_dtype"] == "float_image":
+            channel, fail = self._extract_float_image(
+                internal_failed_channel,
+                channel_name,
+                channel_metadata,
+                value,
+            )
+        elif value.attrs["channel_dtype"] == "rgb-image":
+            # TODO - implement colour image ingestion. Currently waiting on the
+            # OG-HDF5 converter to support conversion of colour images.
+            # Implementation will be as per greyscale image (`get_relative_path()`
+            # then append to `self.images`) but might require extracting a different
+            # part of the value
+            raise HDFDataExtractionError("Colour images cannot be ingested")
+        elif value.attrs["channel_dtype"] == "scalar":
+            channel, fail = self._extract_scalar(
+                internal_failed_channel,
+                channel_name,
+                channel_metadata,
+                value,
+            )
+        elif value.attrs["channel_dtype"] == "waveform":
+            channel, fail = self._extract_waveform(
+                internal_failed_channel,
+                channel_name,
+                channel_metadata,
+                value,
+            )
+        elif value.attrs["channel_dtype"] == "vector":
+            channel, fail = self._extract_vector(
+                internal_failed_channel,
+                channel_name,
+                channel_metadata,
+                value,
+            )
+
+        if fail:
+            internal_failed_channel = fail
+        else:
+            # Put channels into a dictionary to give a good structure to query them in
+            # the database
+            self.channels[channel_name] = channel
+
+        return internal_failed_channel
+
     async def extract_channels(self) -> None:
         """
         Extract data from each data channel in the HDF file and place the data into
         relevant Pydantic models
         """
-
         internal_failed_channel = []
         manifest = await ChannelManifest.get_most_recent_manifest()
-
         for channel_name, value in self.hdf_file.items():
-            channel_metadata = dict(value.attrs)
-
-            channel_checks = ChannelChecks(
-                ingested_record={channel_name: channel_metadata},
+            internal_failed_channel = await self._extract_channel(
+                channel_name=channel_name,
+                value=value,
+                manifest=manifest,
+                internal_failed_channel=internal_failed_channel,
             )
-            channel_checks.set_channels(manifest)
-            response = await channel_checks.channel_dtype_checks()
-            if response != []:
-                internal_failed_channel.extend(response)
-                continue
-
-            if value.attrs["channel_dtype"] == "image":
-                channel, fail = self._extract_image(
-                    internal_failed_channel,
-                    channel_name,
-                    channel_metadata,
-                    value,
-                )
-                if fail:
-                    internal_failed_channel = fail
-                    continue
-
-            elif value.attrs["channel_dtype"] == "rgb-image":
-                # TODO - implement colour image ingestion. Currently waiting on the
-                # OG-HDF5 converter to support conversion of colour images.
-                # Implementation will be as per greyscale image (`get_relative_path()`
-                # then append to `self.images`) but might require extracting a different
-                # part of the value
-                raise HDFDataExtractionError("Colour images cannot be ingested")
-            elif value.attrs["channel_dtype"] == "scalar":
-                channel, fail = self._extract_scalar(
-                    internal_failed_channel,
-                    channel_name,
-                    channel_metadata,
-                    value,
-                )
-                if fail:
-                    internal_failed_channel = fail
-                    continue
-
-            elif value.attrs["channel_dtype"] == "waveform":
-                channel, fail = self._extract_waveform(
-                    internal_failed_channel,
-                    channel_name,
-                    channel_metadata,
-                    value,
-                )
-                if fail:
-                    internal_failed_channel = fail
-                    continue
-
-            elif value.attrs["channel_dtype"] == "vector":
-                channel, fail = self._extract_vector(
-                    internal_failed_channel,
-                    channel_name,
-                    channel_metadata,
-                    value,
-                )
-                if fail:
-                    internal_failed_channel = fail
-                    continue
-
-            # Put channels into a dictionary to give a good structure to query them in
-            # the database
-            self.channels[channel_name] = channel
         self.internal_failed_channel = internal_failed_channel
 
     @staticmethod
@@ -373,11 +432,13 @@ class HDFDataHandler:
         checker_response: dict[str, Any],
         record_data: RecordModel,
         images: list[ImageModel],
+        float_images: list[FloatImageModel],
         waveforms: list[WaveformModel],
         vectors: list[VectorModel],
     ) -> tuple[
         RecordModel,
         list[ImageModel],
+        list[FloatImageModel],
         list[WaveformModel],
         list[VectorModel],
     ]:
@@ -388,27 +449,26 @@ class HDFDataHandler:
                 continue
 
             if channel.metadata.channel_dtype == "image":
-                channel_image_path = channel.image_path
-                for image in images:
-                    if image.path == channel_image_path:
-                        images.remove(image)
-
+                HDFDataHandler.remove_channel(images, channel.image_path)
+            elif channel.metadata.channel_dtype == "float_image":
+                HDFDataHandler.remove_channel(float_images, channel.image_path)
             elif channel.metadata.channel_dtype == "waveform":
-                channel_waveform_path = channel.waveform_path
-                for waveform in waveforms:
-                    if waveform.path == channel_waveform_path:
-                        waveforms.remove(waveform)
-
+                HDFDataHandler.remove_channel(waveforms, channel.waveform_path)
             elif channel.metadata.channel_dtype == "vector":
                 HDFDataHandler.remove_channel(vectors, channel.vector_path)
 
             del record_data.channels[key]
 
-        return record_data, images, waveforms, vectors
+        return record_data, images, float_images, waveforms, vectors
 
     @staticmethod
     def remove_channel(
-        models: list[ImageModel] | list[WaveformModel] | list[VectorModel],
+        models: (
+            list[ImageModel]
+            | list[FloatImageModel]
+            | list[WaveformModel]
+            | list[VectorModel]
+        ),
         path: str,
     ) -> None:
         """Removes the model from models with the specified path, if found."""

@@ -22,6 +22,7 @@ from operationsgateway_api.src.routes import (
     experiments,
     export,
     filters,
+    float_images,
     functions,
     images,
     ingest_data,
@@ -30,6 +31,8 @@ from operationsgateway_api.src.routes import (
     sessions,
     user_preferences,
     users,
+    vectors,
+    version,
     waveforms,
 )
 
@@ -124,9 +127,11 @@ def add_router_to_app(api_router: APIRouter):
 
 # Adding endpoints to FastAPI app
 add_router_to_app(images.router)
+add_router_to_app(float_images.router)
 add_router_to_app(ingest_data.router)
 add_router_to_app(records.router)
 add_router_to_app(waveforms.router)
+add_router_to_app(vectors.router)
 add_router_to_app(auth.router)
 add_router_to_app(channels.router)
 add_router_to_app(experiments.router)
@@ -137,6 +142,7 @@ add_router_to_app(users.router)
 add_router_to_app(functions.router)
 add_router_to_app(filters.router)
 add_router_to_app(maintenance.router)
+add_router_to_app(version.router)
 
 log.debug("ROUTE_MAPPINGS contents:")
 for item in ROUTE_MAPPINGS.items():

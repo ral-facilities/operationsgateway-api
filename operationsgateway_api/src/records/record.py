@@ -42,6 +42,7 @@ from operationsgateway_api.src.models import (
 )
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
+from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
@@ -66,16 +67,12 @@ class Record:
         else:
             raise RecordError("RecordModel or dictionary not passed to Record init")
 
-    def store_thumbnail(self, data: Union[Image, Waveform]) -> None:
+    def store_thumbnail(self, data: Image | FloatImage | Waveform | Vector) -> None:
         """
-        Extract a thumbnail from a given image or waveform and store it in the record
-        object so it can be inserted in the database as part of the record
+        Extract a thumbnail from a given image, vector or waveform and store it in the
+        record object so it can be inserted in the database as part of the record
         """
-        if isinstance(data, Image):
-            channel_name = data.get_channel_name_from_path()
-        elif isinstance(data, Waveform):
-            channel_name = data.get_channel_name_from_path()
-
+        channel_name = data.get_channel_name_from_path()
         self.record.channels[channel_name].thumbnail = data.thumbnail
 
     async def insert(self) -> None:
@@ -304,6 +301,7 @@ class Record:
         lower_level: int,
         upper_level: int,
         colourmap_name: str,
+        float_colourmap_name: str,
         vector_skip: int | None,
         vector_limit: int | None,
     ) -> None:
@@ -332,6 +330,14 @@ class Record:
                     lower_level=lower_level,
                     upper_level=upper_level,
                     colourmap_name=colourmap_name,
+                )
+                value.thumbnail = base64.b64encode(thumbnail_bytes.getvalue())
+            elif channel_dtype == "float_image" and thumbnail_set:
+                thumbnail_bytes = (
+                    FalseColourHandler.apply_false_colour_to_b64_float_img(
+                        b64_thumbnail_str,
+                        float_colourmap_name,
+                    )
                 )
                 value.thumbnail = base64.b64encode(thumbnail_bytes.getvalue())
             elif channel_dtype == "vector" and thumbnail_set and skip_limit_set:

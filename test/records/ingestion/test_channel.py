@@ -16,6 +16,8 @@ def create_channel_response(responses, extra=None, channels=False):
     """
     model_response = {
         "accepted_channels": [
+            "CM-202-CVC-WFS",
+            "CM-202-CVC-WFS-COEF",
             "PM-201-FE-CAM-1",
             "PM-201-FE-CAM-2",
             "PM-201-FE-CAM-2-CENX",
@@ -81,6 +83,8 @@ class TestChannel:
 
         assert await channel_checker.channel_checks() == {
             "accepted_channels": [
+                "CM-202-CVC-WFS",
+                "CM-202-CVC-WFS-COEF",
                 "PM-201-FE-CAM-1",
                 "PM-201-FE-CAM-2",
                 "PM-201-FE-CAM-2-CENX",

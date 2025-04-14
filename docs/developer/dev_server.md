@@ -8,17 +8,13 @@ Deploying the API is done using [OperationsGateway Ansible](https://github.com/r
 - Do the templating files for the config need updating? This can be easy to miss if a config option has been added to the API that you forgot about
 - Are the cron jobs for the simulated data disabled? If the `simulated-data` role is being run when you deploy, they might get re-enabled and this may not be your intention
 
-### Finding Commit Hash of Current Deployment
-To ensure the frontend team get access to new functionality of the API in a reasonable timeframe (so they aren't blocked), deployments can take place before functionality has gone through code review and merged into the main branch. Where multiple pieces of functionality are awaiting code review, this can mean merging multiple branches together; keeping track of exactly what's been deployed can sometimes be confusing. 
 
-When deploying with Ansible, you must specify the commit hash of the API to install which can be found in the following file:
-```bash
-# If this exact path doesn't exist, check Ansible to find where the API is being installed (look for the operationsgateway_api_virtualenv variable)
-/opt/operationsgateway-api/lib/python3.8/site-packages/operationsgateway_api-0.1.0.dist-info/direct_url.json
->>> {"url": "ssh://git@github.com/ral-facilities/operationsgateway-api.git", "vcs_info": {"commit_id": "90701efdc7c5565e4d0afa80b9b7e1c81418f2d7", "requested_revision": "90701efdc7c5565e4d0afa80b9b7e1c81418f2d7", "vcs": "git"}
-```
+### Versioning & Release Flow
+The version of the API can the found in the `pyproject.toml`. This is what is displayed in the `/version` endpoint.
 
-To view that commit, you can go to GitHub and insert the commit hash into the following URL: https://github.com/ral-facilities/operationsgateway-api/commit/[COMMIT-HASH]
+1. Update the version in `pyproject.toml`
+2. Create a release with the same tag
+3. Use that tag to deploy in Ansible
 
 ## Systemd
 To control the API on the dev server, a `systemd` service is added to the machine by Ansible. This allows you to do all the typical things you'd be able to do with a systemd service (i.e. start/stop/restart) and you can check on the logs using `journalctl -u og-api`.

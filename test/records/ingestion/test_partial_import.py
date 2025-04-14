@@ -10,6 +10,9 @@ from operationsgateway_api.src.records.ingestion.partial_import_checks import (
 from test.records.ingestion.create_test_hdf import create_test_hdf_file
 
 
+CHANNEL_PRESENT_MESSAGE = "Channel is already present in existing record"
+
+
 class TestPartialImport:
     @pytest.mark.parametrize(
         "test_type, response",
@@ -84,36 +87,23 @@ class TestPartialImport:
                 {
                     "accepted_channels": [],
                     "rejected_channels": {
-                        "PM-201-FE-EM": "Channel is already present in "
-                        "existing record",
-                        "PM-201-FE-CAM-2-CENX": "Channel is already present "
-                        "in existing record",
-                        "PM-201-FE-CAM-2-FWHMX": "Channel is already present in "
-                        "existing record",
-                        "PM-201-FE-CAM-2-CENY": "Channel is already present in "
-                        "existing record",
-                        "PM-201-FE-CAM-2-FWHMY": "Channel is already present "
-                        "in existing record",
-                        "PM-201-PA1-EM": "Channel is already present in existing "
-                        "record",
-                        "PM-201-FE-CAM-1": "Channel is already present in existing "
-                        "record",
-                        "PM-201-PA2-EM": "Channel is already present in "
-                        "existing record",
-                        "PM-201-TJ-EM": "Channel is already present in existing "
-                        "record",
-                        "PM-201-TJ-CAM-2-CENX": "Channel is already present in "
-                        "existing record",
-                        "PM-201-FE-CAM-2": "Channel is already present in existing "
-                        "record",
-                        "PM-201-HJ-PD": "Channel is already present in "
-                        "existing record",
-                        "PM-201-TJ-CAM-2-FWHMX": "Channel is already present in "
-                        "existing record",
-                        "PM-201-TJ-CAM-2-CENY": "Channel is already present in "
-                        "existing record",
-                        "PM-201-TJ-CAM-2-FWHMY": "Channel is already present in "
-                        "existing record",
+                        "CM-202-CVC-WFS": CHANNEL_PRESENT_MESSAGE,
+                        "CM-202-CVC-WFS-COEF": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-FE-EM": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-FE-CAM-2-CENX": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-FE-CAM-2-FWHMX": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-FE-CAM-2-CENY": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-FE-CAM-2-FWHMY": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-PA1-EM": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-FE-CAM-1": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-PA2-EM": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-TJ-EM": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-TJ-CAM-2-CENX": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-FE-CAM-2": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-HJ-PD": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-TJ-CAM-2-FWHMX": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-TJ-CAM-2-CENY": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-TJ-CAM-2-FWHMY": CHANNEL_PRESENT_MESSAGE,
                     },
                 },
                 id="All channels match",
@@ -127,30 +117,20 @@ class TestPartialImport:
                         "PM-201-TJ-CAM-2-FWHMY",
                     ],
                     "rejected_channels": {
-                        "PM-201-FE-CAM-2-CENX": "Channel is already present in "
-                        "existing record",
-                        "PM-201-FE-CAM-2-FWHMX": "Channel is already present in "
-                        "existing record",
-                        "PM-201-FE-CAM-2-CENY": "Channel is already present in "
-                        "existing record",
-                        "PM-201-FE-CAM-2-FWHMY": "Channel is already present in "
-                        "existing record",
-                        "PM-201-PA1-EM": "Channel is already present in existing "
-                        "record",
-                        "PM-201-FE-CAM-1": "Channel is already present in existing "
-                        "record",
-                        "PM-201-PA2-EM": "Channel is already present in "
-                        "existing record",
-                        "PM-201-TJ-EM": "Channel is already present in existing "
-                        "record",
-                        "PM-201-FE-CAM-2": "Channel is already present in existing "
-                        "record",
-                        "PM-201-HJ-PD": "Channel is already present in "
-                        "existing record",
-                        "PM-201-TJ-CAM-2-FWHMX": "Channel is already present in "
-                        "existing record",
-                        "PM-201-TJ-CAM-2-CENY": "Channel is already present in "
-                        "existing record",
+                        "CM-202-CVC-WFS": CHANNEL_PRESENT_MESSAGE,
+                        "CM-202-CVC-WFS-COEF": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-FE-CAM-2-CENX": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-FE-CAM-2-FWHMX": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-FE-CAM-2-CENY": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-FE-CAM-2-FWHMY": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-PA1-EM": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-FE-CAM-1": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-PA2-EM": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-TJ-EM": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-FE-CAM-2": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-HJ-PD": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-TJ-CAM-2-FWHMX": CHANNEL_PRESENT_MESSAGE,
+                        "PM-201-TJ-CAM-2-CENY": CHANNEL_PRESENT_MESSAGE,
                     },
                 },
                 id="Some channels match",
@@ -159,6 +139,8 @@ class TestPartialImport:
                 "none",
                 {
                     "accepted_channels": [
+                        "CM-202-CVC-WFS",
+                        "CM-202-CVC-WFS-COEF",
                         "PM-201-FE-CAM-1",
                         "PM-201-FE-CAM-2",
                         "PM-201-FE-CAM-2-CENX",
@@ -211,6 +193,8 @@ class TestPartialImport:
             channels["m"] = channels.pop("PM-201-TJ-CAM-2-FWHMX")
             channels["n"] = channels.pop("PM-201-TJ-CAM-2-CENY")
             channels["o"] = channels.pop("PM-201-TJ-CAM-2-FWHMY")
+            channels["p"] = channels.pop("CM-202-CVC-WFS")
+            channels["q"] = channels.pop("CM-202-CVC-WFS-COEF")
 
         partial_import_checker = PartialImportChecks(hdf_tuple[0], stored_record)
 

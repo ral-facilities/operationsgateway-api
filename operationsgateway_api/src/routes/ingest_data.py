@@ -10,6 +10,8 @@ from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.error_handling import endpoint_error_handling
+from operationsgateway_api.src.models import SubmitHDFResponse
+from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.ingestion.channel_checks import ChannelChecks
 from operationsgateway_api.src.records.ingestion.file_checks import FileChecks
@@ -21,11 +23,41 @@ from operationsgateway_api.src.records.ingestion.record_checks import RecordChec
 from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
-
+from operationsgateway_api.src.routes.ingest_data_example_responses import (
+    example_created_response_with_warning,
+    example_updated_response,
+)
 
 log = logging.getLogger()
 router = APIRouter()
 AuthoriseRoute = Annotated[str, Depends(authorise_route)]
+
+
+def _update_checker_response(
+    checker_response: dict[str, list[str] | dict[str, list[str]]],
+    channel: str,
+) -> None:
+    if channel in checker_response["accepted_channels"]:
+        # Remove from accepted_channels and add to rejected_channels
+        checker_response["accepted_channels"].remove(channel)
+        checker_response["rejected_channels"][channel] = []
+
+    # Append the failure reason to the existing reasons
+    checker_response["rejected_channels"][channel].append("Upload to Echo failed")
+
+
+def _insert(
+    entity: Waveform | Vector,
+    failed_uploads: list[str],
+    record: Record,
+) -> None:
+    failed_upload = entity.insert()  # Returns channel name if failed
+    if failed_upload:
+        # if the upload to echo fails, don't process the any further
+        return failed_uploads.append(failed_upload)
+
+    entity.create_thumbnail()
+    record.store_thumbnail(entity)  # in the record not echo
 
 
 @router.post(
@@ -33,6 +65,21 @@ AuthoriseRoute = Annotated[str, Depends(authorise_route)]
     summary="Submit a HDF file for ingestion into MongoDB",
     response_description="ID of the record document that has been inserted/updated",
     tags=["Ingestion"],
+    response_model=SubmitHDFResponse,
+    responses={
+        201: {
+            "model": SubmitHDFResponse,
+            "description": "Created and inserted new record with warning",
+            "content": {
+                "application/json": {"example": example_created_response_with_warning},
+            },
+        },
+        200: {
+            "model": SubmitHDFResponse,
+            "description": "Updated existing record",
+            "content": {"application/json": {"example": example_updated_response}},
+        },
+    },
 )
 @endpoint_error_handling
 async def submit_hdf(
@@ -50,11 +97,13 @@ async def submit_hdf(
     log.info("Submitting CLF data in HDF file to be processed then stored in MongoDB")
     log.debug("Filename: %s, Content: %s", file.filename, file.content_type)
 
+    warnings = []
     hdf_handler = HDFDataHandler(file.file)
     (
         record_data,
         waveforms,
         images,
+        float_images,
         vectors,
         internal_failed_channel,
     ) = await hdf_handler.extract_data()
@@ -64,6 +113,9 @@ async def submit_hdf(
 
     file_checker = FileChecks(record_data)
     warning = file_checker.epac_data_version_checks()
+    if warning:
+        warnings.append(warning)
+
     record_checker = RecordChecks(record_data)
     record_checker.active_area_checks()
     record_checker.optional_metadata_checks()
@@ -72,6 +124,7 @@ async def submit_hdf(
         ingested_record=record_data,
         ingested_waveforms=waveforms,
         ingested_images=images,
+        ingested_float_images=float_images,
         ingested_vectors=vectors,
         internal_failed_channels=internal_failed_channel,
     )
@@ -86,12 +139,13 @@ async def submit_hdf(
     else:
         checker_response = channel_dict
 
-    checker_response["warnings"] = list(warning) if warning else []
+    checker_response["warnings"] = warnings
 
-    record_data, images, waveforms, vectors = HDFDataHandler._update_data(
+    record_data, images, float_images, waveforms, vectors = HDFDataHandler._update_data(
         checker_response,
         record_data,
         images,
+        float_images,
         waveforms,
         vectors=vectors,
     )
@@ -101,15 +155,7 @@ async def submit_hdf(
     log.debug("Processing waveforms")
     failed_waveform_uploads = []
     for w in waveforms:
-        waveform = Waveform(w)
-        # Call insert_waveform and track failures
-        failed_upload = waveform.insert_waveform()  # Returns channel name if failed
-        # if the upload to echo fails, don't process the waveform any further
-        if failed_upload:
-            failed_waveform_uploads.append(failed_upload)
-        else:
-            waveform.create_thumbnail()
-            record.store_thumbnail(waveform)  # in the record not echo
+        _insert(Waveform(w), failed_waveform_uploads, record)
 
     # This section distributes the Image.upload_image calls across
     # the threads in the pool.It takes the image_instances list,
@@ -130,34 +176,36 @@ async def submit_hdf(
         pool.close()
         image_instances = None
 
+    log.debug("Processing float images")
+    failed_float_image_uploads = []
+    float_image_instances = [FloatImage(i) for i in float_images]
+    for float_image in float_image_instances:
+        float_image.create_thumbnail()
+        record.store_thumbnail(float_image)  # in the record not echo
+    if len(float_image_instances) > 0:
+        pool = ThreadPool(processes=Config.config.float_images.upload_image_threads)
+        upload_results = pool.map(FloatImage.upload_image, float_image_instances)
+        # Filter out successful uploads, collect only failed ones
+        failed_float_image_uploads = [channel for channel in upload_results if channel]
+        pool.close()
+        float_image_instances = None
+
     log.debug("Processing vectors")
     failed_vector_uploads = []
     for vector_model in vectors:
-        vector = Vector(vector_model)
-        failed_upload = vector.insert_vector()  # Returns channel name if failed
-        # if the upload to echo fails, don't process any further
-        if failed_upload:
-            failed_vector_uploads.append(failed_upload)
-        else:
-            vector.create_thumbnail()
-            record.store_thumbnail(vector)  # in the record not echo
+        _insert(Vector(vector_model), failed_vector_uploads, record)
 
     # Combine failed channels from waveforms and images and remove them from the record
     # Update the channel checker to reflect failed uploads
     all_failed_upload_channels = (
-        failed_waveform_uploads + failed_image_uploads + failed_vector_uploads
+        failed_waveform_uploads
+        + failed_image_uploads
+        + failed_float_image_uploads
+        + failed_vector_uploads
     )
     for channel in all_failed_upload_channels:
         record.remove_channel(channel)
-        if channel in checker_response["accepted_channels"]:
-            # Remove from accepted_channels and add to rejected_channels
-            checker_response["accepted_channels"].remove(channel)
-            checker_response["rejected_channels"][channel] = ["Upload to Echo failed"]
-        elif channel in checker_response["rejected_channels"]:
-            # Append the failure reason to the existing reasons
-            checker_response["rejected_channels"][channel].append(
-                "Upload to Echo failed",
-            )
+        _update_checker_response(checker_response, channel)
 
     if stored_record and accept_type == "accept_merge":
         log.debug(
@@ -183,8 +231,9 @@ async def submit_hdf(
 
         # Emptying variables to save memory
         images = []
-        vectors = []
+        float_images = []
         hdf_handler.images = []
+        hdf_handler.float_images = []
         hdf_handler.vectors = []
         hdf_handler = None
         channel_checker = None

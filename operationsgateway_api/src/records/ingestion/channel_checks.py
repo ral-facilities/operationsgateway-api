@@ -1,5 +1,4 @@
 import logging
-from types import NoneType
 from typing import Any, Dict, List
 
 import numpy as np
@@ -8,9 +7,14 @@ from pydantic import BaseModel
 from operationsgateway_api.src.exceptions import ChannelManifestError
 from operationsgateway_api.src.models import (
     ChannelModel,
+    FloatImageChannelMetadataModel,
+    FloatImageModel,
+    ImageChannelMetadataModel,
     ImageModel,
+    ScalarChannelMetadataModel,
     VectorChannelMetadataModel,
     VectorModel,
+    WaveformChannelMetadataModel,
     WaveformModel,
 )
 
@@ -24,6 +28,7 @@ class ChannelChecks:
         ingested_record=None,
         ingested_waveforms=None,
         ingested_images=None,
+        ingested_float_images=None,
         ingested_vectors=None,
         internal_failed_channels=None,
     ):
@@ -35,12 +40,14 @@ class ChannelChecks:
         self.ingested_record = ingested_record or []
         self.ingested_waveforms = ingested_waveforms or []
         self.ingested_images = ingested_images or []
+        self.ingested_float_images = ingested_float_images or []
         self.ingested_vectors = ingested_vectors or []
         self.internal_failed_channels = internal_failed_channels or []
 
         self.supported_channel_types = [
             "scalar",
             "image",
+            "float_image",
             "rgb-image",
             "waveform",
             "vector",
@@ -135,9 +142,9 @@ class ChannelChecks:
 
     @staticmethod
     def _find_path(
-        ingested_list: list[ImageModel | WaveformModel | VectorModel],
+        ingested_list: list[ImageModel | FloatImageModel | WaveformModel | VectorModel],
         path: str,
-    ) -> ImageModel | WaveformModel | VectorModel | None:
+    ) -> ImageModel | FloatImageModel | WaveformModel | VectorModel | None:
         """
         Returns the model from ingested_list with the specified path, or None if not
         found.
@@ -155,24 +162,40 @@ class ChannelChecks:
         the reason they failed to return to the used as an output dict
         """
         ingested_channels = self.ingested_record.channels
-
         rejected_channels = []
         for key, value in ingested_channels.items():
             if value.metadata.channel_dtype == "image":
                 image = ChannelChecks._find_path(self.ingested_images, value.image_path)
-                if not isinstance(image.data, np.ndarray):
+                if not isinstance(image, ImageModel) or not isinstance(
+                    image.data,
+                    np.ndarray,
+                ):
                     rejected_channels.append(
                         {key: "data attribute has wrong datatype, should be ndarray"},
                     )
 
-            if value.metadata.channel_dtype == "waveform":
+            elif value.metadata.channel_dtype == "float_image":
+                image = ChannelChecks._find_path(
+                    self.ingested_float_images,
+                    value.image_path,
+                )
+                if not isinstance(image, FloatImageModel) or not isinstance(
+                    image.data,
+                    np.ndarray,
+                ):
+                    rejected_channels.append(
+                        {key: "data attribute has wrong datatype, should be ndarray"},
+                    )
+
+            elif value.metadata.channel_dtype == "waveform":
                 matching_waveform = ChannelChecks._find_path(
                     self.ingested_waveforms,
                     value.waveform_path,
                 )
-
-                if not isinstance(matching_waveform.x, list) or not all(
-                    isinstance(element, float) for element in matching_waveform.x
+                if (
+                    not isinstance(matching_waveform, WaveformModel)
+                    or not isinstance(matching_waveform.x, list)
+                    or not all(isinstance(e, float) for e in matching_waveform.x)
                 ):
                     rejected_channels.append(
                         {key: "x attribute must be a list of floats"},
@@ -194,7 +217,7 @@ class ChannelChecks:
                     isinstance(vector.data, list)
                     and all(isinstance(e, float) for e in vector.data)
                 ):
-                    message = "data attribute has wrong datatype, should be list[float]"
+                    message = "data has wrong datatype, should be list[float]"
                     rejected_channels.append({key: message})
 
         rejected_channels = self._merge_internal_failed(
@@ -209,86 +232,6 @@ class ChannelChecks:
                 "channel_dtype has wrong data type or its value is unsupported",
             ],
         )
-
-        return rejected_channels
-
-    @classmethod
-    def scalar_metadata_checks(cls, key, value_dict, rejected_channels):
-        """
-        Various checks brought out of the main function to simplify it
-
-        when called it returns a list of rejected_channels (if any) from the checks ran
-        """
-
-        if type(value_dict) != dict:
-            value_dict = value_dict.model_dump()
-
-        if ("units" in value_dict) and (
-            type(value_dict["units"]) != str and value_dict["units"] is not None
-        ):
-            rejected_channels.append(
-                {key: "units attribute has wrong datatype"},
-            )
-        return rejected_channels
-
-    @classmethod
-    def image_metadata_checks(cls, key, value_dict, rejected_channels):
-        """
-        Various checks brought out of the main function to simplify it
-
-        when called it returns a list of rejected_channels (if any) from the checks ran
-        """
-
-        if type(value_dict) != dict:
-            value_dict = value_dict.model_dump()
-
-        if ("exposure_time_s" in value_dict) and (
-            not isinstance(value_dict["exposure_time_s"], (float, np.floating))
-            and value_dict["exposure_time_s"] is not None
-        ):
-            rejected_channels.append(
-                {key: "exposure_time_s attribute has wrong datatype"},
-            )
-        if ("gain" in value_dict) and (
-            not isinstance(value_dict["gain"], (float, np.floating))
-            and value_dict["gain"] is not None
-        ):
-            rejected_channels.append({key: "gain attribute has wrong datatype"})
-        if ("x_pixel_size" in value_dict) and (
-            not isinstance(value_dict["x_pixel_size"], (float, np.floating))
-            and value_dict["x_pixel_size"] is not None
-        ):
-            rejected_channels.append(
-                {key: "x_pixel_size attribute has wrong datatype"},
-            )
-        if ("x_pixel_units" in value_dict) and (
-            type(value_dict["x_pixel_units"]) != str
-            and value_dict["x_pixel_units"] is not None
-        ):
-            rejected_channels.append(
-                {key: "x_pixel_units attribute has wrong datatype"},
-            )
-        if ("y_pixel_size" in value_dict) and (
-            not isinstance(value_dict["y_pixel_size"], (float, np.floating))
-            and value_dict["y_pixel_size"] is not None
-        ):
-            rejected_channels.append(
-                {key: "y_pixel_size attribute has wrong datatype"},
-            )
-        if ("y_pixel_units" in value_dict) and (
-            type(value_dict["y_pixel_units"]) != str
-            and value_dict["y_pixel_units"] is not None
-        ):
-            rejected_channels.append(
-                {key: "y_pixel_units attribute has wrong datatype"},
-            )
-
-        if (
-            "bit_depth" in value_dict
-            and value_dict["bit_depth"] is not None
-            and not isinstance(value_dict["bit_depth"], (int, np.integer))
-        ):
-            rejected_channels.append({key: "bit_depth attribute has wrong datatype"})
 
         return rejected_channels
 
@@ -310,18 +253,17 @@ class ChannelChecks:
         value_dict: dict[str, Any],
         rejected_channels: list[dict[str, str]],
         accepted_types: tuple[type],
-    ) -> Any:
+    ) -> None:
         """
         Modifies rejected_channels in place with a new message if attribute name is
-        specified and the value is not of one of the accepted_types or NoneType.
+        specified and the value is not of one of the accepted_types.
         """
-        if attribute_name in value_dict:
-            attribute = value_dict[attribute_name]
-            if not isinstance(attribute, (NoneType, *accepted_types)):
-                message = f"{attribute_name} attribute has wrong datatype"
-                rejected_channels.append({channel_name: message})
-
-            return attribute
+        if (attribute_name in value_dict) and (
+            not isinstance(value_dict[attribute_name], accepted_types)
+            and value_dict[attribute_name] is not None
+        ):
+            message = f"{attribute_name} attribute has wrong datatype"
+            rejected_channels.append({channel_name: message})
 
     @staticmethod
     def _check_str(
@@ -343,6 +285,44 @@ class ChannelChecks:
         )
 
     @staticmethod
+    def _check_int(
+        channel_name: str,
+        attribute_name: str,
+        value_dict: dict[str, Any],
+        rejected_channels: list[dict[str, str]],
+    ) -> None:
+        """
+        Modifies rejected_channels in place with a new message if attribute name is
+        specified and the value is not an int.
+        """
+        ChannelChecks._check_type(
+            channel_name,
+            attribute_name,
+            value_dict,
+            rejected_channels,
+            (int, np.integer),
+        )
+
+    @staticmethod
+    def _check_float(
+        channel_name: str,
+        attribute_name: str,
+        value_dict: dict[str, Any],
+        rejected_channels: list[dict[str, str]],
+    ) -> None:
+        """
+        Modifies rejected_channels in place with a new message if attribute name is
+        specified and the value is not a float.
+        """
+        ChannelChecks._check_type(
+            channel_name,
+            attribute_name,
+            value_dict,
+            rejected_channels,
+            (float, np.floating),
+        )
+
+    @staticmethod
     def _check_list(
         channel_name: str,
         attribute_name: str,
@@ -361,14 +341,88 @@ class ChannelChecks:
             attribute_name,
             value_dict,
             rejected_channels,
-            (list,),
+            (list, np.ndarray),
         )
-        if not all(isinstance(e, element_type) for e in attribute):
-            message = f"{attribute_name} attribute has wrong datatype"
-            rejected_channels.append({channel_name: message})
-        if len(attribute) != length:
-            message = f"{attribute_name} attribute has wrong length"
-            rejected_channels.append({channel_name: message})
+        if attribute is not None:
+            if not all(isinstance(e, element_type) for e in attribute):
+                message = f"{attribute_name} attribute has wrong datatype"
+                rejected_channels.append({channel_name: message})
+            if len(attribute) != length:
+                message = f"{attribute_name} attribute has wrong length"
+                rejected_channels.append({channel_name: message})
+
+    @classmethod
+    def scalar_metadata_checks(
+        cls,
+        key: str,
+        value_dict: dict | ScalarChannelMetadataModel,
+        rejected_channels: list[dict[str, str]],
+    ) -> list[dict[str, str]]:
+        """
+        Various checks brought out of the main function to simplify it
+
+        when called it returns a list of rejected_channels (if any) from the checks ran
+        """
+        value_dict = ChannelChecks._ensure_dict(value_dict)
+        ChannelChecks._check_str(key, "units", value_dict, rejected_channels)
+
+        return rejected_channels
+
+    @classmethod
+    def image_metadata_checks(
+        cls,
+        key: str,
+        value_dict: dict | ImageChannelMetadataModel,
+        rejected_channels: list[dict[str, str]],
+    ) -> list[dict[str, str]]:
+        """
+        Various checks brought out of the main function to simplify it
+
+        when called it returns a list of rejected_channels (if any) from the checks ran
+        """
+        value_dict = ChannelChecks._ensure_dict(value_dict)
+        ChannelChecks._check_float(
+            key,
+            "exposure_time_s",
+            value_dict,
+            rejected_channels,
+        )
+        ChannelChecks._check_float(key, "gain", value_dict, rejected_channels)
+        ChannelChecks._check_float(key, "x_pixel_size", value_dict, rejected_channels)
+        ChannelChecks._check_str(key, "x_pixel_units", value_dict, rejected_channels)
+        ChannelChecks._check_float(key, "y_pixel_size", value_dict, rejected_channels)
+        ChannelChecks._check_str(key, "y_pixel_units", value_dict, rejected_channels)
+        ChannelChecks._check_int(key, "bit_depth", value_dict, rejected_channels)
+
+        return rejected_channels
+
+    @classmethod
+    def float_image_metadata_checks(
+        cls,
+        key: str,
+        value_dict: dict | FloatImageChannelMetadataModel,
+        rejected_channels: list[dict[str, str]],
+    ) -> list[dict[str, str]]:
+        value_dict = ChannelChecks._ensure_dict(value_dict)
+        ChannelChecks._check_float(key, "x_pixel_size", value_dict, rejected_channels)
+        ChannelChecks._check_str(key, "x_pixel_units", value_dict, rejected_channels)
+        ChannelChecks._check_float(key, "y_pixel_size", value_dict, rejected_channels)
+        ChannelChecks._check_str(key, "y_pixel_units", value_dict, rejected_channels)
+
+        return rejected_channels
+
+    @classmethod
+    def waveform_metadata_checks(
+        cls,
+        key: str,
+        value_dict: dict | WaveformChannelMetadataModel,
+        rejected_channels: list[dict[str, str]],
+    ) -> list[dict[str, str]]:
+        value_dict = ChannelChecks._ensure_dict(value_dict)
+        ChannelChecks._check_str(key, "x_units", value_dict, rejected_channels)
+        ChannelChecks._check_str(key, "y_units", value_dict, rejected_channels)
+
+        return rejected_channels
 
     @classmethod
     def vector_metadata_checks(
@@ -394,6 +448,8 @@ class ChannelChecks:
             length,
         )
 
+        return rejected_channels
+
     def optional_dtype_checks(self):
         """
         Checks if the optional attributes of each channel has the correct datatype
@@ -408,35 +464,32 @@ class ChannelChecks:
 
         for key, value in ingested_channels.items():
             if value.metadata.channel_dtype == "scalar":
-
                 rejected_channels = self.scalar_metadata_checks(
                     key,
                     value.metadata,
                     rejected_channels,
                 )
 
-            if value.metadata.channel_dtype == "image":
+            elif value.metadata.channel_dtype == "image":
                 rejected_channels = self.image_metadata_checks(
                     key,
                     value.metadata,
                     rejected_channels,
                 )
 
-            if value.metadata.channel_dtype == "waveform":
-                if hasattr(value.metadata, "x_units") and (
-                    type(value.metadata.x_units) != str
-                    and value.metadata.x_units is not None
-                ):
-                    rejected_channels.append(
-                        {key: "x_units attribute has wrong datatype"},
-                    )
-                if hasattr(value.metadata, "y_units") and (
-                    type(value.metadata.y_units) != str
-                    and value.metadata.y_units is not None
-                ):
-                    rejected_channels.append(
-                        {key: "y_units attribute has wrong datatype"},
-                    )
+            elif value.metadata.channel_dtype == "float_image":
+                rejected_channels = self.float_image_metadata_checks(
+                    key,
+                    value.metadata,
+                    rejected_channels,
+                )
+
+            elif value.metadata.channel_dtype == "waveform":
+                rejected_channels = self.waveform_metadata_checks(
+                    key,
+                    value.metadata,
+                    rejected_channels,
+                )
 
             elif value.metadata.channel_dtype == "vector":
                 vector = ChannelChecks._find_path(
@@ -479,17 +532,11 @@ class ChannelChecks:
         the reason they failed to return to the used as an output dict
         """
         ingested_channels = (self.ingested_record).channels
-
         rejected_channels = []
-
         for key, value in ingested_channels.items():
             if value.metadata.channel_dtype == "image":
-                data = None
-                for image in self.ingested_images:
-                    if image.path == value.image_path:
-                        data = image.data
-                        continue
-
+                image = ChannelChecks._find_path(self.ingested_images, value.image_path)
+                data = image.data
                 if isinstance(data, np.ndarray) and (
                     data.dtype == np.uint16 or data.dtype == np.uint8
                 ):
@@ -505,17 +552,24 @@ class ChannelChecks:
                         },
                     )
 
-            if value.metadata.channel_dtype == "waveform":
-                matching_waveform = None
+            elif value.metadata.channel_dtype == "float_image":
+                image = ChannelChecks._find_path(
+                    self.ingested_float_images,
+                    value.image_path,
+                )
+                data = image.data
+                if not all(isinstance(element, np.ndarray) for element in data):
+                    rejected_channels.append(
+                        {key: "data attribute has wrong shape"},
+                    )
 
-                for waveform in self.ingested_waveforms:
-                    if waveform.path == value.waveform_path:
-                        matching_waveform = waveform
-                        continue
-
+            elif value.metadata.channel_dtype == "waveform":
+                matching_waveform = ChannelChecks._find_path(
+                    self.ingested_waveforms,
+                    value.waveform_path,
+                )
                 x = matching_waveform.x
                 y = matching_waveform.y
-
                 rejected_channels = self._waveform_dataset_check(
                     rejected_channels,
                     x,

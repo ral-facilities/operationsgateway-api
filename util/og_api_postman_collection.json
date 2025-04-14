@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "fa28d10a-2892-4814-b257-65fb06897008",
+		"_postman_id": "2e52b11c-6840-4b83-9db6-713a382f4c44",
 		"name": "OperationsGateway API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "7069916"
@@ -686,6 +686,24 @@
 									"value": "{\"name\": \"image_reductive\", \"expression\": \"mean(FE-204-NSO-P1-CAM-1)\"}",
 									"description": "Reductive function on an image channel",
 									"disabled": true
+								},
+								{
+									"key": "conditions",
+									"value": "{\"_id\": {\"$eq\": \"20230605080300\"}}",
+									"description": "Shot number containing wavefront channels",
+									"disabled": true
+								},
+								{
+									"key": "projection",
+									"value": "channels.CM-202-CVC-WFS",
+									"description": "Float image channel",
+									"disabled": true
+								},
+								{
+									"key": "projection",
+									"value": "channels.FE-204-NSS-WFS-COEF",
+									"description": "Vector channel",
+									"disabled": true
 								}
 							]
 						}
@@ -1155,6 +1173,48 @@
 							"path": [
 								"images",
 								"colourmap_names"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Float images",
+			"item": [
+				{
+					"name": "Get float image",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/images/float/20230605080300/CM-202-CVC-WFS",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"images",
+								"float",
+								"20230605080300",
+								"CM-202-CVC-WFS"
+							],
+							"query": [
+								{
+									"key": "colourmap_name",
+									"value": "berlin",
+									"disabled": true
+								}
 							]
 						}
 					},
@@ -1738,6 +1798,40 @@
 			]
 		},
 		{
+			"name": "Vectors",
+			"item": [
+				{
+					"name": "Get vector",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{og-access-token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/vectors/20230605080300/CM-202-CVC-WFS-COEF",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"vectors",
+								"20230605080300",
+								"CM-202-CVC-WFS-COEF"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Data Export",
 			"item": [
 				{
@@ -2135,14 +2229,7 @@
 					"name": "Get Maintenance",
 					"request": {
 						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{og-access-token}}",
-									"type": "string"
-								}
-							]
+							"type": "noauth"
 						},
 						"method": "GET",
 						"header": [],
@@ -2195,28 +2282,49 @@
 					"response": []
 				},
 				{
-					"name": "Get Scheduled Maintenance",
+					"name": "Set Maintenance failure",
 					"request": {
 						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{og-access-token}}",
-									"type": "string"
-								}
-							]
+							"type": "noauth"
 						},
-						"method": "GET",
+						"method": "POST",
 						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"show\": true,\r\n    \"message\": \"message\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
 						"url": {
-							"raw": "{{og-api}}/maintenance/scheduled",
+							"raw": "{{og-api}}/maintenance",
 							"host": [
 								"{{og-api}}"
 							],
 							"path": [
-								"maintenance",
-								"scheduled"
+								"maintenance"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Scheduled Maintenance",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api}}/scheduled_maintenance",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"scheduled_maintenance"
 							]
 						}
 					},
@@ -2247,15 +2355,56 @@
 							}
 						},
 						"url": {
-							"raw": "{{og-api}}/maintenance/scheduled",
+							"raw": "{{og-api}}/scheduled_maintenance",
 							"host": [
 								"{{og-api}}"
 							],
 							"path": [
-								"maintenance",
-								"scheduled"
+								"scheduled_maintenance"
 							]
 						}
+					},
+					"response": []
+				},
+				{
+					"name": "Set Scheduled Maintenance failure",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"show\": true,\r\n    \"message\": \"message\",\r\n    \"severity\": \"warning\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{og-api}}/scheduled_maintenance",
+							"host": [
+								"{{og-api}}"
+							],
+							"path": [
+								"scheduled_maintenance"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Version",
+			"item": [
+				{
+					"name": "Get Version",
+					"request": {
+						"method": "GET",
+						"header": []
 					},
 					"response": []
 				}
