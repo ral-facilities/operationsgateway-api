@@ -603,6 +603,6 @@ class TestSubmitHDF:
 
         response_json = test_response.json()
         assert (
-            "File minor version number too high (expected <=1)"
+            "File minor version number too high (expected <=2)"
             in response_json["response"]["warnings"]
         )
