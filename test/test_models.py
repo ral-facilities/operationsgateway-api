@@ -1,7 +1,13 @@
 import numpy as np
+from pydantic import ValidationError
 import pytest
 
-from operationsgateway_api.src.models import ImageChannelMetadataModel
+from operationsgateway_api.src.exceptions import ChannelManifestError
+from operationsgateway_api.src.models import (
+    ChannelDtype,
+    ChannelModel,
+    ImageChannelMetadataModel,
+)
 
 
 class TestModels:
@@ -36,3 +42,29 @@ class TestModels:
         bit_depth_correct = isinstance(model.bit_depth, bit_depth_type)
         assert gain_correct, f"{type(model.gain)} != {gain_type}"
         assert bit_depth_correct, f"{type(model.bit_depth)} != {bit_depth_type}"
+
+    @pytest.mark.parametrize(
+        ["metadata", "expected"],
+        [
+            pytest.param(
+                {"x_units": "J"},
+                "Only waveform channels should contain waveform channel metadata.",
+            ),
+            pytest.param(
+                {"y_units": "J"},
+                "Only waveform channels should contain waveform channel metadata.",
+            ),
+            pytest.param(
+                {"labels": ["Tilt X", "Tilt Y"]},
+                "Only vector channels should contain vector channel metadata.",
+            ),
+        ],
+    )
+    def test_channel_model(self, metadata: dict, expected: str):
+        with pytest.raises(ChannelManifestError) as e:
+            ChannelModel(name="name", path="path", type=ChannelDtype.SCALAR, **metadata)
+
+        assert e.exconly() == (
+            f"operationsgateway_api.src.exceptions.ChannelManifestError: {expected} "
+            "Invalid channel is called: name"
+        )
