@@ -10,6 +10,7 @@ from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.error_handling import endpoint_error_handling
+from operationsgateway_api.src.models import SubmitHDFResponse
 from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.ingestion.channel_checks import ChannelChecks
@@ -22,7 +23,10 @@ from operationsgateway_api.src.records.ingestion.record_checks import RecordChec
 from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
-
+from operationsgateway_api.src.routes.ingest_data_example_responses import (
+    example_created_response_with_warning,
+    example_updated_response,
+)
 
 log = logging.getLogger()
 router = APIRouter()
@@ -61,6 +65,21 @@ def _insert(
     summary="Submit a HDF file for ingestion into MongoDB",
     response_description="ID of the record document that has been inserted/updated",
     tags=["Ingestion"],
+    response_model=SubmitHDFResponse,
+    responses={
+        201: {
+            "model": SubmitHDFResponse,
+            "description": "Created and inserted new record with warning",
+            "content": {
+                "application/json": {"example": example_created_response_with_warning},
+            },
+        },
+        200: {
+            "model": SubmitHDFResponse,
+            "description": "Updated existing record",
+            "content": {"application/json": {"example": example_updated_response}},
+        },
+    },
 )
 @endpoint_error_handling
 async def submit_hdf(
@@ -78,6 +97,7 @@ async def submit_hdf(
     log.info("Submitting CLF data in HDF file to be processed then stored in MongoDB")
     log.debug("Filename: %s, Content: %s", file.filename, file.content_type)
 
+    warnings = []
     hdf_handler = HDFDataHandler(file.file)
     (
         record_data,
@@ -93,6 +113,9 @@ async def submit_hdf(
 
     file_checker = FileChecks(record_data)
     warning = file_checker.epac_data_version_checks()
+    if warning:
+        warnings.append(warning)
+
     record_checker = RecordChecks(record_data)
     record_checker.active_area_checks()
     record_checker.optional_metadata_checks()
@@ -116,7 +139,7 @@ async def submit_hdf(
     else:
         checker_response = channel_dict
 
-    checker_response["warnings"] = list(warning) if warning else []
+    checker_response["warnings"] = warnings
 
     record_data, images, float_images, waveforms, vectors = HDFDataHandler._update_data(
         checker_response,

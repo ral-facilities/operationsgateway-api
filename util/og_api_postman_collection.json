@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "fa28d10a-2892-4814-b257-65fb06897008",
+		"_postman_id": "2e52b11c-6840-4b83-9db6-713a382f4c44",
 		"name": "OperationsGateway API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "7069916"
@@ -2392,6 +2392,19 @@
 								"scheduled_maintenance"
 							]
 						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Version",
+			"item": [
+				{
+					"name": "Get Version",
+					"request": {
+						"method": "GET",
+						"header": []
 					},
 					"response": []
 				}

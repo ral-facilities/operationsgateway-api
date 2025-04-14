@@ -431,3 +431,31 @@ class MaintenanceModel(BaseModel):
 
 class ScheduledMaintenanceModel(MaintenanceModel):
     severity: Severity
+
+
+class IngestionResponse(BaseModel):
+    accepted_channels: List[str] = Field(
+        ...,
+        description="A List of channel names successfully accepted and ingested.",
+    )
+    rejected_channels: Dict[str, Union[str, List[str]]] = Field(
+        ...,
+        description=("Dictionary mapping channel names to rejection reasons."),
+    )
+    warnings: Optional[List[str]] = Field(
+        default=[],
+        description="List of non-critical issues encountered during ingestion, "
+        "currently around EPAC data version",
+    )
+
+
+class SubmitHDFResponse(BaseModel):
+    message: str = Field(
+        ...,
+        description="Indicates whether a HDF file was added, updated or rejected.",
+    )
+    response: IngestionResponse = Field(
+        ...,
+        description="Detailed information about which channels were "
+        "accepted, rejected, and whether there are any warnings.",
+    )
