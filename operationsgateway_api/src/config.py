@@ -53,6 +53,8 @@ class WaveformsConfig(BaseModel):
 
 class VectorsConfig(BaseModel):
     thumbnail_size: tuple[int, int]
+    skip_pref_name: StrictStr = "VECTOR_SKIP"
+    limit_pref_name: StrictStr = "VECTOR_LIMIT"
 
 
 class EchoConfig(BaseModel):

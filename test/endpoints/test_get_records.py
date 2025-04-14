@@ -237,6 +237,18 @@ class TestGetRecords:
                 ],
                 id="Query for bit_depth, present",
             ),
+            pytest.param(
+                {"metadata.timestamp": "2023-06-05T08:03:00"},
+                0,
+                1,
+                "metadata.shotnum ASC",
+                None,  # projection
+                False,  # truncate
+                [361],  # expected_channels_count
+                [],  # functions
+                [{"FE-204-NSS-WFS-COEF": "83c0e03ef8c77f30"}],  # expected_channels_data
+                id="Query for vector thumbnail",
+            ),
         ],
     )
     def test_valid_get_records(
