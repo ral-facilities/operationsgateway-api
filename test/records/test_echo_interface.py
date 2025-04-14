@@ -329,3 +329,7 @@ class TestEchoInterface:
 
             with pytest.raises(EchoS3Error, match="when deleting file at"):
                 test_echo.delete_directory("test/image/19900202143000/")
+
+    def test_head_object(self):
+        echo_interface = EchoInterface()
+        assert not echo_interface.head_object("test")

@@ -1,5 +1,6 @@
 import io
 import json
+from unittest.mock import patch
 from urllib.parse import quote
 from zipfile import ZipFile
 
@@ -10,6 +11,7 @@ import numpy as np
 from PIL import Image
 import pytest
 
+from operationsgateway_api.src.exceptions import EchoS3Error
 from test.conftest import (
     assert_text_file_contents,
 )
@@ -567,7 +569,40 @@ class TestExport:
                     ),
                     "20230605080300_FE-204-NSS-WFS-COEF.png": "9f87e03838c77c38",
                 },
-                id="Zip export of main CSV and float images",
+                id="Zip export of vector CSV/image and float images",
+            ),
+            pytest.param(
+                {"_id": {"$in": ["20230605080300"]}},
+                0,
+                10,
+                "metadata.shotnum ASC",
+                [
+                    "metadata.shotnum",
+                    "metadata.timestamp",
+                    "metadata.epac_ops_data_version",
+                    "channels.FE-204-LT-WFS",
+                    "channels.FE-204-LT-WFS-COEF",
+                ],
+                None,
+                None,
+                None,
+                None,
+                False,  # export_float_images
+                True,  # export_vector_images
+                True,  # export_vector_csvs
+                None,
+                None,
+                None,
+                "20230605080300.zip",
+                None,
+                {
+                    "20230605080300.csv": "export/20230605080300_no_channels.csv",
+                    "20230605080300_FE-204-LT-WFS-COEF.csv": (
+                        "export/20230605080300_FE-204-LT-WFS-COEF.csv"
+                    ),
+                    "20230605080300_FE-204-LT-WFS-COEF.png": "9fc7c080719fcf60",
+                },
+                id="Zip export of vector CSV/image with labels",
             ),
             pytest.param(
                 {"_id": {"$in": ["20230605080000"]}},
@@ -913,6 +948,40 @@ class TestExport:
 
         assert test_response.status_code == 200
 
+    def test_export_errors(
+        self,
+        test_app: TestClient,
+        login_and_get_token,
+    ):
+        get_params = [
+            f"conditions={json.dumps({'_id': {'$eq': '20230605080300'}})}",
+            "projection=metadata.shotnum",
+            "projection=metadata.timestamp",
+            "projection=metadata.epac_ops_data_version",
+            "projection=channels.FE-204-PSO-EM",
+            "projection=channels.FE-204-LT-WFS",
+            "projection=channels.FE-204-LT-WFS-COEF",
+        ]
+        get_params_str = "&".join(get_params)
+
+        target = (
+            "operationsgateway_api.src.records.echo_interface.EchoInterface."
+            "download_file_object"
+        )
+        with patch(target=target, side_effect=EchoS3Error()):
+            test_response = test_app.get(
+                f"/export?{get_params_str}",
+                headers={"Authorization": f"Bearer {login_and_get_token}"},
+            )
+
+        TestExport.check_export_headers(
+            test_response,
+            "application/zip",
+            "20230605080300.zip",
+        )
+        zip_contents_dict = {"EXPORT_ERRORS.txt": "export/EXPORT_ERRORS.txt"}
+        TestExport.check_zip_file_contents(zip_contents_dict, test_response)
+
     @pytest.mark.parametrize(
         ["projection", "message"],
         [
@@ -1010,7 +1079,7 @@ class TestExport:
                     raise AssertionError(
                         f"Unexpected file found in export zip: {filename_in_zip}",
                     ) from err
-                if filename_in_zip.endswith(".csv"):
+                if filename_in_zip.endswith(".csv") or filename_in_zip.endswith(".txt"):
                     # there should be a file in the test dir that the contents of the
                     # CSV in the zip file need comparing to
                     assert_text_file_contents(

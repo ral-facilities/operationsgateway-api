@@ -1,3 +1,4 @@
+import h5py
 import numpy as np
 from pydantic import BaseModel
 import pytest
@@ -5,6 +6,7 @@ import pytest
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.models import ScalarChannelMetadataModel
 from operationsgateway_api.src.records.ingestion.channel_checks import ChannelChecks
+from operationsgateway_api.src.records.ingestion.hdf_handler import HDFDataHandler
 from test.records.ingestion.create_test_hdf import create_test_hdf_file
 
 
@@ -232,17 +234,17 @@ class TestChannel:
                 {"image": {"data": 42}},
                 [
                     {
-                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data has wrong datatype, "
                         "should be ndarray",
                     },
                 ],
                 [
                     {
-                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data has wrong datatype, "
                         "should be ndarray",
                     },
                     {
-                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data has wrong datatype, "
                         "should be uint16 or uint8",
                     },
                 ],
@@ -306,7 +308,7 @@ class TestChannel:
                 },
                 [
                     {
-                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data has wrong datatype, "
                         "should be ndarray",
                     },
                     {"PM-201-FE-EM": "data attribute is missing"},
@@ -315,11 +317,11 @@ class TestChannel:
                 ],
                 [
                     {
-                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data has wrong datatype, "
                         "should be ndarray",
                     },
                     {
-                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data has wrong datatype, "
                         "should be uint16 or uint8",
                     },
                     {"PM-201-FE-EM": "data attribute is missing"},
@@ -363,6 +365,59 @@ class TestChannel:
         channel_response = create_channel_response(response, extra)
         assert await channel_checker.channel_checks() == channel_response
         assert channel_checker.required_attribute_checks() == response
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ["channel_name", "channel_dtype", "expected"],
+        [
+            pytest.param(
+                "PM-201-FE-CAM-1",
+                "image",
+                [{"PM-201-FE-CAM-1": "data has wrong datatype, should be ndarray"}],
+            ),
+            pytest.param(
+                "TS-202-TSM-WFS",
+                "float_image",
+                [{"TS-202-TSM-WFS": "data has wrong datatype, should be ndarray"}],
+            ),
+            pytest.param(
+                "TS-202-TSM-WFS-COEF",
+                "vector",
+                [
+                    {
+                        "TS-202-TSM-WFS-COEF": (
+                            "data has wrong datatype, should be list[float]"
+                        ),
+                    },
+                ],
+            ),
+        ],
+    )
+    async def test_required_attribute_checks(
+        self,
+        channel_name: str,
+        channel_dtype: str,
+        expected: list[dict[str, str]],
+        remove_hdf_file,
+    ):
+        with h5py.File("test.h5", "w") as f:
+            f.attrs.create("epac_ops_data_version", "1.2")
+            record = f["/"]
+            record.attrs.create("timestamp", "2020-04-07 14:28:16")
+            record.attrs.create("shotnum", 366272, dtype="u8")
+            record.attrs.create("active_area", "ea1")
+            record.attrs.create("active_experiment", "90097341")
+            channel = record.create_group(channel_name)
+            channel.create_dataset("data", data=False)
+            channel.attrs.create("channel_dtype", channel_dtype)
+
+        hdf_data_handler = HDFDataHandler("test.h5")
+        data = await hdf_data_handler.extract_data()
+        channel_checker = ChannelChecks(*data)
+        manifest = await ChannelManifest.get_most_recent_manifest()
+        channel_checker.set_channels(manifest)
+
+        assert channel_checker.required_attribute_checks() == expected
 
     @pytest.mark.parametrize(
         "optional_attributes, response",
@@ -492,6 +547,41 @@ class TestChannel:
         assert await channel_checker.channel_checks() == channel_response
         assert channel_checker.optional_dtype_checks() == response
 
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ["labels", "message"],
+        [
+            pytest.param(["one", "two"], "labels attribute has wrong length"),
+            pytest.param([1], "labels attribute has wrong datatype"),
+        ],
+    )
+    async def test_optional_attribute_vector(
+        self,
+        labels: list,
+        message: str,
+        remove_hdf_file: None,
+    ):
+        with h5py.File("test.h5", "w") as f:
+            f.attrs.create("epac_ops_data_version", "1.2")
+            record = f["/"]
+            record.attrs.create("timestamp", "2020-04-07 14:28:16")
+            record.attrs.create("shotnum", 366272, dtype="u8")
+            record.attrs.create("active_area", "ea1")
+            record.attrs.create("active_experiment", "90097341")
+            channel = record.create_group("TS-202-TSM-WFS-COEF")
+            channel.create_dataset("data", data=[1])
+            channel.attrs.create("channel_dtype", "vector")
+            channel.attrs.create("labels", labels)
+
+        hdf_data_handler = HDFDataHandler("test.h5")
+        data = await hdf_data_handler.extract_data()
+        channel_checker = ChannelChecks(*data)
+        manifest = await ChannelManifest.get_most_recent_manifest()
+        channel_checker.set_channels(manifest)
+
+        expected = [{"TS-202-TSM-WFS-COEF": message}]
+        assert channel_checker.optional_dtype_checks() == expected
+
     @pytest.mark.parametrize(
         "required_attributes, response, extra",
         [
@@ -509,17 +599,17 @@ class TestChannel:
                 {"image": {"data": 6780}},
                 [
                     {
-                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data has wrong datatype, "
                         "should be uint16 or uint8",
                     },
                 ],
                 [
                     {
-                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data has wrong datatype, "
                         "should be ndarray",
                     },
                     {
-                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data has wrong datatype, "
                         "should be uint16 or uint8",
                     },
                 ],
@@ -529,7 +619,7 @@ class TestChannel:
                 {"image": {"data": np.array([[1, 2, 3], [4, 5, 6]])}},
                 [
                     {
-                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data has wrong datatype, "
                         "should be uint16 or uint8",
                     },
                 ],
@@ -540,7 +630,7 @@ class TestChannel:
                 {"image": {"data": np.array([1, 2, 3], dtype=np.uint8)}},
                 [
                     {
-                        "PM-201-FE-CAM-1": "data attribute has wrong shape",
+                        "PM-201-FE-CAM-1": "data has wrong shape",
                     },
                 ],
                 None,
@@ -628,6 +718,28 @@ class TestChannel:
         channel_response = create_channel_response(response, extra)
         assert await channel_checker.channel_checks() == channel_response
         assert channel_checker.dataset_checks() == response
+
+    @pytest.mark.asyncio
+    async def test_dataset_checks_float_image(self, remove_hdf_file: None):
+        with h5py.File("test.h5", "w") as f:
+            f.attrs.create("epac_ops_data_version", "1.2")
+            record = f["/"]
+            record.attrs.create("timestamp", "2020-04-07 14:28:16")
+            record.attrs.create("shotnum", 366272, dtype="u8")
+            record.attrs.create("active_area", "ea1")
+            record.attrs.create("active_experiment", "90097341")
+            channel = record.create_group("TS-202-TSM-WFS")
+            channel.create_dataset("data", data=[1])  # Data is only 1 dimensional
+            channel.attrs.create("channel_dtype", "float_image")
+
+        hdf_data_handler = HDFDataHandler("test.h5")
+        data = await hdf_data_handler.extract_data()
+        channel_checker = ChannelChecks(*data)
+        manifest = await ChannelManifest.get_most_recent_manifest()
+        channel_checker.set_channels(manifest)
+
+        expected = [{"TS-202-TSM-WFS": "data has wrong shape"}]
+        assert channel_checker.dataset_checks() == expected
 
     @pytest.mark.parametrize(
         "unrecognised_attribute, response",
@@ -965,7 +1077,7 @@ class TestChannel:
                     {"PM-201-FE-CAM-1": "x_pixel_size attribute has wrong datatype"},
                     {"PM-201-FE-CAM-1": "x_pixel_units attribute has wrong datatype"},
                     {
-                        "PM-201-FE-CAM-1": "data attribute has wrong datatype, "
+                        "PM-201-FE-CAM-1": "data has wrong datatype, "
                         "should be uint16 or uint8",
                     },
                 ],
