@@ -23,7 +23,7 @@ class UserPreferences:
         :return: the user preference value or `default`
         """
         try:
-            return UserPreferences.get(username, pref_name)
+            return await UserPreferences.get(username, pref_name)
         except MissingAttributeError:
             return default
 
