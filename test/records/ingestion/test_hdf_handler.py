@@ -14,7 +14,7 @@ def create_test_hdf_file(timestamp_test=False, data_test=False):
         if timestamp_test:
             record.attrs.create("timestamp", "20t0-04 07 a4 mh 228:1")
         else:
-            record.attrs.create("timestamp", "2020-04-07 14:28:16")
+            record.attrs.create("timestamp", "2020-04-07T14:28:16+0000")
         record.attrs.create("shotnum", 366272, dtype="u8")
         record.attrs.create("active_area", "ea1")
         record.attrs.create("active_experiment", "90097341")
@@ -55,6 +55,6 @@ class TestHDFDataHandler:
         instance = HDFDataHandler("test.h5")
         with pytest.raises(
             HDFDataExtractionError,
-            match="Incorrect timestamp format for metadata timestamp. Use",
+            match="Invalid timestamp metadata",
         ):
             await instance.extract_data()
