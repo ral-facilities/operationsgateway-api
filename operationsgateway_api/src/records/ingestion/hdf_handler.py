@@ -77,28 +77,15 @@ class HDFDataHandler:
         log.debug("Extracting data from HDF files")
 
         metadata_hdf = dict(self.hdf_file.attrs)
-        timestamp_format = "%Y-%m-%dT%H:%M:%S%z"
         try:
             metadata_hdf["timestamp"] = datetime.strptime(
                 metadata_hdf["timestamp"],
-                timestamp_format,
+                DATA_DATETIME_FORMAT,
             )
-        except ValueError:
-            # Try using alternative timestamp format that might be used for older HDF
-            # files such as old Gemini test data
-            # TODO - when Gemini test data is no longer needed, remove this try/except
-            # block that attempts to convert the timestamp for a second time. Go
-            # straight to raising the exception instead
-            try:
-                metadata_hdf["timestamp"] = datetime.strptime(
-                    metadata_hdf["timestamp"],
-                    DATA_DATETIME_FORMAT,
-                )
-            except ValueError as exc:
-                raise HDFDataExtractionError(
-                    "Incorrect timestamp format for metadata timestamp. Use"
-                    f" {timestamp_format} instead",
-                ) from exc
+        except (KeyError, ValueError) as exc:
+            raise HDFDataExtractionError(
+                f"Invalid timestamp metadata. Expected key 'timestamp' with value formatted as '{DATA_DATETIME_FORMAT}'."
+            ) from exc
 
         self.record_id = metadata_hdf["timestamp"].strftime(ID_DATETIME_FORMAT)
         await self.extract_channels()
