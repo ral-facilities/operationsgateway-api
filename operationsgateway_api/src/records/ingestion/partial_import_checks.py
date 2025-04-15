@@ -43,7 +43,7 @@ class PartialImportChecks:
         try:
             time_match = (ingested_metadata.timestamp).replace(
                 tzinfo=None,
-            ) == stored_metadata.timestamp
+            ) == stored_metadata.timestamp.replace(tzinfo=None)
         except Exception:
             time_match = (ingested_metadata.timestamp) == stored_metadata.timestamp
 
