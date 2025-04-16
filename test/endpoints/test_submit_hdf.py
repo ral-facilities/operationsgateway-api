@@ -23,7 +23,7 @@ def create_integration_test_hdf(fails=None, generic_fail=None):
     with h5py.File("test.h5", "w") as f:
         f.attrs.create("epac_ops_data_version", "1.0")
         record = f["/"]
-        record.attrs.create("timestamp", "2020-04-07 14:28:16")
+        record.attrs.create("timestamp", "2020-04-07T14:28:16+00:00")
         record.attrs.create("shotnum", 366272, dtype="u8")
         record.attrs.create("active_area", "ea1")
         record.attrs.create("active_experiment", "90097341")

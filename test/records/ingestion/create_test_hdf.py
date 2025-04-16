@@ -86,7 +86,7 @@ async def create_test_hdf_file(  # noqa: C901
 
     data_version = data_version if data_version is not None else ["1.0", "exists"]
     timestamp = (
-        timestamp if timestamp is not None else ["2020-04-07 14:28:16", "exists"]
+        timestamp if timestamp is not None else ["2020-04-07T14:28:16+00:00", "exists"]
     )
     active_area = active_area if active_area is not None else ["ea1", "exists"]
     shotnum = shotnum if shotnum is not None else ["valid", "exists"]
