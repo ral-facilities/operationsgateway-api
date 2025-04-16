@@ -7,7 +7,7 @@ import h5py
 from pydantic import ValidationError
 
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
-from operationsgateway_api.src.constants import ID_DATETIME_FORMAT
+from operationsgateway_api.src.constants import DATA_DATETIME_FORMAT, ID_DATETIME_FORMAT
 from operationsgateway_api.src.exceptions import HDFDataExtractionError, ModelError
 from operationsgateway_api.src.models import (
     ChannelManifestModel,
@@ -78,13 +78,14 @@ class HDFDataHandler:
 
         metadata_hdf = dict(self.hdf_file.attrs)
         try:
-            metadata_hdf["timestamp"] = datetime.fromisoformat(
+            metadata_hdf["timestamp"] = datetime.strptime(
                 metadata_hdf["timestamp"],
+                DATA_DATETIME_FORMAT,
             )
         except (KeyError, ValueError, TypeError) as exc:
             raise HDFDataExtractionError(
                 "Invalid timestamp metadata. Expected key 'timestamp' with value "
-                "formatted as ISO 8601 (e.g., 'YYYY-MM-DDTHH:MM:SS±HH:MM').",
+                "formatted, for example as: '2025-04-07T14:28:16+00:00'.",
             ) from exc
 
         self.record_id = metadata_hdf["timestamp"].strftime(ID_DATETIME_FORMAT)
