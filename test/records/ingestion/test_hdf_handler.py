@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 import h5py
 import numpy as np
 import pytest
@@ -79,12 +81,47 @@ class TestHDFDataHandler:
             await instance.extract_data()
 
     @pytest.mark.asyncio
-    async def test_invalid_timestamp_type_error(self, remove_hdf_file):
-        # Create HDF file with invalid (non-str) timestamp
+    @pytest.mark.parametrize(
+        "valid_timestamp",
+        [
+            "2020-04-07T14:28:16+00:00",  # with colon
+            "2020-04-07T14:28:16+0000",  # no colon
+            "2020-04-07T14:28:16Z",  # zulu time zone
+        ],
+    )
+    async def test_valid_timestamps(self, remove_hdf_file, valid_timestamp):
         with h5py.File("test.h5", "w") as f:
             f.attrs.create("epac_ops_data_version", "1.0")
             record = f["/"]
-            record.attrs.create("timestamp", 123456789)  # not a string
+            record.attrs.create("timestamp", valid_timestamp)
+            record.attrs.create("shotnum", 366272, dtype="u8")
+            record.attrs.create("active_area", "ea1")
+            record.attrs.create("active_experiment", "90097341")
+
+        instance = HDFDataHandler("test.h5")
+        record_model, *_ = await instance.extract_data()
+        assert hasattr(record_model, "metadata")
+        assert isinstance(record_model.metadata.timestamp, datetime)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "invalid_timestamp",
+        [
+            "07-04-2020T14:28:16+00:00",  # wrong order
+            "not-a-timestamp",  # junk
+            "2020/04/07T14:28:16+00:00",  # wrong seperator
+            55458554,  # not a string,
+            "2020-04-07",  # no time
+            "2020-04-07T14:28:16",  # no time zone
+            "2020-04-07 14:28:16",  # no T seperator, like the old Gemini data
+            "2020-04-07T14:28",  # no seconds
+        ],
+    )
+    async def test_invalid_formats(self, remove_hdf_file, invalid_timestamp):
+        with h5py.File("test.h5", "w") as f:
+            f.attrs.create("epac_ops_data_version", "1.0")
+            record = f["/"]
+            record.attrs.create("timestamp", invalid_timestamp)
             record.attrs.create("shotnum", 366272, dtype="u8")
             record.attrs.create("active_area", "ea1")
             record.attrs.create("active_experiment", "90097341")
