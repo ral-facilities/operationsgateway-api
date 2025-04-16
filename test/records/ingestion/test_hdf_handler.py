@@ -14,7 +14,7 @@ def create_test_hdf_file(timestamp_test=False, data_test=False):
         if timestamp_test:
             record.attrs.create("timestamp", "20t0-04 07 a4 mh 228:1")
         else:
-            record.attrs.create("timestamp", "2020-04-07T14:28:16+0000")
+            record.attrs.create("timestamp", "2020-04-07T14:28:16+00:00")
         record.attrs.create("shotnum", 366272, dtype="u8")
         record.attrs.create("active_area", "ea1")
         record.attrs.create("active_experiment", "90097341")
@@ -50,7 +50,44 @@ def create_test_hdf_file(timestamp_test=False, data_test=False):
 class TestHDFDataHandler:
     @pytest.mark.asyncio
     async def test_invalid_timestamp(self, remove_hdf_file):
+        # Malformed timestamp string
         create_test_hdf_file(timestamp_test=True)
+
+        instance = HDFDataHandler("test.h5")
+        with pytest.raises(
+            HDFDataExtractionError,
+            match="Invalid timestamp metadata",
+        ):
+            await instance.extract_data()
+
+    @pytest.mark.asyncio
+    async def test_missing_timestamp(self, remove_hdf_file):
+        # Create HDF file without 'timestamp'
+        with h5py.File("test.h5", "w") as f:
+            f.attrs.create("epac_ops_data_version", "1.0")
+            record = f["/"]
+            # Note: no 'timestamp' attr added here
+            record.attrs.create("shotnum", 366272, dtype="u8")
+            record.attrs.create("active_area", "ea1")
+            record.attrs.create("active_experiment", "90097341")
+
+        instance = HDFDataHandler("test.h5")
+        with pytest.raises(
+            HDFDataExtractionError,
+            match="Invalid timestamp metadata",
+        ):
+            await instance.extract_data()
+
+    @pytest.mark.asyncio
+    async def test_invalid_timestamp_type_error(self, remove_hdf_file):
+        # Create HDF file with invalid (non-str) timestamp
+        with h5py.File("test.h5", "w") as f:
+            f.attrs.create("epac_ops_data_version", "1.0")
+            record = f["/"]
+            record.attrs.create("timestamp", 123456789)  # not a string
+            record.attrs.create("shotnum", 366272, dtype="u8")
+            record.attrs.create("active_area", "ea1")
+            record.attrs.create("active_experiment", "90097341")
 
         instance = HDFDataHandler("test.h5")
         with pytest.raises(

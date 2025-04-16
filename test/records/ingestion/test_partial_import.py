@@ -60,12 +60,12 @@ class TestPartialImport:
         elif test_type == "num":
             # alter so only num matches
             stored_record.metadata.epac_ops_data_version = "2.3"
-            stored_record.metadata.timestamp = "3122-04-07T14:28:16+0000"
+            stored_record.metadata.timestamp = "3122-04-07T14:28:16+00:00"
             stored_record.metadata.active_area = "ae2"
             stored_record.metadata.active_experiment = "4898"
         elif test_type == "neither":
             # alter so neither shotnum nor timestamp matches
-            stored_record.metadata.timestamp = "3122-04-07T14:28:16+0000"
+            stored_record.metadata.timestamp = "3122-04-07T14:28:16+00:00"
             stored_record.metadata.shotnum = 234
         elif test_type == "single":
             # alter so only shotnum is wrong
