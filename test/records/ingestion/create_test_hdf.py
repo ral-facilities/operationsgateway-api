@@ -127,8 +127,10 @@ async def create_test_hdf_file(  # noqa: C901
         if shotnum[1] == "exists":
             if shotnum[0] == "invalid":
                 record.attrs.create("shotnum", "string")
-            else:
+            elif shotnum[0] == "valid":
                 record.attrs.create("shotnum", 366272, dtype="u8")
+            elif shotnum[0]:
+                record.attrs.create("shotnum", int(shotnum[0]), dtype="u8")
         if active_area[1] == "exists":
             record.attrs.create("active_area", active_area[0])
         if active_experiment[1] == "exists":
