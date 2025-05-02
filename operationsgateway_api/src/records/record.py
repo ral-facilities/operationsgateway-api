@@ -345,7 +345,8 @@ class Record:
                 # non-None and non-zero int
                 vector_model = await Vector.get_vector(record_id, channel_name)
                 vector = Vector(vector_model)
-                value.thumbnail = vector.create_thumbnail(vector_skip, vector_limit)
+                vector.create_thumbnail(vector_skip, vector_limit)
+                value.thumbnail = vector.thumbnail
 
     @staticmethod
     async def get_channel_dtype(
