@@ -78,10 +78,12 @@ class Vector:
         skip = await UserPreferences.get_default(
             username,
             Config.config.vectors.skip_pref_name,
+            enforce_type=int,
         )
         limit = await UserPreferences.get_default(
             username,
             Config.config.vectors.limit_pref_name,
+            enforce_type=int,
         )
 
         msg = "Preferred vector skip, limit for %s is %s, %s"

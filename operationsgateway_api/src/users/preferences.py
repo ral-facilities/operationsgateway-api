@@ -13,6 +13,7 @@ class UserPreferences:
     async def get_default(
         username: str,
         pref_name: str,
+        enforce_type: type,
         default: int | float | bool | str | None = None,
     ) -> int | float | bool | str:
         """
@@ -23,7 +24,8 @@ class UserPreferences:
         :return: the user preference value or `default`
         """
         try:
-            return await UserPreferences.get(username, pref_name)
+            value = await UserPreferences.get(username, pref_name)
+            return enforce_type(value)
         except MissingAttributeError:
             return default
 
