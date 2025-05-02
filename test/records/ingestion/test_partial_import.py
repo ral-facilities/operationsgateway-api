@@ -1,12 +1,15 @@
 import copy
+from datetime import datetime, timezone
 from unittest.mock import patch
 
+from fastapi.testclient import TestClient
 import pytest
 
-from operationsgateway_api.src.exceptions import RejectRecordError
+from operationsgateway_api.src.exceptions import HDFDataExtractionError
 from operationsgateway_api.src.records.ingestion.partial_import_checks import (
     PartialImportChecks,
 )
+from test.endpoints.conftest import reset_record_storage
 from test.records.ingestion.create_test_hdf import create_test_hdf_file
 
 
@@ -14,70 +17,231 @@ CHANNEL_PRESENT_MESSAGE = "Channel is already present in existing record"
 
 
 class TestPartialImport:
-    @pytest.mark.parametrize(
-        "test_type, response",
-        [
-            pytest.param(
-                "match",
-                "accept_merge",
-                id="Metadata matches",
-            ),
-            pytest.param(
-                "time",
-                "timestamp matches, other metadata does not",
-                id="Timestamp matches",
-            ),
-            pytest.param(
-                "num",
-                "shotnum matches, other metadata does not",
-                id="Shotnum matches",
-            ),
-            pytest.param(
-                "neither",
-                "accept_new",
-                id="Neither shotnum nor timestamp matches",
-            ),
-            pytest.param(
-                "single",
-                "inconsistent metadata",
-                id="Shotnum does not match",
-            ),
-        ],
-    )
+    """
+    These tests, and their associated implementation, came from the need
+    to have the shotnumber be unique in the system.
+    More history at: https://stfc.atlassian.net/browse/DSEGOG-412
+    Test cases: https://github.com/ral-facilities/operationsgateway-api/pull/179
+    """
+
+    def _submit_hdf(self, test_app, token) -> TestClient:
+        with open("test.h5", "rb") as f:
+            files = {"file": ("test.h5", f)}
+            return test_app.post(
+                "/submit/hdf",
+                headers={"Authorization": f"Bearer {token}"},
+                files=files,
+            )
+
     @pytest.mark.asyncio
-    async def test_metadata_checks(self, remove_hdf_file, test_type, response):
+    async def test_new_timestamp_no_shotnum(
+        self,
+        test_app,
+        reset_record_storage,
+        login_and_get_token,
+    ):
+        """
+        Test 1: New timestamp, no shot number. Should be accepted (201)
+        because shot number is optional.
+        """
+        # Create a file with the default time stamp (20200407142816),
+        # with a missing shot number
+        await create_test_hdf_file(shotnum=["", "missing"])
+        response = self._submit_hdf(test_app, login_and_get_token)
+        assert response.status_code == 201
+        assert "added as 20200407142816" in response.json()["message"].lower()
 
-        hdf_tuple = await create_test_hdf_file()
+    @pytest.mark.asyncio
+    async def test_existing_timestamp_no_shotnum(
+        self,
+        test_app,
+        reset_record_storage,
+        login_and_get_token,
+    ):
+        """
+        Test 2: Existing timestamp (present in the db), no shot number.
+        Should be updated (200) due to duplicate timestamp and shotnum being optional.
+        """
+        # Create a file with the default time stamp (20200407142816)
+        # with a missing shot number
+        await create_test_hdf_file(shotnum=["", "missing"])
+        self._submit_hdf(test_app, login_and_get_token)
+        # Submit again with same timestamp in the file
+        response = self._submit_hdf(test_app, login_and_get_token)
+        print(response.text)
+        assert response.status_code == 200
+        assert "updated 20200407142816" in response.json()["message"].lower()
 
-        stored_record = copy.deepcopy(hdf_tuple[0])
+    @pytest.mark.asyncio
+    async def test_no_timestamp_no_shotnum(
+        self,
+        test_app,
+        reset_record_storage,
+        login_and_get_token,
+    ):
+        """
+        Test 3: No timestamp, no shot number.Should raise error in
+        create_test_hdf_file due to missing required timestamp metadata.
+        """
+        with pytest.raises(HDFDataExtractionError, match="Invalid timestamp metadata"):
+            await create_test_hdf_file(
+                timestamp=["", "missing"],
+                shotnum=["", "missing"],
+            )
 
-        if test_type == "time":
-            # alter so only time matches
-            stored_record.metadata.epac_ops_data_version = "2.3"
-            stored_record.metadata.shotnum = 234
-            stored_record.metadata.active_area = "ae2"
-            stored_record.metadata.active_experiment = "4898"
-        elif test_type == "num":
-            # alter so only num matches
-            stored_record.metadata.epac_ops_data_version = "2.3"
-            stored_record.metadata.timestamp = "3122-04-07T14:28:16+00:00"
-            stored_record.metadata.active_area = "ae2"
-            stored_record.metadata.active_experiment = "4898"
-        elif test_type == "neither":
-            # alter so neither shotnum nor timestamp matches
-            stored_record.metadata.timestamp = "3122-04-07T14:28:16+00:00"
-            stored_record.metadata.shotnum = 234
-        elif test_type == "single":
-            # alter so only shotnum is wrong
-            stored_record.metadata.shotnum = 234
+    @pytest.mark.asyncio
+    async def test_new_timestamp_new_shotnum(
+        self,
+        test_app,
+        reset_record_storage,
+        login_and_get_token,
+    ):
+        """
+        Test 4: New timestamp, new shot number. Should be accepted as both are unique.
+        """
+        # Create a file with the default time stamp (20200407142816)
+        # and the default shot number (366272)
+        await create_test_hdf_file()
+        response = self._submit_hdf(test_app, login_and_get_token)
+        assert response.status_code == 201
+        assert "added as 20200407142816" in response.json()["message"].lower()
 
-        partial_import_checker = PartialImportChecks(hdf_tuple[0], stored_record)
+    @pytest.mark.asyncio
+    async def test_existing_timestamp_new_shotnum(
+        self,
+        test_app,
+        reset_record_storage,
+        login_and_get_token,
+    ):
+        """
+        Test 5: Existing timestamp, new shot number. Should be rejected (400)
+        because of inconsistent metadata. The shot number doesn't match the
+        shot number in the db
+        """
+        # Create a file with the default time stamp (20200407142816)
+        # and the default shot number (366272)
+        await create_test_hdf_file()
+        self._submit_hdf(test_app, login_and_get_token)
 
-        if test_type == "match" or test_type == "neither":
-            assert partial_import_checker.metadata_checks() == response
-        else:
-            with pytest.raises(RejectRecordError, match=response):
-                partial_import_checker.metadata_checks()
+        # Create a file with the same time stamp above but a different shot number
+        await create_test_hdf_file(shotnum=["9999", "exists"])
+
+        response = self._submit_hdf(test_app, login_and_get_token)
+        assert response.status_code == 400
+        assert "inconsistent metadata" in response.json()["detail"].lower()
+
+    @pytest.mark.asyncio
+    async def test_no_timestamp_new_shotnum(
+        self,
+        test_app,
+        reset_record_storage,
+        login_and_get_token,
+    ):
+        """
+        Test 6: No timestamp, New shot number. Should raise error in
+        create_test_hdf_file due to missing required timestamp metadata.
+        """
+        with pytest.raises(HDFDataExtractionError, match="Invalid timestamp metadata"):
+            # Create a file with a missing time stamp, but with the
+            # default shot number (366272) that doesn't exist on the system
+            await create_test_hdf_file(
+                timestamp=["", "missing"],
+                shotnum=["10101", "exists"],
+            )
+
+    @pytest.mark.asyncio
+    async def test_new_timestamp_existing_shotnum(
+        self,
+        test_app,
+        reset_record_storage,
+        login_and_get_token,
+    ):
+        """
+        Test 7: new timestamp, existing shot number.Should be rejected (400)
+        because shot number needs to be unique in the system.
+        """
+        # Create a file with the default time stamp (20200407142816)
+        # and the default shot number (366272)
+        await create_test_hdf_file()
+        self._submit_hdf(test_app, login_and_get_token)
+
+        # Create a file with a new time stamp but the same default shot number (366272)
+        timestamp_now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        await create_test_hdf_file(timestamp=[timestamp_now, "exists"])
+
+        response = self._submit_hdf(test_app, login_and_get_token)
+        assert response.status_code == 400
+        assert (
+            "a record with this shotnum already exists"
+            in response.json()["detail"].lower()
+        )
+
+    @pytest.mark.asyncio
+    async def test_existing_timestamp_existing_shotnum(
+        self,
+        test_app,
+        reset_record_storage,
+        login_and_get_token,
+    ):
+        """
+        Test 8: existing timestamp, existing shot number. Both the timestamp
+        and the shot number exist in the system. Should be accepted as a merge (200).
+        """
+        # Create a file with the default time stamp (20200407142816)
+        # and the default shot number (366272)
+        await create_test_hdf_file()
+        self._submit_hdf(test_app, login_and_get_token)
+
+        # submit the same file again
+        response = self._submit_hdf(test_app, login_and_get_token)
+        assert response.status_code == 200
+        assert "updated 20200407142816" in response.json()["message"].lower()
+
+    @pytest.mark.asyncio
+    async def test_no_timestamp_existing_shotnum(
+        self,
+        test_app,
+        reset_record_storage,
+        login_and_get_token,
+    ):
+        """
+        Test 9: No timestamp, but with a shotnumber that already exists in the
+        system. Should raise error in create_test_hdf_file due to missing
+        required timestamp metadata.
+        """
+        # Create a file with the default time stamp (20200407142816)
+        # and the default shot number (366272)
+        await create_test_hdf_file()
+        self._submit_hdf(test_app, login_and_get_token)
+
+        with pytest.raises(HDFDataExtractionError, match="Invalid timestamp metadata"):
+            # Create a file with a missing timestamp field
+            # but with the same shot number as above (366272)
+            await create_test_hdf_file(timestamp=["", "missing"])
+
+    @pytest.mark.asyncio
+    async def test_existing_timestamp_and_shotnum_with_none_update(
+        self,
+        test_app,
+        reset_record_storage,
+        login_and_get_token,
+    ):
+        """
+        Test 10: Existing timestamp, None as shot number. Should be rejected (400)
+        because of inconsistent metadata. The shot number doesn't match the
+        shot number in the db
+        """
+        # Create a file with the default time stamp (20200407142816)
+        # and the default shot number (366272)
+        await create_test_hdf_file()
+        self._submit_hdf(test_app, login_and_get_token)
+
+        # Create a file with the same time stamp above but a different shot number
+        await create_test_hdf_file(shotnum=["9999", "missing"])
+
+        response = self._submit_hdf(test_app, login_and_get_token)
+        assert response.status_code == 400
+        assert "inconsistent metadata" in response.json()["detail"].lower()
 
     @pytest.mark.parametrize(
         "test_type, response",
