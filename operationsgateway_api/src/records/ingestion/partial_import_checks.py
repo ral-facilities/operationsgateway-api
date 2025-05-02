@@ -40,56 +40,47 @@ class PartialImportChecks:
         ingested_metadata = self.ingested_record.metadata
         stored_metadata = self.stored_record.metadata
 
+        # Match timestamp with or without timezone info
         try:
-            time_match = (ingested_metadata.timestamp).replace(
+            time_match = ingested_metadata.timestamp.replace(
                 tzinfo=None,
             ) == stored_metadata.timestamp.replace(tzinfo=None)
         except Exception:
-            time_match = (ingested_metadata.timestamp) == stored_metadata.timestamp
+            time_match = ingested_metadata.timestamp == stored_metadata.timestamp
 
         epac_match = (
             ingested_metadata.epac_ops_data_version
             == stored_metadata.epac_ops_data_version
         )
-        shot_match = ingested_metadata.shotnum == stored_metadata.shotnum
         area_match = ingested_metadata.active_area == stored_metadata.active_area
         experiment_match = (
             ingested_metadata.active_experiment == stored_metadata.active_experiment
         )
 
-        if time_match and epac_match and shot_match and area_match and experiment_match:
-            log.info("record metadata matches existing record perfectly")
-            return "accept_merge"
+        shot_match = (ingested_metadata.shotnum == stored_metadata.shotnum)
 
-        elif (
-            time_match
-            and not epac_match
-            and not shot_match
-            and not area_match
-            and not experiment_match
-        ):
-            raise RejectRecordError("timestamp matches, other metadata does not")
+        # Reject if shotnum matches but timestamp doesn't
+        if shot_match and not time_match:
+            raise RejectRecordError("A record with this shotnum already exists")
 
-        elif (
-            shot_match
-            and not time_match
-            and not epac_match
-            and not area_match
-            and not experiment_match
-        ):
-            raise RejectRecordError("shotnum matches, other metadata does not")
+        # Accept merge if everything matches and shotnum also matches
+        if time_match and epac_match and area_match and experiment_match:
+            if shot_match:
+                log.info("record metadata matches existing record perfectly")
+                return "accept_merge"
 
-        elif not time_match and not shot_match:
+        # Accept as new record if both timestamp and shotnum are unique
+        if not time_match and not shot_match:
             return "accept_new"
 
-        else:
-            log.error(
-                "Metadata for file being ingested: %s, metadata for file stored in"
-                " database: %s",
-                ingested_metadata,
-                stored_metadata,
-            )
-            raise RejectRecordError("inconsistent metadata")
+        # All other cases are inconsistent
+        log.error(
+            "Metadata for file being ingested: %s, metadata for file "
+            "stored in database: %s",
+            ingested_metadata,
+            stored_metadata,
+        )
+        raise RejectRecordError("inconsistent metadata")
 
     def channel_checks(
         self,
