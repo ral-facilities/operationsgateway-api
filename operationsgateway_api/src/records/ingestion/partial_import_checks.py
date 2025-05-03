@@ -57,7 +57,7 @@ class PartialImportChecks:
             ingested_metadata.active_experiment == stored_metadata.active_experiment
         )
 
-        shot_match = (ingested_metadata.shotnum == stored_metadata.shotnum)
+        shot_match = ingested_metadata.shotnum == stored_metadata.shotnum
 
         # Reject if shotnum matches but timestamp doesn't
         if shot_match and not time_match:
