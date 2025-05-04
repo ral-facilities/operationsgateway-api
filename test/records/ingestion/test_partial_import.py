@@ -268,6 +268,14 @@ class TestPartialImport:
         assert response.status_code == 200
         assert "updated 20200407142816" in response.json()["message"].lower()
 
+        # make sure the version hasn't been updated and remains the standard
+        response = test_app.get(
+            "/records/20200407142816",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+        )
+        assert response.status_code == 200
+        assert response.json()["metadata"]["epac_ops_data_version"] == "1.0"
+
     @pytest.mark.parametrize(
         "test_type, response",
         [
