@@ -199,7 +199,7 @@ class TestPartialImport:
         assert "inconsistent metadata" in response.json()["detail"].lower()
 
     @pytest.mark.asyncio
-    async def test_existing_timestamp_and_shotnum_with_none_update(
+    async def test_existing_timestamp_none_shotnum(
         self,
         test_app,
         reset_record_storage,
@@ -239,6 +239,31 @@ class TestPartialImport:
         self._submit_hdf(test_app, login_and_get_token)
 
         # submit the same file again
+        response = self._submit_hdf(test_app, login_and_get_token)
+        assert response.status_code == 200
+        assert "updated 20200407142816" in response.json()["message"].lower()
+
+    @pytest.mark.asyncio
+    async def test_existing_version_with_different_version(
+        self,
+        test_app,
+        reset_record_storage,
+        login_and_get_token,
+    ):
+        """
+        Test 11: Both the timestamp and the shot number exist in the system.
+        All other metadata match apart from the version, which shouldn't be
+        checked for. Should be accepted as a merge (200).
+        """
+        # Create a file with the default time stamp (20200407142816),
+        # default shot number (366272), and the default version (1.0)
+        await create_test_hdf_file()
+        self._submit_hdf(test_app, login_and_get_token)
+
+        # create the same file again but with a different version,
+        # the value has to be present as it's a required field but the api
+        # should NOT reject if they are different
+        await create_test_hdf_file(data_version=["1.2", "exists"])
         response = self._submit_hdf(test_app, login_and_get_token)
         assert response.status_code == 200
         assert "updated 20200407142816" in response.json()["message"].lower()
