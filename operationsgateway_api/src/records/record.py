@@ -97,6 +97,8 @@ class Record:
 
         for metadata_key, value in self.record.metadata.model_dump(
             exclude_unset=True,
+            exclude={"epac_ops_data_version"},
+
         ).items():
             await MongoDBInterface.update_one(
                 "records",
