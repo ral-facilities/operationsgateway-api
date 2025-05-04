@@ -48,10 +48,6 @@ class PartialImportChecks:
         except Exception:
             time_match = ingested_metadata.timestamp == stored_metadata.timestamp
 
-        epac_match = (
-            ingested_metadata.epac_ops_data_version
-            == stored_metadata.epac_ops_data_version
-        )
         area_match = ingested_metadata.active_area == stored_metadata.active_area
         experiment_match = (
             ingested_metadata.active_experiment == stored_metadata.active_experiment
@@ -61,13 +57,12 @@ class PartialImportChecks:
 
         # Reject if shotnum matches but timestamp doesn't
         if shot_match and not time_match:
-            raise RejectRecordError("A record with this shotnum already exists")
+            raise RejectRecordError("a record with this shotnum already exists")
 
-        # Accept merge if everything matches and shotnum also matches
-        if time_match and epac_match and area_match and experiment_match:
-            if shot_match:
-                log.info("record metadata matches existing record perfectly")
-                return "accept_merge"
+        # Accept merge if everything matches
+        if shot_match and time_match and area_match and experiment_match:
+            log.info("record metadata matches existing record perfectly")
+            return "accept_merge"
 
         # Accept as new record if both timestamp and shotnum are unique
         if not time_match and not shot_match:
