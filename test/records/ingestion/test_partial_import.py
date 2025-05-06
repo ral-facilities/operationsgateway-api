@@ -41,8 +41,8 @@ class TestPartialImport:
         login_and_get_token,
     ):
         """
-        Test 1: New timestamp, no shot number. Should be accepted (201)
-        because shot number is optional.
+        Test 1: New timestamp, no shot number. Should be accepted and treated
+        as a new record (201) because shot number is optional.
         """
         # Create a file with the default time stamp (20200407142816),
         # with a missing shot number
@@ -95,7 +95,7 @@ class TestPartialImport:
         login_and_get_token,
     ):
         """
-        Test 4: No timestamp, but with a shotnumber that already exists in the
+        Test 4: No timestamp, but with a shot number that already exists in the
         system. Should raise error in create_test_hdf_file due to missing
         required timestamp metadata.
         """
@@ -117,7 +117,8 @@ class TestPartialImport:
         login_and_get_token,
     ):
         """
-        Test 5: New timestamp, new shot number. Should be accepted as both are unique.
+        Test 5: New timestamp, new shot number. Should be accepted (201) as
+        both are unique.
         """
         # Create a file with the default time stamp (20200407142816)
         # and the default shot number (366272)
@@ -162,7 +163,8 @@ class TestPartialImport:
     ):
         """
         Test 7: Existing timestamp (present in the db), no shot number.
-        Should be updated (200) due to duplicate timestamp and shotnum being optional.
+        Should be updated (200) due to duplicate timestamp, other metadata
+        matching and shot number being optional.
         """
         # Create a file with the default time stamp (20200407142816)
         # with a missing shot number
@@ -206,16 +208,16 @@ class TestPartialImport:
         login_and_get_token,
     ):
         """
-        Test 9: Existing timestamp, None as shot number. Should be rejected (400)
-        because of inconsistent metadata. The shot number doesn't match the
-        shot number in the db
+        Test 9: Existing timestamp, None as shot number. Similar to above,
+        should be rejected (400) because of inconsistent metadata.
+        The shot number doesn't match the shot number in the db
         """
         # Create a file with the default time stamp (20200407142816)
         # and the default shot number (366272)
         await create_test_hdf_file()
         self._submit_hdf(test_app, login_and_get_token)
 
-        # Create a file with the same time stamp above but a different shot number
+        # Create a file with the same time stamp above but no shot number
         await create_test_hdf_file(shotnum=["9999", "missing"])
 
         response = self._submit_hdf(test_app, login_and_get_token)
@@ -231,7 +233,8 @@ class TestPartialImport:
     ):
         """
         Test 10: existing timestamp, existing shot number. Both the timestamp
-        and the shot number exist in the system. Should be accepted as a merge (200).
+        and the shot number exist in the system. Should be accepted as a merge (200)
+        as all other metadata matches.
         """
         # Create a file with the default time stamp (20200407142816)
         # and the default shot number (366272)
