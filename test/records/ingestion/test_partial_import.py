@@ -4,6 +4,11 @@ from unittest.mock import patch
 import pytest
 
 from operationsgateway_api.src.exceptions import RejectRecordError
+from operationsgateway_api.src.models import (
+    RecordModel,
+    ScalarChannelMetadataModel,
+    ScalarChannelModel,
+)
 from operationsgateway_api.src.records.ingestion.partial_import_checks import (
     PartialImportChecks,
 )
@@ -210,3 +215,17 @@ class TestPartialImport:
             )
 
         assert partial_import_channel_checks == response
+
+    def test_channel_checks_removal(self):
+        partial_import_checks = PartialImportChecks(None, None)
+        model = ScalarChannelModel(metadata=ScalarChannelMetadataModel(), data="")
+        ingested_record = RecordModel(_id="", metadata={}, channels={"test": model})
+        stored_record = RecordModel(_id="", metadata={}, channels={})
+        partial_import_checks.stored_record = stored_record
+        partial_import_checks.ingested_record = ingested_record
+
+        channel_dict = {"rejected_channels": {"test": "failure"}}
+        checks = partial_import_checks.channel_checks(channel_dict)
+
+        expected = {"accepted_channels": [], "rejected_channels": {"test": "failure"}}
+        assert checks == expected

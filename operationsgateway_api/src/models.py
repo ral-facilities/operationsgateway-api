@@ -234,11 +234,18 @@ class PartialWaveformChannelModel(WaveformChannelModel):
     waveform_path: str | None = None
 
 
+class PartialVectorChannelModel(VectorChannelModel):
+    metadata: VectorChannelMetadataModel | None = None
+    thumbnail: bytes | None = None
+    vector_path: str | None = None
+
+
 PartialChannelModel = (
     PartialImageChannelModel
     | PartialFloatImageChannelModel
     | PartialScalarChannelModel
     | PartialWaveformChannelModel
+    | PartialVectorChannelModel
 )
 PartialChannels = dict[str, PartialChannelModel]
 
@@ -314,7 +321,7 @@ class ChannelModel(BaseModel):
     def check_vector_channel(cls, v, values):  # noqa: N805
         if not values.data["type_"] == ChannelDtype.VECTOR:
             raise ChannelManifestError(
-                "Only vector channels should contain waveform channel metadata."
+                "Only vector channels should contain vector channel metadata."
                 f" Invalid channel is called: {values.data['name']}",
             )
         else:

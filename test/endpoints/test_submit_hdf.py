@@ -379,8 +379,8 @@ class TestSubmitHDF:
                         "Channel is already present in existing record"
                     ),
                     "PM-201-FE-CAM-2": [
-                        "data attribute has wrong datatype, should be ndarray",
-                        "data attribute has wrong datatype, should be uint16 or uint8",
+                        "data has wrong datatype, should be ndarray",
+                        "data has wrong datatype, should be uint16 or uint8",
                     ],
                     "PM-201-HJ-PD": "Channel is already present in existing record",
                 },
@@ -603,6 +603,6 @@ class TestSubmitHDF:
 
         response_json = test_response.json()
         assert (
-            "File minor version number too high (expected <=1)"
+            "File minor version number too high (expected <=2)"
             in response_json["response"]["warnings"]
         )
