@@ -6,7 +6,12 @@ import imagehash
 from PIL import Image
 import pytest
 
-from test.conftest import set_preferred_colourmap, unset_preferred_colourmap
+from test.conftest import (
+    set_preferred_colourmap,
+    set_preferred_float_colourmap,
+    unset_preferred_colourmap,
+    unset_preferred_float_colourmap,
+)
 
 
 class TestChannelSummary:
@@ -77,6 +82,42 @@ class TestChannelSummary:
                 id="Image channel summary (using user's preferred colourmap)",
             ),
             pytest.param(
+                "FE-204-NSS-WFS",
+                {
+                    "first_date": "2023-06-05T08:03:00",
+                    "most_recent_date": "2023-06-05T08:03:00",
+                    "recent_sample": [
+                        {"2023-06-05T08:03:00": "cf2c39d3382c6363"},
+                    ],
+                },
+                False,
+                id="Float image channel summary (using system default colourmap)",
+            ),
+            pytest.param(
+                "FE-204-NSS-WFS",
+                {
+                    "first_date": "2023-06-05T08:03:00",
+                    "most_recent_date": "2023-06-05T08:03:00",
+                    "recent_sample": [
+                        {"2023-06-05T08:03:00": "ec3893c79c688f92"},
+                    ],
+                },
+                True,
+                id="Float image channel summary (using user's preferred colourmap)",
+            ),
+            pytest.param(
+                "FE-204-NSS-WFS-COEF",
+                {
+                    "first_date": "2023-06-05T08:03:00",
+                    "most_recent_date": "2023-06-05T08:03:00",
+                    "recent_sample": [
+                        {"2023-06-05T08:03:00": "83c0e03ef8c77f30"},
+                    ],
+                },
+                False,
+                id="Vector channel summary",
+            ),
+            pytest.param(
                 "FE-204-PSO-P1-PD",
                 {
                     "first_date": "2023-06-05T08:00:00",
@@ -107,6 +148,11 @@ class TestChannelSummary:
         """
 
         set_preferred_colourmap(test_app, login_and_get_token, use_preferred_colourmap)
+        set_preferred_float_colourmap(
+            test_app,
+            login_and_get_token,
+            use_preferred_colourmap,
+        )
 
         test_response = test_app.get(
             f"/channels/summary/{channel_name}",
@@ -122,6 +168,11 @@ class TestChannelSummary:
                 sample[timestamp] = str(imagehash.phash(img))
 
         unset_preferred_colourmap(
+            test_app,
+            login_and_get_token,
+            use_preferred_colourmap,
+        )
+        unset_preferred_float_colourmap(
             test_app,
             login_and_get_token,
             use_preferred_colourmap,
