@@ -267,10 +267,10 @@ class ExportHandler:
             )
         elif channel_type == "vector":
             log.info("Channel %s is a vector", channel_name)
-            labels = None
             channel = channels[channel_name]
-            if "metadata" in channel and "labels" in channel["metadata"]:
-                labels = channel["metadata"]["labels"]
+            labels = None
+            if channel.metadata and channel.metadata.labels:
+                labels = channel.metadata.labels
             await self._add_vector_to_zip(channels, record_id, channel_name, labels)
         # process a scalar channel
         else:

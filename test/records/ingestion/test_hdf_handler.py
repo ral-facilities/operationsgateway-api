@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 import h5py
 import numpy as np
+from pydantic import ValidationError
 import pytest
 
 from operationsgateway_api.src.exceptions import HDFDataExtractionError
@@ -132,3 +133,93 @@ class TestHDFDataHandler:
             match="Invalid timestamp metadata",
         ):
             await instance.extract_data()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ["channel_name", "channel_dtype"],
+        [
+            pytest.param("PM-201-FE-EM", "scalar"),
+            pytest.param("PM-201-FE-CAM-1", "image"),
+            pytest.param("TS-202-TSM-WFS", "float_image"),
+            pytest.param("PM-201-FE-PD", "waveform"),
+            pytest.param("TS-202-TSM-WFS-COEF", "vector"),
+        ],
+    )
+    async def test_extract_channel_unexpected_group(
+        self,
+        channel_name: str,
+        channel_dtype: str,
+        remove_hdf_file,
+    ):
+        with h5py.File("test.h5", "w") as f:
+            f.attrs.create("epac_ops_data_version", "1.2")
+            record = f["/"]
+            record.attrs.create("timestamp", "2020-04-07 14:28:16")
+            record.attrs.create("shotnum", 366272, dtype="u8")
+            record.attrs.create("active_area", "ea1")
+            record.attrs.create("active_experiment", "90097341")
+            channel = record.create_group(channel_name)
+            channel.create_dataset("unexpected", 0)
+            channel.attrs.create("channel_dtype", channel_dtype)
+
+        hdf_data_handler = HDFDataHandler("test.h5")
+        await hdf_data_handler.extract_data()
+
+        expected = [{channel_name: "unexpected group or dataset in channel group"}]
+        assert hdf_data_handler.internal_failed_channel == expected
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ["channel_name", "channel_dtype", "expected"],
+        [
+            pytest.param(
+                "PM-201-FE-EM",
+                "scalar",
+                [{"PM-201-FE-EM": "data attribute is missing"}],
+            ),
+            pytest.param(
+                "PM-201-FE-CAM-1",
+                "image",
+                [{"PM-201-FE-CAM-1": "data attribute is missing"}],
+            ),
+            pytest.param(
+                "TS-202-TSM-WFS",
+                "float_image",
+                [{"TS-202-TSM-WFS": "data attribute is missing"}],
+            ),
+            pytest.param(
+                "PM-201-FE-PD",
+                "waveform",
+                [
+                    {"PM-201-FE-PD": "x attribute is missing"},
+                    {"PM-201-FE-PD": "y attribute is missing"},
+                ],
+            ),
+            pytest.param(
+                "TS-202-TSM-WFS-COEF",
+                "vector",
+                [{"TS-202-TSM-WFS-COEF": "data attribute is missing"}],
+            ),
+        ],
+    )
+    async def test_extract_channel_data_missing(
+        self,
+        channel_name: str,
+        channel_dtype: str,
+        expected: list[dict[str, str]],
+        remove_hdf_file,
+    ):
+        with h5py.File("test.h5", "w") as f:
+            f.attrs.create("epac_ops_data_version", "1.2")
+            record = f["/"]
+            record.attrs.create("timestamp", "2020-04-07 14:28:16")
+            record.attrs.create("shotnum", 366272, dtype="u8")
+            record.attrs.create("active_area", "ea1")
+            record.attrs.create("active_experiment", "90097341")
+            channel = record.create_group(channel_name)
+            channel.attrs.create("channel_dtype", channel_dtype)
+
+        hdf_data_handler = HDFDataHandler("test.h5")
+        await hdf_data_handler.extract_data()
+
+        assert hdf_data_handler.internal_failed_channel == expected

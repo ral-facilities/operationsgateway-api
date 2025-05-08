@@ -171,7 +171,7 @@ class ChannelChecks:
                     np.ndarray,
                 ):
                     rejected_channels.append(
-                        {key: "data attribute has wrong datatype, should be ndarray"},
+                        {key: "data has wrong datatype, should be ndarray"},
                     )
 
             elif value.metadata.channel_dtype == "float_image":
@@ -184,7 +184,7 @@ class ChannelChecks:
                     np.ndarray,
                 ):
                     rejected_channels.append(
-                        {key: "data attribute has wrong datatype, should be ndarray"},
+                        {key: "data has wrong datatype, should be ndarray"},
                     )
 
             elif value.metadata.channel_dtype == "waveform":
@@ -253,17 +253,19 @@ class ChannelChecks:
         value_dict: dict[str, Any],
         rejected_channels: list[dict[str, str]],
         accepted_types: tuple[type],
-    ) -> None:
+    ) -> Any:
         """
         Modifies rejected_channels in place with a new message if attribute name is
         specified and the value is not of one of the accepted_types.
         """
-        if (attribute_name in value_dict) and (
-            not isinstance(value_dict[attribute_name], accepted_types)
-            and value_dict[attribute_name] is not None
-        ):
-            message = f"{attribute_name} attribute has wrong datatype"
-            rejected_channels.append({channel_name: message})
+        if attribute_name in value_dict and value_dict[attribute_name] is not None:
+            if not isinstance(value_dict[attribute_name], accepted_types):
+                message = f"{attribute_name} attribute has wrong datatype"
+                rejected_channels.append({channel_name: message})
+            else:
+                return value_dict[attribute_name]
+
+        return None
 
     @staticmethod
     def _check_str(
@@ -542,13 +544,12 @@ class ChannelChecks:
                 ):
                     if not all(isinstance(element, np.ndarray) for element in data):
                         rejected_channels.append(
-                            {key: "data attribute has wrong shape"},
+                            {key: "data has wrong shape"},
                         )
                 else:
                     rejected_channels.append(
                         {
-                            key: "data attribute has wrong datatype, "
-                            "should be uint16 or uint8",
+                            key: "data has wrong datatype, should be uint16 or uint8",
                         },
                     )
 
@@ -560,7 +561,7 @@ class ChannelChecks:
                 data = image.data
                 if not all(isinstance(element, np.ndarray) for element in data):
                     rejected_channels.append(
-                        {key: "data attribute has wrong shape"},
+                        {key: "data has wrong shape"},
                     )
 
             elif value.metadata.channel_dtype == "waveform":
@@ -589,6 +590,7 @@ class ChannelChecks:
             [
                 "data attribute is missing",
                 "data has wrong datatype",
+                "data has wrong shape",
                 "x attribute is missing",
                 "y attribute is missing",
                 "channel_dtype attribute is missing",

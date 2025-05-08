@@ -90,14 +90,11 @@ class PartialImportChecks:
         there's an image channel in the record, but the image isn't stored in Echo
         (perhaps due to a failure in ingestion or someone's manually deleted it)
         """
-        ingested_channels = self.ingested_record.channels
-        stored_channels = self.stored_record.channels
-
         accepted_channels = []
         rejected_channels = {}
 
-        for channel_name, channel_model in ingested_channels.items():
-            if channel_name in stored_channels:
+        for channel_name, channel_model in self.ingested_record.channels.items():
+            if channel_name in self.stored_record.channels:
                 if isinstance(channel_model, ImageChannelModel):
                     path = Image.get_full_path(channel_model.image_path)
                     object_stored = self.echo.head_object(path)

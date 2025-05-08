@@ -50,11 +50,17 @@ async def get_channel_summary(
         [("_id", pymongo.DESCENDING)],
     )
 
+    msg = "Preferred colourmaps after user prefs check are %s, %s (float)"
     username = JwtHandler.get_payload(access_token)["username"]
     colourmap_name = await FalseColourHandler.get_preferred_colourmap(username)
-    log.debug("Preferred colour map after user prefs check is %s", colourmap_name)
+    float_colourmap = await FalseColourHandler.get_preferred_float_colourmap(username)
+    log.debug(msg, colourmap_name, float_colourmap)
 
-    recent_data = await Record.get_recent_channel_values(channel_name, colourmap_name)
+    recent_data = await Record.get_recent_channel_values(
+        channel_name,
+        colourmap_name,
+        float_colourmap,
+    )
 
     return ChannelSummaryModel(
         first_date=first_date,

@@ -248,13 +248,15 @@ class Record:
     async def get_recent_channel_values(
         channel_name: str,
         colourmap_name: str,
+        float_colourmap: str,
     ) -> List[Union[str, int, float]]:
         """
         Return the most recent three values for a particular channel
 
         Depending on the channel type, different samples will be collected:
         - Scalar: return the values themselves
-        - Image or waveform: return the thumbnails of the data they represent
+        - Image, float image, waveform or vector: return the thumbnails of the data they
+          represent
         """
 
         channel_path = f"channels.{channel_name}"
@@ -273,9 +275,10 @@ class Record:
         recent_values = []
         for record in records:
             channel = record.channels[channel_name]
+            data = None
 
             if channel.metadata.channel_dtype == "scalar":
-                recent_values.append({record.metadata.timestamp: channel.data})
+                data = channel.data
             elif channel.metadata.channel_dtype == "image":
                 thumbnail_bytes = FalseColourHandler.apply_false_colour_to_b64_img(
                     channel.thumbnail,
@@ -283,16 +286,23 @@ class Record:
                     None,
                     colourmap_name,
                 )
-                thumbnail_bytes.seek(0)
-                recent_values.append(
-                    {
-                        record.metadata.timestamp: base64.b64encode(
-                            thumbnail_bytes.getvalue(),
-                        ),
-                    },
-                )
+                data = base64.b64encode(thumbnail_bytes.getvalue())
             elif channel.metadata.channel_dtype == "waveform":
-                recent_values.append({record.metadata.timestamp: channel.thumbnail})
+                data = channel.thumbnail
+            elif channel.metadata.channel_dtype == ChannelDtype.VECTOR:
+                data = channel.thumbnail
+            elif channel.metadata.channel_dtype == ChannelDtype.FLOAT_IMAGE:
+                bytes_io = FalseColourHandler.apply_false_colour_to_b64_float_img(
+                    channel.thumbnail,
+                    float_colourmap,
+                )
+                data = base64.b64encode(bytes_io.getvalue())
+            else:
+                msg = "Unrecognised channel_dtype of %s"
+                log.warning(msg, channel.metadata.channel_dtype)
+                continue
+
+            recent_values.append({record.metadata.timestamp: data})
 
         return recent_values
 
