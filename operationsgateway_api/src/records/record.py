@@ -312,6 +312,8 @@ class Record:
         upper_level: int,
         colourmap_name: str,
         float_colourmap_name: str,
+        vector_skip: int | None,
+        vector_limit: int | None,
     ) -> None:
         """
         Apply false colour to any greyscale image thumbnails in the record.
@@ -330,23 +332,31 @@ class Record:
                 value,
             )
             b64_thumbnail_str = getattr(value, "thumbnail", None)
-            if b64_thumbnail_str is not None:
-                if channel_dtype == "image":
-                    thumbnail_bytes = FalseColourHandler.apply_false_colour_to_b64_img(
+            thumbnail_set = b64_thumbnail_str is not None
+            skip_limit_set = vector_skip or vector_limit
+            if channel_dtype == "image" and thumbnail_set:
+                thumbnail_bytes = FalseColourHandler.apply_false_colour_to_b64_img(
+                    base64_image=b64_thumbnail_str,
+                    lower_level=lower_level,
+                    upper_level=upper_level,
+                    colourmap_name=colourmap_name,
+                )
+                value.thumbnail = base64.b64encode(thumbnail_bytes.getvalue())
+            elif channel_dtype == "float_image" and thumbnail_set:
+                thumbnail_bytes = (
+                    FalseColourHandler.apply_false_colour_to_b64_float_img(
                         b64_thumbnail_str,
-                        lower_level,
-                        upper_level,
-                        colourmap_name,
+                        float_colourmap_name,
                     )
-                    value.thumbnail = base64.b64encode(thumbnail_bytes.getvalue())
-                elif channel_dtype == "float_image":
-                    thumbnail_bytes = (
-                        FalseColourHandler.apply_false_colour_to_b64_float_img(
-                            b64_thumbnail_str,
-                            float_colourmap_name,
-                        )
-                    )
-                    value.thumbnail = base64.b64encode(thumbnail_bytes.getvalue())
+                )
+                value.thumbnail = base64.b64encode(thumbnail_bytes.getvalue())
+            elif channel_dtype == "vector" and thumbnail_set and skip_limit_set:
+                # Only re-generate thumbnail if either skip or limit are truthy, i.e.
+                # non-None and non-zero int
+                vector_model = await Vector.get_vector(record_id, channel_name)
+                vector = Vector(vector_model)
+                vector.create_thumbnail(vector_skip, vector_limit)
+                value.thumbnail = vector.thumbnail
 
     @staticmethod
     async def get_channel_dtype(
