@@ -6,7 +6,6 @@ from fastapi.testclient import TestClient
 import pytest
 
 from operationsgateway_api.src.exceptions import HDFDataExtractionError
-from operationsgateway_api.src.exceptions import RejectRecordError
 from operationsgateway_api.src.models import (
     RecordModel,
     ScalarChannelMetadataModel,
