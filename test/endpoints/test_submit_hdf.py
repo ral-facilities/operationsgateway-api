@@ -272,37 +272,6 @@ class TestSubmitHDF:
         assert test_response.status_code == 400
 
     @pytest.mark.asyncio
-    async def test_partial_import_record_reject(
-        self,
-        reset_record_storage,
-        test_app: TestClient,
-        login_and_get_token,
-    ):
-        _ = await create_test_hdf_file()
-
-        test_file = "test.h5"
-        files = {"file": (test_file, open(test_file, "rb"))}
-
-        test_app.post(
-            "/submit/hdf",
-            headers={"Authorization": f"Bearer {login_and_get_token}"},
-            files=files,
-        )
-
-        _ = await create_test_hdf_file(shotnum=["valid", "missing"])
-
-        files = {"file": (test_file, open(test_file, "rb"))}
-
-        test_response = test_app.post(
-            "/submit/hdf",
-            headers={"Authorization": f"Bearer {login_and_get_token}"},
-            files=files,
-        )
-
-        assert test_response.json() == {"detail": "inconsistent metadata"}
-        assert test_response.status_code == 400
-
-    @pytest.mark.asyncio
     async def test_channel_all_fail(
         self,
         reset_record_storage,

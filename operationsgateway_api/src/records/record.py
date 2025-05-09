@@ -97,6 +97,7 @@ class Record:
 
         for metadata_key, value in self.record.metadata.model_dump(
             exclude_unset=True,
+            exclude={"epac_ops_data_version"},
         ).items():
             await MongoDBInterface.update_one(
                 "records",
@@ -146,6 +147,30 @@ class Record:
                 channels=record_dict["channels"],
             )
             return existing_record
+        else:
+            return None
+
+    async def find_record_by_shotnum(self) -> Union[RecordModel, None]:
+        """
+        Searches the MongoDB 'records' collection for a record with the given
+        shot number. Returns a `RecordModel` if found, otherwise returns `None`.
+        """
+
+        log.debug(
+            "Querying MongoDB to see if a shotnum is already stored in the database",
+        )
+
+        record_dict = await MongoDBInterface.find_one(
+            "records",
+            filter_={"metadata.shotnum": self.record.metadata.shotnum},
+        )
+
+        if record_dict:
+            return RecordModel(
+                _id=record_dict["_id"],
+                metadata=record_dict["metadata"],
+                channels=record_dict["channels"],
+            )
         else:
             return None
 

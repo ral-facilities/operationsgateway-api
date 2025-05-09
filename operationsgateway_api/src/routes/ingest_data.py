@@ -109,7 +109,10 @@ async def submit_hdf(
     ) = await hdf_handler.extract_data()
 
     record_original = Record(record_data)
+    # a record is deemed existing in the db if the timestamp or shotnum exists
     stored_record = await record_original.find_existing_record()
+    if stored_record is None and record_original.record.metadata.shotnum is not None:
+        stored_record = await record_original.find_record_by_shotnum()
 
     file_checker = FileChecks(record_data)
     warning = file_checker.epac_data_version_checks()

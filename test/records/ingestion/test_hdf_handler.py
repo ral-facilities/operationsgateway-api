@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 
 import h5py
 import numpy as np
-from pydantic import ValidationError
 import pytest
 
 from operationsgateway_api.src.exceptions import HDFDataExtractionError
@@ -154,7 +153,7 @@ class TestHDFDataHandler:
         with h5py.File("test.h5", "w") as f:
             f.attrs.create("epac_ops_data_version", "1.2")
             record = f["/"]
-            record.attrs.create("timestamp", "2020-04-07 14:28:16")
+            record.attrs.create("timestamp", "2020-04-07T14:28:16Z")
             record.attrs.create("shotnum", 366272, dtype="u8")
             record.attrs.create("active_area", "ea1")
             record.attrs.create("active_experiment", "90097341")
@@ -212,7 +211,7 @@ class TestHDFDataHandler:
         with h5py.File("test.h5", "w") as f:
             f.attrs.create("epac_ops_data_version", "1.2")
             record = f["/"]
-            record.attrs.create("timestamp", "2020-04-07 14:28:16")
+            record.attrs.create("timestamp", "2020-04-07T14:28:16Z")
             record.attrs.create("shotnum", 366272, dtype="u8")
             record.attrs.create("active_area", "ea1")
             record.attrs.create("active_experiment", "90097341")
