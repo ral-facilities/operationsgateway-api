@@ -119,7 +119,7 @@ class ObservabilityConfig(BaseModel):
     """Configuration model class to store export observability details"""
 
     environment: StrictStr
-    secret: StrictStr
+    secret_key: StrictStr
 
 
 class APIConfig(BaseModel):
