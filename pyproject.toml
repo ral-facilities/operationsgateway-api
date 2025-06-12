@@ -43,6 +43,7 @@ httpx = "^0.23.3"
 # urllib3 isn't a dependency of this project, remove once the issue has been resolved
 urllib3 = ">=1.25.4,<1.27"
 lark = "1.1.9"
+elastic-apm = "^6.23.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.4.0"

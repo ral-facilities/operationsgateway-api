@@ -115,6 +115,13 @@ class ExportConfig(BaseModel):
     max_filesize_bytes: StrictInt
 
 
+class ObservabilityConfig(BaseModel):
+    """Configuration model class to store export observability details"""
+
+    environment: StrictStr
+    secret: StrictStr
+
+
 class APIConfig(BaseModel):
     """
     Class to store the API's configuration settings

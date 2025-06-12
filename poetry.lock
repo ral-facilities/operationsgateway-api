@@ -745,6 +745,48 @@ pipenv = ["pipenv"]
 poetry = ["poetry"]
 
 [[package]]
+name = "ecs-logging"
+version = "2.2.0"
+description = "Logging formatters for ECS (Elastic Common Schema) in Python"
+optional = false
+python-versions = ">=3.6"
+groups = ["main"]
+files = [
+    {file = "ecs_logging-2.2.0-py3-none-any.whl", hash = "sha256:f6e22d267770b06f797076f49b5fcc9d97108b22f452f5f9ed4b5367b1e61b5b"},
+    {file = "ecs_logging-2.2.0.tar.gz", hash = "sha256:1dc9e216f614129db0e6a2f9f926da4e4cf8edf8de16d1045a20aa8e950291d3"},
+]
+
+[package.extras]
+develop = ["elastic-apm", "mock", "pytest", "pytest-cov", "structlog"]
+
+[[package]]
+name = "elastic-apm"
+version = "6.23.0"
+description = "The official Python module for Elastic APM"
+optional = false
+python-versions = "<4,>=3.6"
+groups = ["main"]
+files = [
+    {file = "elastic-apm-6.23.0.tar.gz", hash = "sha256:1aeef4562486bd9ad611bba15f9eca5aeede6a737777541cb68c47c6cf5df7d4"},
+    {file = "elastic_apm-6.23.0-py2.py3-none-any.whl", hash = "sha256:5a1a17580560e70fba40b0a2e7682348422de5a9d2d13511efd05646eb4c62ae"},
+]
+
+[package.dependencies]
+certifi = "*"
+ecs-logging = "*"
+urllib3 = "<2.0.0 || >2.0.0,<3.0.0"
+wrapt = ">=1.14.1,<1.15.0 || >1.15.0"
+
+[package.extras]
+aiohttp = ["aiohttp"]
+flask = ["blinker"]
+opentelemetry = ["opentelemetry-api", "opentelemetry-sdk"]
+opentracing = ["opentracing (>=2.0.0)"]
+sanic = ["sanic"]
+starlette = ["starlette"]
+tornado = ["tornado"]
+
+[[package]]
 name = "epac-data-sim"
 version = "0.0.1"
 description = "Python application to simulate EPAC calendar schedule and data."
@@ -3571,7 +3613,7 @@ version = "1.17.2"
 description = "Module for decorators, wrappers and monkey patching."
 optional = false
 python-versions = ">=3.8"
-groups = ["dev"]
+groups = ["main", "dev"]
 files = [
     {file = "wrapt-1.17.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:3d57c572081fed831ad2d26fd430d565b76aa277ed1d30ff4d40670b1c0dd984"},
     {file = "wrapt-1.17.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:b5e251054542ae57ac7f3fba5d10bfff615b6c2fb09abeb37d2f1463f841ae22"},
@@ -3685,4 +3727,4 @@ xmlsec = ["xmlsec (>=0.6.1)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.12"
-content-hash = "248692ff33ced9861980b41f563d2272df9669214753a4bcfc2f6984d98603ae"
+content-hash = "7049addbaf0c7e999d3bee14e75e29ba53fbc7ba32dec266d4b7441f42b83369"
