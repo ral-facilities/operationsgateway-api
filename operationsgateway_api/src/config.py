@@ -140,6 +140,7 @@ class APIConfig(BaseModel):
     vectors: VectorsConfig
     echo: EchoConfig
     export: ExportConfig
+    observability: ObservabilityConfig
 
     @classmethod
     def load(cls, path=Path(__file__).parent.parent / "config.yml"):
