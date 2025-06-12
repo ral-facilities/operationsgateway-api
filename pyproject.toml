@@ -38,7 +38,7 @@ cron-converter = "^1.0.1"
 zeep = "^4.2.1"
 # Indirect dependency lxml 5.1.0 causes symbol not found in flat namespace '_exsltDateXpathCtxtRegister' error
 lxml = "5.0.1"
-httpx = "^0.23.3"
+httpx = "^0.28.1"
 # Workaround for: https://github.com/python-poetry/poetry-plugin-export/issues/183
 # urllib3 isn't a dependency of this project, remove once the issue has been resolved
 urllib3 = ">=1.25.4,<1.27"
