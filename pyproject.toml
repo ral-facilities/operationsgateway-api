@@ -41,7 +41,7 @@ lxml = "5.0.1"
 httpx = "^0.23.3"
 # Workaround for: https://github.com/python-poetry/poetry-plugin-export/issues/183
 # urllib3 isn't a dependency of this project, remove once the issue has been resolved
-urllib3 = ">=1.25.4,<1.27"
+urllib3 = ">=1.25.4,<2.6"
 lark = "1.1.9"
 
 [tool.poetry.group.dev.dependencies]
