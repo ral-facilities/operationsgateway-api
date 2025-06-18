@@ -115,6 +115,13 @@ class ExportConfig(BaseModel):
     max_filesize_bytes: StrictInt
 
 
+class ObservabilityConfig(BaseModel):
+    """Configuration model class to store export observability details"""
+
+    environment: StrictStr
+    secret_key: StrictStr  # apm key
+
+
 class APIConfig(BaseModel):
     """
     Class to store the API's configuration settings
@@ -133,6 +140,7 @@ class APIConfig(BaseModel):
     vectors: VectorsConfig
     echo: EchoConfig
     export: ExportConfig
+    observability: ObservabilityConfig
 
     @classmethod
     def load(cls, path=Path(__file__).parent.parent / "config.yml"):
