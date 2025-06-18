@@ -27,3 +27,7 @@ api:
   log_config_path: /home/runner/work/operationsgateway-api/operationsgateway-api/operationsgateway_api/logging.ini
   gunicorn_num_workers: "1"
   timeout_seconds: 1000
+observability:
+  # used to view logs and traces in Elasticsearch run by Platforms & Services
+  environment: dev
+  secret_key: test
