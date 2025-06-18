@@ -31,3 +31,7 @@ api:
   # assigned to the instance
   gunicorn_num_workers: "2"
   timeout_seconds: 300
+observability:
+  # used to view logs and traces in Elasticsearch run by Platforms & Services
+  environment: dev
+  secret_key: test
