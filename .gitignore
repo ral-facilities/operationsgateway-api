@@ -5,10 +5,8 @@ venv/
 *.log.*
 config.yml*
 !config.yml.example
-schedulued_maintenance.json*
-!schedulued_maintenance.json.example
-maintenance.json*
-!maintenance.json.example
+operationsgateway_api/scheduled_maintenance*
+operationsgateway_api/maintenance*
 .vscode/
 .nox/
 .python-version
