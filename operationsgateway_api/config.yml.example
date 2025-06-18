@@ -78,7 +78,7 @@ export:
   # 1048576 = 1 MB
   # 1073741824 = 1 GB
   max_filesize_bytes: 1073741824
- observability:
+observability:
   # used to view logs and traces in Elasticsearch run by Platforms & Services
   environment: dev
   secret_key: test
