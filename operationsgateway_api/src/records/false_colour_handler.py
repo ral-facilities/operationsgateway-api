@@ -39,7 +39,7 @@ class FalseColourHandler:
             pref_name = FalseColourHandler.preferred_colour_map_pref_name
             return await UserPreferences.get(username, pref_name)
         except MissingAttributeError:
-            return None
+            return FalseColourHandler.default_colour_map_name
 
     @staticmethod
     async def get_preferred_float_colourmap(username: str) -> str:
@@ -52,7 +52,7 @@ class FalseColourHandler:
             pref_name = FalseColourHandler.preferred_float_colour_map_pref_name
             return await UserPreferences.get(username, pref_name)
         except MissingAttributeError:
-            return None
+            return FalseColourHandler.default_float_colour_map_name
 
     @staticmethod
     def create_colourbar(
