@@ -2,6 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 import logging
 
+from elasticapm.contrib.starlette import ElasticAPM, make_apm_client
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -83,6 +84,18 @@ app = FastAPI(
     lifespan=lifespan,
     root_path=Config.config.app.url_prefix,
 )
+
+apm_config = {
+    "ENVIRONMENT": Config.config.observability.environment,
+    "SECRET_TOKEN": Config.config.observability.secret_key,
+    "SERVER_URL": "http://localhost:8200", # this should already be localhost
+    "SERVICE_NAME": "operationsgateway",
+    "ENABLED": True,
+}
+
+apm = make_apm_client(apm_config)
+
+app.add_middleware(ElasticAPM, client=apm)
 
 app.add_middleware(
     CORSMiddleware,
