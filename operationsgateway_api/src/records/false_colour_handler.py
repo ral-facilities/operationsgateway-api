@@ -147,8 +147,7 @@ class FalseColourHandler:
             upper_level=upper_level,
             limit_bit_depth=limit_bit_depth,
         )
-        if colourmap_name is None:
-            colourmap_name = FalseColourHandler.default_colour_map_name
+        colourmap_name = colourmap_name or FalseColourHandler.default_colour_map_name
         if not ColourmapMapping.is_colourmap_available(
             FalseColourHandler.colourmap_names,
             colourmap_name,
@@ -178,8 +177,9 @@ class FalseColourHandler:
         position of 0 at the centre of the colourmap, the absolute_max pixel value is
         used to set both vmin and vmax.
         """
-        if colourmap_name is None:
-            colourmap_name = FalseColourHandler.default_float_colour_map_name
+        colourmap_name = (
+            colourmap_name or FalseColourHandler.default_float_colour_map_name
+        )
         if not ColourmapMapping.is_colourmap_available(
             FalseColourHandler.colourmap_names,
             colourmap_name,
