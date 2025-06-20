@@ -39,7 +39,7 @@ class FalseColourHandler:
             pref_name = FalseColourHandler.preferred_colour_map_pref_name
             return await UserPreferences.get(username, pref_name)
         except MissingAttributeError:
-            return None
+            return FalseColourHandler.default_colour_map_name
 
     @staticmethod
     async def get_preferred_float_colourmap(username: str) -> str:
@@ -52,7 +52,7 @@ class FalseColourHandler:
             pref_name = FalseColourHandler.preferred_float_colour_map_pref_name
             return await UserPreferences.get(username, pref_name)
         except MissingAttributeError:
-            return None
+            return FalseColourHandler.default_float_colour_map_name
 
     @staticmethod
     def create_colourbar(
@@ -147,8 +147,7 @@ class FalseColourHandler:
             upper_level=upper_level,
             limit_bit_depth=limit_bit_depth,
         )
-        if colourmap_name is None:
-            colourmap_name = FalseColourHandler.default_colour_map_name
+        colourmap_name = colourmap_name or FalseColourHandler.default_colour_map_name
         if not ColourmapMapping.is_colourmap_available(
             FalseColourHandler.colourmap_names,
             colourmap_name,
@@ -178,8 +177,9 @@ class FalseColourHandler:
         position of 0 at the centre of the colourmap, the absolute_max pixel value is
         used to set both vmin and vmax.
         """
-        if colourmap_name is None:
-            colourmap_name = FalseColourHandler.default_float_colour_map_name
+        colourmap_name = (
+            colourmap_name or FalseColourHandler.default_float_colour_map_name
+        )
         if not ColourmapMapping.is_colourmap_available(
             FalseColourHandler.colourmap_names,
             colourmap_name,

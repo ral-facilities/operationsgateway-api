@@ -87,7 +87,7 @@ class TestChannelSummary:
                     "first_date": "2023-06-05T08:03:00",
                     "most_recent_date": "2023-06-05T08:03:00",
                     "recent_sample": [
-                        {"2023-06-05T08:03:00": "cf2c39d3382c6363"},
+                        {"2023-06-05T08:03:00": "93cf6c1833976165"},
                     ],
                 },
                 False,

@@ -109,8 +109,10 @@ async def get_records(
         projection,
     )
 
-    if colourmap_name is None:
-        colourmap_name = await Image.get_preferred_colourmap(access_token)
+    colourmap_name = colourmap_name or await Image.get_preferred_colourmap(access_token)
+    float_colourmap_name = (
+        float_colourmap_name or await FloatImage.get_preferred_colourmap(access_token)
+    )
 
     vector_skip, vector_limit = await Vector.get_skip_limit(access_token)
     for record_data in records_data:
@@ -252,8 +254,13 @@ async def get_record_by_id(
     record_data = await Record.find_record_by_id(id_, conditions)
 
     if record_data.channels:
-        if colourmap_name is None:
-            colourmap_name = await Image.get_preferred_colourmap(access_token)
+        colourmap_name = colourmap_name or await Image.get_preferred_colourmap(
+            access_token,
+        )
+        float_colourmap_name = (
+            float_colourmap_name
+            or await FloatImage.get_preferred_colourmap(access_token)
+        )
 
         vector_skip, vector_limit = await Vector.get_skip_limit(access_token)
         await Record.apply_false_colour_to_thumbnails(
