@@ -80,7 +80,11 @@ sudo systemctl start mongod
 sudo systemctl enable mongod
 ```
 ### MongoDB Indexes:
-The following Indexes are uses and need to be set up on local, dev & prod databases:
+The following Indexes are uses and need to be set up on local, dev & prod databases.
+
+Using [mongosh](https://www.mongodb.com/docs/manual/reference/method/db.collection.createIndex/), select the database: `use opsgateway`
+
+Then run the following command:
 
 ```json
 # Multiple users can have the same session name, but a user can't have two sessions with the same name.
