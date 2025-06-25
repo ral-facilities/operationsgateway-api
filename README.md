@@ -79,7 +79,16 @@ sudo systemctl start mongod
 # Enable it to start on boot
 sudo systemctl enable mongod
 ```
+### MongoDB Indexes:
+The following Indexes are uses and need to be set up on local, dev & prod databases:
 
+```json
+# Multiple users can have the same session name, but a user can't have two sessions with the same name.
+db.sessions.createIndex(
+  { username: 1, name: 1 },
+  { unique: true }
+);
+```
 ## Authentication
 
 The authentication system uses JSON Web Tokens (JWTs), which require a private and public key pair to encrypt and decrypt the tokens.
