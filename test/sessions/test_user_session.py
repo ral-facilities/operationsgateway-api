@@ -284,7 +284,8 @@ class TestUserSession:
         assert authorised == expected_result
 
     @patch(
-        "operationsgateway_api.src.mongo.interface.MongoDBInterface.get_collection_object")
+        "operationsgateway_api.src.mongo.interface.MongoDBInterface.get_collection_object",
+    )
     @pytest.mark.asyncio
     async def test_insert_duplicate_session_name(self, mock_get_collection):
         # Mock the insert_one method on the collection object
@@ -292,7 +293,7 @@ class TestUserSession:
         mock_collection.insert_one.side_effect = DuplicateKeyError(
             "E11000 duplicate key error collection: opsgateway.sessions index: "
             "username_1_name_1 dup key: "
-            "{ username: \"Test User\", name: \"Test Session\" }"
+            '{ username: "Test User", name: "Test Session" }',
         )
 
         session_model = UserSessionModel(**TestUserSession.session_data_dict)
