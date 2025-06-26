@@ -2,7 +2,7 @@ from functools import wraps
 from inspect import iscoroutinefunction
 import logging
 
-from operationsgateway_api.src.exceptions import DatabaseError
+from operationsgateway_api.src.exceptions import DatabaseError, DuplicateSessionError
 
 log = logging.getLogger()
 
@@ -20,8 +20,9 @@ def mongodb_error_handling(operation: str):
             async def async_wrapper(*args, **kwargs):
                 try:
                     return await func(*args, **kwargs)
-                except DatabaseError:
-                    raise  # If it's already a DatabaseError, propagate it as-is
+                except (DatabaseError, DuplicateSessionError):
+                    raise  # If it's already a DatabaseError
+                    # or DuplicateSessionError, propagate it as-is
                 except Exception as exc:
                     log.error("Database operation: %s failed", operation)
                     raise DatabaseError(
@@ -35,8 +36,9 @@ def mongodb_error_handling(operation: str):
             def sync_wrapper(*args, **kwargs):
                 try:
                     return func(*args, **kwargs)
-                except DatabaseError:
-                    raise  # If it's already a DatabaseError, propagate it as-is
+                except (DatabaseError, DuplicateSessionError):
+                    raise  # If it's already a DatabaseError
+                    # or DuplicateSessionError, propagate it as-is
                 except Exception as exc:
                     log.error("Database operation: %s failed", operation)
                     raise DatabaseError(

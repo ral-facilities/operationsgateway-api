@@ -15,6 +15,12 @@ class RejectRecordError(ApiError):
         self.status_code = 400
 
 
+class DuplicateSessionError(ApiError):
+    def __init__(self, msg="Database error", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 400
+
+
 class DatabaseError(ApiError):
     def __init__(self, msg="Database error", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)

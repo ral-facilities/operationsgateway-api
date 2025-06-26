@@ -3,7 +3,7 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Union
 
 from pymongo.collection import Collection
 from pymongo.cursor import Cursor
-from pymongo.errors import InvalidName, PyMongoError, WriteError
+from pymongo.errors import DuplicateKeyError, InvalidName, PyMongoError, WriteError
 from pymongo.results import (
     DeleteResult,
     InsertManyResult,
@@ -12,7 +12,7 @@ from pymongo.results import (
 )
 
 from operationsgateway_api.src.config import Config
-from operationsgateway_api.src.exceptions import DatabaseError
+from operationsgateway_api.src.exceptions import DatabaseError, DuplicateSessionError
 from operationsgateway_api.src.mongo.connection import ConnectionInstance
 from operationsgateway_api.src.mongo.mongo_error_handling import mongodb_error_handling
 
@@ -195,6 +195,11 @@ class MongoDBInterface:
         collection = MongoDBInterface.get_collection_object(collection_name)
         try:
             return await collection.insert_one(data)
+        except DuplicateKeyError as exc:
+            log.exception(msg=exc)
+            raise DuplicateSessionError(
+                "Session name already exists for this user.",
+            ) from exc
         except WriteError as exc:
             log.exception(msg=exc)
             raise DatabaseError(

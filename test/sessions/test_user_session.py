@@ -2,12 +2,14 @@ from datetime import datetime
 from unittest.mock import patch
 
 from bson import ObjectId
+from pymongo.errors import DuplicateKeyError
 import pytest
 
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.constants import DATA_DATETIME_FORMAT
 from operationsgateway_api.src.exceptions import (
     DatabaseError,
+    DuplicateSessionError,
     ForbiddenError,
     MissingDocumentError,
     ModelError,
@@ -280,3 +282,24 @@ class TestUserSession:
 
         authorised = UserSession._is_user_authorised(access_token, session_username)
         assert authorised == expected_result
+
+    @patch(
+        "operationsgateway_api.src.mongo.interface.MongoDBInterface.get_collection_object",
+    )
+    @pytest.mark.asyncio
+    async def test_insert_duplicate_session_name(self, mock_get_collection):
+        # Mock the insert_one method on the collection object
+        mock_collection = mock_get_collection.return_value
+        mock_collection.insert_one.side_effect = DuplicateKeyError(
+            "E11000 duplicate key error collection: opsgateway.sessions index: "
+            "username_1_name_1 dup key: "
+            '{ username: "Test User", name: "Test Session" }',
+        )
+
+        session_model = UserSessionModel(**TestUserSession.session_data_dict)
+        test_session = UserSession(session_model)
+
+        with pytest.raises(DuplicateSessionError) as exc_info:
+            await test_session.insert()
+
+        assert "Session name already exists" in str(exc_info.value)
