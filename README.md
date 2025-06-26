@@ -86,7 +86,7 @@ Using [mongosh](https://www.mongodb.com/docs/manual/reference/method/db.collecti
 
 Then run the following command:
 
-```json
+```
 # Multiple users can have the same session name, but a user can't have two sessions with the same name.
 db.sessions.createIndex(
   { username: 1, name: 1 },
