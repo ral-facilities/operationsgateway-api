@@ -41,7 +41,7 @@ class SchedulerInterface:
         log.info("Generating session ID for Scheduler system")
         credentials = {
             "username": Config.config.experiments.username,
-            "password": Config.config.experiments.password,
+            "password": Config.config.experiments.password.get_secret_value(),
         }
         headers = {"Content-Type": "application/json"}
 

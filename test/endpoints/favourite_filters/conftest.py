@@ -29,7 +29,7 @@ def multiple_favourite_filters():
 
 class FavouriteFilter:
     def __init__(self) -> None:
-        mongo_client = MongoClient(Config.config.mongodb.mongodb_url)
+        mongo_client = MongoClient(Config.config.mongodb.mongodb_url.get_secret_value())
         og_db = mongo_client[Config.config.mongodb.database_name]
         self.users = og_db["users"]
 

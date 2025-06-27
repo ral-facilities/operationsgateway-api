@@ -33,7 +33,7 @@ def multiple_user_sessions():
 
 class Session:
     def __init__(self) -> None:
-        mongo_client = MongoClient(Config.config.mongodb.mongodb_url)
+        mongo_client = MongoClient(Config.config.mongodb.mongodb_url.get_secret_value())
         og_db = mongo_client[Config.config.mongodb.database_name]
         self.sessions = og_db["sessions"]
 

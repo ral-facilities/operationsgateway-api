@@ -10,7 +10,9 @@ class MongoDBConnection:
     Class to store database connections, the database and collection
     """
 
-    mongo_client = AsyncIOMotorClient(Config.config.mongodb.mongodb_url)
+    mongo_client = AsyncIOMotorClient(
+        Config.config.mongodb.mongodb_url.get_secret_value(),
+    )
     mongo_client.get_io_loop = asyncio.get_event_loop
 
     db: AsyncIOMotorDatabase = mongo_client[Config.config.mongodb.database_name]
