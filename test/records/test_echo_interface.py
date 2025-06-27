@@ -2,6 +2,7 @@ from io import BytesIO
 from unittest.mock import patch
 
 from botocore.exceptions import ClientError
+from pydantic import SecretStr
 import pytest
 
 from operationsgateway_api.src.exceptions import EchoS3Error
@@ -10,8 +11,8 @@ from operationsgateway_api.src.records.echo_interface import EchoInterface
 
 class TestEchoInterface:
     config_echo_url = "https://mytesturl.com"
-    config_echo_access_key = "TestAccessKey"
-    config_echo_secret_key = "TestSecretKey"
+    config_echo_access_key = SecretStr("TestAccessKey")
+    config_echo_secret_key = SecretStr("TestSecretKey")
     config_image_bucket_name = "MyTestBucket"
     test_image_path = "test/image/path.png"
 
@@ -39,8 +40,8 @@ class TestEchoInterface:
         expected_resource_args = ("s3",)
         expected_resource_kwargs = {
             "endpoint_url": self.config_echo_url,
-            "aws_access_key_id": self.config_echo_access_key,
-            "aws_secret_access_key": self.config_echo_secret_key,
+            "aws_access_key_id": self.config_echo_access_key.get_secret_value(),
+            "aws_secret_access_key": self.config_echo_secret_key.get_secret_value(),
         }
         assert mock_resource.call_args.args == expected_resource_args
         assert mock_resource.call_args.kwargs == expected_resource_kwargs

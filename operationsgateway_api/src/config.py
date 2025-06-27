@@ -8,6 +8,7 @@ from pydantic import (
     BaseModel,
     field_validator,
     FilePath,
+    SecretStr,
     StrictBool,
     StrictInt,
     StrictStr,
@@ -60,8 +61,8 @@ class VectorsConfig(BaseModel):
 class EchoConfig(BaseModel):
     url: StrictStr
     username: StrictStr
-    access_key: StrictStr
-    secret_key: StrictStr
+    access_key: SecretStr
+    secret_key: SecretStr
     bucket_name: StrictStr
 
 
@@ -95,7 +96,7 @@ class ExperimentsConfig(BaseModel):
     scheduler_background_retry_mins: float
     user_office_rest_api_url: StrictStr
     username: StrictStr
-    password: StrictStr
+    password: SecretStr
     scheduler_wsdl_url: StrictStr
     instrument_names: List[StrictStr]
     worker_file_path: StrictStr
@@ -119,7 +120,7 @@ class ObservabilityConfig(BaseModel):
     """Configuration model class to store export observability details"""
 
     environment: StrictStr
-    secret_key: StrictStr  # apm key
+    secret_key: SecretStr  # apm key
 
 
 class APIConfig(BaseModel):
