@@ -69,7 +69,7 @@ class EchoConfig(BaseModel):
 class MongoDB(BaseModel):
     """Configuration model class to store MongoDB configuration details"""
 
-    mongodb_url: StrictStr
+    mongodb_url: SecretStr
     database_name: StrictStr
     max_documents: StrictInt
 
