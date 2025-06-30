@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 from typing import Optional
 
-from pydantic import BaseModel, ValidationError, SecretStr
+from pydantic import BaseModel, SecretStr, ValidationError
 import yaml
 
 
