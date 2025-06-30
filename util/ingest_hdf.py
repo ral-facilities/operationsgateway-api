@@ -119,8 +119,8 @@ if WIPE_ECHO:
     s3_resource = boto3.resource(
         "s3",
         endpoint_url=Config.config.echo.url,
-        aws_access_key_id=Config.config.echo.access_key,
-        aws_secret_access_key=Config.config.echo.secret_key,
+        aws_access_key_id=Config.config.echo.access_key.get_secret_value(),
+        aws_secret_access_key=Config.config.echo.secret_key.get_secret_value(),
     )
 
     bucket = s3_resource.Bucket(BUCKET_NAME)
