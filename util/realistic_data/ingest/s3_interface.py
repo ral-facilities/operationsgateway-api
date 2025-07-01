@@ -10,14 +10,14 @@ class S3Interface:
         self.resource = boto3.resource(
             "s3",
             endpoint_url=Config.config.echo.endpoint_url,
-            aws_access_key_id=Config.config.echo.access_key,
-            aws_secret_access_key=Config.config.echo.secret_key,
+            aws_access_key_id=Config.config.echo.access_key.get_secret_value(),
+            aws_secret_access_key=Config.config.echo.secret_key.get_secret_value(),
         )
         self.client = boto3.client(
             "s3",
             endpoint_url=Config.config.echo.endpoint_url,
-            aws_access_key_id=Config.config.echo.access_key,
-            aws_secret_access_key=Config.config.echo.secret_key,
+            aws_access_key_id=Config.config.echo.access_key.get_secret_value(),
+            aws_secret_access_key=Config.config.echo.secret_key.get_secret_value(),
         )
         self.simulated_data_bucket = self.resource.Bucket(
             Config.config.echo.simulated_data_bucket,

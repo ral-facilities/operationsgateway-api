@@ -87,7 +87,7 @@ app = FastAPI(
 
 apm_config = {
     "ENVIRONMENT": Config.config.observability.environment,
-    "SECRET_TOKEN": Config.config.observability.secret_key,
+    "SECRET_TOKEN": Config.config.observability.secret_key.get_secret_value(),
     "SERVER_URL": "http://localhost:8200",  # this should already be localhost
     "SERVICE_NAME": "operationsgateway",
     "ENABLED": True,

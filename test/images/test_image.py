@@ -7,6 +7,7 @@ from unittest.mock import patch
 import imagehash
 import numpy as np
 from PIL import Image as PILImage
+from pydantic import SecretStr
 import pytest
 
 from operationsgateway_api.src.exceptions import (
@@ -30,8 +31,8 @@ class MockImage:
 
 class TestImage:
     config_echo_url = "https://mytesturl.com"
-    config_echo_access_key = "TestAccessKey"
-    config_echo_secret_key = "TestSecretKey"
+    config_echo_access_key = SecretStr("TestAccessKey")
+    config_echo_secret_key = SecretStr("TestSecretKey")
     config_image_bucket_name = "MyTestBucket"
 
     def _get_bytes_of_image(self, filename):

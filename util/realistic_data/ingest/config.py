@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 from typing import Optional
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, SecretStr, ValidationError
 import yaml
 
 
@@ -29,8 +29,8 @@ class Database(BaseModel):
 
 class Echo(BaseModel):
     endpoint_url: str
-    access_key: str
-    secret_key: str
+    access_key: SecretStr
+    secret_key: SecretStr
     simulated_data_bucket: str
     storage_bucket: str
     page_size: int
