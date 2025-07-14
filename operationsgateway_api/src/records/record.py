@@ -710,7 +710,7 @@ class Record:
 
         elif channel_dtype == "waveform":
             x_units = getattr(channel_value.metadata, "x_units", None)
-            waveform = Waveform.get_waveform(record_id, name)
+            waveform = await Waveform.get_waveform(record_id, name)
             return WaveformVariable(waveform, x_units=x_units)
         else:
             return channel_value.data

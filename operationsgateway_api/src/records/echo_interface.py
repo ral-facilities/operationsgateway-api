@@ -115,6 +115,7 @@ class EchoInterface:
             raise EchoS3Error(
                 f"{exc.response['Error']['Code']} when downloading file at"
                 f" '{object_path}'",
+                status_code=exc.response["Error"]["Code"],
             ) from exc
         if len(file.getvalue()) == 0:
             log.warning(

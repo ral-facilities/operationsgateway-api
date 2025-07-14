@@ -78,4 +78,4 @@ async def get_waveform_by_id(
 
     msg = "Getting waveform by record_id, channel_name: %s, %s"
     log.info(msg, record_id, channel_name)
-    return Waveform.get_waveform(record_id, channel_name)
+    return await Waveform.get_waveform(record_id, channel_name)
