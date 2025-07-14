@@ -30,6 +30,7 @@ from operationsgateway_api.src.records.waveform import Waveform
 class TestRecord:
     test_record = {
         "_id": "19520605070023",
+        "version": 1,
         "metadata": {
             "epac_ops_data_version": "1.0",
             "shotnum": 423648000000,

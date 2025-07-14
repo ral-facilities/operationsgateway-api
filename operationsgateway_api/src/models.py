@@ -200,6 +200,13 @@ class RecordMetadataModel(BaseModel):
 
 class RecordModel(BaseModel):
     id_: str = Field(alias="_id")
+    version: int = Field(
+        default=1,
+        description=(
+            "Indicates the number of updates to this record "
+            "(starting at 1 for the initial insert)."
+        ),
+    )
     metadata: RecordMetadataModel
     channels: dict[
         str,
