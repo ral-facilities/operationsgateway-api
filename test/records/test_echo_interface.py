@@ -1,12 +1,21 @@
 from io import BytesIO
+from typing import Any, Generator
 from unittest.mock import patch
 
 from botocore.exceptions import ClientError
 from pydantic import SecretStr
 import pytest
 
+from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import EchoS3Error
 from operationsgateway_api.src.records.echo_interface import EchoInterface
+
+
+@pytest.fixture(scope="function")
+def reset_lifecycle() -> Generator[None, Any, None]:
+    yield
+    echo_interface = EchoInterface()
+    echo_interface.client.delete_bucket_lifecycle(Bucket=Config.config.echo.bucket_name)
 
 
 class TestEchoInterface:
@@ -334,3 +343,59 @@ class TestEchoInterface:
     def test_head_object(self):
         echo_interface = EchoInterface()
         assert not echo_interface.head_object("test")
+
+    @patch(
+        "operationsgateway_api.src.config.Config.config.echo.expiry_days",
+        1095,
+    )
+    def test_put_lifecycle(self, reset_lifecycle: None):
+        echo_interface = EchoInterface()
+        echo_interface.put_lifecycle()
+
+        configutation = echo_interface.client.get_bucket_lifecycle_configuration(
+            Bucket=Config.config.echo.bucket_name,
+        )
+        assert "Rules" in configutation
+        assert len(configutation["Rules"]) == 1
+        assert configutation["Rules"][0] == {
+            "Expiration": {"Days": 1095},
+            "ID": "expiry",
+            "Prefix": "",
+            "Status": "Enabled",
+        }
+
+    def test_put_lifecycle_unset(self, reset_lifecycle: None):
+        echo_interface = EchoInterface()
+        echo_interface.put_lifecycle()  # expiry_days defaults to None, no PUT sent
+
+        # Getting NoSuchLifecycleConfiguration on GET indicates that nothing created
+        with pytest.raises(ClientError) as exc_info:
+            echo_interface.client.get_bucket_lifecycle_configuration(
+                Bucket=Config.config.echo.bucket_name,
+            )
+
+        assert exc_info.exconly() == (
+            "botocore.exceptions.ClientError: "
+            "An error occurred (NoSuchLifecycleConfiguration) when calling the "
+            "GetBucketLifecycleConfiguration operation: Unknown"
+        )
+
+    @patch(
+        "operationsgateway_api.src.config.Config.config.echo.expiry_days",
+        -1,  # Pydantic config would normally prevent a negative value
+    )
+    def test_put_lifecycle_failure(self, reset_lifecycle: None):
+        echo_interface = EchoInterface()
+        echo_interface.put_lifecycle()  # Error on PUT caught and logged
+
+        # Getting NoSuchLifecycleConfiguration on GET indicates that nothing created
+        with pytest.raises(ClientError) as exc_info:
+            echo_interface.client.get_bucket_lifecycle_configuration(
+                Bucket=Config.config.echo.bucket_name,
+            )
+
+        assert exc_info.exconly() == (
+            "botocore.exceptions.ClientError: "
+            "An error occurred (NoSuchLifecycleConfiguration) when calling the "
+            "GetBucketLifecycleConfiguration operation: Unknown"
+        )

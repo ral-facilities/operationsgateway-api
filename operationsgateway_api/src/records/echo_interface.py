@@ -81,6 +81,30 @@ class EchoInterface:
         else:
             return record_id
 
+    def put_lifecycle(self) -> None:
+        """
+        https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/put_bucket_lifecycle_configuration.html
+        Puts the lifecycle configuration of the bucket to delete objects after a certain
+        number of days.
+        """
+        if Config.config.echo.expiry_days is not None:
+            log.info("Put expiry lifecycle of %s days", Config.config.echo.expiry_days)
+            rule = {
+                "Expiration": {"Days": Config.config.echo.expiry_days},
+                "ID": "expiry",
+                "Filter": {"Prefix": ""},
+                "Status": "Enabled",
+            }
+            try:
+                self.client.put_bucket_lifecycle_configuration(
+                    Bucket=Config.config.echo.bucket_name,
+                    LifecycleConfiguration={"Rules": [rule]},
+                )
+            except ClientError:
+                log.exception("Failed to put lifecyle")
+        else:
+            log.info("Expiry lifecycle not configured")
+
     def head_object(self, object_path: str) -> bool:
         """
         https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/head_object.html

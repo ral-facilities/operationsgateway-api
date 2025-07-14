@@ -6,8 +6,10 @@ from typing import List, Optional, Tuple
 from dateutil import tz
 from pydantic import (
     BaseModel,
+    Field,
     field_validator,
     FilePath,
+    PositiveInt,
     SecretStr,
     StrictBool,
     StrictInt,
@@ -64,6 +66,11 @@ class EchoConfig(BaseModel):
     access_key: SecretStr
     secret_key: SecretStr
     bucket_name: StrictStr
+    expiry_days: PositiveInt | None = Field(
+        default=None,
+        description="If defined, objects older than this will be marked for expiry",
+        examples=[1095],
+    )
 
 
 class MongoDB(BaseModel):
