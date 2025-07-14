@@ -277,7 +277,6 @@ class TestSubmitHDF:
         assert cache_path_3.exists()
         assert cache_path_3.stat().st_size == 7080
 
-
     @pytest.mark.parametrize(
         "data_version, active_area, expected_response",
         [
