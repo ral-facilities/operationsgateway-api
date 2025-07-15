@@ -17,6 +17,7 @@ from operationsgateway_api.src.experiments.unique_worker import (
     UniqueWorker,
 )
 from operationsgateway_api.src.mongo.connection import ConnectionInstance
+from operationsgateway_api.src.records.echo_interface import EchoInterface
 from operationsgateway_api.src.routes import (
     auth,
     channels,
@@ -71,7 +72,13 @@ async def lifespan(app: FastAPI):
         else:
             log.info("Scheduler background task has not been enabled")
 
+    @assign_event_to_single_worker()
+    async def set_bucket_expiry() -> None:
+        echo_interface = EchoInterface()
+        echo_interface.put_lifecycle()
+
     await get_experiments_on_startup()
+    await set_bucket_expiry()
     yield
     UniqueWorker.remove_file()
     ConnectionInstance.db_connection.mongo_client.close()
