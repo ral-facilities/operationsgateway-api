@@ -85,3 +85,39 @@ class Authentication:
         except Exception as exc:
             log.exception("Problem with LDAP/AD server")
             raise AuthServerError() from exc
+
+    @staticmethod
+    def get_fedid_from_email(email: str) -> str | None:
+        """
+        Search for the user's FedID (username) using their email address.
+        """
+        log.debug("Searching LDAP for FedID with email: %s", email)
+        try:
+            conn = ldap.initialize(Config.config.auth.fedid_server_url)
+            ldap.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
+            ldap.set_option(ldap.OPT_X_TLS_DEMAND, True)
+            ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+            ldap.set_option(ldap.OPT_DEBUG_LEVEL, 0)
+            conn.start_tls_s()
+
+            conn.simple_bind_s()  # Anonymous bind
+
+            base_dn = "dc=fed,dc=cclrc,dc=ac,dc=uk"
+            search_filter = f"(mail={email})"
+            attributes = ["cn"]
+
+            result = conn.search_s(base_dn, ldap.SCOPE_SUBTREE, search_filter, attributes)
+            conn.unbind()
+
+            if result:
+                dn, entry = result[0]
+                fedid = entry.get("cn", [b""])[0].decode("utf-8")
+                log.debug("Found FedID '%s' for email '%s'", fedid, email)
+                return fedid
+            else:
+                log.info("No match found for email '%s'", email)
+                return None
+
+        except ldap.LDAPError:
+            log.exception("LDAP search failed for email '%s'", email)
+            return None
