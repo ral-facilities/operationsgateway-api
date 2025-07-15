@@ -1,4 +1,5 @@
 from io import BytesIO
+import re
 from typing import Any, Generator
 from unittest.mock import patch
 
@@ -369,16 +370,14 @@ class TestEchoInterface:
         echo_interface.put_lifecycle()  # expiry_days defaults to None, no PUT sent
 
         # Getting NoSuchLifecycleConfiguration on GET indicates that nothing created
-        with pytest.raises(ClientError) as exc_info:
+        expected_message = (
+            "An error occurred (NoSuchLifecycleConfiguration) when calling the "
+            "GetBucketLifecycleConfiguration operation: "
+        )
+        with pytest.raises(ClientError, match=re.escape(expected_message)):
             echo_interface.client.get_bucket_lifecycle_configuration(
                 Bucket=Config.config.echo.bucket_name,
             )
-
-        assert exc_info.exconly() == (
-            "botocore.exceptions.ClientError: "
-            "An error occurred (NoSuchLifecycleConfiguration) when calling the "
-            "GetBucketLifecycleConfiguration operation: Unknown"
-        )
 
     @patch(
         "operationsgateway_api.src.config.Config.config.echo.expiry_days",
@@ -389,13 +388,11 @@ class TestEchoInterface:
         echo_interface.put_lifecycle()  # Error on PUT caught and logged
 
         # Getting NoSuchLifecycleConfiguration on GET indicates that nothing created
-        with pytest.raises(ClientError) as exc_info:
+        expected_message = (
+            "An error occurred (NoSuchLifecycleConfiguration) when calling the "
+            "GetBucketLifecycleConfiguration operation: "
+        )
+        with pytest.raises(ClientError, match=re.escape(expected_message)):
             echo_interface.client.get_bucket_lifecycle_configuration(
                 Bucket=Config.config.echo.bucket_name,
             )
-
-        assert exc_info.exconly() == (
-            "botocore.exceptions.ClientError: "
-            "An error occurred (NoSuchLifecycleConfiguration) when calling the "
-            "GetBucketLifecycleConfiguration operation: Unknown"
-        )

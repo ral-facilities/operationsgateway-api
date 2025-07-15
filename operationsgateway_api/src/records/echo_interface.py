@@ -92,7 +92,7 @@ class EchoInterface:
             rule = {
                 "Expiration": {"Days": Config.config.echo.expiry_days},
                 "ID": "expiry",
-                "Filter": {"Prefix": ""},
+                "Prefix": "",
                 "Status": "Enabled",
             }
             try:
