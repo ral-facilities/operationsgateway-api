@@ -48,6 +48,24 @@ class User:
             raise UnauthorisedError
 
     @staticmethod
+    async def get_user_by_email(email: str) -> UserModel:
+        """
+        Get the document for the user with the specified email from the database
+        and populate a UserModel with the details.
+        :return: the populated UserModel
+        """
+        user_data = await MongoDBInterface.find_one(
+            "users",
+            {"email": email},
+        )
+
+        if user_data:
+            return UserModel(**user_data)
+        else:
+            log.error("No user document found for email: '%s'", email)
+            raise UnauthorisedError
+
+    @staticmethod
     async def get_all_users():
         """
         Get all user documents from the database.
