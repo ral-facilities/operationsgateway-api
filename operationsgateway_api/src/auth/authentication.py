@@ -1,5 +1,6 @@
 from hashlib import sha256
 import logging
+from socket import socket
 
 import ldap
 
@@ -86,17 +87,22 @@ class Authentication:
             log.exception("Problem with LDAP/AD server")
             raise AuthServerError() from exc
 
-    def get_email_from_fedid(fedid):
+    @staticmethod
+    def get_email_from_fedid(fedid: str) -> str | None:
         """
-        Look up a user's email address from LDAP using their FedID (username).
+        Look up a user's email address from LDAP using their FedID.
         """
         log.debug("Looking up email for FedID: %s", fedid)
+
+        ldap.set_option(ldap.OPT_NETWORK_TIMEOUT,5)  # 5 seconds network timeout
+        ldap.set_option(ldap.OPT_TIMEOUT, 5) # 5 seconds search timeout
+
         try:
-            conn = ldap.initialize("ldap://fed.cclrc.ac.uk")
+            conn = ldap.initialize(Config.config.auth.fedid_server_url)
             ldap.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
-            ldap.set_option(ldap.OPT_X_TLS_DEMAND, True)
             ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
-            ldap.set_option(ldap.OPT_DEBUG_LEVEL, 0)
+            conn.set_option(ldap.OPT_REFERRALS, 0)
+
             conn.start_tls_s()
             conn.simple_bind_s()  # anonymous bind
 
@@ -104,7 +110,8 @@ class Authentication:
             search_filter = f"(cn={fedid})"
             attributes = ["mail"]
 
-            result = conn.search_s(base_dn, ldap.SCOPE_SUBTREE, search_filter, attributes)
+            result = conn.search_s(base_dn, ldap.SCOPE_SUBTREE, search_filter,
+                                   attributes)
             conn.unbind()
 
             if result:
@@ -116,6 +123,7 @@ class Authentication:
                 log.info("No email found for FedID '%s'", fedid)
                 return None
 
-        except ldap.LDAPError:
-            log.exception("LDAP lookup failed for FedID '%s'", fedid)
+        except (ldap.LDAPError, socket.timeout) as e:
+            log.warning("LDAP lookup failed or timed out for FedID '%s': %s",
+                        fedid, str(e))
             return None
