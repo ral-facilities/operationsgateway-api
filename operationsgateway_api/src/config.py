@@ -79,7 +79,7 @@ class OidcProviderConfig(BaseModel):
     audience: StrictStr
     verify_cert: StrictBool
     mechanism: StrictStr
-    username_claim: StrictStr
+    matching_claim: StrictStr
 
 
 class AuthConfig(BaseModel):
