@@ -13,7 +13,7 @@ class OidcProvider:
     def __init__(self, provider_config: OidcProviderConfig) -> None:
         self._audience = provider_config.audience
         self._mechanism = provider_config.mechanism
-        self._email = provider_config.username_claim
+        self._matching_claim = provider_config.matching_claim
 
         try:
             # Read discovery document
@@ -55,8 +55,8 @@ class OidcProvider:
     def get_mechanism(self) -> str:
         return self._mechanism
 
-    def get_username_claim(self) -> str:
-        return self._email
+    def get_matching_claim(self) -> str:
+        return self._matching_claim
 
 
 class OidcHandler:
@@ -72,7 +72,7 @@ class OidcHandler:
                 log.error(f"Failed to initialise OIDC provider '{name}': {e}")
                 raise AuthServerError(f"Initialisation error for OIDC provider '{name}'")
 
-    def handle(self, encoded_token: str) -> tuple[str, str]:
+    def handle(self, encoded_token: str) -> str:
         try:
             # Decode header/payload to extract issuer and kid
             unverified_header = jwt.get_unverified_header(encoded_token)
@@ -98,11 +98,11 @@ class OidcHandler:
                 },
             )
 
-            username = payload.get(provider.get_username_claim())
-            if not username:
+            matching_claim = payload.get(provider.get_matching_claim())
+            if not matching_claim:
                 raise AuthServerError("Username claim missing in ID token")
 
-            return provider.get_mechanism(), username
+            return matching_claim
 
         except jwt.exceptions.InvalidTokenError as exc:
             raise AuthServerError("Invalid OIDC ID token") from exc
