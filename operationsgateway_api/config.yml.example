@@ -53,7 +53,7 @@ auth:
       audience: operations-gateway  # the Keycloak client ID for example
       verify_cert: true
       mechanism: oidc
-      username_claim: username
+      matching_claim: email
 experiments:
   user_office_rest_api_url: https://devapi.facilities.rl.ac.uk/users-service/v1
   scheduler_wsdl_url: https://devapis.facilities.rl.ac.uk/ws/ScheduleWebService?wsdl
