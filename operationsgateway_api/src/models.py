@@ -10,7 +10,7 @@ from pydantic import (
     constr,
     Field,
     field_validator,
-    model_validator,
+    model_validator, EmailStr,
 )
 from pydantic_core import core_schema
 from typing_extensions import Annotated
@@ -269,6 +269,7 @@ class UserModel(BaseModel):
     sha256_password: Optional[str] = None
     auth_type: str
     authorised_routes: Optional[List[str]] = None
+    email: EmailStr
 
 
 class UpdateUserModel(BaseModel):
