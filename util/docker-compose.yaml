@@ -13,12 +13,12 @@ services:
 
 
 #call with
-#curl -X POST http://localhost:8081/realms/testrealm/protocol/openid-connect/token
-#    -H "Content-Type: application/x-www-form-urlencoded"
-#    -d "grant_type=password"
-#    -d "client_id=operations-gateway"
-#    -d "scope=openid profile email"
-#    -d "username=alice"
+#curl -X POST http://localhost:8081/realms/testrealm/protocol/openid-connect/token \
+#    -H "Content-Type: application/x-www-form-urlencoded" \
+#    -d "grant_type=password" \
+#    -d "client_id=operations-gateway" \
+#    -d "scope=openid profile email" \
+#    -d "username=alice" \
 #    -d "password=password"
 
 #and use id token
