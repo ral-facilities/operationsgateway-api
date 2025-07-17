@@ -168,18 +168,14 @@ async def oidc_login(
     encoded_token = bearer_token.credentials
 
     # Validate the OIDC token and extract claims (throws error if invalid)
-    mechanism, oidc_email = oidc_handler.handle(encoded_token)
+    oidc_email = oidc_handler.handle(encoded_token)
     log.debug("Validated OIDC claims: %s", oidc_email)
 
-    # get fedID from email
-    fedid = Authentication.get_fedid_from_email(oidc_email)
-
     # Construct a User model (or dummy object) to use with JwtHandler
-    user_model = await User.get_user(
-        fedid
-    )
+    user_model = await User.get_user_by_email(oidc_email)
+
     if not user_model:
-        log.warning("User '%s' not found in user database", fedid)
+        log.warning("User '%s' not found in user database", oidc_email)
         raise ForbiddenError("User not authorised")
 
     # Create access/refresh tokens
@@ -187,7 +183,7 @@ async def oidc_login(
     access_token = jwt_handler.get_access_token()
     refresh_token = jwt_handler.get_refresh_token()
 
-    log.info("Refresh token issued for '%s'", fedid)
+    log.info("Refresh token issued for '%s'", oidc_email)
     response = JSONResponse(content=access_token)
     response.set_cookie(
         key="refresh_token",
