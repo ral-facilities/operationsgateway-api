@@ -8,9 +8,10 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     constr,
+    EmailStr,
     Field,
     field_validator,
-    model_validator, EmailStr,
+    model_validator,
 )
 from pydantic_core import core_schema
 from typing_extensions import Annotated

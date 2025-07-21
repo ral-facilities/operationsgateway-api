@@ -1,10 +1,11 @@
-import jwt
-import requests
 import logging
 
+import jwt
+import requests
+
+from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.config import OidcProviderConfig
 from operationsgateway_api.src.exceptions import AuthServerError
-from operationsgateway_api.src.config import Config
 
 log = logging.getLogger()
 
@@ -17,12 +18,16 @@ class OidcProvider:
 
         try:
             # Read discovery document
-            r = requests.get(provider_config.configuration_url, verify=provider_config.verify_cert)
+            r = requests.get(
+                provider_config.configuration_url,
+                verify=provider_config.verify_cert,
+            )
             r.raise_for_status()
             discovery = r.json()
             self._issuer = discovery["issuer"]
-        except Exception as e:
-            raise AuthServerError(f"Failed to fetch OIDC discovery: {e}")
+        except Exception as exc:
+            log.exception("Failed to fetch OIDC discovery")
+            raise AuthServerError() from exc
 
         try:
             # Read JWKS keys
@@ -30,23 +35,26 @@ class OidcProvider:
             r = requests.get(jwks_uri, verify=provider_config.verify_cert)
             r.raise_for_status()
             jwks_config = r.json()
-        except Exception as e:
-            raise AuthServerError(f"Failed to fetch JWKS from {jwks_uri}: {e}")
+        except Exception as exc:
+            log.exception("Failed to fetch JWKS from %s:", jwks_uri)
+            raise AuthServerError() from exc
 
         self._keys = {}
         for key in jwks_config.get("keys", []):
             kid = key.get("kid")
             try:
                 self._keys[kid] = jwt.PyJWK(key)
-            except jwt.exceptions.PyJWKError as e:
-                log.warning(f"Could not load key {kid}: {e}")
+            except jwt.exceptions.PyJWKError as exc:
+                log.exception("Could not load key %s:", kid)
+                raise AuthServerError() from exc
 
     def get_issuer(self) -> str:
         return self._issuer
 
     def get_key(self, kid: str) -> jwt.PyJWK:
         if kid not in self._keys:
-            raise AuthServerError(f"Unknown key ID: {kid}")
+            log.exception("Unknown key ID %s:", kid)
+            raise AuthServerError()
         return self._keys[kid]
 
     def get_audience(self) -> str:
@@ -64,24 +72,28 @@ class OidcHandler:
         self._providers = {}
 
         for name, provider_config in Config.config.auth.oidc_providers.items():
-            log.info(f"Loading OIDC provider: {name}")
+            log.info("Loading OIDC provider: %s", name)
             try:
                 provider = OidcProvider(provider_config)
                 self._providers[provider.get_issuer()] = provider
-            except Exception as e:
-                log.error(f"Failed to initialise OIDC provider '{name}': {e}")
-                raise AuthServerError(f"Initialisation error for OIDC provider '{name}'")
+            except Exception as exc:
+                log.error("Initialisation error for OIDC provider %s", name)
+                raise AuthServerError() from exc
 
     def handle(self, encoded_token: str) -> str:
         try:
             # Decode header/payload to extract issuer and kid
             unverified_header = jwt.get_unverified_header(encoded_token)
-            unverified_payload = jwt.decode(encoded_token, options={"verify_signature": False})
+            unverified_payload = jwt.decode(
+                encoded_token,
+                options={"verify_signature": False},
+            )
 
             kid = unverified_header["kid"]
             iss = unverified_payload["iss"]
             if iss not in self._providers:
-                raise AuthServerError(f"Unknown issuer: {iss}")
+                log.error("Unknown issuer: %s", iss)
+                raise AuthServerError()
 
             provider = self._providers[iss]
             key = provider.get_key(kid)
@@ -100,11 +112,14 @@ class OidcHandler:
 
             matching_claim = payload.get(provider.get_matching_claim())
             if not matching_claim:
-                raise AuthServerError("Username claim missing in ID token")
+                log.error("Username claim missing in ID token")
+                raise AuthServerError()
 
             return matching_claim
 
         except jwt.exceptions.InvalidTokenError as exc:
-            raise AuthServerError("Invalid OIDC ID token") from exc
+            log.error("Invalid OIDC ID token")
+            raise AuthServerError() from exc
         except KeyError as e:
-            raise AuthServerError(f"Missing required JWT field: {e}")
+            log.error("Missing required JWT field")
+            raise AuthServerError() from e

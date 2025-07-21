@@ -73,7 +73,7 @@ async def add_user(
         email = Authentication.get_email_from_fedid(login_details.username)
         if not email:
             raise QueryParameterError(
-                f"No email found for FedID username '{login_details.username}'"
+                f"No email found for FedID username '{login_details.username}'",
             )
         login_details.email = email
 

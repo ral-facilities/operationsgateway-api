@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 import sys
-from typing import List, Optional, Tuple, Dict
+from typing import Dict, List, Optional, Tuple
 
 from dateutil import tz
 from pydantic import (

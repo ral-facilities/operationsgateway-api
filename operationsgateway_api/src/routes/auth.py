@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Body, Cookie, Response, status, Depends
+from fastapi import APIRouter, Body, Cookie, Depends, Response, status
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing_extensions import Annotated
@@ -156,7 +156,8 @@ async def refresh(
 async def oidc_login(
     oidc_handler: Annotated[OidcHandler, Depends(OidcHandler)],
     bearer_token: Annotated[
-        HTTPAuthorizationCredentials, Depends(HTTPBearer(description="OIDC ID token"))
+        HTTPAuthorizationCredentials,
+        Depends(HTTPBearer(description="OIDC ID token")),
     ],
 ):
     """
@@ -195,6 +196,7 @@ async def oidc_login(
         path="/refresh",
     )
     return response
+
 
 @router.get("/oidc_providers")
 @endpoint_error_handling

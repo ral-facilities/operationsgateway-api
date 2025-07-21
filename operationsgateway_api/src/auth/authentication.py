@@ -94,8 +94,8 @@ class Authentication:
         """
         log.debug("Looking up email for FedID: %s", fedid)
 
-        ldap.set_option(ldap.OPT_NETWORK_TIMEOUT,5)  # 5 seconds network timeout
-        ldap.set_option(ldap.OPT_TIMEOUT, 5) # 5 seconds search timeout
+        ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, 5)  # 5 seconds network timeout
+        ldap.set_option(ldap.OPT_TIMEOUT, 5)  # 5 seconds search timeout
 
         try:
             conn = ldap.initialize(Config.config.auth.fedid_server_url)
@@ -109,8 +109,12 @@ class Authentication:
             search_filter = f"(cn={fedid})"
             attributes = ["mail"]
 
-            result = conn.search_s(base_dn, ldap.SCOPE_SUBTREE, search_filter,
-                                   attributes)
+            result = conn.search_s(
+                base_dn,
+                ldap.SCOPE_SUBTREE,
+                search_filter,
+                attributes,
+            )
             conn.unbind()
 
             if result:
@@ -119,14 +123,12 @@ class Authentication:
                     mail_values = entry.get("mail")
                     if mail_values:
                         email = mail_values[0].decode("utf-8")
-                        log.debug("Found email '%s' for FedID '%s'", email,
-                                  fedid)
+                        log.debug("Found email '%s' for FedID '%s'", email, fedid)
                         return email
             else:
                 log.info("No email found for FedID '%s'", fedid)
                 return None
 
-        except (ldap.LDAPError, TimeoutError, socket.timeout) as e:
-            log.warning("LDAP lookup failed or timed out for FedID '%s': %s",
-                        fedid, str(e))
-            return None
+        except (ldap.LDAPError, TimeoutError, socket.timeout) as exc:
+            log.warning("LDAP lookup failed or timed out for FedID '%s'", fedid)
+            raise AuthServerError() from exc
