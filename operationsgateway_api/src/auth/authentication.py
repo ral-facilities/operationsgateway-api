@@ -103,8 +103,7 @@ class Authentication:
             ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
             conn.set_option(ldap.OPT_REFERRALS, 0)
 
-            conn.start_tls_s()
-            conn.simple_bind_s()  # anonymous bind
+            conn.simple_bind_s()
 
             base_dn = "dc=fed,dc=cclrc,dc=ac,dc=uk"
             search_filter = f"(cn={fedid})"
@@ -116,14 +115,18 @@ class Authentication:
 
             if result:
                 dn, entry = result[0]
-                email = entry.get("mail", [b""])[0].decode("utf-8")
-                log.debug("Found email '%s' for FedID '%s'", email, fedid)
-                return email
+                if isinstance(entry, dict):
+                    mail_values = entry.get("mail")
+                    if mail_values:
+                        email = mail_values[0].decode("utf-8")
+                        log.debug("Found email '%s' for FedID '%s'", email,
+                                  fedid)
+                        return email
             else:
                 log.info("No email found for FedID '%s'", fedid)
                 return None
 
-        except (ldap.LDAPError, socket.timeout) as e:
+        except (ldap.LDAPError, TimeoutError, socket.timeout) as e:
             log.warning("LDAP lookup failed or timed out for FedID '%s': %s",
                         fedid, str(e))
             return None
