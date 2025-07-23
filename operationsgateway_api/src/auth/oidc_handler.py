@@ -42,11 +42,13 @@ class OidcProvider:
         self._keys = {}
         for key in jwks_config.get("keys", []):
             kid = key.get("kid")
+            if key.get("use") != "sig":
+                log.debug("Skipping non-signing key %s (use=%s)", kid, key.get("use"))
+                continue
             try:
                 self._keys[kid] = jwt.PyJWK(key)
-            except jwt.exceptions.PyJWKError as exc:
-                log.exception("Could not load key %s:", kid)
-                raise AuthServerError() from exc
+            except jwt.exceptions.PyJWKError:
+                log.warning("Could not load key")
 
     def get_issuer(self) -> str:
         return self._issuer
@@ -117,9 +119,14 @@ class OidcHandler:
 
             return matching_claim
 
+        except jwt.exceptions.ExpiredSignatureError as exc:
+            log.warning("OIDC token has expired")
+            raise AuthServerError("OIDC token has expired") from exc
+
         except jwt.exceptions.InvalidTokenError as exc:
             log.error("Invalid OIDC ID token")
+            raise AuthServerError("Invalid OIDC ID token") from exc
+
+        except Exception as exc:
+            log.exception("Unexpected error during OIDC token handling")
             raise AuthServerError() from exc
-        except KeyError as e:
-            log.error("Missing required JWT field")
-            raise AuthServerError() from e
