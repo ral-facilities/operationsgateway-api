@@ -17,12 +17,14 @@ from operationsgateway_api.src.records.false_colour_handler import FalseColourHa
 def test_app():
     return TestClient(app)
 
+
 @pytest.fixture(autouse=True)
 def mock_fedid_email(monkeypatch):
     monkeypatch.setattr(
         "operationsgateway_api.src.routes.users.Authentication.get_email_from_fedid",
-        staticmethod(lambda username: "test@example.com")
+        staticmethod(lambda username: "test@example.com"),
     )
+
 
 @pytest.fixture()
 def login_and_get_token(test_app: TestClient):
