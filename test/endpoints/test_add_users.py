@@ -317,3 +317,24 @@ class TestCreateUsers:
         )
 
         assert create_local_response.status_code == 400
+
+    @pytest.mark.asyncio
+    async def test_fedid_user_creation_fails_without_email(
+            self,
+            test_app: TestClient,
+            login_and_get_token,
+            delete_fed_fixture,
+            mock_fedid_email_none,
+    ):
+        response = test_app.post(
+            "/users",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+            content=json.dumps({
+                "_id": "fedid_user_missing_email",
+                "auth_type": "FedID",
+                "authorised_routes": ["/submit/hdf POST"],
+            }),
+        )
+
+        assert response.status_code == 400
+        assert "No email found for FedID username 'fedid_user_missing_email'" in response.text

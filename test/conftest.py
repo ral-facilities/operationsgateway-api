@@ -8,6 +8,7 @@ import imagehash
 from PIL import Image
 import pytest
 
+from operationsgateway_api.src.auth.authentication import Authentication
 from operationsgateway_api.src.experiments.unique_worker import UniqueWorker
 from operationsgateway_api.src.main import app
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
@@ -23,6 +24,14 @@ def mock_fedid_email(monkeypatch):
     monkeypatch.setattr(
         "operationsgateway_api.src.routes.users.Authentication.get_email_from_fedid",
         staticmethod(lambda username: "test@example.com"),
+    )
+
+@pytest.fixture
+def mock_fedid_email_none(monkeypatch):
+    monkeypatch.setattr(
+        Authentication,
+        "get_email_from_fedid",
+        lambda _: None,
     )
 
 
