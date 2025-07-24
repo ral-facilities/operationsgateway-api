@@ -1,3 +1,4 @@
+from functools import lru_cache
 from io import BytesIO
 import logging
 
@@ -197,3 +198,12 @@ class EchoInterface:
                 f"{exc.response['Error']['Code']} when deleting file at"
                 f" '{dir_path}'",
             ) from exc
+
+
+@lru_cache
+def get_echo_interface() -> EchoInterface:
+    """
+    Returns:
+        EchoInterface: Cached object for interacting with Echo object storage.
+    """
+    return EchoInterface()

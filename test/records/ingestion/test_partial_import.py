@@ -408,7 +408,8 @@ class TestPartialImport:
         # waveform channels, a check is conducted to make sure the associated
         # image/waveform is actually on Echo and because we're not using stored data for
         # this test, we need to mock that check
-        with patch.object(partial_import_checker.echo, "head_object") as mock_is_stored:
+        echo_interface = partial_import_checker.echo_interface
+        with patch.object(echo_interface, "head_object") as mock_is_stored:
             mock_is_stored.return_value = True
             partial_import_channel_checks = partial_import_checker.channel_checks(
                 {"rejected_channels": {}},

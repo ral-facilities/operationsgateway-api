@@ -1,11 +1,7 @@
-import json
-from urllib.parse import quote
-
 from fastapi.testclient import TestClient
-import pytest
 
 
-class TestGetWaveformByID:
+class TestGetVectorById:
     def test_get_vector(
         self,
         test_app: TestClient,

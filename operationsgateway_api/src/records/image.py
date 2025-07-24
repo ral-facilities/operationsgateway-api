@@ -20,7 +20,7 @@ from operationsgateway_api.src.functions.builtins.centroid_y import CentroidY
 from operationsgateway_api.src.functions.builtins.fwhm import FWHM
 from operationsgateway_api.src.functions.variable_models import WaveformVariable
 from operationsgateway_api.src.models import ImageModel
-from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.image_abc import ImageABC
 from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
@@ -123,17 +123,18 @@ class Image(ImageABC):
             log.exception(msg=exc)
             raise ImageError("Image data is not in correct format to be read") from exc
 
-        echo = EchoInterface()
+        echo_interface = get_echo_interface()
         storage_path = Image.get_full_path(input_image.image.path)
         log.info("Storing image on S3: %s", storage_path)
 
         try:
-            echo.upload_file_object(image_bytes, storage_path)
+            echo_interface.upload_file_object(image_bytes, storage_path)
             return None  # No failure
         except EchoS3Error:
             # Extract the channel name and propagate it
             channel_name = input_image.get_channel_name_from_path()
             log.error("Failed to upload image for channel: %s", channel_name)
+            get_echo_interface.cache_clear()  # Invalidate the cache as a precaution
             return channel_name
 
     @staticmethod
@@ -160,19 +161,18 @@ class Image(ImageABC):
         """
 
         log.info("Retrieving image and returning BytesIO object")
-        echo = EchoInterface()
+        echo_interface = get_echo_interface()
 
         try:
             try:
                 relative_path = Image.get_relative_path(record_id, channel_name)
                 full_path = Image.get_full_path(relative_path)
-                image_bytes = echo.download_file_object(full_path)
+                image_bytes = echo_interface.download_file_object(full_path)
             except EchoS3Error:
                 # Try again without subdirectories, might be stored in old format
                 relative_path = Image.get_relative_path(record_id, channel_name, False)
                 full_path = Image.get_full_path(relative_path)
-                image_bytes = echo.download_file_object(full_path)
-
+                image_bytes = echo_interface.download_file_object(full_path)
             if original_image:
                 log.debug(
                     "Original image requested, return unmodified image bytes: %s",
@@ -198,6 +198,7 @@ class Image(ImageABC):
                 img_src.close()
                 return false_colour_image
         except (ClientError, EchoS3Error) as exc:
+            get_echo_interface.cache_clear()  # Invalidate the cache as a precaution
             await Image._handle_get_image_exception(record_id, channel_name, exc)
 
     @staticmethod

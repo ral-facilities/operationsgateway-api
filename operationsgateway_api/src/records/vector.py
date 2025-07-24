@@ -13,7 +13,10 @@ from operationsgateway_api.src.exceptions import (
     VectorError,
 )
 from operationsgateway_api.src.models import VectorModel
-from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.echo_interface import (
+    EchoInterface,
+    get_echo_interface,
+)
 from operationsgateway_api.src.users.preferences import UserPreferences
 
 
@@ -34,17 +37,18 @@ class Vector:
         found, a VectorError will be raised.
         """
         log.info("Retrieving vector and returning a VectorModel")
-        echo = EchoInterface()
+        echo_interface = get_echo_interface()
 
         try:
             relative_path = Vector.get_relative_path(record_id, channel_name)
             full_path = Vector.get_full_path(relative_path)
-            bytes_io = echo.download_file_object(full_path)
+            bytes_io = echo_interface.download_file_object(full_path)
             vector_dict = json.loads(bytes_io.getvalue().decode())
             return VectorModel(**vector_dict)
         except (ClientError, EchoS3Error) as exc:
             log.error("Vector could not be found: %s", relative_path)
             msg = f"Vector could not be found on object storage: {relative_path}"
+            get_echo_interface.cache_clear()  # Invalidate the cache as a precaution
             raise VectorError(msg) from exc
 
     @staticmethod
@@ -102,15 +106,17 @@ class Vector:
         upload fails.
         """
         log.info("Storing vector: %s", self.vector.path)
-        echo = EchoInterface()
+        echo_interface = get_echo_interface()
         try:
             bytes_io = BytesIO(self.vector.model_dump_json(indent=2).encode())
-            echo.upload_file_object(bytes_io, Vector.get_full_path(self.vector.path))
+            full_path = Vector.get_full_path(self.vector.path)
+            echo_interface.upload_file_object(bytes_io, full_path)
             return  # Successful upload
         except EchoS3Error:
             # Extract the channel name and propagate it
             channel_name = self.get_channel_name_from_path()
             log.exception("Failed to upload vector for channel '%s'", channel_name)
+            get_echo_interface.cache_clear()  # Invalidate the cache as a precaution
             return channel_name
 
     def create_thumbnail(

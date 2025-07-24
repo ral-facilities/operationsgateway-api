@@ -13,7 +13,10 @@ import matplotlib.pyplot as plt  # noqa: I202
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import EchoS3Error, WaveformError
 from operationsgateway_api.src.models import WaveformModel
-from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.echo_interface import (
+    EchoInterface,
+    get_echo_interface,
+)
 
 
 log = logging.getLogger()
@@ -42,9 +45,9 @@ class Waveform:
         """
         log.info("Storing waveform: %s", self.waveform.path)
         bytes_json = self.to_json()
-        echo = EchoInterface()
+        echo_interface = get_echo_interface()
         try:
-            echo.upload_file_object(
+            echo_interface.upload_file_object(
                 bytes_json,
                 Waveform.get_full_path(self.waveform.path),
             )
@@ -56,6 +59,7 @@ class Waveform:
                 "Failed to upload waveform for channel '%s'",
                 channel_name,
             )
+            get_echo_interface.cache_clear()  # Invalidate the cache as a precaution
             return channel_name
 
     def create_thumbnail(self) -> None:
@@ -158,13 +162,13 @@ class Waveform:
         the waveform should exist; if no waveform can be found, a `WaveformError` will
         be raised
         """
-        echo = EchoInterface()
+        echo_interface = get_echo_interface()
 
         try:
             try:
                 relative_path = Waveform.get_relative_path(record_id, channel_name)
                 full_path = Waveform.get_full_path(relative_path)
-                waveform_file = echo.download_file_object(full_path)
+                waveform_file = echo_interface.download_file_object(full_path)
             except EchoS3Error:
                 # Try again without subdirectories, might be stored in old format
                 relative_path = Waveform.get_relative_path(
@@ -173,12 +177,13 @@ class Waveform:
                     use_subdirectories=False,
                 )
                 full_path = Waveform.get_full_path(relative_path)
-                waveform_file = echo.download_file_object(full_path)
+                waveform_file = echo_interface.download_file_object(full_path)
 
             waveform_data = json.loads(waveform_file.getvalue().decode())
             return WaveformModel(**waveform_data)
         except (ClientError, EchoS3Error) as exc:
             log.error("Waveform could not be found: %s", relative_path)
+            get_echo_interface.cache_clear()  # Invalidate the cache as a precaution
             raise WaveformError(
                 f"Waveform could not be found on object storage: {relative_path}",
             ) from exc

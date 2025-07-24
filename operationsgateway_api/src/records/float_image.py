@@ -11,7 +11,7 @@ from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import EchoS3Error
 from operationsgateway_api.src.models import FloatImageModel
-from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.image_abc import ImageABC
 from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
@@ -64,17 +64,17 @@ class FloatImage(ImageABC):
         log.info("Storing float image in a Bytes object: %s", input_image.image.path)
         image_bytes = BytesIO()
         np.savez_compressed(image_bytes, input_image.image.data)
-        echo = EchoInterface()
         storage_path = FloatImage.get_full_path(input_image.image.path)
         log.info("Storing float image on S3: %s", storage_path)
-
+        echo_interface = get_echo_interface()
         try:
-            echo.upload_file_object(image_bytes, storage_path)
+            echo_interface.upload_file_object(image_bytes, storage_path)
             return None  # No failure
         except EchoS3Error:
             # Extract the channel name and propagate it
             channel_name = input_image.get_channel_name_from_path()
             log.error("Failed to upload float image for channel: %s", channel_name)
+            get_echo_interface.cache_clear()  # Invalidate the cache as a precaution
             return channel_name
 
     @staticmethod
@@ -106,12 +106,13 @@ class FloatImage(ImageABC):
         Get and return the BytesIO of the original compressed npz file. For use when
         exporting data.
         """
-        echo = EchoInterface()
+        echo_interface = get_echo_interface()
         try:
             relative_path = FloatImage.get_relative_path(record_id, channel_name)
             full_path = FloatImage.get_full_path(relative_path)
-            return echo.download_file_object(full_path)
+            return echo_interface.download_file_object(full_path)
         except (ClientError, EchoS3Error) as exc:
+            get_echo_interface.cache_clear()  # Invalidate the cache as a precaution
             await FloatImage._handle_get_image_exception(
                 record_id=record_id,
                 channel_name=channel_name,

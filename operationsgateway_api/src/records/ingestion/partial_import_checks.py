@@ -8,7 +8,7 @@ from operationsgateway_api.src.models import (
     VectorChannelModel,
     WaveformChannelModel,
 )
-from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.vector import Vector
@@ -26,7 +26,7 @@ class PartialImportChecks:
         """
         self.ingested_record = ingested_record
         self.stored_record = stored_record
-        self.echo = EchoInterface()
+        self.echo_interface = get_echo_interface()
 
     def metadata_checks(self):
         """
@@ -97,16 +97,16 @@ class PartialImportChecks:
             if channel_name in self.stored_record.channels:
                 if isinstance(channel_model, ImageChannelModel):
                     path = Image.get_full_path(channel_model.image_path)
-                    object_stored = self.echo.head_object(path)
+                    object_stored = self.echo_interface.head_object(path)
                 elif isinstance(channel_model, FloatImageChannelModel):
                     path = FloatImage.get_full_path(channel_model.image_path)
-                    object_stored = self.echo.head_object(path)
+                    object_stored = self.echo_interface.head_object(path)
                 elif isinstance(channel_model, WaveformChannelModel):
                     path = Waveform.get_full_path(channel_model.waveform_path)
-                    object_stored = self.echo.head_object(path)
+                    object_stored = self.echo_interface.head_object(path)
                 elif isinstance(channel_model, VectorChannelModel):
                     path = Vector.get_full_path(channel_model.vector_path)
-                    object_stored = self.echo.head_object(path)
+                    object_stored = self.echo_interface.head_object(path)
                 else:
                     object_stored = True
                 if object_stored:
