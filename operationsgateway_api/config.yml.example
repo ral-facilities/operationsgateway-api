@@ -50,7 +50,7 @@ auth:
   oidc_providers:
     keycloak:
       configuration_url: https://keycloak.example.com/realms/myrealm/.well-known/openid-configuration
-      audience: operations-gateway  # the Keycloak client ID for example
+      audience: operations-gateway  # also known as the client id
       verify_cert: true
       mechanism: oidc
       matching_claim: email
