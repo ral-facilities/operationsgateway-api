@@ -6,9 +6,9 @@ import pytest
 
 from operationsgateway_api.src.exceptions import UnauthorisedError
 from operationsgateway_api.src.models import UserModel
-from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.users.user import User
 
+pytestmark = pytest.mark.usefixtures("mock_fedid_email")
 
 class TestCreateUsers:
     @pytest.mark.parametrize(
@@ -335,7 +335,7 @@ class TestCreateUsers:
             headers={"Authorization": f"Bearer {login_and_get_token}"},
             content=json.dumps(
                 {
-                    "_id": "fedid_user_missing_email",
+                    "_id": "fed",
                     "auth_type": "FedID",
                     "authorised_routes": ["/submit/hdf POST"],
                 },
@@ -344,14 +344,14 @@ class TestCreateUsers:
 
         assert response.status_code == 400
         assert (
-            "No email found for FedID username 'fedid_user_missing_email'"
+            "No email found for FedID username 'fed'"
             in response.text
         )
 
     @pytest.mark.asyncio
-    async def test_user_found(self):
+    async def test_user_email_found(self):
         expected_user = {
-            "_id": "test",
+            "_id": "fed",
             "email": "test@example.com",
             "auth_type": "local",
         }
@@ -365,11 +365,11 @@ class TestCreateUsers:
             result = await User.get_user_by_email("test@example.com")
 
             assert isinstance(result, UserModel)
-            assert result.username == "test"
+            assert result.username == "fed"
             assert result.email == "test@example.com"
 
     @pytest.mark.asyncio
-    async def test_user_not_found(self):
+    async def test_user_email_not_found(self):
         with patch(
                 "operationsgateway_api.src.mongo.interface.MongoDBInterface.find_one",
                 new_callable=AsyncMock
