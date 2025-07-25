@@ -4,8 +4,10 @@ import os
 
 import numpy as np
 import pymongo
+import pytest
 import pytest_asyncio
 
+from operationsgateway_api.src.auth.authentication import Authentication
 from operationsgateway_api.src.models import VectorModel, WaveformModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.echo_interface import EchoInterface
@@ -226,3 +228,19 @@ async def data_for_delete_records_subdirectories(record_for_delete_records: str)
     echo.delete_file_object(waveform_path)
     echo.delete_file_object(float_image_path)
     echo.delete_file_object(vector_path)
+
+@pytest_asyncio.fixture()
+async def mock_fedid_email(monkeypatch):
+    monkeypatch.setattr(
+        "operationsgateway_api.src.routes.users.Authentication.get_email_from_fedid",
+        staticmethod(lambda username: "test@example.com"),
+    )
+
+
+@pytest_asyncio.fixture
+async def mock_fedid_email_none(monkeypatch):
+    monkeypatch.setattr(
+        Authentication,
+        "get_email_from_fedid",
+        lambda _: None,
+    )
