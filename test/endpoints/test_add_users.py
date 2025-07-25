@@ -1,8 +1,12 @@
 import json
+from unittest.mock import AsyncMock
 
 from fastapi.testclient import TestClient
 import pytest
 
+from operationsgateway_api.src.exceptions import UnauthorisedError
+from operationsgateway_api.src.models import UserModel
+from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.users.user import User
 
 
@@ -343,3 +347,36 @@ class TestCreateUsers:
             "No email found for FedID username 'fedid_user_missing_email'"
             in response.text
         )
+
+    @pytest.mark.asyncio
+    async def test_get_user_by_email_success(mocker):
+        email = "user@example.com"
+        fake_user = {
+            "username": "testuser",
+            "email": email,
+            "auth_type": "FedID",
+            "sha256_password": None,
+        }
+
+        # Patch the MongoDBInterface.find_one method
+        mocker.patch.object(
+            MongoDBInterface,
+            "find_one",
+            new=AsyncMock(return_value=fake_user),
+        )
+
+        user = await User.get_user_by_email(email)
+        assert isinstance(user, UserModel)
+        assert user.email == email
+        assert user.username == "testuser"
+
+    @pytest.mark.asyncio
+    async def test_get_user_by_email_not_found(mocker):
+        mocker.patch.object(
+            MongoDBInterface,
+            "find_one",
+            new=AsyncMock(return_value=None),
+        )
+
+        with pytest.raises(UnauthorisedError):
+            await User.get_user_by_email("nonexistent@example.com")
