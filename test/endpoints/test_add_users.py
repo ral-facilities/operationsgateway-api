@@ -1,5 +1,5 @@
 import json
-from unittest.mock import AsyncMock
+from unittest.mock import patch, AsyncMock
 
 from fastapi.testclient import TestClient
 import pytest
@@ -349,34 +349,32 @@ class TestCreateUsers:
         )
 
     @pytest.mark.asyncio
-    async def test_get_user_by_email_success(mocker):
-        email = "user@example.com"
-        fake_user = {
-            "username": "testuser",
-            "email": email,
-            "auth_type": "FedID",
-            "sha256_password": None,
+    async def test_user_found(self):
+        expected_user = {
+            "_id": "test",
+            "email": "test@example.com",
+            "auth_type": "local",
         }
 
-        # Patch the MongoDBInterface.find_one method
-        mocker.patch.object(
-            MongoDBInterface,
-            "find_one",
-            new=AsyncMock(return_value=fake_user),
-        )
+        with patch(
+                "operationsgateway_api.src.mongo.interface.MongoDBInterface.find_one",
+                new_callable=AsyncMock
+        ) as mock_find_one:
+            mock_find_one.return_value = expected_user
 
-        user = await User.get_user_by_email(email)
-        assert isinstance(user, UserModel)
-        assert user.email == email
-        assert user.username == "testuser"
+            result = await User.get_user_by_email("test@example.com")
+
+            assert isinstance(result, UserModel)
+            assert result.username == "test"
+            assert result.email == "test@example.com"
 
     @pytest.mark.asyncio
-    async def test_get_user_by_email_not_found(mocker):
-        mocker.patch.object(
-            MongoDBInterface,
-            "find_one",
-            new=AsyncMock(return_value=None),
-        )
+    async def test_user_not_found(self):
+        with patch(
+                "operationsgateway_api.src.mongo.interface.MongoDBInterface.find_one",
+                new_callable=AsyncMock
+        ) as mock_find_one:
+            mock_find_one.return_value = None
 
-        with pytest.raises(UnauthorisedError):
-            await User.get_user_by_email("nonexistent@example.com")
+            with pytest.raises(UnauthorisedError):
+                await User.get_user_by_email("test@example.com")
