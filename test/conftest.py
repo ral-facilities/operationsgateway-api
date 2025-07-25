@@ -26,6 +26,7 @@ def mock_fedid_email(monkeypatch):
         staticmethod(lambda username: "test@example.com"),
     )
 
+
 @pytest.fixture
 def mock_fedid_email_none(monkeypatch):
     monkeypatch.setattr(
