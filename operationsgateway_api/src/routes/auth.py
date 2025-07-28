@@ -10,7 +10,8 @@ from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.auth.oidc_handler import OidcHandler
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.error_handling import endpoint_error_handling
-from operationsgateway_api.src.exceptions import ForbiddenError
+from operationsgateway_api.src.exceptions import ForbiddenError, \
+    UnauthorisedError
 from operationsgateway_api.src.models import AccessTokenModel, LoginDetailsModel
 from operationsgateway_api.src.users.user import User
 
@@ -147,8 +148,7 @@ async def refresh(
     summary="Login using an OpenID Connect (OIDC) token",
     response_description="A JWT access token (and a refresh token cookie)",
     responses={
-        401: {"description": "Invalid OIDC token"},
-        403: {"description": "User not allowed to access the system"},
+        401: {"description": "Unauthorized"}
     },
     tags=["Authentication"],
 )
@@ -177,7 +177,7 @@ async def oidc_login(
 
     if not user_model:
         log.warning("User '%s' not found in user database", oidc_email)
-        raise ForbiddenError("User not authorised")
+        raise UnauthorisedError
 
     # Create access/refresh tokens
     jwt_handler = JwtHandler(user_model)

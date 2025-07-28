@@ -8,7 +8,6 @@ import imagehash
 from PIL import Image
 import pytest
 
-from operationsgateway_api.src.auth.authentication import Authentication
 from operationsgateway_api.src.experiments.unique_worker import UniqueWorker
 from operationsgateway_api.src.main import app
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler

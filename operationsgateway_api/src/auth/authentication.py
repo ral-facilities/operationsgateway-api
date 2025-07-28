@@ -1,6 +1,6 @@
 from hashlib import sha256
 import logging
-from socket import socket
+import socket
 
 import ldap
 

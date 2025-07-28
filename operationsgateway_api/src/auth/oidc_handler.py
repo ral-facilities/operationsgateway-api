@@ -5,7 +5,8 @@ import requests
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.config import OidcProviderConfig
-from operationsgateway_api.src.exceptions import AuthServerError
+from operationsgateway_api.src.exceptions import AuthServerError, UserError, \
+    UnauthorisedError
 
 log = logging.getLogger()
 
@@ -115,17 +116,17 @@ class OidcHandler:
             matching_claim = payload.get(provider.get_matching_claim())
             if not matching_claim:
                 log.error("Username claim missing in ID token")
-                raise AuthServerError()
+                raise UnauthorisedError("Username claim missing in ID token")
 
             return matching_claim
 
         except jwt.exceptions.ExpiredSignatureError as exc:
             log.warning("OIDC token has expired")
-            raise AuthServerError("OIDC token has expired") from exc
+            raise UnauthorisedError("OIDC token has expired") from exc
 
         except jwt.exceptions.InvalidTokenError as exc:
             log.error("Invalid OIDC ID token")
-            raise AuthServerError("Invalid OIDC ID token") from exc
+            raise UserError("Invalid OIDC ID token") from exc
 
         except Exception as exc:
             log.exception("Unexpected error during OIDC token handling")
