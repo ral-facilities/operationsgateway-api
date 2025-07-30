@@ -4,7 +4,8 @@ import jwt
 import pytest
 
 from operationsgateway_api.src.auth.oidc_handler import OidcHandler
-from operationsgateway_api.src.exceptions import AuthServerError
+from operationsgateway_api.src.exceptions import AuthServerError, \
+    UnauthorisedError
 
 
 class TestOidcHandler:
@@ -56,7 +57,7 @@ class TestOidcHandler:
         self,
         handler_with_mocked_provider,
     ):
-        """Check that expired token raises AuthServerError with specific message."""
+        """Check that expired token raises UnauthorisedError """
         with patch("jwt.get_unverified_header") as mock_header, patch(
             "jwt.decode",
         ) as mock_decode:
@@ -67,7 +68,7 @@ class TestOidcHandler:
                 jwt.exceptions.ExpiredSignatureError("Token has expired"),
             ]
 
-            with pytest.raises(AuthServerError) as exc_info:
+            with pytest.raises(UnauthorisedError) as exc_info:
                 handler_with_mocked_provider.handle(self.expired_token)
 
             assert str(exc_info.value) == "OIDC token has expired"
