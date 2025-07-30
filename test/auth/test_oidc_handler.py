@@ -3,7 +3,8 @@ from unittest.mock import MagicMock, patch
 import jwt
 import pytest
 
-from operationsgateway_api.src.auth.oidc_handler import OidcHandler
+from operationsgateway_api.src.auth.oidc_handler import OidcHandler, \
+    OidcProvider
 from operationsgateway_api.src.exceptions import AuthServerError, \
     UnauthorisedError
 
@@ -29,6 +30,16 @@ class TestOidcHandler:
         handler = OidcHandler.__new__(OidcHandler)
         handler._providers = {self._issuer: provider}
         return handler
+
+    @pytest.fixture
+    def config(self):
+        return MagicMock(
+            audience="test-audience",
+            mechanism="test",
+            matching_claim="email",
+            configuration_url="https://example.com/.well-known/openid-configuration",
+            verify_cert=True,
+        )
 
     expired_token = (
         "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICIzT0lkZW1"
@@ -96,3 +107,74 @@ class TestOidcHandler:
 
             result = handler_with_mocked_provider.handle(self.expired_token)
             assert result == self._email_value
+
+    def test_discovery_failure_raises(self, config):
+        with patch("requests.get", side_effect=Exception("boom")):
+            with pytest.raises(AuthServerError):
+                OidcProvider(config)
+
+    def test_jwks_fetch_failure_raises(self, config):
+        discovery = {"issuer": "https://example.com",
+                     "jwks_uri": "https://example.com/jwks"}
+        with patch("requests.get") as mock_get:
+            mock_get.side_effect = [
+                MagicMock(status_code=200, json=lambda: discovery),
+                Exception("boom"),
+            ]
+            with pytest.raises(AuthServerError):
+                OidcProvider(config)
+
+    def test_skips_invalid_key_format(self, config, caplog):
+        discovery = {"issuer": "https://example.com",
+                     "jwks_uri": "https://example.com/jwks"}
+        bad_key = {"kid": "bad", "use": "sig", "kty": "UNKNOWN"}
+
+        with patch("requests.get") as mock_get:
+            mock_get.side_effect = [
+                MagicMock(status_code=200, json=lambda: discovery),
+                MagicMock(status_code=200, json=lambda: {"keys": [bad_key]}),
+            ]
+
+            with caplog.at_level("WARNING"):
+                OidcProvider(config)
+
+            assert "Could not load key" in caplog.text
+
+    def test_skips_non_signing_keys(self, config, caplog):
+        discovery = {"issuer": "https://example.com",
+                     "jwks_uri": "https://example.com/jwks"}
+        key = {"kid": "notsig", "use": "enc", "kty": "RSA"}
+
+        with patch("requests.get") as mock_get:
+            mock_get.side_effect = [
+                MagicMock(status_code=200, json=lambda: discovery),
+                MagicMock(status_code=200, json=lambda: {"keys": [key]}),
+            ]
+
+            with caplog.at_level("DEBUG"):
+                provider = OidcProvider(config)
+
+            assert "Skipping non-signing key" in caplog.text
+
+    def test_get_key_unknown_raises(self, config):
+        discovery = {"issuer": "https://example.com",
+                     "jwks_uri": "https://example.com/jwks"}
+        valid_key = {
+            "kid": "good",
+            "use": "sig",
+            "kty": "RSA",
+            "alg": "RS256",
+            "n": "sXchYgqz6kzRNmD2vOBZK8wV8iYGZZ4yq0b3WXWqEJQzyABdT4TfBw",
+            "e": "AQAB",
+        }
+
+        with patch("requests.get") as mock_get:
+            mock_get.side_effect = [
+                MagicMock(status_code=200, json=lambda: discovery),
+                MagicMock(status_code=200, json=lambda: {"keys": [valid_key]}),
+            ]
+
+            provider = OidcProvider(config)
+
+            with pytest.raises(AuthServerError):
+                provider.get_key("not-there")
