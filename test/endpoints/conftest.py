@@ -228,20 +228,3 @@ async def data_for_delete_records_subdirectories(record_for_delete_records: str)
     echo.delete_file_object(waveform_path)
     echo.delete_file_object(float_image_path)
     echo.delete_file_object(vector_path)
-
-
-@pytest_asyncio.fixture()
-async def mock_fedid_email(monkeypatch):
-    monkeypatch.setattr(
-        "operationsgateway_api.src.routes.users.Authentication.get_email_from_fedid",
-        staticmethod(lambda username: "test@example.com"),
-    )
-
-
-@pytest_asyncio.fixture
-async def mock_fedid_email_none(monkeypatch):
-    monkeypatch.setattr(
-        Authentication,
-        "get_email_from_fedid",
-        lambda _: None,
-    )
