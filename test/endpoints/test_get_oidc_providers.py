@@ -31,6 +31,7 @@ class TestOidcProviders:
         }
 
     def test_list_oidc_providers(self, test_app: TestClient, mock_oidc_providers):
+        """Test to check that the endpoint can return a list of oidc providers"""
         # Patch the config.auth.oidc_providers dictionary
         with patch.object(Config.config.auth, "oidc_providers", mock_oidc_providers):
             response = test_app.get("/oidc_providers")

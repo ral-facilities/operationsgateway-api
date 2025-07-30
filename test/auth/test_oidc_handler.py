@@ -11,7 +11,9 @@ from operationsgateway_api.src.exceptions import (
 )
 
 
+# Suite of tests that check the OidcHandler and OidcProvider classes
 class TestOidcHandler:
+    # Constants used in multiple tests
     _issuer = "http://localhost:8081/realms/testrealm"
     _kid = "dZqu2hFr2k6SB5I36lv84ZNSVw38PKbYDlUoPpgk8WQ"
     _audience = "operations-gateway"
@@ -20,8 +22,10 @@ class TestOidcHandler:
 
     @pytest.fixture()
     def handler_with_mocked_provider(self):
+        # Create a fake key with the correct algorithm
         key = MagicMock()
         key.algorithm_name = "RS256"
+        # Create a fake provider that returns expected values
 
         provider = MagicMock()
         provider.get_key.return_value = key
@@ -29,10 +33,12 @@ class TestOidcHandler:
         provider.get_audience.return_value = self._audience
         provider.get_matching_claim.return_value = self._claim
 
+        # Instantiate OidcHandler without calling __init__ and insert fake provider
         handler = OidcHandler.__new__(OidcHandler)
         handler._providers = {self._issuer: provider}
         return handler
 
+    # Mocked config object for use in OidcProvider tests
     @pytest.fixture
     def config(self):
         return MagicMock(
@@ -43,6 +49,7 @@ class TestOidcHandler:
             verify_cert=True,
         )
 
+    # Example of an expired, but otherwise valid JWT for testing
     expired_token = (
         "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICIzT0lkZW1"
         "mU0pIQ1dFU0RlTGE3Q2xvdjNFeEdQa1F2a0Z0a0x2VUp4a1ZVIn0.eyJle"
@@ -90,8 +97,12 @@ class TestOidcHandler:
         self,
         handler_with_mocked_provider,
     ):
-        """Check that the email claim is extracted when expiry/signature
-        checks are skipped."""
+        """Test to check the 'happy path' of the OidcHandler.handle() method.
+        This test focuses on verifying correct claim extraction using mocks:
+        - The JWT is assumed valid (signature and expiry verification are skipped
+          as we cannot easily create a valid signed token here).
+        - The 'email' claim is present and matches the configured matching claim.
+        """
         with patch("jwt.get_unverified_header") as mock_header, patch(
             "jwt.decode",
         ) as mock_decode:
@@ -111,11 +122,16 @@ class TestOidcHandler:
             assert result == self._email_value
 
     def test_discovery_failure_raises(self, config):
-        with patch("requests.get", side_effect=Exception("boom")):
+        """Test to check that, if the discovery document fetch fails,
+        the OidcProvider correctly raises an AuthServerError."""
+        with patch("requests.get", side_effect=Exception("whetever")):
             with pytest.raises(AuthServerError):
                 OidcProvider(config)
 
     def test_jwks_fetch_failure_raises(self, config):
+        """Test to check that OidcProvider raises an AuthServerError if
+        fetching the JWKS (JSON Web Key Set) fails, even when the discovery
+        document is successfully retrieved."""
         discovery = {
             "issuer": "https://example.com",
             "jwks_uri": "https://example.com/jwks",
@@ -123,12 +139,14 @@ class TestOidcHandler:
         with patch("requests.get") as mock_get:
             mock_get.side_effect = [
                 MagicMock(status_code=200, json=lambda: discovery),
-                Exception("boom"),
+                Exception("whetever"),
             ]
             with pytest.raises(AuthServerError):
                 OidcProvider(config)
 
     def test_skips_invalid_key_format(self, config, caplog):
+        """Test to check that OidcProvider logs a warning and skips a key if
+        the JWKS contains a key with an unsupported or invalid format."""
         discovery = {
             "issuer": "https://example.com",
             "jwks_uri": "https://example.com/jwks",
@@ -147,6 +165,9 @@ class TestOidcHandler:
             assert "Could not load key" in caplog.text
 
     def test_skips_non_signing_keys(self, config, caplog):
+        """Test to check that OidcProvider skips and logs non-signing keys
+        in the JWKS. Keys that are meant for encryption ("use": "enc")
+        instead of signing ("use": "sig")"""
         discovery = {
             "issuer": "https://example.com",
             "jwks_uri": "https://example.com/jwks",
@@ -165,6 +186,8 @@ class TestOidcHandler:
             assert "Skipping non-signing key" in caplog.text
 
     def test_get_key_unknown_raises(self, config):
+        """Test to check that OidcProvider.get_key() raises an AuthServerError
+        if asked for a key ID (kid) that doesn't exist in the JWKS."""
         discovery = {
             "issuer": "https://example.com",
             "jwks_uri": "https://example.com/jwks",
@@ -190,6 +213,8 @@ class TestOidcHandler:
                 provider.get_key("not-there")
 
     def test_oidc_handler_init_failure_on_bad_provider(self):
+        """Test to check that OidcHandler raises an AuthServerError when one
+        of its OIDC providers fails to initialise."""
         bad_config = MagicMock()
         with patch(
             "operationsgateway_api.src.auth.oidc_handler.Config",
@@ -206,6 +231,9 @@ class TestOidcHandler:
         self,
         handler_with_mocked_provider,
     ):
+        """Test to check that the OidcHandler.handle() method raises a UserError
+        when the id token is invalid, specifically when jwt.decode() raises
+        an InvalidTokenError."""
         with patch("jwt.get_unverified_header") as mock_header, patch(
             "jwt.decode",
         ) as mock_decode:
@@ -222,6 +250,8 @@ class TestOidcHandler:
         self,
         handler_with_mocked_provider,
     ):
+        """Test to check that any unexpected exception raised during the execution
+        of OidcHandler.handle() is caught and re-raised as an AuthServerError."""
         with patch("jwt.get_unverified_header", side_effect=Exception("Boom")):
             with pytest.raises(AuthServerError):
                 handler_with_mocked_provider.handle(self.expired_token)
