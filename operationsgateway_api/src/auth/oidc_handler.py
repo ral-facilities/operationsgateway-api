@@ -48,7 +48,7 @@ class OidcProvider:
                 continue
             try:
                 self._keys[kid] = jwt.PyJWK(key)
-            except jwt.exceptions.PyJWKError:
+            except (jwt.exceptions.PyJWKError,jwt.exceptions.InvalidKeyError):
                 log.warning("Could not load key")
 
     def get_issuer(self) -> str:
