@@ -3,15 +3,33 @@ from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 import pytest
+import pytest_asyncio
 
+from operationsgateway_api.src.auth.authentication import Authentication
 from operationsgateway_api.src.exceptions import UnauthorisedError
 from operationsgateway_api.src.models import UserModel
 from operationsgateway_api.src.users.user import User
 
-pytestmark = pytest.mark.usefixtures("mock_fedid_email")
-
 
 class TestCreateUsers:
+
+    @staticmethod
+    @pytest_asyncio.fixture()
+    async def mock_fedid_email(monkeypatch):
+        monkeypatch.setattr(
+            "operationsgateway_api.src.routes.users.Authentication.get_email_from_fedid",
+            staticmethod(lambda username: "test@example.com"),
+        )
+
+    @staticmethod
+    @pytest_asyncio.fixture()
+    async def mock_fedid_email_none(monkeypatch):
+        monkeypatch.setattr(
+            Authentication,
+            "get_email_from_fedid",
+            lambda _: None,
+        )
+
     @pytest.mark.parametrize(
         "username, auth_type, routes, password, expected_response_code",
         [
@@ -77,6 +95,7 @@ class TestCreateUsers:
         routes,
         password,
         expected_response_code,
+        mock_fedid_email,
     ):
         create_response = test_app.post(
             "/users",
