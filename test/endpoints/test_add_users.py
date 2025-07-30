@@ -1,5 +1,5 @@
 import json
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 import pytest
@@ -9,6 +9,7 @@ from operationsgateway_api.src.models import UserModel
 from operationsgateway_api.src.users.user import User
 
 pytestmark = pytest.mark.usefixtures("mock_fedid_email")
+
 
 class TestCreateUsers:
     @pytest.mark.parametrize(
@@ -343,10 +344,7 @@ class TestCreateUsers:
         )
 
         assert response.status_code == 400
-        assert (
-            "No email found for FedID username 'fed'"
-            in response.text
-        )
+        assert "No email found for FedID username 'fed'" in response.text
 
     @pytest.mark.asyncio
     async def test_user_email_found(self):
@@ -357,8 +355,8 @@ class TestCreateUsers:
         }
 
         with patch(
-                "operationsgateway_api.src.mongo.interface.MongoDBInterface.find_one",
-                new_callable=AsyncMock
+            "operationsgateway_api.src.mongo.interface.MongoDBInterface.find_one",
+            new_callable=AsyncMock,
         ) as mock_find_one:
             mock_find_one.return_value = expected_user
 
@@ -371,8 +369,8 @@ class TestCreateUsers:
     @pytest.mark.asyncio
     async def test_user_email_not_found(self):
         with patch(
-                "operationsgateway_api.src.mongo.interface.MongoDBInterface.find_one",
-                new_callable=AsyncMock
+            "operationsgateway_api.src.mongo.interface.MongoDBInterface.find_one",
+            new_callable=AsyncMock,
         ) as mock_find_one:
             mock_find_one.return_value = None
 

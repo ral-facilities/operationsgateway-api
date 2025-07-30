@@ -5,8 +5,11 @@ import requests
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.config import OidcProviderConfig
-from operationsgateway_api.src.exceptions import AuthServerError, UserError, \
-    UnauthorisedError
+from operationsgateway_api.src.exceptions import (
+    AuthServerError,
+    UnauthorisedError,
+    UserError,
+)
 
 log = logging.getLogger()
 
@@ -48,7 +51,7 @@ class OidcProvider:
                 continue
             try:
                 self._keys[kid] = jwt.PyJWK(key)
-            except (jwt.exceptions.PyJWKError,jwt.exceptions.InvalidKeyError):
+            except (jwt.exceptions.PyJWKError, jwt.exceptions.InvalidKeyError):
                 log.warning("Could not load key")
 
     def get_issuer(self) -> str:

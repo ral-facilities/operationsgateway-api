@@ -229,6 +229,7 @@ async def data_for_delete_records_subdirectories(record_for_delete_records: str)
     echo.delete_file_object(float_image_path)
     echo.delete_file_object(vector_path)
 
+
 @pytest_asyncio.fixture()
 async def mock_fedid_email(monkeypatch):
     monkeypatch.setattr(

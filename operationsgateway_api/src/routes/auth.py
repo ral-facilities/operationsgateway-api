@@ -10,8 +10,7 @@ from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.auth.oidc_handler import OidcHandler
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.error_handling import endpoint_error_handling
-from operationsgateway_api.src.exceptions import ForbiddenError, \
-    UnauthorisedError
+from operationsgateway_api.src.exceptions import ForbiddenError, UnauthorisedError
 from operationsgateway_api.src.models import AccessTokenModel, LoginDetailsModel
 from operationsgateway_api.src.users.user import User
 
@@ -147,9 +146,7 @@ async def refresh(
     "/oidc_login",
     summary="Login using an OpenID Connect (OIDC) token",
     response_description="A JWT access token (and a refresh token cookie)",
-    responses={
-        401: {"description": "Unauthorized"}
-    },
+    responses={401: {"description": "Unauthorized"}},
     tags=["Authentication"],
 )
 @endpoint_error_handling

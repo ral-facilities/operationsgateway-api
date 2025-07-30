@@ -1,16 +1,12 @@
-import base64
-import json
+from unittest.mock import AsyncMock, patch
 
-from fastapi.testclient import TestClient
 import pytest
-from httpx import AsyncClient
 
-from operationsgateway_api.src.exceptions import AuthServerError
-
-pytestmark = pytest.mark.asyncio
-from unittest.mock import patch, AsyncMock, MagicMock
 from operationsgateway_api.src.auth.oidc_handler import OidcHandler
 from operationsgateway_api.src.main import app  # or wherever your FastAPI app is
+
+pytestmark = pytest.mark.asyncio
+
 
 class TestOidcAuth:
     @pytest.fixture
@@ -22,27 +18,29 @@ class TestOidcAuth:
         yield
         app.dependency_overrides.clear()
 
-    @patch("operationsgateway_api.src.users.user.User.get_user_by_email",
-           new_callable=AsyncMock)
+    @patch(
+        "operationsgateway_api.src.users.user.User.get_user_by_email",
+        new_callable=AsyncMock,
+    )
     @patch("operationsgateway_api.src.routes.auth.JwtHandler")
     async def test_oidc_login_success(
-            self,
-            mock_jwt_handler_class,
-            mock_get_user_by_email,override_oidc_handler,
+        self,
+        mock_jwt_handler_class,
+        mock_get_user_by_email,
+        override_oidc_handler,
     ):
         from fastapi.testclient import TestClient
         from operationsgateway_api.src.main import app
 
         fake_id_token = "does.not.matter"
 
-        mock_get_user_by_email.return_value = type("User", (), {
-            "username": "user",
-            "auth_type": "FedID"
-        })()
+        mock_get_user_by_email.return_value = type(
+            "User",
+            (),
+            {"username": "user", "auth_type": "FedID"},
+        )()
         mock_jwt_handler = mock_jwt_handler_class.return_value
-        mock_jwt_handler.get_access_token.return_value = {
-            "access": "mock_access_token"
-        }
+        mock_jwt_handler.get_access_token.return_value = {"access": "mock_access_token"}
         mock_jwt_handler.get_refresh_token.return_value = "mock_refresh_token"
 
         client = TestClient(app)
@@ -70,14 +68,18 @@ class TestOidcAuth:
         assert response.status_code == 400
         assert response.json() == {"detail": "Invalid OIDC ID token"}
 
-    @patch("operationsgateway_api.src.users.user.User.get_user_by_email",
-           new_callable=AsyncMock)
-    @patch("operationsgateway_api.src.auth.oidc_handler.OidcHandler.handle",
-           new_callable=AsyncMock)
+    @patch(
+        "operationsgateway_api.src.users.user.User.get_user_by_email",
+        new_callable=AsyncMock,
+    )
+    @patch(
+        "operationsgateway_api.src.auth.oidc_handler.OidcHandler.handle",
+        new_callable=AsyncMock,
+    )
     async def test_oidc_login_user_not_found_returns_401(
-            self,
-            mock_oidc_handle,
-            mock_get_user_by_email,
+        self,
+        mock_oidc_handle,
+        mock_get_user_by_email,
     ):
         from fastapi.testclient import TestClient
         from operationsgateway_api.src.main import app
@@ -92,4 +94,3 @@ class TestOidcAuth:
         )
 
         assert response.status_code == 401
-

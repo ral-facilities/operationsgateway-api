@@ -2,12 +2,13 @@ from unittest.mock import MagicMock, patch
 
 import jwt
 import pytest
-from fastapi import requests
 
-from operationsgateway_api.src.auth.oidc_handler import OidcHandler, \
-    OidcProvider
-from operationsgateway_api.src.exceptions import AuthServerError, \
-    UnauthorisedError, UserError
+from operationsgateway_api.src.auth.oidc_handler import OidcHandler, OidcProvider
+from operationsgateway_api.src.exceptions import (
+    AuthServerError,
+    UnauthorisedError,
+    UserError,
+)
 
 
 class TestOidcHandler:
@@ -69,7 +70,7 @@ class TestOidcHandler:
         self,
         handler_with_mocked_provider,
     ):
-        """Check that expired token raises UnauthorisedError """
+        """Check that expired token raises UnauthorisedError"""
         with patch("jwt.get_unverified_header") as mock_header, patch(
             "jwt.decode",
         ) as mock_decode:
@@ -115,8 +116,10 @@ class TestOidcHandler:
                 OidcProvider(config)
 
     def test_jwks_fetch_failure_raises(self, config):
-        discovery = {"issuer": "https://example.com",
-                     "jwks_uri": "https://example.com/jwks"}
+        discovery = {
+            "issuer": "https://example.com",
+            "jwks_uri": "https://example.com/jwks",
+        }
         with patch("requests.get") as mock_get:
             mock_get.side_effect = [
                 MagicMock(status_code=200, json=lambda: discovery),
@@ -126,8 +129,10 @@ class TestOidcHandler:
                 OidcProvider(config)
 
     def test_skips_invalid_key_format(self, config, caplog):
-        discovery = {"issuer": "https://example.com",
-                     "jwks_uri": "https://example.com/jwks"}
+        discovery = {
+            "issuer": "https://example.com",
+            "jwks_uri": "https://example.com/jwks",
+        }
         bad_key = {"kid": "bad", "use": "sig", "kty": "UNKNOWN"}
 
         with patch("requests.get") as mock_get:
@@ -142,8 +147,10 @@ class TestOidcHandler:
             assert "Could not load key" in caplog.text
 
     def test_skips_non_signing_keys(self, config, caplog):
-        discovery = {"issuer": "https://example.com",
-                     "jwks_uri": "https://example.com/jwks"}
+        discovery = {
+            "issuer": "https://example.com",
+            "jwks_uri": "https://example.com/jwks",
+        }
         key = {"kid": "notsig", "use": "enc", "kty": "RSA"}
 
         with patch("requests.get") as mock_get:
@@ -153,13 +160,15 @@ class TestOidcHandler:
             ]
 
             with caplog.at_level("DEBUG"):
-                provider = OidcProvider(config)
+                OidcProvider(config)
 
             assert "Skipping non-signing key" in caplog.text
 
     def test_get_key_unknown_raises(self, config):
-        discovery = {"issuer": "https://example.com",
-                     "jwks_uri": "https://example.com/jwks"}
+        discovery = {
+            "issuer": "https://example.com",
+            "jwks_uri": "https://example.com/jwks",
+        }
         valid_key = {
             "kid": "good",
             "use": "sig",
@@ -183,19 +192,23 @@ class TestOidcHandler:
     def test_oidc_handler_init_failure_on_bad_provider(self):
         bad_config = MagicMock()
         with patch(
-                "operationsgateway_api.src.auth.oidc_handler.Config") as mock_config, \
-                patch(
-                    "operationsgateway_api.src.auth.oidc_handler.OidcProvider",
-                    side_effect=Exception("boom")):
+            "operationsgateway_api.src.auth.oidc_handler.Config",
+        ) as mock_config, patch(
+            "operationsgateway_api.src.auth.oidc_handler.OidcProvider",
+            side_effect=Exception("boom"),
+        ):
             mock_config.config.auth.oidc_providers = {"bad": bad_config}
 
             with pytest.raises(AuthServerError):
                 OidcHandler()
 
-    def test_oidc_handler_invalid_token_raises_user_error(self,
-                                                          handler_with_mocked_provider):
+    def test_oidc_handler_invalid_token_raises_user_error(
+        self,
+        handler_with_mocked_provider,
+    ):
         with patch("jwt.get_unverified_header") as mock_header, patch(
-                "jwt.decode") as mock_decode:
+            "jwt.decode",
+        ) as mock_decode:
             mock_header.return_value = {"kid": self._kid}
             mock_decode.side_effect = [
                 {"iss": self._issuer},
@@ -205,7 +218,10 @@ class TestOidcHandler:
             with pytest.raises(UserError, match="Invalid OIDC ID token"):
                 handler_with_mocked_provider.handle(self.expired_token)
 
-    def test_oidc_handler_unexpected_exception_raises_auth_error(self, handler_with_mocked_provider):
+    def test_oidc_handler_unexpected_exception_raises_auth_error(
+        self,
+        handler_with_mocked_provider,
+    ):
         with patch("jwt.get_unverified_header", side_effect=Exception("Boom")):
             with pytest.raises(AuthServerError):
                 handler_with_mocked_provider.handle(self.expired_token)

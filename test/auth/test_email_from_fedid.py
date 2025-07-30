@@ -1,10 +1,12 @@
 import socket
+from unittest.mock import MagicMock, patch
 
-from unittest.mock import patch, MagicMock
-import pytest
 import ldap
+import pytest
+
 from operationsgateway_api.src.auth.authentication import Authentication
 from operationsgateway_api.src.exceptions import AuthServerError
+
 
 class TestFedidEmailLookup:
 
@@ -14,7 +16,10 @@ class TestFedidEmailLookup:
         mock_conn = MagicMock()
         mock_conn.simple_bind_s.return_value = None
         mock_conn.search_s.return_value = [
-            ("dn=whatever", {"mail": [b"test@example.ac.uk"]})
+            (
+                "dn=whatever",
+                {"mail": [b"test@example.ac.uk"]},
+            ),
         ]
         mock_conn.unbind.return_value = None
         mock_ldap_init.return_value = mock_conn
@@ -50,12 +55,17 @@ class TestFedidEmailLookup:
         result = Authentication.get_email_from_fedid("userwithoutmail")
         assert result is None
 
-    # Test LDAP lookup where the result has a malformed structure (e.g. entry is not a dict)
+    # Test LDAP lookup where the result has a malformed structure
     @patch("operationsgateway_api.src.auth.authentication.ldap.initialize")
     def test_get_email_from_fedid_malformed_entry(self, mock_ldap_init):
         mock_conn = MagicMock()
         mock_conn.simple_bind_s.return_value = None
-        mock_conn.search_s.return_value = [("dn=whatever", ["not-a-dict"])]  # Invalid entry type
+        mock_conn.search_s.return_value = [
+            (
+                "dn=whatever",
+                ["not-a-dict"],
+            ),
+        ]  # Invalid entry type
         mock_conn.unbind.return_value = None
         mock_ldap_init.return_value = mock_conn
 
@@ -63,16 +73,21 @@ class TestFedidEmailLookup:
         assert result is None
 
     # Test the appropriate Errors are returned
-    @pytest.mark.parametrize("exception_type", [
-        ldap.LDAPError("ldap error"),
-        TimeoutError("timeout error"),
-        socket.timeout("socket timeout"),
-    ])
+    @pytest.mark.parametrize(
+        "exception_type",
+        [
+            ldap.LDAPError("ldap error"),
+            TimeoutError("timeout error"),
+            socket.timeout("socket timeout"),
+        ],
+    )
     def test_get_email_from_fedid_ldap_errors_raise_auth_server_error(
-            self, exception_type
+        self,
+        exception_type,
     ):
         with patch(
-                "operationsgateway_api.src.auth.authentication.ldap.initialize") as mock_ldap_init:
+            "operationsgateway_api.src.auth.authentication.ldap.initialize",
+        ) as mock_ldap_init:
             mock_conn = MagicMock()
             mock_conn.simple_bind_s.side_effect = exception_type
             mock_ldap_init.return_value = mock_conn
