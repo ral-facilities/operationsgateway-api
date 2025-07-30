@@ -2,11 +2,12 @@ from unittest.mock import MagicMock, patch
 
 import jwt
 import pytest
+from fastapi import requests
 
 from operationsgateway_api.src.auth.oidc_handler import OidcHandler, \
     OidcProvider
 from operationsgateway_api.src.exceptions import AuthServerError, \
-    UnauthorisedError
+    UnauthorisedError, UserError
 
 
 class TestOidcHandler:
@@ -178,3 +179,33 @@ class TestOidcHandler:
 
             with pytest.raises(AuthServerError):
                 provider.get_key("not-there")
+
+    def test_oidc_handler_init_failure_on_bad_provider(self):
+        bad_config = MagicMock()
+        with patch(
+                "operationsgateway_api.src.auth.oidc_handler.Config") as mock_config, \
+                patch(
+                    "operationsgateway_api.src.auth.oidc_handler.OidcProvider",
+                    side_effect=Exception("boom")):
+            mock_config.config.auth.oidc_providers = {"bad": bad_config}
+
+            with pytest.raises(AuthServerError):
+                OidcHandler()
+
+    def test_oidc_handler_invalid_token_raises_user_error(self,
+                                                          handler_with_mocked_provider):
+        with patch("jwt.get_unverified_header") as mock_header, patch(
+                "jwt.decode") as mock_decode:
+            mock_header.return_value = {"kid": self._kid}
+            mock_decode.side_effect = [
+                {"iss": self._issuer},
+                jwt.exceptions.InvalidTokenError("Bad token"),
+            ]
+
+            with pytest.raises(UserError, match="Invalid OIDC ID token"):
+                handler_with_mocked_provider.handle(self.expired_token)
+
+    def test_oidc_handler_unexpected_exception_raises_auth_error(self, handler_with_mocked_provider):
+        with patch("jwt.get_unverified_header", side_effect=Exception("Boom")):
+            with pytest.raises(AuthServerError):
+                handler_with_mocked_provider.handle(self.expired_token)
