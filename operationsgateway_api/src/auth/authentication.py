@@ -3,7 +3,9 @@ import logging
 import socket
 
 import ldap
+from starlette.responses import JSONResponse
 
+from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import (
     AuthServerError,
@@ -125,10 +127,37 @@ class Authentication:
                         email = mail_values[0].decode("utf-8")
                         log.debug("Found email '%s' for FedID '%s'", email, fedid)
                         return email
-            else:
-                log.info("No email found for FedID '%s'", fedid)
-                return None
+
+            log.info("No email found for FedID '%s'", fedid)
+            return None
 
         except (ldap.LDAPError, TimeoutError, socket.timeout) as exc:
             log.warning("LDAP lookup failed or timed out for FedID '%s'", fedid)
             raise AuthServerError() from exc
+
+    @staticmethod
+    def create_tokens_response(user_model):
+
+        # Create access/refresh tokens
+        jwt_handler = JwtHandler(user_model)
+        access_token = jwt_handler.get_access_token()
+        refresh_token = jwt_handler.get_refresh_token()
+
+        # Create response with access token and refresh token cookie
+        response = JSONResponse(content=access_token)
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            max_age=604800,  # 7 days
+            secure=True,
+            httponly=True,
+            samesite="Lax",
+            path="/refresh",
+        )
+
+        log.info(
+            "Refresh token created '%s':",
+            refresh_token,
+        )
+
+        return response

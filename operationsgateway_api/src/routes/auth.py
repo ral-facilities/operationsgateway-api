@@ -1,7 +1,6 @@
 import logging
 
 from fastapi import APIRouter, Body, Cookie, Depends, Response, status
-from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing_extensions import Annotated
 
@@ -67,25 +66,13 @@ async def login(
     authentication = Authentication(login_details, user_model)
     authentication.authenticate()
 
-    # # create their JWT access and refresh tokens
-    jwt_handler = JwtHandler(user_model)
-    access_token = jwt_handler.get_access_token()
-    refresh_token = jwt_handler.get_refresh_token()
     log.info(
-        "Refresh token assigned to '%s': %s",
+        "Creating refresh token for '%s':",
         login_details.username,
-        refresh_token,
     )
-    response = JSONResponse(content=access_token)
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        max_age=604800,
-        secure=True,
-        httponly=True,
-        samesite="Lax",
-        path="/refresh",
-    )
+
+    response = Authentication.create_tokens_response(user_model)
+
     return response
 
 
@@ -176,22 +163,13 @@ async def oidc_login(
         log.warning("User '%s' not found in user database", oidc_email)
         raise UnauthorisedError
 
-    # Create access/refresh tokens
-    jwt_handler = JwtHandler(user_model)
-    access_token = jwt_handler.get_access_token()
-    refresh_token = jwt_handler.get_refresh_token()
-
-    log.info("Refresh token issued for '%s'", oidc_email)
-    response = JSONResponse(content=access_token)
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        max_age=604800,
-        secure=True,
-        httponly=True,
-        samesite="Lax",
-        path="/refresh",
+    log.info(
+        "Creating refresh token for '%s'",
+        oidc_email,
     )
+
+    response = Authentication.create_tokens_response(user_model)
+
     return response
 
 

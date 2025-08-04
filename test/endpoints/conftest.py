@@ -4,10 +4,8 @@ import os
 
 import numpy as np
 import pymongo
-import pytest
 import pytest_asyncio
 
-from operationsgateway_api.src.auth.authentication import Authentication
 from operationsgateway_api.src.models import VectorModel, WaveformModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.echo_interface import EchoInterface

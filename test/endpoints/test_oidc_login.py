@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 from fastapi.testclient import TestClient
 import pytest
+from starlette.responses import JSONResponse
 
 from operationsgateway_api.src.auth.oidc_handler import OidcHandler
 from operationsgateway_api.src.main import app
@@ -23,10 +24,12 @@ class TestOidcAuth:
         "operationsgateway_api.src.users.user.User.get_user_by_email",
         new_callable=AsyncMock,
     )
-    @patch("operationsgateway_api.src.routes.auth.JwtHandler")
+    @patch(
+        "operationsgateway_api.src.routes.auth.Authentication.create_tokens_response",
+    )
     def test_oidc_login_success(
         self,
-        mock_jwt_handler_class,
+        mock_create_tokens_response,
         mock_get_user_by_email,
         override_oidc_handler,
         test_app: TestClient,
@@ -40,10 +43,20 @@ class TestOidcAuth:
             (),
             {"username": "user", "auth_type": "FedID"},
         )()
-        # Mock JWT handler token generation
-        mock_jwt_handler = mock_jwt_handler_class.return_value
-        mock_jwt_handler.get_access_token.return_value = {"access": "mock_access_token"}
-        mock_jwt_handler.get_refresh_token.return_value = "mock_refresh_token"
+
+        # Mock response from create_tokens_response
+        response_body = {"access": "mock_access_token"}
+        mock_response = JSONResponse(content=response_body)
+        mock_response.set_cookie(
+            key="refresh_token",
+            value="mock_refresh_token",
+            max_age=604800,
+            secure=True,
+            httponly=True,
+            samesite="Lax",
+            path="/refresh",
+        )
+        mock_create_tokens_response.return_value = mock_response
 
         response = test_app.post(
             "/oidc_login",
@@ -52,6 +65,7 @@ class TestOidcAuth:
 
         assert response.status_code == 200
         assert response.json()["access"] == "mock_access_token"
+        assert "refresh_token=" in response.headers.get("set-cookie", "")
 
     def test_oidc_login_invalid_jwt_returns_400(
         self,

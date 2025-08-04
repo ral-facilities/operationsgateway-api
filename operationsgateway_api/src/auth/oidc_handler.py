@@ -116,10 +116,13 @@ class OidcHandler:
                 },
             )
 
-            matching_claim = payload.get(provider.get_matching_claim())
+            matching_claim_key = provider.get_matching_claim()
+            matching_claim = payload.get(matching_claim_key)
             if not matching_claim:
-                log.error("Username claim missing in ID token")
-                raise UnauthorisedError("Username claim missing in ID token")
+                log.error("%s claim missing in ID token", matching_claim_key)
+                raise UnauthorisedError(
+                    f"{matching_claim_key} claim missing in ID token",
+                )
 
             return matching_claim
 
