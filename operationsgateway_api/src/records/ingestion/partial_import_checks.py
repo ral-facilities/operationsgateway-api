@@ -57,6 +57,11 @@ class PartialImportChecks:
 
         # Reject if shotnum matches but timestamp doesn't
         if shot_match and not time_match:
+            log.error(
+                "a record with this shotnum already exists %s, %s",
+                ingested_metadata,
+                stored_metadata,
+            )
             raise RejectRecordError("a record with this shotnum already exists")
 
         # Accept merge if everything matches
@@ -77,7 +82,7 @@ class PartialImportChecks:
         )
         raise RejectRecordError("inconsistent metadata")
 
-    def channel_checks(
+    async def channel_checks(
         self,
         channel_dict: dict[str, list[str] | dict[str, str]],
     ) -> dict[str, list[str] | dict[str, str]]:
@@ -97,16 +102,16 @@ class PartialImportChecks:
             if channel_name in self.stored_record.channels:
                 if isinstance(channel_model, ImageChannelModel):
                     path = Image.get_full_path(channel_model.image_path)
-                    object_stored = self.echo_interface.head_object(path)
+                    object_stored = await self.echo_interface.head_object(path)
                 elif isinstance(channel_model, FloatImageChannelModel):
                     path = FloatImage.get_full_path(channel_model.image_path)
-                    object_stored = self.echo_interface.head_object(path)
+                    object_stored = await self.echo_interface.head_object(path)
                 elif isinstance(channel_model, WaveformChannelModel):
                     path = Waveform.get_full_path(channel_model.waveform_path)
-                    object_stored = self.echo_interface.head_object(path)
+                    object_stored = await self.echo_interface.head_object(path)
                 elif isinstance(channel_model, VectorChannelModel):
                     path = Vector.get_full_path(channel_model.vector_path)
-                    object_stored = self.echo_interface.head_object(path)
+                    object_stored = await self.echo_interface.head_object(path)
                 else:
                     object_stored = True
                 if object_stored:

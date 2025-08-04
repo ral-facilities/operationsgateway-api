@@ -102,7 +102,7 @@ class Image(ImageABC):
         img.close()
 
     @staticmethod
-    def upload_image(input_image: Image) -> Optional[str]:
+    async def upload_image(input_image: Image) -> Optional[str]:
         """
         Save the image on Echo S3 object storage
         """
@@ -128,7 +128,7 @@ class Image(ImageABC):
         log.info("Storing image on S3: %s", storage_path)
 
         try:
-            echo_interface.upload_file_object(image_bytes, storage_path)
+            await echo_interface.upload_file_object(image_bytes, storage_path)
             return None  # No failure
         except EchoS3Error:
             # Extract the channel name and propagate it
@@ -161,45 +161,71 @@ class Image(ImageABC):
         """
 
         log.info("Retrieving image and returning BytesIO object")
-        echo_interface = get_echo_interface()
+        echo = get_echo_interface()
 
         try:
             try:
                 relative_path = Image.get_relative_path(record_id, channel_name)
                 full_path = Image.get_full_path(relative_path)
-                image_bytes = echo_interface.download_file_object(full_path)
+                image_bytes = await echo.download_file_object(full_path)
             except EchoS3Error:
                 # Try again without subdirectories, might be stored in old format
                 relative_path = Image.get_relative_path(record_id, channel_name, False)
                 full_path = Image.get_full_path(relative_path)
-                image_bytes = echo_interface.download_file_object(full_path)
-            if original_image:
-                log.debug(
-                    "Original image requested, return unmodified image bytes: %s",
-                    relative_path,
-                )
-                return image_bytes
-            else:
-                log.debug(
-                    "False colour requested, applying false colour to image: %s",
-                    relative_path,
-                )
-                img_src = PILImage.open(image_bytes)
-                orig_img_array = np.array(img_src)
-                storage_bit_depth = FalseColourHandler.get_pixel_depth(img_src)
-                false_colour_image = FalseColourHandler.apply_false_colour(
-                    image_array=orig_img_array,
-                    storage_bit_depth=storage_bit_depth,
-                    lower_level=lower_level,
-                    upper_level=upper_level,
-                    limit_bit_depth=limit_bit_depth,
-                    colourmap_name=colourmap_name,
-                )
-                img_src.close()
-                return false_colour_image
+                image_bytes = await echo.download_file_object(full_path)
+
+            return Image.apply_false_colour(
+                image_bytes,
+                original_image,
+                relative_path,
+                lower_level,
+                upper_level,
+                limit_bit_depth,
+                colourmap_name,
+            )
+
         except (ClientError, EchoS3Error) as exc:
             get_echo_interface.cache_clear()  # Invalidate the cache as a precaution
             await Image._handle_get_image_exception(record_id, channel_name, exc)
+
+    @staticmethod
+    def apply_false_colour(
+        image_bytes: BytesIO,
+        original_image: bool,
+        relative_path: str,
+        lower_level: int,
+        upper_level: int,
+        limit_bit_depth: int,
+        colourmap_name: str,
+    ) -> BytesIO:
+        """
+        If not requesting the `original_image`, then false colour will be applied to
+        `image_bytes` using the other parameters.
+        """
+        if original_image:
+            log.debug(
+                "Original image requested, return unmodified image bytes: %s",
+                relative_path,
+            )
+            return image_bytes
+        else:
+            log.debug(
+                "False colour requested, applying false colour to image: %s",
+                relative_path,
+            )
+            img_src = PILImage.open(image_bytes)
+            orig_img_array = np.array(img_src)
+            storage_bit_depth = FalseColourHandler.get_pixel_depth(img_src)
+            false_colour_image = FalseColourHandler.apply_false_colour(
+                image_array=orig_img_array,
+                storage_bit_depth=storage_bit_depth,
+                lower_level=lower_level,
+                upper_level=upper_level,
+                limit_bit_depth=limit_bit_depth,
+                colourmap_name=colourmap_name,
+            )
+            img_src.close()
+            return false_colour_image
 
     @staticmethod
     async def get_preferred_colourmap(access_token: str) -> str:

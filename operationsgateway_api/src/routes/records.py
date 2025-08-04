@@ -1,3 +1,4 @@
+import asyncio
 from http import HTTPStatus
 import logging
 from typing import List, Optional
@@ -20,6 +21,7 @@ from operationsgateway_api.src.records.echo_interface import (
 from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.record import Record as Record
+from operationsgateway_api.src.records.record_retriever import RecordRetriever
 from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
 from operationsgateway_api.src.routes.common_parameters import ParameterHandler
@@ -118,23 +120,10 @@ async def get_records(
     )
 
     vector_skip, vector_limit = await Vector.get_skip_limit(access_token)
-    for record_data in records_data:
-        if record_data.channels:
-            await Record.apply_false_colour_to_thumbnails(
-                record_data,
-                lower_level,
-                upper_level,
-                colourmap_name,
-                float_colourmap_name,
-                vector_skip=vector_skip,
-                vector_limit=vector_limit,
-            )
-
-            if truncate:
-                Record.truncate_thumbnails(record_data)
-
-        if functions:
-            await Record.apply_functions(
+    tasks = []
+    async with asyncio.TaskGroup() as task_group:
+        for record_data in records_data:
+            record_retriever = RecordRetriever(
                 record=record_data,
                 functions=functions,
                 original_image=False,
@@ -142,9 +131,14 @@ async def get_records(
                 upper_level=upper_level,
                 limit_bit_depth=8,  # We are returning thumbnails, so limits are 8 bit
                 colourmap_name=colourmap_name,
-                return_thumbnails=True,
+                float_colourmap_name=float_colourmap_name,
+                vector_skip=vector_skip,
+                vector_limit=vector_limit,
                 truncate=truncate,
             )
+            coroutine = record_retriever.process_record()
+            task = task_group.create_task(coroutine)
+            tasks.append(task)
 
     return records_data
 
@@ -310,19 +304,20 @@ async def delete_record_by_id(
     directory = EchoInterface.format_record_id(record_id=id_, use_subdirectories=False)
 
     log.info("Deleting waveforms for record ID '%s'", id_)
-    echo_interface.delete_directory(f"{Waveform.echo_prefix}/{sub_directories}/")
-    echo_interface.delete_directory(f"{Waveform.echo_prefix}/{directory}/")
+    await echo_interface.delete_directory(f"{Waveform.echo_prefix}/{sub_directories}/")
+    await echo_interface.delete_directory(f"{Waveform.echo_prefix}/{directory}/")
 
     log.info("Deleting images for record ID '%s'", id_)
-    echo_interface.delete_directory(f"{Image.echo_prefix}/{sub_directories}/")
-    echo_interface.delete_directory(f"{Image.echo_prefix}/{directory}/")
+    await echo_interface.delete_directory(f"{Image.echo_prefix}/{sub_directories}/")
+    await echo_interface.delete_directory(f"{Image.echo_prefix}/{directory}/")
 
     log.info("Deleting vectors for record ID '%s'", id_)
-    echo_interface.delete_directory(f"{Vector.echo_prefix}/{sub_directories}/")
-    echo_interface.delete_directory(f"{Vector.echo_prefix}/{directory}/")
+    await echo_interface.delete_directory(f"{Vector.echo_prefix}/{sub_directories}/")
+    await echo_interface.delete_directory(f"{Vector.echo_prefix}/{directory}/")
 
     log.info("Deleting float images for record ID '%s'", id_)
-    echo_interface.delete_directory(f"{FloatImage.echo_prefix}/{sub_directories}/")
-    echo_interface.delete_directory(f"{FloatImage.echo_prefix}/{directory}/")
+    dir_path = f"{FloatImage.echo_prefix}/{sub_directories}/"
+    await echo_interface.delete_directory(dir_path)
+    await echo_interface.delete_directory(f"{FloatImage.echo_prefix}/{directory}/")
 
     return Response(status_code=HTTPStatus.NO_CONTENT.value)

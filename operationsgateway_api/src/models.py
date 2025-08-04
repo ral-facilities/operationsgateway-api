@@ -7,15 +7,18 @@ import numpy as np
 from pydantic import (
     BaseModel,
     ConfigDict,
-    constr,
     Field,
     field_validator,
     model_validator,
+    StringConstraints,
 )
 from pydantic_core import core_schema
 from typing_extensions import Annotated
 
 from operationsgateway_api.src.exceptions import ChannelManifestError, ModelError
+
+
+NonEmptyString = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 
 class PyObjectId(ObjectId):
@@ -415,8 +418,8 @@ class FavouriteFilterModel(BaseModel):
 
 
 class Function(BaseModel):
-    name: constr(strip_whitespace=True, min_length=1)
-    expression: constr(strip_whitespace=True, min_length=1)
+    name: NonEmptyString
+    expression: NonEmptyString
 
 
 class Severity(StrEnum):

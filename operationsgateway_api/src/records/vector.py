@@ -42,7 +42,7 @@ class Vector:
         try:
             relative_path = Vector.get_relative_path(record_id, channel_name)
             full_path = Vector.get_full_path(relative_path)
-            bytes_io = echo_interface.download_file_object(full_path)
+            bytes_io = await echo_interface.download_file_object(full_path)
             vector_dict = json.loads(bytes_io.getvalue().decode())
             return VectorModel(**vector_dict)
         except (ClientError, EchoS3Error) as exc:
@@ -100,7 +100,7 @@ class Vector:
         """
         return self.vector.path.split("/")[-1].split(".json")[0]
 
-    def insert(self) -> str | None:
+    async def insert(self) -> str | None:
         """
         Upload the bytes of this vector to storage. Returns the channel name if the
         upload fails.
@@ -110,7 +110,7 @@ class Vector:
         try:
             bytes_io = BytesIO(self.vector.model_dump_json(indent=2).encode())
             full_path = Vector.get_full_path(self.vector.path)
-            echo_interface.upload_file_object(bytes_io, full_path)
+            await echo_interface.upload_file_object(bytes_io, full_path)
             return  # Successful upload
         except EchoS3Error:
             # Extract the channel name and propagate it

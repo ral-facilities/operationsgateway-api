@@ -82,12 +82,13 @@ async def reset_record_storage():
     yield
     record_id = "20200407142816"
     await remove_record(record_id)
+    await MongoDBInterface.delete_one("records", {"metadata.shotnum": 366272})
     echo = EchoInterface()
     subdirectories = echo.format_record_id(record_id)
-    echo.delete_directory(f"{Waveform.echo_prefix}/{subdirectories}/")
-    echo.delete_directory(f"{Image.echo_prefix}/{subdirectories}/")
-    echo.delete_directory(f"{FloatImage.echo_prefix}/{subdirectories}/")
-    echo.delete_directory(f"{Vector.echo_prefix}/{subdirectories}/")
+    await echo.delete_directory(f"{Waveform.echo_prefix}/{subdirectories}/")
+    await echo.delete_directory(f"{Image.echo_prefix}/{subdirectories}/")
+    await echo.delete_directory(f"{FloatImage.echo_prefix}/{subdirectories}/")
+    await echo.delete_directory(f"{Vector.echo_prefix}/{subdirectories}/")
 
     if os.path.exists("test.h5"):
         os.remove("test.h5")
@@ -159,7 +160,7 @@ async def data_for_delete_records(record_for_delete_records: str):
     image_file = "test-image-channel-id.png"
     image_path = f"{Image.echo_prefix}/{record_for_delete_records}/{image_file}"
     with open("test/images/original_image.png", "rb") as f:
-        echo.upload_file_object(f, image_path)
+        await echo.upload_file_object(f, image_path)
 
     waveform = Waveform(WaveformModel(x=[1.0, 2.0, 3.0], y=[1.0, 2.0, 3.0]))
     waveform_bytes = waveform.to_json()
@@ -167,7 +168,7 @@ async def data_for_delete_records(record_for_delete_records: str):
     waveform_path = (
         f"{Waveform.echo_prefix}/{record_for_delete_records}/{waveform_file}"
     )
-    echo.upload_file_object(waveform_bytes, waveform_path)
+    await echo.upload_file_object(waveform_bytes, waveform_path)
 
     bytes_io = BytesIO()
     np.savez_compressed(bytes_io, np.ones((1, 1)))
@@ -175,7 +176,7 @@ async def data_for_delete_records(record_for_delete_records: str):
     float_image_path = (
         f"{FloatImage.echo_prefix}/{record_for_delete_records}/{filename}"
     )
-    echo.upload_file_object(bytes_io, float_image_path)
+    await echo.upload_file_object(bytes_io, float_image_path)
 
     vector = Vector(VectorModel(data=[1.0], path=""))
     bytes_io = BytesIO(vector.vector.model_dump_json(indent=2).encode())
@@ -186,10 +187,10 @@ async def data_for_delete_records(record_for_delete_records: str):
     yield record_for_delete_records
 
     await Record.delete_record(record_for_delete_records)
-    echo.delete_file_object(image_path)
-    echo.delete_file_object(waveform_path)
-    echo.delete_file_object(float_image_path)
-    echo.delete_file_object(vector_path)
+    await echo.delete_file_object(image_path)
+    await echo.delete_file_object(waveform_path)
+    await echo.delete_file_object(float_image_path)
+    await echo.delete_file_object(vector_path)
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -199,30 +200,30 @@ async def data_for_delete_records_subdirectories(record_for_delete_records: str)
     image_file = "test-image-channel-id.png"
     image_path = f"{Image.echo_prefix}/{subdirectories}/{image_file}"
     with open("test/images/original_image.png", "rb") as f:
-        echo.upload_file_object(f, image_path)
+        await echo.upload_file_object(f, image_path)
 
     waveform = Waveform(WaveformModel(x=[1.0, 2.0, 3.0], y=[1.0, 2.0, 3.0]))
     waveform_bytes = waveform.to_json()
     waveform_file = "test-waveform-channel-id.json"
     waveform_path = f"{Waveform.echo_prefix}/{subdirectories}/{waveform_file}"
-    echo.upload_file_object(waveform_bytes, waveform_path)
+    await echo.upload_file_object(waveform_bytes, waveform_path)
 
     bytes_io = BytesIO()
     np.savez_compressed(bytes_io, np.ones((1, 1)))
     filename = "test-float-image-channel-id.npz"
     float_image_path = f"{FloatImage.echo_prefix}/{subdirectories}/{filename}"
-    echo.upload_file_object(bytes_io, float_image_path)
+    await echo.upload_file_object(bytes_io, float_image_path)
 
     vector = Vector(VectorModel(data=[1.0], path=""))
     bytes_io = BytesIO(vector.vector.model_dump_json(indent=2).encode())
     filename = "test-vector-channel-id.json"
     vector_path = f"{vector.echo_prefix}/{subdirectories}/{filename}"
-    echo.upload_file_object(bytes_io, vector_path)
+    await echo.upload_file_object(bytes_io, vector_path)
 
     yield record_for_delete_records
 
     await Record.delete_record(record_for_delete_records)
-    echo.delete_file_object(image_path)
-    echo.delete_file_object(waveform_path)
-    echo.delete_file_object(float_image_path)
-    echo.delete_file_object(vector_path)
+    await echo.delete_file_object(image_path)
+    await echo.delete_file_object(waveform_path)
+    await echo.delete_file_object(float_image_path)
+    await echo.delete_file_object(vector_path)

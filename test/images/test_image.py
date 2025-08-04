@@ -17,6 +17,7 @@ from operationsgateway_api.src.exceptions import (
 )
 from operationsgateway_api.src.models import ImageModel
 from operationsgateway_api.src.records.image import Image
+from test.conftest import clear_lru_cache
 from test.records.conftest import remove_test_objects
 
 
@@ -179,6 +180,7 @@ class TestImage:
         bit_depth: int,
         path: str,
         remove_test_objects: None,
+        clear_lru_cache: None,
     ):
         test_image = Image(
             ImageModel(
@@ -187,7 +189,7 @@ class TestImage:
                 bit_depth=bit_depth,
             ),
         )
-        response = Image.upload_image(test_image)
+        response = await Image.upload_image(test_image)
 
         assert response is None
 
@@ -205,12 +207,13 @@ class TestImage:
         uploaded_bytes = bytes_io.getvalue()
         s_bit_offset = uploaded_bytes.find(b"sBIT")
         if bit_depth is None:
-            assert s_bit_offset == -1
+            assert s_bit_offset == -1, uploaded_bytes[: s_bit_offset + 10]
         else:
             assert s_bit_offset != -1
             s_bit = uploaded_bytes[s_bit_offset + 4 : s_bit_offset + 5]
             assert int.from_bytes(s_bit, byteorder="big") == bit_depth
 
+    @pytest.mark.asyncio
     @patch(
         "operationsgateway_api.src.config.Config.config.echo.url",
         config_echo_url,
@@ -232,7 +235,7 @@ class TestImage:
         "PIL.Image.fromarray",
         side_effect=TypeError("Mocked Exception"),
     )
-    def test_invalid_upload_image(self, _, __):
+    async def test_invalid_upload_image(self, _, __):
         test_image = Image(
             ImageModel(
                 path="test/image/path.png",
@@ -240,7 +243,7 @@ class TestImage:
             ),
         )
         with pytest.raises(ImageError):
-            Image.upload_image(test_image)
+            await Image.upload_image(test_image)
 
     @pytest.mark.asyncio
     @patch(

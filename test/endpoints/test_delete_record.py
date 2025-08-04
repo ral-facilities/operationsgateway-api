@@ -8,6 +8,7 @@ from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
+from test.conftest import clear_lru_cache
 
 
 class TestDeleteRecordById:
@@ -31,25 +32,30 @@ class TestDeleteRecordById:
 
         # Check that waveform and image have been removed from Echo
         echo = EchoInterface()
-        waveform_query = echo.bucket.objects.filter(
+        bucket = await echo.get_bucket()
+        waveform_query = bucket.objects.filter(
             Prefix=f"{Waveform.echo_prefix}/{record_id}/",
         )
-        assert list(waveform_query) == []
+        async for waveform in waveform_query:
+            pytest.fail(f"{waveform} still exists")
 
-        image_query = echo.bucket.objects.filter(
+        image_query = bucket.objects.filter(
             Prefix=f"{Image.echo_prefix}/{record_id}/",
         )
-        assert list(image_query) == []
+        async for image in image_query:
+            pytest.fail(f"{image} still exists")
 
-        vector_query = echo.bucket.objects.filter(
+        vector_query = bucket.objects.filter(
             Prefix=f"{Vector.echo_prefix}/{record_id}/",
         )
-        assert list(vector_query) == []
+        async for vector in vector_query:
+            pytest.fail(f"{vector} still exists")
 
-        float_image_query = echo.bucket.objects.filter(
+        float_image_query = bucket.objects.filter(
             Prefix=f"{FloatImage.echo_prefix}/{record_id}/",
         )
-        assert list(float_image_query) == []
+        async for float_image in float_image_query:
+            pytest.fail(f"{float_image} still exists")
 
     @pytest.mark.asyncio
     async def test_delete_record_subdirectories_success(
@@ -73,22 +79,27 @@ class TestDeleteRecordById:
         subdirectories = EchoInterface.format_record_id(
             data_for_delete_records_subdirectories,
         )
-        waveform_query = echo.bucket.objects.filter(
+        bucket = await echo.get_bucket()
+        waveform_query = bucket.objects.filter(
             Prefix=f"{Waveform.echo_prefix}/{subdirectories}/",
         )
-        assert list(waveform_query) == []
+        async for waveform in waveform_query:
+            pytest.fail(f"{waveform} still exists")
 
-        image_query = echo.bucket.objects.filter(
+        image_query = bucket.objects.filter(
             Prefix=f"{Image.echo_prefix}/{subdirectories}/",
         )
-        assert list(image_query) == []
+        async for image in image_query:
+            pytest.fail(f"{image} still exists")
 
-        vector_query = echo.bucket.objects.filter(
+        vector_query = bucket.objects.filter(
             Prefix=f"{Vector.echo_prefix}/{subdirectories}/",
         )
-        assert list(vector_query) == []
+        async for vector in vector_query:
+            pytest.fail(f"{vector} still exists")
 
-        float_image_query = echo.bucket.objects.filter(
+        float_image_query = bucket.objects.filter(
             Prefix=f"{FloatImage.echo_prefix}/{subdirectories}/",
         )
-        assert list(float_image_query) == []
+        async for float_image in float_image_query:
+            pytest.fail(f"{float_image} still exists")

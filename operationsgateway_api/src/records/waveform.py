@@ -39,7 +39,7 @@ class Waveform:
         b.seek(0)
         return b
 
-    def insert(self) -> Optional[str]:
+    async def insert(self) -> Optional[str]:
         """
         Store the waveform from this object in Echo
         """
@@ -47,7 +47,7 @@ class Waveform:
         bytes_json = self.to_json()
         echo_interface = get_echo_interface()
         try:
-            echo_interface.upload_file_object(
+            await echo_interface.upload_file_object(
                 bytes_json,
                 Waveform.get_full_path(self.waveform.path),
             )
@@ -156,7 +156,7 @@ class Waveform:
         return f"{Waveform.echo_prefix}/{relative_path}"
 
     @staticmethod
-    def get_waveform(record_id: str, channel_name: str) -> WaveformModel:
+    async def get_waveform(record_id: str, channel_name: str) -> WaveformModel:
         """
         Given a waveform path, find the waveform from Echo. This function assumes that
         the waveform should exist; if no waveform can be found, a `WaveformError` will
@@ -168,7 +168,7 @@ class Waveform:
             try:
                 relative_path = Waveform.get_relative_path(record_id, channel_name)
                 full_path = Waveform.get_full_path(relative_path)
-                waveform_file = echo_interface.download_file_object(full_path)
+                waveform_file = await echo_interface.download_file_object(full_path)
             except EchoS3Error:
                 # Try again without subdirectories, might be stored in old format
                 relative_path = Waveform.get_relative_path(
@@ -177,7 +177,7 @@ class Waveform:
                     use_subdirectories=False,
                 )
                 full_path = Waveform.get_full_path(relative_path)
-                waveform_file = echo_interface.download_file_object(full_path)
+                waveform_file = await echo_interface.download_file_object(full_path)
 
             waveform_data = json.loads(waveform_file.getvalue().decode())
             return WaveformModel(**waveform_data)

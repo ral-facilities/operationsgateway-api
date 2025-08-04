@@ -10,25 +10,18 @@ from pydantic import ValidationError
 import pymongo
 from pymongo.results import DeleteResult
 
-from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import (
     ChannelSummaryError,
     DatabaseError,
-    FunctionParseError,
     MissingDocumentError,
     ModelError,
     RecordError,
 )
-from operationsgateway_api.src.functions import (
-    ExpressionTransformer,
-    VariableTransformer,
-    WaveformVariable,
-)
+from operationsgateway_api.src.functions import WaveformVariable
 from operationsgateway_api.src.functions.variable_models import (
     PartialImageVariableChannelModel,
     PartialVariableChannelModel,
-    PartialVariableChannels,
     PartialWaveformVariableChannelModel,
 )
 from operationsgateway_api.src.models import (
@@ -511,209 +504,6 @@ class Record:
                 return ShotnumConverterRange(**converted_range[0])
         except ValidationError as exc:
             raise ModelError(str(exc)) from exc
-
-    @staticmethod
-    async def apply_functions(
-        record: PartialRecordModel,
-        functions: "list[dict[str, str]]",
-        original_image: bool,
-        lower_level: int,
-        upper_level: int,
-        limit_bit_depth: int,
-        colourmap_name: str,
-        return_thumbnails: bool = True,
-        truncate: bool = False,
-    ) -> PartialVariableChannels:
-        """
-        Evaluates all functions and stores the results on `record` as though
-        they were normal channels.
-        """
-        variable_data = {}
-        channels = {}
-        if record.channels is not None:
-            channels.update(record.channels)
-
-        variable_transformer = VariableTransformer()
-        expression_transformer = ExpressionTransformer(variable_data)
-        for function in functions:
-            await Record._apply_function(
-                record_id=record.id_,
-                channels=channels,
-                original_image=original_image,
-                lower_level=lower_level,
-                upper_level=upper_level,
-                limit_bit_depth=limit_bit_depth,
-                colourmap_name=colourmap_name,
-                variable_data=variable_data,
-                variable_transformer=variable_transformer,
-                expression_transformer=expression_transformer,
-                function=function,
-                return_thumbnails=return_thumbnails,
-                truncate=truncate,
-            )
-
-        record.channels = channels
-        return channels
-
-    @staticmethod
-    async def _apply_function(
-        record_id: str,
-        channels: PartialVariableChannels,
-        original_image: bool,
-        lower_level: int,
-        upper_level: int,
-        limit_bit_depth: int,
-        colourmap_name: str,
-        variable_data: dict,
-        variable_transformer: VariableTransformer,
-        expression_transformer: ExpressionTransformer,
-        function: "dict[str, str]",
-        return_thumbnails: bool = True,
-        truncate: bool = False,
-    ) -> None:
-        """
-        Evaluates a single function and stores the result on `record` as though
-        it were a normal channel.
-        """
-        variable_transformer.evaluate(function["expression"])
-        variables = variable_transformer.variables
-        channels_to_fetch = set()
-        bit_depths = []
-
-        log.debug("Attempting to extract %s from %s", variables, channels)
-        for variable in variables:
-            if variable in channels:
-                variable_data[variable] = await Record._extract_variable(
-                    record_id=record_id,
-                    name=variable,
-                    channel_value=channels[variable],
-                    bit_depths=bit_depths,
-                )
-            else:
-                channels_to_fetch.add(variable)
-
-        if channels_to_fetch:
-            missing_channels = await Record._fetch_channels(
-                record_id=record_id,
-                variable_data=variable_data,
-                channels_to_fetch=channels_to_fetch,
-                skip_functions=variable_transformer.skip_functions,
-                bit_depths=bit_depths,
-            )
-            if missing_channels:
-                # Remove any missing channels so we don't skip future functions which
-                # may not depend on them
-                variable_transformer.variables -= missing_channels
-                variable_transformer.skip_functions.add(function["name"])
-                return
-
-        result = expression_transformer.evaluate(function["expression"])
-        channel = Record._parse_function_results(
-            original_image=original_image,
-            lower_level=lower_level,
-            upper_level=upper_level,
-            limit_bit_depth=limit_bit_depth,
-            colourmap_name=colourmap_name,
-            result=result,
-            return_thumbnails=return_thumbnails,
-            truncate=truncate,
-            bit_depths=bit_depths,
-        )
-        channels[function["name"]] = channel
-        variable_data[function["name"]] = result
-
-    @staticmethod
-    async def _fetch_channels(
-        record_id: str,
-        variable_data: dict,
-        channels_to_fetch: "set[str]",
-        skip_functions: "set[str]",
-        bit_depths: "list[int]",
-    ) -> "set[str]":
-        """Fetches `channels_to_fetch`, returning known channels missing for this
-        record and raising an exception if the channel is not known at all."""
-        log.debug("Fetching channels: %s", channels_to_fetch)
-        projection = [f"channels.{v}" for v in channels_to_fetch]
-        record_extra = await Record.find_record_by_id(record_id, {}, projection)
-        fetched_channels = record_extra.channels
-        missing_channels = channels_to_fetch.difference(fetched_channels)
-        if missing_channels:
-            manifest = await ChannelManifest.get_most_recent_manifest()
-            for missing_channel in missing_channels:
-                if missing_channel in skip_functions:
-                    message = "Function %s defined but cannot be evaluated for %s"
-                    log.warning(message, missing_channel, record_id)
-                elif missing_channel in manifest.channels:
-                    message = "Channel %s does not have a value for %s"
-                    log.warning(message, missing_channel, record_id)
-                else:
-                    message = "%s is not known as a channel or function name"
-                    log.error(message, missing_channel)
-                    raise FunctionParseError(message % missing_channel)
-
-            return missing_channels
-
-        for name, channel_value in fetched_channels.items():
-            variable_data[name] = await Record._extract_variable(
-                record_id=record_id,
-                name=name,
-                channel_value=channel_value,
-                bit_depths=bit_depths,
-            )
-
-    @staticmethod
-    async def _extract_variable(
-        record_id: str,
-        name: str,
-        channel_value: PartialChannelModel,
-        bit_depths: "list[int]",
-    ) -> "np.ndarray | WaveformVariable | float":
-        """
-        Extracts and returns the relevant data from `channel_value`, handling
-        extra calls needed for "image" and "waveform" types.
-        """
-        if hasattr(channel_value, "variable_value"):
-            # Might be PartialImageVariableModel or PartialWaveformVariableChannelModel,
-            # which store the value across function evaluations
-            return channel_value.variable_value
-
-        channel_dtype = await Record.get_channel_dtype(
-            record_id=record_id,
-            channel_name=name,
-            channel_value=channel_value,
-        )
-        if channel_dtype == "image":
-            raw_bit_depth = await Record.get_raw_bit_depth(
-                record_id=record_id,
-                channel_name=name,
-                channel_value=channel_value,
-            )
-            if raw_bit_depth is not None:
-                # Modify in place to store for each channel, getting around static func
-                bit_depths.append(raw_bit_depth)
-
-            image_bytes = await Image.get_image(
-                record_id=record_id,
-                channel_name=name,
-                original_image=True,
-                lower_level=0,
-                upper_level=255,
-                limit_bit_depth=8,  # Not relevant when `original_image=True`
-                colourmap_name=None,
-            )
-            img_src = PILImage.open(image_bytes)
-            img_array = np.array(img_src)
-            return Record._bit_shift_to_raw(
-                img_array=img_array,
-                raw_bit_depth=raw_bit_depth,
-            )
-
-        elif channel_dtype == "waveform":
-            x_units = getattr(channel_value.metadata, "x_units", None)
-            waveform = Waveform.get_waveform(record_id, name)
-            return WaveformVariable(waveform, x_units=x_units)
-        else:
-            return channel_value.data
 
     @staticmethod
     def _bit_shift_to_raw(

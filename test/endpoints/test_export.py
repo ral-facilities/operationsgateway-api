@@ -4,8 +4,8 @@ from unittest.mock import patch
 from urllib.parse import quote
 from zipfile import ZipFile
 
-from fastapi import Response
 from fastapi.testclient import TestClient
+from httpx import Response
 import imagehash
 import numpy as np
 from PIL import Image
@@ -935,7 +935,9 @@ class TestExport:
                 "text/plain",
                 expected_filename,
             )
-            assert_text_file_contents(expected_filepath, test_response.text)
+            with open(f"test/{expected_filepath}") as f:
+                assert f.read() == test_response.text
+
         elif expected_filename.endswith(".zip"):
             TestExport.check_export_headers(
                 test_response,
@@ -943,6 +945,7 @@ class TestExport:
                 expected_filename,
             )
             TestExport.check_zip_file_contents(zip_contents_dict, test_response)
+
         else:
             raise AssertionError(f"Unexpected file type: {expected_filename}")
 
@@ -1079,12 +1082,18 @@ class TestExport:
                     raise AssertionError(
                         f"Unexpected file found in export zip: {filename_in_zip}",
                     ) from err
-                if filename_in_zip.endswith(".csv") or filename_in_zip.endswith(".txt"):
+                if filename_in_zip.endswith(".txt"):
+                    assert_text_file_contents(
+                        filepath_or_hash,
+                        zip_file.open(filename_in_zip).readlines(),
+                        sort_lines=True,
+                    )
+                elif filename_in_zip.endswith(".csv"):
                     # there should be a file in the test dir that the contents of the
                     # CSV in the zip file need comparing to
                     assert_text_file_contents(
                         filepath_or_hash,
-                        zip_file.open(filename_in_zip).read().decode(),
+                        zip_file.open(filename_in_zip).readlines(),
                     )
                 elif filename_in_zip.endswith(".png"):
                     # this is an image so it needs a perceptual hash generating and

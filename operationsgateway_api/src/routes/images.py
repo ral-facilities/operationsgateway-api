@@ -12,7 +12,7 @@ from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.models import PartialRecordModel
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.image import Image
-from operationsgateway_api.src.records.record import Record
+from operationsgateway_api.src.records.record_retriever import RecordRetriever
 
 log = logging.getLogger()
 router = APIRouter()
@@ -269,7 +269,7 @@ async def get_image_bytes(
     if functions:
         for function_dict in functions:
             if function_dict["name"] == channel_name:
-                channels = await Record.apply_functions(
+                record_retriever = RecordRetriever(
                     record=PartialRecordModel(_id=record_id),
                     functions=functions,
                     original_image=original_image,
@@ -277,9 +277,11 @@ async def get_image_bytes(
                     upper_level=upper_level,
                     limit_bit_depth=limit_bit_depth,
                     colourmap_name=colourmap_name,
+                    float_colourmap_name=None,
                     return_thumbnails=False,
                 )
-                return channels[channel_name].data
+                await record_retriever.process_functions()
+                return record_retriever.record.channels[channel_name].data
 
     bytes_io = await Image.get_image(
         record_id=record_id,
@@ -310,7 +312,7 @@ async def get_image_array(
     if functions:
         for function_dict in functions:
             if function_dict["name"] == channel_name:
-                channels = await Record.apply_functions(
+                record_retriever = RecordRetriever(
                     record=PartialRecordModel(_id=record_id),
                     functions=functions,
                     original_image=original_image,
@@ -318,9 +320,11 @@ async def get_image_array(
                     upper_level=upper_level,
                     limit_bit_depth=limit_bit_depth,
                     colourmap_name=colourmap_name,
+                    float_colourmap_name=None,
                     return_thumbnails=False,
                 )
-                return channels[channel_name].variable_value
+                await record_retriever.process_functions()
+                return record_retriever.record.channels[channel_name].variable_value
 
     bytes_io = await Image.get_image(
         record_id=record_id,

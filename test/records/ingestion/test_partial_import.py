@@ -11,6 +11,7 @@ from operationsgateway_api.src.models import (
     ScalarChannelMetadataModel,
     ScalarChannelModel,
 )
+from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.records.ingestion.partial_import_checks import (
     PartialImportChecks,
 )
@@ -176,6 +177,7 @@ class TestPartialImport:
         await create_test_hdf_file(shotnum=["", "missing"])
         self._submit_hdf(test_app, login_and_get_token)
         # Submit again with same timestamp in the file
+        get_echo_interface.cache_clear()
         response = self._submit_hdf(test_app, login_and_get_token)
         print(response.text)
         assert response.status_code == 200
@@ -247,6 +249,7 @@ class TestPartialImport:
         self._submit_hdf(test_app, login_and_get_token)
 
         # submit the same file again
+        get_echo_interface.cache_clear()
         response = self._submit_hdf(test_app, login_and_get_token)
         assert response.status_code == 200
         assert "updated 20200407142816" in response.json()["message"].lower()
@@ -271,6 +274,7 @@ class TestPartialImport:
         # create the same file again but with a different version,
         # the value has to be present as it's a required field but the api
         # should NOT reject if they are different
+        get_echo_interface.cache_clear()
         await create_test_hdf_file(data_version=["1.2", "exists"])
         response = self._submit_hdf(test_app, login_and_get_token)
         assert response.status_code == 200
@@ -411,13 +415,14 @@ class TestPartialImport:
         echo_interface = partial_import_checker.echo_interface
         with patch.object(echo_interface, "head_object") as mock_is_stored:
             mock_is_stored.return_value = True
-            partial_import_channel_checks = partial_import_checker.channel_checks(
+            partial_import_channel_checks = await partial_import_checker.channel_checks(
                 {"rejected_channels": {}},
             )
 
         assert partial_import_channel_checks == response
 
-    def test_channel_checks_removal(self):
+    @pytest.mark.asyncio
+    async def test_channel_checks_removal(self):
         partial_import_checks = PartialImportChecks(None, None)
         model = ScalarChannelModel(metadata=ScalarChannelMetadataModel(), data="")
         ingested_record = RecordModel(_id="", metadata={}, channels={"test": model})
@@ -426,7 +431,7 @@ class TestPartialImport:
         partial_import_checks.ingested_record = ingested_record
 
         channel_dict = {"rejected_channels": {"test": "failure"}}
-        checks = partial_import_checks.channel_checks(channel_dict)
+        checks = await partial_import_checks.channel_checks(channel_dict)
 
         expected = {"accepted_channels": [], "rejected_channels": {"test": "failure"}}
         assert checks == expected

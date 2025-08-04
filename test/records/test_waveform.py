@@ -8,6 +8,7 @@ import pytest
 from operationsgateway_api.src.exceptions import WaveformError
 from operationsgateway_api.src.models import WaveformModel
 from operationsgateway_api.src.records.waveform import Waveform
+from test.conftest import clear_lru_cache
 
 
 class TestWaveform:
@@ -35,19 +36,20 @@ class TestWaveform:
         self,
         test_waveform: WaveformModel,
         remove_test_objects,
+        clear_lru_cache: None,
     ):
         waveform_instance = Waveform(test_waveform)
-        response = waveform_instance.insert()
+        response = await waveform_instance.insert()
         assert response is None
 
-        waveform = Waveform.get_waveform("19520605070023", "test-channel-name")
+        waveform = await Waveform.get_waveform("19520605070023", "test-channel-name")
 
         assert waveform.model_dump() == test_waveform.model_dump()
 
     @pytest.mark.asyncio
-    async def test_waveform_not_found(self):
+    async def test_waveform_not_found(self, clear_lru_cache: None):
         with pytest.raises(WaveformError, match="Waveform could not be found"):
-            Waveform.get_waveform("19520605070023", "test-channel-name.json")
+            await Waveform.get_waveform("19520605070023", "test-channel-name.json")
 
     @pytest.mark.parametrize(
         "config_thumbnail_size",

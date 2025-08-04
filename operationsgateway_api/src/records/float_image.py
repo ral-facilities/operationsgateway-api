@@ -56,7 +56,7 @@ class FloatImage(ImageABC):
         la_image.close()
 
     @staticmethod
-    def upload_image(input_image: FloatImage) -> str | None:
+    async def upload_image(input_image: FloatImage) -> str | None:
         """
         Save the image on Echo S3 object storage as a compressed numpy array (.npz)
         """
@@ -68,7 +68,7 @@ class FloatImage(ImageABC):
         log.info("Storing float image on S3: %s", storage_path)
         echo_interface = get_echo_interface()
         try:
-            echo_interface.upload_file_object(image_bytes, storage_path)
+            await echo_interface.upload_file_object(image_bytes, storage_path)
             return None  # No failure
         except EchoS3Error:
             # Extract the channel name and propagate it
@@ -110,7 +110,7 @@ class FloatImage(ImageABC):
         try:
             relative_path = FloatImage.get_relative_path(record_id, channel_name)
             full_path = FloatImage.get_full_path(relative_path)
-            return echo_interface.download_file_object(full_path)
+            return await echo_interface.download_file_object(full_path)
         except (ClientError, EchoS3Error) as exc:
             get_echo_interface.cache_clear()  # Invalidate the cache as a precaution
             await FloatImage._handle_get_image_exception(
