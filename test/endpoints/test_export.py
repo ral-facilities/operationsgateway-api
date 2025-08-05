@@ -35,6 +35,7 @@ class TestExport:
             "lower_level",
             "upper_level",
             "colourmap_name",
+            "functions",
             "expected_filename",
             "expected_filepath",
             "zip_contents_dict",
@@ -74,6 +75,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                [],  # functions
                 "20230605080000_to_20230605120000.csv",
                 "export/20230605080000_to_20230605120000_asc.csv",
                 None,
@@ -110,6 +112,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                [],  # functions
                 "20230605080000_to_20230605120000.csv",
                 "export/20230605080000_to_20230605120000_desc.csv",
                 None,
@@ -146,6 +149,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                [],  # functions
                 "20230605100000_to_20230605110000.csv",
                 "export/20230605100000_to_20230605110000_desc_s_l.csv",
                 None,
@@ -183,6 +187,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                [],  # functions
                 "20230605080000_to_20230605120000.zip",
                 None,
                 {
@@ -226,6 +231,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                [],  # functions
                 "20230605070600_to_20230605120000.csv",
                 "export/20230605070600_to_20230605120000.csv",
                 None,
@@ -263,6 +269,7 @@ class TestExport:
                 5,
                 15,
                 "jet_r",
+                [],  # functions
                 "20230605080000_to_20230605120000.zip",
                 None,
                 {
@@ -310,6 +317,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                [],  # functions
                 "20230605080000_to_20230605120000.zip",
                 None,
                 {
@@ -368,6 +376,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                [],  # functions
                 "20230605080000_to_20230605120000.zip",
                 None,
                 {
@@ -429,6 +438,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                [],  # functions
                 "20230605080000_to_20230605120000.zip",
                 None,
                 {
@@ -479,6 +489,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                [],  # functions
                 "20230605080000_to_20230605120000.zip",
                 None,
                 {
@@ -523,6 +534,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                [],  # functions
                 "20230605080000_to_20230605120000.zip",
                 None,
                 {
@@ -559,6 +571,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                [],  # functions
                 "20230605080300.zip",
                 None,
                 {
@@ -593,6 +606,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                [],  # functions
                 "20230605080300.zip",
                 None,
                 {
@@ -625,6 +639,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                [],  # functions
                 "20230605080000.csv",
                 "export/20230605080000.csv",
                 None,
@@ -652,6 +667,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                [],  # functions
                 "20230605080000.zip",
                 None,
                 {
@@ -686,6 +702,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                [],  # functions
                 "20230605080000_to_20230605120000_FE-204-PSO-EM.csv",
                 "export/20230605080000_to_20230605120000_FE-204-PSO-EM.csv",
                 None,
@@ -707,6 +724,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                [],  # functions
                 "20230605080000_FE-204-PSO-CAM-1.zip",
                 None,
                 {
@@ -740,6 +758,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                [],  # functions
                 "20230605080000_to_20230605120000_ID.csv",
                 "export/20230605080000_to_20230605120000_ID.csv",
                 None,
@@ -778,10 +797,82 @@ class TestExport:
                 None,
                 None,
                 None,
+                [],  # functions
                 "20230605080000_to_20230605120000.csv",
                 "export/20230605080000_to_20230605120000_asc_incl_id.csv",
                 None,
                 id="Basic CSV export of different channel types incl. _id channel",
+            ),
+            pytest.param(
+                {
+                    "_id": {
+                        "$in": [
+                            "20230605080000",
+                            "20230605090000",
+                            "20230605100000",
+                            "20230605110000",
+                            "20230605120000",
+                        ],
+                    },
+                },
+                0,
+                10,
+                "metadata.shotnum ASC",
+                # including a waveform channel to add waveform CSV and waveform image
+                # files to export
+                [
+                    "metadata.shotnum",
+                    "metadata.timestamp",
+                    "metadata.epac_ops_data_version",
+                    "channels.FE-204-PSO-EM.data",
+                    "channels.FE-204-PSO-CAM-1",
+                    "channels.FE-204-PSO-P1-SP",
+                ],
+                True,  # export_waveform_images - request these
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                [
+                    {"name": "scalar", "expression": "FE-204-PSO-EM + 1"},
+                    {"name": "waveform", "expression": "FE-204-PSO-P1-SP + (1 - 1)"},
+                    {"name": "image", "expression": "FE-204-PSO-CAM-1 + (1 - 1)"},
+                ],
+                "20230605080000_to_20230605120000.zip",
+                None,
+                {
+                    "20230605080000_to_20230605120000.csv": "export/"
+                    "20230605080000_to_20230605120000_asc.csv",
+                    "20230605080000_FE-204-PSO-CAM-1.png": "da2d4927045f24bf",
+                    "20230605090000_FE-204-PSO-CAM-1.png": "c8270437263f26bf",
+                    "20230605100000_FE-204-PSO-CAM-1.png": "c8262437273b373d",
+                    "20230605110000_FE-204-PSO-CAM-1.png": "da6d49270437247f",
+                    "20230605120000_FE-204-PSO-CAM-1.png": "dad7495b04ab04fa",
+                    "20230605080000_FE-204-PSO-P1-SP.csv": "export/"
+                    "20230605080000_FE-204-PSO-P1-SP.csv",
+                    "20230605090000_FE-204-PSO-P1-SP.csv": "export/"
+                    "20230605090000_FE-204-PSO-P1-SP.csv",
+                    "20230605100000_FE-204-PSO-P1-SP.csv": "export/"
+                    "20230605100000_FE-204-PSO-P1-SP.csv",
+                    "20230605110000_FE-204-PSO-P1-SP.csv": "export/"
+                    "20230605110000_FE-204-PSO-P1-SP.csv",
+                    "20230605120000_FE-204-PSO-P1-SP.csv": "export/"
+                    "20230605120000_FE-204-PSO-P1-SP.csv",
+                    "20230605080000_FE-204-PSO-P1-SP.png": "fa914e6e914eb04d",
+                    "20230605090000_FE-204-PSO-P1-SP.png": "fa916e6e916e9181",
+                    "20230605100000_FE-204-PSO-P1-SP.png": "fab14f6e914e90c1",
+                    "20230605110000_FE-204-PSO-P1-SP.png": "fb914e6e914eb091",
+                    "20230605120000_FE-204-PSO-P1-SP.png": "ff914e6e914eb081",
+                },
+                id=(
+                    "Zip export of main CSV, images, waveform CSVs and waveform images "
+                    "with functions defined but not included in projections"
+                ),
             ),
             pytest.param(
                 {
@@ -817,6 +908,11 @@ class TestExport:
                 None,
                 None,
                 None,
+                [
+                    {"name": "scalar", "expression": "FE-204-PSO-EM + 1"},
+                    {"name": "waveform", "expression": "FE-204-PSO-P1-SP + (1 - 1)"},
+                    {"name": "image", "expression": "FE-204-PSO-CAM-1 + (1 - 1)"},
+                ],
                 "20230605080000_to_20230605120000.zip",
                 None,
                 {
@@ -869,6 +965,7 @@ class TestExport:
         lower_level,
         upper_level,
         colourmap_name,
+        functions: list[dict[str, str]],
         expected_filename,
         expected_filepath,
         zip_contents_dict,
@@ -914,13 +1011,9 @@ class TestExport:
         TestExport.compile_get_params(get_params, "lower_level", lower_level)
         TestExport.compile_get_params(get_params, "upper_level", upper_level)
         TestExport.compile_get_params(get_params, "colourmap_name", colourmap_name)
-        TestExport.compile_functions(get_params, "scalar", "FE-204-PSO-EM + 1")
-        TestExport.compile_functions(
-            get_params,
-            "waveform",
-            "FE-204-PSO-P1-SP + (1 - 1)",
-        )
-        TestExport.compile_functions(get_params, "image", "FE-204-PSO-CAM-1 + (1 - 1)")
+        for function in functions:
+            value = quote(json.dumps(function))
+            TestExport.compile_get_params(get_params, "functions", value)
 
         get_params_str = "&".join(get_params)
 
@@ -1021,11 +1114,6 @@ class TestExport:
 
         assert test_response.status_code == 400
         assert json.loads(test_response.content.decode())["detail"] == message
-
-    @staticmethod
-    def compile_functions(get_params: list, name: str, expression: str) -> None:
-        function_str = json.dumps({"name": name, "expression": expression})
-        TestExport.compile_get_params(get_params, "functions", quote(function_str))
 
     @staticmethod
     def compile_get_params(get_params: list, param_name: str, param_value: str):

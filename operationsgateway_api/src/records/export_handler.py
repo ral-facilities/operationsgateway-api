@@ -213,9 +213,6 @@ class ExportHandler:
                 upper_level=self.upper_level,
                 limit_bit_depth=self.limit_bit_depth,
                 colourmap_name=self.colourmap_name,
-                float_colourmap_name=None,  # Not relevant as we export as npz not png
-                vector_skip=None,
-                vector_limit=None,
                 return_thumbnails=False,
             )
             await record_retriever.process_functions()

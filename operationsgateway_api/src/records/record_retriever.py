@@ -4,6 +4,8 @@ import logging
 import numpy as np
 from PIL import Image as PILImage
 
+from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
+from operationsgateway_api.src.exceptions import FunctionParseError
 from operationsgateway_api.src.functions.expression_transformer import (
     ExpressionTransformer,
 )
@@ -55,13 +57,13 @@ class RecordRetriever:
         record: PartialRecordModel,
         functions: list[dict[str, str]],
         original_image: bool,
-        lower_level: int,
-        upper_level: int,
-        limit_bit_depth: int,
-        colourmap_name: str,
-        float_colourmap_name: str,
-        vector_skip=int,
-        vector_limit=int,
+        lower_level: int = 0,
+        upper_level: int = 255,
+        limit_bit_depth: int = 8,
+        colourmap_name: str | None = None,
+        float_colourmap_name: str | None = None,
+        vector_skip: int | None = None,
+        vector_limit: int | None = None,
         return_thumbnails: bool = True,
         truncate: bool = False,
     ) -> None:
@@ -83,8 +85,12 @@ class RecordRetriever:
         self.coroutines = []
         self.variable_data = {}
         self.raw_data = {}
-        self.missing_variables = set()
+        # Named in the manifest, but not defined for the record
+        self.undefined_channels = set()
+        # Not named in the manifest, could be another function name
+        self.unknown_variables = set()
         self.bit_depths = {}
+        self._manifest_channel_names = None
 
     async def process_record(self):
         """
@@ -150,18 +156,36 @@ class RecordRetriever:
         # Finally, evaluate the expressions and extract the results
         expression_transformer = ExpressionTransformer(channels=self.variable_data)
         for function_data in self.functions_data:
-            intersection = function_data.variable_transformer.variables.intersection(
-                self.missing_variables,
+            undefined = function_data.variable_transformer.variables.intersection(
+                self.undefined_channels,
             )
-            if intersection:
+            if undefined:
+                # This is OK, not all records have all channels defined
+                # continue gracefully
                 message = "Channel/functions %s undefined for %s"
-                log.warning(message, intersection, self.record.id_)
+                log.warning(message, undefined, self.record.id_)
+                if function_data.name in self.unknown_variables:
+                    # Mark this function as undefined, rather than unknown, in case
+                    # another function depends on it
+                    self.undefined_channels.add(function_data.name)
+                    self.unknown_variables.remove(function_data.name)
+
                 continue
+
+            unknown = function_data.variable_transformer.variables.intersection(
+                self.unknown_variables,
+            )
+            if unknown:
+                # This is not OK, as it is either not a real channel/function name or
+                # indicates a circular dependency which cannot be evaluated
+                log.error("%s are not recognised channels/functions", unknown)
+                msg = f"{unknown} are not recognised channels/functions"
+                raise FunctionParseError(msg)
 
             result = expression_transformer.evaluate(function_data.expression)
             self.variable_data[function_data.name] = result
-            if function_data.name in self.missing_variables:
-                self.missing_variables.remove(function_data.name)
+            if function_data.name in self.unknown_variables:
+                self.unknown_variables.remove(function_data.name)
 
             self.record.channels[function_data.name] = Record._parse_function_results(
                 original_image=self.original_image,
@@ -214,8 +238,10 @@ class RecordRetriever:
 
             else:
                 self.variable_data[variable] = self.record.channels[variable].data
+        elif variable in await self._get_channel_manifest():
+            self.undefined_channels.add(variable)
         else:
-            self.missing_variables.add(variable)
+            self.unknown_variables.add(variable)
 
     async def _get_image_variable(
         self,
@@ -253,3 +279,10 @@ class RecordRetriever:
         waveform = await Waveform.get_waveform(record_id, channel_name)
         self.raw_data[channel_name] = waveform
         self.variable_data[channel_name] = WaveformVariable(waveform, x_units=x_units)
+
+    async def _get_channel_manifest(self) -> set[str]:
+        if self._manifest_channel_names is None:
+            manifest = await ChannelManifest.get_most_recent_manifest()
+            self._manifest_channel_names = set(manifest.channels.keys())
+
+        return self._manifest_channel_names

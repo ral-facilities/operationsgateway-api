@@ -1,3 +1,4 @@
+import asyncio
 import base64
 from datetime import datetime
 from io import BytesIO
@@ -27,6 +28,8 @@ from operationsgateway_api.src.functions.variable_models import (
 from operationsgateway_api.src.models import (
     ChannelDtype,
     DateConverterRange,
+    FloatImageModel,
+    ImageModel,
     PartialChannelModel,
     PartialRecordModel,
     PartialScalarChannelModel,
@@ -77,6 +80,28 @@ class Record:
             "records",
             self.record.model_dump(by_alias=True, exclude_unset=True),
         )
+
+    async def concurrent_upload(
+        self,
+        images: list[ImageModel] | list[FloatImageModel],
+        image_class: Image.__class__ | FloatImage.__class__,
+    ) -> list[str]:
+        log.debug("Processing %ss", image_class.__name__)
+        failed_image_uploads = []
+        tasks = []
+        async with asyncio.TaskGroup() as task_group:
+            for image_model in images:
+                image = image_class(image_model)
+                image.create_thumbnail()
+                self.store_thumbnail(image)  # in the record not echo
+                task = task_group.create_task(image_class.upload_image(image))
+                tasks.append(task)
+        for task in tasks:
+            channel_name = task.result()
+            if channel_name:
+                failed_image_uploads.append(channel_name)
+
+        return failed_image_uploads
 
     async def update(self) -> None:
         """

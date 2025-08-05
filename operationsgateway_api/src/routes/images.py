@@ -277,7 +277,6 @@ async def get_image_bytes(
                     upper_level=upper_level,
                     limit_bit_depth=limit_bit_depth,
                     colourmap_name=colourmap_name,
-                    float_colourmap_name=None,
                     return_thumbnails=False,
                 )
                 await record_retriever.process_functions()
@@ -320,7 +319,6 @@ async def get_image_array(
                     upper_level=upper_level,
                     limit_bit_depth=limit_bit_depth,
                     colourmap_name=colourmap_name,
-                    float_colourmap_name=None,
                     return_thumbnails=False,
                 )
                 await record_retriever.process_functions()

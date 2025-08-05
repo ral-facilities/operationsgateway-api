@@ -9,7 +9,6 @@ from typing_extensions import Annotated
 from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.models import PartialRecordModel
-from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.record_retriever import RecordRetriever
 from operationsgateway_api.src.records.waveform import Waveform
 
@@ -62,16 +61,10 @@ async def get_waveform_by_id(
                 log.info("Getting waveform from function for record ID: %s", record_id)
 
                 record = PartialRecordModel(_id=record_id)
-                colourmap_name = await Image.get_preferred_colourmap(access_token)
                 record_retriever = RecordRetriever(
                     record=record,
                     functions=functions,
                     original_image=False,
-                    lower_level=0,
-                    upper_level=255,
-                    limit_bit_depth=8,  # Limits hardcoded to 8 bit
-                    colourmap_name=colourmap_name,
-                    float_colourmap_name=None,
                     return_thumbnails=False,
                 )
                 await record_retriever.process_functions()

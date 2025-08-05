@@ -41,19 +41,21 @@ class EchoInterface:
                     aws_secret_access_key=echo_config.secret_key.get_secret_value(),
                 ) as resource:
                     self._bucket = await resource.Bucket(echo_config.bucket_name)
-
                     # If a bucket doesn't exist, Bucket() won't raise an exception,
                     # so we have to check ourselves. Checking for a creation date means
                     # we don't need to make a second call using boto, where a low-level
                     # client API call would be needed.
                     # See https://stackoverflow.com/a/49817544
-                    if not self._bucket.creation_date:
+                    if not await self._bucket.creation_date:
                         log.error(
                             "Bucket for object storage cannot be found: %s",
                             echo_config.bucket_name,
                         )
                         raise EchoS3Error("Bucket for object storage cannot be found")
-            except ClientError as exc:
+            except EchoS3Error:
+                raise
+            # May get ClientError, ValueError, EndpointConnectionError, possible others
+            except Exception as exc:
                 log.exception(
                     "Error retrieving object storage bucket '%s'",
                     echo_config.bucket_name,

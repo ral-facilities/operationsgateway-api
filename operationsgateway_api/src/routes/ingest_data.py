@@ -1,4 +1,3 @@
-import asyncio
 import ctypes
 import logging
 
@@ -159,40 +158,11 @@ async def submit_hdf(
     for w in waveforms:
         await _insert(Waveform(w), failed_waveform_uploads, record)
 
-    # This section distributes the Image.upload_image calls across
-    # the threads in the pool.It takes the image_instances list,
-    # applies the Image.upload_image function to each item, and collects
-    # the return values in upload_results. The map function blocks the main
-    # thread until all the tasks in the pool are complete.
-    log.debug("Processing images")
-    failed_image_uploads = []
-    tasks = []
-    async with asyncio.TaskGroup() as task_group:
-        for image_model in images:
-            image = Image(image_model)
-            image.create_thumbnail()
-            record.store_thumbnail(image)  # in the record not echo
-            task = task_group.create_task(Image.upload_image(image))
-            tasks.append(task)
-    for task in tasks:
-        channel_name = task.result()
-        if channel_name:
-            failed_image_uploads.append(channel_name)
-
-    log.debug("Processing float images")
-    failed_float_image_uploads = []
-    tasks = []
-    async with asyncio.TaskGroup() as task_group:
-        for image_model in float_images:
-            image = FloatImage(image_model)
-            image.create_thumbnail()
-            record.store_thumbnail(image)  # in the record not echo
-            task = task_group.create_task(FloatImage.upload_image(image))
-            tasks.append(task)
-    for task in tasks:
-        channel_name = task.result()
-        if channel_name:
-            failed_float_image_uploads.append(channel_name)
+    failed_image_uploads = await record.concurrent_upload(images, Image)
+    failed_float_image_uploads = await record.concurrent_upload(
+        float_images,
+        FloatImage,
+    )
 
     log.debug("Processing vectors")
     failed_vector_uploads = []
