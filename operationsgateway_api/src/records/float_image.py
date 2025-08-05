@@ -3,7 +3,6 @@ from __future__ import annotations
 from io import BytesIO
 import logging
 
-from botocore.exceptions import ClientError
 import numpy as np
 from PIL import Image
 
@@ -88,7 +87,7 @@ class FloatImage(ImageABC):
         The returned BytesIO encode the image as a png. For use when displaying data.
         """
         log.info("Retrieving float image and returning BytesIO object")
-        array_bytes = await FloatImage.get_storage_bytes(record_id, channel_name)
+        array_bytes = await FloatImage.get_bytes(record_id, channel_name)
         array_bytes.seek(0)
         npz_file = np.load(array_bytes)
         array = npz_file["arr_0"]
@@ -99,24 +98,6 @@ class FloatImage(ImageABC):
             absolute_max,
             colourmap_name,
         )
-
-    @staticmethod
-    async def get_storage_bytes(record_id: str, channel_name: str) -> BytesIO:
-        """
-        Get and return the BytesIO of the original compressed npz file. For use when
-        exporting data.
-        """
-        echo = EchoInterface()
-        try:
-            relative_path = FloatImage.get_relative_path(record_id, channel_name)
-            full_path = FloatImage.get_full_path(relative_path)
-            return echo.download_file_object(full_path)
-        except (ClientError, EchoS3Error) as exc:
-            await FloatImage._handle_get_image_exception(
-                record_id=record_id,
-                channel_name=channel_name,
-                exc=exc,
-            )
 
     @staticmethod
     async def get_preferred_colourmap(access_token: str) -> str:
