@@ -4,7 +4,6 @@ from io import BytesIO
 import logging
 from typing import Optional
 
-from botocore.exceptions import ClientError
 import numpy as np
 from PIL import Image as PILImage, PngImagePlugin
 from pydantic import Json
@@ -161,32 +160,36 @@ class Image(ImageABC):
         """
 
         log.info("Retrieving image and returning BytesIO object")
-        echo = get_echo_interface()
-
-        try:
-            try:
-                relative_path = Image.get_relative_path(record_id, channel_name)
-                full_path = Image.get_full_path(relative_path)
-                image_bytes = await echo.download_file_object(full_path)
-            except EchoS3Error:
-                # Try again without subdirectories, might be stored in old format
-                relative_path = Image.get_relative_path(record_id, channel_name, False)
-                full_path = Image.get_full_path(relative_path)
-                image_bytes = await echo.download_file_object(full_path)
-
-            return Image.apply_false_colour(
-                image_bytes,
-                original_image,
-                relative_path,
-                lower_level,
-                upper_level,
-                limit_bit_depth,
-                colourmap_name,
+        image_bytes = await Image.get_bytes(
+            record_id=record_id,
+            channel_name=channel_name,
+        )
+        if original_image:
+            log.debug(
+                "Original image requested, return unmodified image bytes: %s, %s",
+                record_id,
+                channel_name,
             )
-
-        except (ClientError, EchoS3Error) as exc:
-            get_echo_interface.cache_clear()  # Invalidate the cache as a precaution
-            await Image._handle_get_image_exception(record_id, channel_name, exc)
+            return image_bytes
+        else:
+            log.debug(
+                "False colour requested, applying false colour to image: %s, %s",
+                record_id,
+                channel_name,
+            )
+            img_src = PILImage.open(image_bytes)
+            orig_img_array = np.array(img_src)
+            storage_bit_depth = FalseColourHandler.get_pixel_depth(img_src)
+            false_colour_image = FalseColourHandler.apply_false_colour(
+                image_array=orig_img_array,
+                storage_bit_depth=storage_bit_depth,
+                lower_level=lower_level,
+                upper_level=upper_level,
+                limit_bit_depth=limit_bit_depth,
+                colourmap_name=colourmap_name,
+            )
+            img_src.close()
+            return false_colour_image
 
     @staticmethod
     def apply_false_colour(

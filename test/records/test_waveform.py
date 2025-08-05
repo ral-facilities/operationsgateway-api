@@ -5,7 +5,7 @@ from unittest.mock import patch
 from PIL import Image
 import pytest
 
-from operationsgateway_api.src.exceptions import WaveformError
+from operationsgateway_api.src.exceptions import EchoS3Error
 from operationsgateway_api.src.models import WaveformModel
 from operationsgateway_api.src.records.waveform import Waveform
 from test.conftest import clear_lru_cache
@@ -48,7 +48,11 @@ class TestWaveform:
 
     @pytest.mark.asyncio
     async def test_waveform_not_found(self, clear_lru_cache: None):
-        with pytest.raises(WaveformError, match="Waveform could not be found"):
+        match = (
+            "Waveform with id=19520605070023, channel=test-channel-name.json could not "
+            "be found due to invalid id and or channel"
+        )
+        with pytest.raises(EchoS3Error, match=match):
             await Waveform.get_waveform("19520605070023", "test-channel-name.json")
 
     @pytest.mark.parametrize(

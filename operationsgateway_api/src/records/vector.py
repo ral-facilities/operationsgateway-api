@@ -3,28 +3,23 @@ from io import BytesIO
 import json
 import logging
 
-from botocore.exceptions import ClientError
 from matplotlib import pyplot as plt
 
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.config import Config
-from operationsgateway_api.src.exceptions import (
-    EchoS3Error,
-    VectorError,
-)
+from operationsgateway_api.src.exceptions import EchoS3Error
 from operationsgateway_api.src.models import VectorModel
-from operationsgateway_api.src.records.echo_interface import (
-    EchoInterface,
-    get_echo_interface,
-)
+from operationsgateway_api.src.records.channel_object_abc import ChannelObjectABC
+from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.users.preferences import UserPreferences
 
 
 log = logging.getLogger()
 
 
-class Vector:
+class Vector(ChannelObjectABC):
     echo_prefix = "vectors"
+    echo_extension = "json"
 
     def __init__(self, vector: VectorModel) -> None:
         self.vector = vector
@@ -34,43 +29,15 @@ class Vector:
     async def get_vector(record_id: str, channel_name: str) -> VectorModel:
         """
         Get vector data from storage and return it as a VectorModel. If no vector can be
-        found, a VectorError will be raised.
+        found, an Exception will be raised.
         """
         log.info("Retrieving vector and returning a VectorModel")
-        echo_interface = get_echo_interface()
-
-        try:
-            relative_path = Vector.get_relative_path(record_id, channel_name)
-            full_path = Vector.get_full_path(relative_path)
-            bytes_io = await echo_interface.download_file_object(full_path)
-            vector_dict = json.loads(bytes_io.getvalue().decode())
-            return VectorModel(**vector_dict)
-        except (ClientError, EchoS3Error) as exc:
-            log.error("Vector could not be found: %s", relative_path)
-            msg = f"Vector could not be found on object storage: {relative_path}"
-            get_echo_interface.cache_clear()  # Invalidate the cache as a precaution
-            raise VectorError(msg) from exc
-
-    @staticmethod
-    def get_relative_path(
-        record_id: str,
-        channel_name: str,
-        use_subdirectories: bool = True,
-    ) -> str:
-        """
-        Returns a relative path given a record id and channel name. The path is relative
-        to the base directory.
-        """
-        directories = EchoInterface.format_record_id(record_id, use_subdirectories)
-        return f"{directories}/{channel_name}.json"
-
-    @staticmethod
-    def get_full_path(relative_path: str) -> str:
-        """
-        Returns the full path by adding the storage base directory to the start of the
-        path. The full path does not include the bucket name.
-        """
-        return f"{Vector.echo_prefix}/{relative_path}"
+        bytes_io = await Vector.get_bytes(
+            record_id=record_id,
+            channel_name=channel_name,
+        )
+        vector_dict = json.loads(bytes_io.getvalue().decode())
+        return VectorModel(**vector_dict)
 
     @staticmethod
     async def get_skip_limit(access_token: str) -> tuple[int | None, int | None]:

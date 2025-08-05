@@ -113,6 +113,7 @@ class EchoInterface:
             log.exception("%s when downloading file at %s", code, object_path)
             raise EchoS3Error(
                 f"{code} when downloading file at '{object_path}'",
+                status_code=code,
             ) from exc
 
         if len(file.getvalue()) == 0:

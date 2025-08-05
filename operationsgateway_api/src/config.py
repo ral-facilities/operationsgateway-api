@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 import sys
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from dateutil import tz
 from pydantic import (
@@ -72,6 +72,14 @@ class MongoDB(BaseModel):
     max_documents: StrictInt
 
 
+class OidcProviderConfig(BaseModel):
+    configuration_url: StrictStr
+    audience: StrictStr
+    verify_cert: StrictBool
+    mechanism: StrictStr
+    matching_claim: StrictStr
+
+
 class AuthConfig(BaseModel):
     """Configuration model class to store authentication configuration details"""
 
@@ -82,6 +90,7 @@ class AuthConfig(BaseModel):
     refresh_token_validity_days: StrictInt
     fedid_server_url: StrictStr
     fedid_server_ldap_realm: StrictStr
+    oidc_providers: Dict[StrictStr, OidcProviderConfig] = {}
 
 
 class ExperimentsConfig(BaseModel):

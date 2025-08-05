@@ -999,6 +999,22 @@ starlette = ["starlette"]
 tornado = ["tornado"]
 
 [[package]]
+name = "email-validator"
+version = "2.2.0"
+description = "A robust email address syntax and deliverability validation library."
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "email_validator-2.2.0-py3-none-any.whl", hash = "sha256:561977c2d73ce3611850a06fa56b414621e0c8faa9d66f2611407d87465da631"},
+    {file = "email_validator-2.2.0.tar.gz", hash = "sha256:cb690f344c617a714f22e66ae771445a1ceb46821152df8e165c5f9a364582b7"},
+]
+
+[package.dependencies]
+dnspython = ">=2.0.0"
+idna = ">=2.0.0"
+
+[[package]]
 name = "epac-data-sim"
 version = "0.0.1"
 description = "Python application to simulate EPAC calendar schedule and data."
@@ -4416,4 +4432,4 @@ xmlsec = ["xmlsec (>=0.6.1)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.12"
-content-hash = "02ac5025b04cce9a306b11ea7c207f44d0fa7587ed1cc72a39646f23255f6ec4"
+content-hash = "b0c06756738fb88587cdbd118da1d4d5a8597ae7adfe70fddab5f93ac9a7ae4c"

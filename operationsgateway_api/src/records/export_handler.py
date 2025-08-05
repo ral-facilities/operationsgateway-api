@@ -401,7 +401,7 @@ class ExportHandler:
 
         log.info("Getting float image to add to zip: %s %s", record_id, channel_name)
         try:
-            storage_bytes = await FloatImage.get_storage_bytes(
+            storage_bytes = await FloatImage.get_bytes(
                 record_id,
                 channel_name,
             )
