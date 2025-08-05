@@ -83,7 +83,7 @@ class ChannelObjectABC(ABC):
         exc: EchoS3Error,
     ) -> None:
         """
-        Log and raise an exception with an appropirate message/code depending on
+        Log and raise an exception with an appropriate message/code depending on
         whether the data is only missing in Echo, or from Mongo as well.
         """
         filter_ = {"_id": record_id, f"channels.{channel_name}": {"$exists": True}}
