@@ -409,9 +409,7 @@ class ExportHandler:
         channel_name: str,
     ) -> None:
         """
-        Get the arrays of x and y values for a waveform and then either write them to a
-        CSV file or create a rendered image of the waveform (or both) and add the
-        created file(s) to the zip file being created ready for download.
+        Get vector data from echo and add it to the zip file in CSV or PNG form.
         """
         export_vectors = self.export_vector_csvs or self.export_vector_images
         if not export_vectors or channel_name not in channels:
