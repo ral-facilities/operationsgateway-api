@@ -8,6 +8,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     constr,
+    EmailStr,
     Field,
     field_validator,
     model_validator,
@@ -269,6 +270,8 @@ class UserModel(BaseModel):
     sha256_password: Optional[str] = None
     auth_type: str
     authorised_routes: Optional[List[str]] = None
+    # Email needs to be optional so local login can work
+    email: Optional[EmailStr] = None
 
 
 class UpdateUserModel(BaseModel):

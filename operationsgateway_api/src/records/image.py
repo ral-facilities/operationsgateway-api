@@ -4,7 +4,6 @@ from io import BytesIO
 import logging
 from typing import Optional
 
-from botocore.exceptions import ClientError
 import numpy as np
 from PIL import Image as PILImage, PngImagePlugin
 from pydantic import Json
@@ -160,45 +159,36 @@ class Image(ImageABC):
         """
 
         log.info("Retrieving image and returning BytesIO object")
-        echo = EchoInterface()
-
-        try:
-            try:
-                relative_path = Image.get_relative_path(record_id, channel_name)
-                full_path = Image.get_full_path(relative_path)
-                image_bytes = echo.download_file_object(full_path)
-            except EchoS3Error:
-                # Try again without subdirectories, might be stored in old format
-                relative_path = Image.get_relative_path(record_id, channel_name, False)
-                full_path = Image.get_full_path(relative_path)
-                image_bytes = echo.download_file_object(full_path)
-
-            if original_image:
-                log.debug(
-                    "Original image requested, return unmodified image bytes: %s",
-                    relative_path,
-                )
-                return image_bytes
-            else:
-                log.debug(
-                    "False colour requested, applying false colour to image: %s",
-                    relative_path,
-                )
-                img_src = PILImage.open(image_bytes)
-                orig_img_array = np.array(img_src)
-                storage_bit_depth = FalseColourHandler.get_pixel_depth(img_src)
-                false_colour_image = FalseColourHandler.apply_false_colour(
-                    image_array=orig_img_array,
-                    storage_bit_depth=storage_bit_depth,
-                    lower_level=lower_level,
-                    upper_level=upper_level,
-                    limit_bit_depth=limit_bit_depth,
-                    colourmap_name=colourmap_name,
-                )
-                img_src.close()
-                return false_colour_image
-        except (ClientError, EchoS3Error) as exc:
-            await Image._handle_get_image_exception(record_id, channel_name, exc)
+        image_bytes = await Image.get_bytes(
+            record_id=record_id,
+            channel_name=channel_name,
+        )
+        if original_image:
+            log.debug(
+                "Original image requested, return unmodified image bytes: %s, %s",
+                record_id,
+                channel_name,
+            )
+            return image_bytes
+        else:
+            log.debug(
+                "False colour requested, applying false colour to image: %s, %s",
+                record_id,
+                channel_name,
+            )
+            img_src = PILImage.open(image_bytes)
+            orig_img_array = np.array(img_src)
+            storage_bit_depth = FalseColourHandler.get_pixel_depth(img_src)
+            false_colour_image = FalseColourHandler.apply_false_colour(
+                image_array=orig_img_array,
+                storage_bit_depth=storage_bit_depth,
+                lower_level=lower_level,
+                upper_level=upper_level,
+                limit_bit_depth=limit_bit_depth,
+                colourmap_name=colourmap_name,
+            )
+            img_src.close()
+            return false_colour_image
 
     @staticmethod
     async def get_preferred_colourmap(access_token: str) -> str:

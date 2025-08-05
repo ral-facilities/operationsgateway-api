@@ -20,8 +20,8 @@ class User:
         "/users PATCH",
         "/users GET",
         "/users/{id_} DELETE",
-        "/maintenance POST",
-        "/scheduled_maintenance POST",
+        "/maintenance PUT",
+        "/scheduled_maintenance PUT",
     ]
 
     auth_type_list = [
@@ -45,6 +45,24 @@ class User:
             return UserModel(**user_data)
         else:
             log.error("No user document found for user: '%s'", username)
+            raise UnauthorisedError
+
+    @staticmethod
+    async def get_user_by_email(email: str) -> UserModel:
+        """
+        Get the document for the user with the specified email from the database
+        and populate a UserModel with the details.
+        :return: the populated UserModel
+        """
+        user_data = await MongoDBInterface.find_one(
+            "users",
+            {"email": email},
+        )
+
+        if user_data:
+            return UserModel(**user_data)
+        else:
+            log.error("No user document found for email: '%s'", email)
             raise UnauthorisedError
 
     @staticmethod
