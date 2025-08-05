@@ -256,22 +256,10 @@ class ExportHandler:
         # process a waveform channel
         elif channel_type == "waveform":
             log.info("Channel %s is a waveform", channel_name)
-            channel = channels[channel_name]
-            ExportHandler._ensure_waveform_metadata(channel)
-            await self._add_waveform_to_zip(
-                channels,
-                record_id,
-                channel_name,
-                channel.metadata.x_units,
-                channel.metadata.y_units,
-            )
+            await self._add_waveform_to_zip(channels, record_id, channel_name)
         elif channel_type == "vector":
             log.info("Channel %s is a vector", channel_name)
-            channel = channels[channel_name]
-            labels = None
-            if channel.metadata and channel.metadata.labels:
-                labels = channel.metadata.labels
-            await self._add_vector_to_zip(channels, record_id, channel_name, labels)
+            await self._add_vector_to_zip(channels, record_id, channel_name)
         # process a scalar channel
         else:
             log.info("Channel %s is a scalar", channel_name)
@@ -297,21 +285,13 @@ class ExportHandler:
         supports this so it is easy to pass the false colour parameters on if they are
         specified. If none of them are specified the original image is used.
         """
-        if not self.export_images:
-            return
-
-        try:
-            # first check that there should be an image to process
-            channel = channels[channel_name]
-        except KeyError:
-            # there is no entry for this channel in the record
-            # so there is no image to process
+        if not self.export_images or channel_name not in channels:
             return
 
         log.info("Getting image to add to zip: %s %s", record_id, channel_name)
         try:
             if channel_name in self.function_types:
-                image_bytes = channel.data
+                image_bytes = channels[channel_name].data
             else:
                 image_bytes_io = await Image.get_image(
                     record_id=record_id,
@@ -364,115 +344,114 @@ class ExportHandler:
         channels: PartialChannels,
         record_id: str,
         channel_name: str,
-        x_units: str,
-        y_units: str,
     ) -> None:
         """
         Get the arrays of x and y values for a waveform and then either write them to a
         CSV file or create a rendered image of the waveform (or both) and add the
         created file(s) to the zip file being created ready for download.
         """
-        try:
-            # first check that there should be a waveform to process
-            channel = channels[channel_name]
-        except KeyError:
-            # there is no entry for this channel in the record
-            # so there is no waveform to process
+        export_waveforms = self.export_waveform_csvs or self.export_waveform_images
+        if not export_waveforms or channel_name not in channels:
             return
 
-        if self.export_waveform_csvs or self.export_waveform_images:
-            log.info(
-                "Getting waveform to add to zip: %s %s",
-                record_id,
-                channel_name,
+        log.info(
+            "Getting waveform to add to zip: %s %s",
+            record_id,
+            channel_name,
+        )
+        channel = channels[channel_name]
+        ExportHandler._ensure_waveform_metadata(channel)
+        try:
+            if channel_name in self.function_types:
+                waveform_model = channel.data
+            else:
+                waveform_model = await Waveform.get_waveform(record_id, channel_name)
+        except Exception:
+            self.errors_file_in_memory.write(
+                f"Could not find waveform for {record_id} {channel_name}\n",
             )
-            try:
-                if channel_name in self.function_types:
-                    waveform_model = channel.data
-                else:
-                    waveform_model = await Waveform.get_waveform(
-                        record_id,
-                        channel_name,
-                    )
-            except Exception:
-                self.errors_file_in_memory.write(
-                    f"Could not find waveform for {record_id} {channel_name}\n",
-                )
-                # no point trying to process the waveform so return at this point
-                return
+            # no point trying to process the waveform so return at this point
+            return
 
-            if self.export_waveform_csvs:
-                num_points = len(waveform_model.x)
-                waveform_csv_in_memory = io.StringIO()
-                for point_num in range(num_points):
-                    waveform_csv_in_memory.write(
-                        str(waveform_model.x[point_num])
-                        + ","
-                        + str(waveform_model.y[point_num])
-                        + "\n",
-                    )
-                self.zip_file.writestr(
-                    f"{record_id}_{channel_name}.csv",
-                    waveform_csv_in_memory.getvalue(),
+        if self.export_waveform_csvs:
+            num_points = len(waveform_model.x)
+            waveform_csv_in_memory = io.StringIO()
+            for point_num in range(num_points):
+                waveform_csv_in_memory.write(
+                    str(waveform_model.x[point_num])
+                    + ","
+                    + str(waveform_model.y[point_num])
+                    + "\n",
                 )
-                self._check_zip_file_size()
+            self.zip_file.writestr(
+                f"{record_id}_{channel_name}.csv",
+                waveform_csv_in_memory.getvalue(),
+            )
+            self._check_zip_file_size()
 
-            if self.export_waveform_images:
-                # if rendered trace images have been requested then add those
-                waveform = Waveform(waveform_model)
-                waveform_png_bytes = waveform.get_fullsize_png(x_units, y_units)
-                self.zip_file.writestr(
-                    f"{record_id}_{channel_name}.png",
-                    waveform_png_bytes,
-                )
-                self._check_zip_file_size()
+        if self.export_waveform_images:
+            # if rendered trace images have been requested then add those
+            waveform = Waveform(waveform_model)
+            waveform_png_bytes = waveform.get_fullsize_png(
+                x_label=channel.metadata.x_units,
+                y_label=channel.metadata.y_units,
+            )
+            self.zip_file.writestr(
+                f"{record_id}_{channel_name}.png",
+                waveform_png_bytes,
+            )
+            self._check_zip_file_size()
 
     async def _add_vector_to_zip(
         self,
         channels: PartialChannels,
         record_id: str,
         channel_name: str,
-        labels: list[str] | None,
     ) -> None:
         """
-        Get the arrays of x and y values for a waveform and then either write them to a
-        CSV file or create a rendered image of the waveform (or both) and add the
-        created file(s) to the zip file being created ready for download.
+        Get vector data from echo and add it to the zip file in CSV or PNG form.
         """
         export_vectors = self.export_vector_csvs or self.export_vector_images
-        if export_vectors and channel_name in channels:
-            log.info(
-                "Getting vector to add to zip: %s %s",
-                record_id,
-                channel_name,
+        if not export_vectors or channel_name not in channels:
+            return
+
+        channel = channels[channel_name]
+        labels = None
+        if channel.metadata and channel.metadata.labels:
+            labels = channel.metadata.labels
+
+        log.info(
+            "Getting vector to add to zip: %s %s",
+            record_id,
+            channel_name,
+        )
+        try:
+            vector_model = await Vector.get_vector(record_id, channel_name)
+        except Exception:
+            self.errors_file_in_memory.write(
+                f"Could not find vector for {record_id} {channel_name}\n",
             )
-            try:
-                vector_model = await Vector.get_vector(record_id, channel_name)
-            except Exception:
-                self.errors_file_in_memory.write(
-                    f"Could not find vector for {record_id} {channel_name}\n",
-                )
-                # no point trying to process the vector so return at this point
-                return
+            # no point trying to process the vector so return at this point
+            return
 
-            if self.export_vector_csvs:
-                string_io = io.StringIO()
-                if labels:
-                    for label, value in zip(labels, vector_model.data, strict=True):
-                        string_io.write(f"{label},{value}\n")
-                else:
-                    for value in vector_model.data:
-                        string_io.write(f"{value}\n")
+        if self.export_vector_csvs:
+            string_io = io.StringIO()
+            if labels:
+                for label, value in zip(labels, vector_model.data, strict=True):
+                    string_io.write(f"{label},{value}\n")
+            else:
+                for value in vector_model.data:
+                    string_io.write(f"{value}\n")
 
-                data = string_io.getvalue()
-                self.zip_file.writestr(f"{record_id}_{channel_name}.csv", data)
-                self._check_zip_file_size()
+            data = string_io.getvalue()
+            self.zip_file.writestr(f"{record_id}_{channel_name}.csv", data)
+            self._check_zip_file_size()
 
-            if self.export_vector_images:
-                vector = Vector(vector_model)
-                vector_image = vector.get_fullsize_png(labels)
-                self.zip_file.writestr(f"{record_id}_{channel_name}.png", vector_image)
-                self._check_zip_file_size()
+        if self.export_vector_images:
+            vector = Vector(vector_model)
+            vector_image = vector.get_fullsize_png(labels)
+            self.zip_file.writestr(f"{record_id}_{channel_name}.png", vector_image)
+            self._check_zip_file_size()
 
     def _add_main_csv_file_to_zip(self):
         """
