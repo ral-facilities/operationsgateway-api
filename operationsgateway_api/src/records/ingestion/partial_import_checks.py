@@ -26,7 +26,6 @@ class PartialImportChecks:
         """
         self.ingested_record = ingested_record
         self.stored_record = stored_record
-        self.echo_interface = get_echo_interface()
 
     def metadata_checks(self):
         """
@@ -97,21 +96,21 @@ class PartialImportChecks:
         """
         accepted_channels = []
         rejected_channels = {}
-
+        echo_interface = get_echo_interface()
         for channel_name, channel_model in self.ingested_record.channels.items():
             if channel_name in self.stored_record.channels:
                 if isinstance(channel_model, ImageChannelModel):
                     path = Image.get_full_path(channel_model.image_path)
-                    object_stored = await self.echo_interface.head_object(path)
+                    object_stored = await echo_interface.head_object(path)
                 elif isinstance(channel_model, FloatImageChannelModel):
                     path = FloatImage.get_full_path(channel_model.image_path)
-                    object_stored = await self.echo_interface.head_object(path)
+                    object_stored = await echo_interface.head_object(path)
                 elif isinstance(channel_model, WaveformChannelModel):
                     path = Waveform.get_full_path(channel_model.waveform_path)
-                    object_stored = await self.echo_interface.head_object(path)
+                    object_stored = await echo_interface.head_object(path)
                 elif isinstance(channel_model, VectorChannelModel):
                     path = Vector.get_full_path(channel_model.vector_path)
-                    object_stored = await self.echo_interface.head_object(path)
+                    object_stored = await echo_interface.head_object(path)
                 else:
                     object_stored = True
                 if object_stored:

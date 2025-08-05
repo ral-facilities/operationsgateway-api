@@ -28,41 +28,40 @@ class EchoInterface:
     def __init__(self) -> None:
         log.debug("Creating S3 resource to connect to Echo")
         self.session = aioboto3.Session()
-        self._bucket: Bucket = None
 
     async def get_bucket(self) -> Bucket:
-        if self._bucket is None:
-            echo_config = Config.config.echo
-            try:
-                async with self.session.resource(
-                    "s3",
-                    endpoint_url=echo_config.url,
-                    aws_access_key_id=echo_config.access_key.get_secret_value(),
-                    aws_secret_access_key=echo_config.secret_key.get_secret_value(),
-                ) as resource:
-                    self._bucket = await resource.Bucket(echo_config.bucket_name)
-                    # If a bucket doesn't exist, Bucket() won't raise an exception,
-                    # so we have to check ourselves. Checking for a creation date means
-                    # we don't need to make a second call using boto, where a low-level
-                    # client API call would be needed.
-                    # See https://stackoverflow.com/a/49817544
-                    if not await self._bucket.creation_date:
-                        log.error(
-                            "Bucket for object storage cannot be found: %s",
-                            echo_config.bucket_name,
-                        )
-                        raise EchoS3Error("Bucket for object storage cannot be found")
-            except EchoS3Error:
-                raise
-            # May get ClientError, ValueError, EndpointConnectionError, possible others
-            except Exception as exc:
-                log.exception(
-                    "Error retrieving object storage bucket '%s'",
-                    echo_config.bucket_name,
-                )
-                raise EchoS3Error("Error retrieving object storage bucket") from exc
+        echo_config = Config.config.echo
+        try:
+            async with self.session.resource(
+                "s3",
+                endpoint_url=echo_config.url,
+                aws_access_key_id=echo_config.access_key.get_secret_value(),
+                aws_secret_access_key=echo_config.secret_key.get_secret_value(),
+            ) as resource:
+                bucket: Bucket = await resource.Bucket(echo_config.bucket_name)
+                # If a bucket doesn't exist, Bucket() won't raise an exception,
+                # so we have to check ourselves. Checking for a creation date means
+                # we don't need to make a second call using boto, where a low-level
+                # client API call would be needed.
+                # See https://stackoverflow.com/a/49817544
+                if not await bucket.creation_date:
+                    log.error(
+                        "Bucket for object storage cannot be found: %s",
+                        echo_config.bucket_name,
+                    )
+                    raise EchoS3Error("Bucket for object storage cannot be found")
 
-        return self._bucket
+                return bucket
+
+        except EchoS3Error:
+            raise
+        # May get ClientError, ValueError, EndpointConnectionError, possibly others
+        except Exception as exc:
+            log.exception(
+                "Error retrieving object storage bucket '%s'",
+                echo_config.bucket_name,
+            )
+            raise EchoS3Error("Error retrieving object storage bucket") from exc
 
     @staticmethod
     def format_record_id(record_id: str, use_subdirectories: bool = True) -> str:
