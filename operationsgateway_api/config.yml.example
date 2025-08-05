@@ -47,6 +47,13 @@ auth:
   refresh_token_validity_days: 7
   fedid_server_url: ldap://fed.cclrc.ac.uk:389
   fedid_server_ldap_realm: FED.CCLRC.AC.UK
+  oidc_providers:
+    keycloak:
+      configuration_url: https://keycloak.example.com/realms/myrealm/.well-known/openid-configuration
+      audience: operations-gateway  # also known as the client id
+      verify_cert: true
+      mechanism: oidc
+      matching_claim: email
 experiments:
   user_office_rest_api_url: https://devapi.facilities.rl.ac.uk/users-service/v1
   scheduler_wsdl_url: https://devapis.facilities.rl.ac.uk/ws/ScheduleWebService?wsdl

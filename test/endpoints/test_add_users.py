@@ -1,12 +1,35 @@
 import json
+from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 import pytest
+import pytest_asyncio
 
+from operationsgateway_api.src.auth.authentication import Authentication
+from operationsgateway_api.src.exceptions import UnauthorisedError
+from operationsgateway_api.src.models import UserModel
 from operationsgateway_api.src.users.user import User
 
 
 class TestCreateUsers:
+
+    @staticmethod
+    @pytest_asyncio.fixture()
+    async def mock_fedid_email(monkeypatch):
+        monkeypatch.setattr(
+            "operationsgateway_api.src.routes.users.Authentication.get_email_from_fedid",
+            staticmethod(lambda username: "test@example.com"),
+        )
+
+    @staticmethod
+    @pytest_asyncio.fixture()
+    async def mock_fedid_email_none(monkeypatch):
+        monkeypatch.setattr(
+            Authentication,
+            "get_email_from_fedid",
+            lambda _: None,
+        )
+
     @pytest.mark.parametrize(
         "username, auth_type, routes, password, expected_response_code",
         [
@@ -72,6 +95,7 @@ class TestCreateUsers:
         routes,
         password,
         expected_response_code,
+        mock_fedid_email,
     ):
         create_response = test_app.post(
             "/users",
@@ -317,3 +341,57 @@ class TestCreateUsers:
         )
 
         assert create_local_response.status_code == 400
+
+    @pytest.mark.asyncio
+    async def test_fedid_user_creation_fails_without_email(
+        self,
+        test_app: TestClient,
+        login_and_get_token,
+        delete_fed_fixture,
+        mock_fedid_email_none,
+    ):
+        response = test_app.post(
+            "/users",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+            content=json.dumps(
+                {
+                    "_id": "fed",
+                    "auth_type": "FedID",
+                    "authorised_routes": ["/submit/hdf POST"],
+                },
+            ),
+        )
+
+        assert response.status_code == 400
+        assert "No email found for FedID username 'fed'" in response.text
+
+    @pytest.mark.asyncio
+    async def test_user_email_found(self):
+        expected_user = {
+            "_id": "fed",
+            "email": "test@example.com",
+            "auth_type": "local",
+        }
+
+        with patch(
+            "operationsgateway_api.src.mongo.interface.MongoDBInterface.find_one",
+            new_callable=AsyncMock,
+        ) as mock_find_one:
+            mock_find_one.return_value = expected_user
+
+            result = await User.get_user_by_email("test@example.com")
+
+            assert isinstance(result, UserModel)
+            assert result.username == "fed"
+            assert result.email == "test@example.com"
+
+    @pytest.mark.asyncio
+    async def test_user_email_not_found(self):
+        with patch(
+            "operationsgateway_api.src.mongo.interface.MongoDBInterface.find_one",
+            new_callable=AsyncMock,
+        ) as mock_find_one:
+            mock_find_one.return_value = None
+
+            with pytest.raises(UnauthorisedError):
+                await User.get_user_by_email("test@example.com")

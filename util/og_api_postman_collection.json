@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "2e52b11c-6840-4b83-9db6-713a382f4c44",
-		"name": "OperationsGateway API",
+		"_postman_id": "ecbdfb91-457b-460b-972f-8ae38efa040d",
+		"name": "OperationsGateway API new",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "7069916"
 	},
@@ -47,6 +47,107 @@
 							],
 							"path": [
 								"login"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "OIDC Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);\r",
+									"pm.globals.set(\"og-access-token\", jsonData);\r",
+									"\r",
+									"var setCookieValue = pm.response.headers.get(\"set-cookie\");\r",
+									"var refreshCookieValue = setCookieValue.substring(setCookieValue.indexOf(\"=\")+1, setCookieValue.indexOf(\";\"));\r",
+									"pm.globals.set(\"og-refresh-token\", refreshCookieValue);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-length": true
+						}
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJkWnF1MmhGcjJrNlNCNUkzNmx2ODRaTlNWdzM4UEtiWURsVW9QcGdrOFdRIn0.eyJleHAiOjE3NTMyNzA1NzIsImlhdCI6MTc1MzI3MDI3MiwiYXV0aF90aW1lIjowLCJqdGkiOiJjYzliYzVmNS01YWNhLTQwMzYtYWFmYy1iYjJlMTE2ZWY2MDAiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODEvcmVhbG1zL3Rlc3RyZWFsbSIsImF1ZCI6Im9wZXJhdGlvbnMtZ2F0ZXdheSIsInN1YiI6Ijc4NDk3MTBhLWNhNjEtNGI5Yy05ZDYxLWFiNmM5MDdjZTg1YyIsInR5cCI6IklEIiwiYXpwIjoib3BlcmF0aW9ucy1nYXRld2F5Iiwic2Vzc2lvbl9zdGF0ZSI6IjI4YzBiMzUxLWY5ODYtNGYwYS1hMTY5LTA5ZWFiM2FmNTg5MSIsImF0X2hhc2giOiJhS3VIZTZJRFpBYjd0MjY1aXM5X0dBIiwic2lkIjoiMjhjMGIzNTEtZjk4Ni00ZjBhLWExNjktMDllYWIzYWY1ODkxIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImdpdmVuX25hbWUiOiJBbGljZSIsImZhbWlseV9uYW1lIjoiRXhhbXBsZSIsImVtYWlsIjoiYWxleGFuZGVyLmtlbXBAc3RmYy5hYy51ayJ9.lnw5TxsRyTKlBIUoLdiQbzb54e2DJoBT8xoc4Su2h-ElMXmv7uawRFlre3LhTpjmwxjMPe1Sy0JY3e7Vxk_xJkB46ln11g-C_75CaDcSywvARJCuiPBRQr0w5-JXhaFqOnQne5u3YOxcVUCMQTdfPl2UY9LXIPCB2TO-BgRjP5Z6lcCcyox5gBhNUQJyVCmlKJO8nPPUV9KQ-9JRgg69qDoY2v_YKwlycJHAyVWmaV5C2EM9dwYx_6LG7X4z0trJyPDH7NurYq8riJebtxEtwGBK9lETZGI0Bdb4fSX-sKMQuxNkAnaBXgmljOKQQE6VMKuHK3P66XdVuczAdLWQHQ",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{og-api-local}}/oidc_login",
+							"host": [
+								"{{og-api-local}}"
+							],
+							"path": [
+								"oidc_login"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "OIDC Get providers",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-length": true
+						}
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{og-api-local}}/oidc_providers",
+							"host": [
+								"{{og-api-local}}"
+							],
+							"path": [
+								"oidc_providers"
 							],
 							"query": [
 								{
@@ -2404,7 +2505,10 @@
 					"name": "Get Version",
 					"request": {
 						"method": "GET",
-						"header": []
+						"header": [],
+						"url": {
+							"raw": ""
+						}
 					},
 					"response": []
 				}
@@ -2437,13 +2541,13 @@
 			"value": "http://localhost:8000"
 		},
 		{
-			"key": "og-api",
-			"value": "https://opsgateway-epac-dev.clf.stfc.ac.uk/api",
+			"key": "og-api-prod",
+			"value": "https://opsgateway-epac.clf.stfc.ac.uk/api",
 			"disabled": true
 		},
 		{
-			"key": "og-api",
-			"value": "",
+			"key": "og-api-pre-prod",
+			"value": "https://opsgateway-epac-dev.clf.stfc.ac.uk/api",
 			"disabled": true
 		}
 	]
