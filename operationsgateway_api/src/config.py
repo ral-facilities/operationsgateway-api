@@ -1,13 +1,17 @@
 from datetime import datetime
 from pathlib import Path
 import sys
-from typing import List, Optional, Tuple
+from typing import Annotated, List, Optional, Tuple
 
+import annotated_types
 from dateutil import tz
 from pydantic import (
     BaseModel,
+    DirectoryPath,
+    Field,
     field_validator,
     FilePath,
+    PositiveInt,
     SecretStr,
     StrictBool,
     StrictInt,
@@ -123,6 +127,34 @@ class ObservabilityConfig(BaseModel):
     secret_key: SecretStr  # apm key
 
 
+class BackupConfig(BaseModel):
+    cache_directory: DirectoryPath = Field(
+        description=(
+            "Directory to write incoming files to so that they can later be backed up "
+            "to tape."
+        ),
+        examples=["/home/user/cache/"],
+    )
+    warning_mark_percent: Annotated[PositiveInt, annotated_types.Lt(100)] = Field(
+        default=50,
+        description=(
+            "Above this level of disk usage for the cache_directory, log warnings"
+        ),
+    )
+    target_url: StrictStr = Field(
+        description="XRootD URL defining the server and root directory path to copy to",
+        examples=["root://localhost:1094//path/to/directory/"],
+    )
+    copy_cron_string: StrictStr = Field(
+        description="Cron string defining the schedule of the backup tasks",
+        examples=["0 * * * *", "0 18 * * 1-5"],
+    )
+    timezone_str: StrictStr = Field(
+        default="Europe/London",
+        description="String to pass to Cron for determining the schedule",
+    )
+
+
 class APIConfig(BaseModel):
     """
     Class to store the API's configuration settings
@@ -142,6 +174,7 @@ class APIConfig(BaseModel):
     echo: EchoConfig
     export: ExportConfig
     observability: ObservabilityConfig
+    backup: BackupConfig | None = None
 
     @classmethod
     def load(cls, path=Path(__file__).parent.parent / "config.yml"):
