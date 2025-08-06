@@ -248,7 +248,7 @@ class TestRecordRetriever:
         record: PartialRecordModel,
         functions: "list[dict[str, str]]",
         values: "dict[str, dict]",
-        clear_lru_cache: None,
+        clear_cached_echo_interface: None,
     ):
         record_retriever = RecordRetriever(
             record=record,

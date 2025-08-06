@@ -83,7 +83,6 @@ class Vector(ChannelObjectABC):
             # Extract the channel name and propagate it
             channel_name = self.get_channel_name_from_path()
             log.exception("Failed to upload vector for channel '%s'", channel_name)
-            get_echo_interface.cache_clear()  # Invalidate the cache as a precaution
             return channel_name
 
     def create_thumbnail(

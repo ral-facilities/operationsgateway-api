@@ -107,7 +107,6 @@ class ChannelObjectABC(ABC):
             log.error(msg)
             raise EchoS3Error(msg=msg, status_code=404) from exc
         else:
-            get_echo_interface.cache_clear()  # Invalidate the cache as a precaution
             msg = (
                 f"Unexpected number of records ({record_count}) found when verifying "
                 f"whether {record_id}, {channel_name} should be available on object "

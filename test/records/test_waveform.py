@@ -8,7 +8,6 @@ import pytest
 from operationsgateway_api.src.exceptions import EchoS3Error
 from operationsgateway_api.src.models import WaveformModel
 from operationsgateway_api.src.records.waveform import Waveform
-from test.conftest import clear_lru_cache
 
 
 class TestWaveform:
@@ -36,7 +35,7 @@ class TestWaveform:
         self,
         test_waveform: WaveformModel,
         remove_test_objects,
-        clear_lru_cache: None,
+        clear_cached_echo_interface: None,
     ):
         waveform_instance = Waveform(test_waveform)
         response = await waveform_instance.insert()
@@ -47,7 +46,7 @@ class TestWaveform:
         assert waveform.model_dump() == test_waveform.model_dump()
 
     @pytest.mark.asyncio
-    async def test_waveform_not_found(self, clear_lru_cache: None):
+    async def test_waveform_not_found(self, clear_cached_echo_interface: None):
         match = (
             "Waveform with id=19520605070023, channel=test-channel-name.json could not "
             "be found due to invalid id and or channel"

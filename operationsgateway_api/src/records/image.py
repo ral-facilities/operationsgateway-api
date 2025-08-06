@@ -133,7 +133,6 @@ class Image(ImageABC):
             # Extract the channel name and propagate it
             channel_name = input_image.get_channel_name_from_path()
             log.error("Failed to upload image for channel: %s", channel_name)
-            get_echo_interface.cache_clear()  # Invalidate the cache as a precaution
             return channel_name
 
     @staticmethod

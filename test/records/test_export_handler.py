@@ -85,6 +85,7 @@ class TestExportHandler:
         await export_handler._process_data_channel(
             channels={},
             record_id="20230605080300",
+            raw_data={},
             channel_name=channel_name,
             line="",
         )

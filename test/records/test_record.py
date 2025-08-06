@@ -25,7 +25,6 @@ from operationsgateway_api.src.mongo.interface import MongoDBInterface
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.waveform import Waveform
-from test.conftest import clear_lru_cache
 
 
 class TestRecord:

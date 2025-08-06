@@ -16,8 +16,12 @@ from operationsgateway_api.src.records.false_colour_handler import FalseColourHa
 
 @pytest.fixture(scope="function")
 def test_app():
-    get_echo_interface.cache_clear()
-    return TestClient(app)
+    """
+    Using TestClient as a context manager runs the lifespan and initialises our
+    EchoInterface like it would be in production.
+    """
+    with TestClient(app) as client:
+        yield client
 
 
 @pytest.fixture()
@@ -169,5 +173,9 @@ def unset_preferred_float_colourmap(test_app: TestClient, auth_token: str, do_it
 
 
 @pytest.fixture(scope="function")
-def clear_lru_cache() -> None:
+def clear_cached_echo_interface() -> None:
+    """
+    Clear the cache between tests to ensure we do not share the same event loop between
+    tests, as this gets closed.
+    """
     get_echo_interface.cache_clear()

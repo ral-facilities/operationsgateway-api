@@ -4,7 +4,7 @@ import logging
 
 import aioboto3
 from botocore.exceptions import ClientError
-from mypy_boto3_s3.service_resource import Bucket, Object
+from mypy_boto3_s3.service_resource import Bucket, Object, S3ServiceResource
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import EchoS3Error
@@ -28,40 +28,7 @@ class EchoInterface:
     def __init__(self) -> None:
         log.debug("Creating S3 resource to connect to Echo")
         self.session = aioboto3.Session()
-
-    async def get_bucket(self) -> Bucket:
-        echo_config = Config.config.echo
-        try:
-            async with self.session.resource(
-                "s3",
-                endpoint_url=echo_config.url,
-                aws_access_key_id=echo_config.access_key.get_secret_value(),
-                aws_secret_access_key=echo_config.secret_key.get_secret_value(),
-            ) as resource:
-                bucket: Bucket = await resource.Bucket(echo_config.bucket_name)
-                # If a bucket doesn't exist, Bucket() won't raise an exception,
-                # so we have to check ourselves. Checking for a creation date means
-                # we don't need to make a second call using boto, where a low-level
-                # client API call would be needed.
-                # See https://stackoverflow.com/a/49817544
-                if not await bucket.creation_date:
-                    log.error(
-                        "Bucket for object storage cannot be found: %s",
-                        echo_config.bucket_name,
-                    )
-                    raise EchoS3Error("Bucket for object storage cannot be found")
-
-                return bucket
-
-        except EchoS3Error:
-            raise
-        # May get ClientError, ValueError, EndpointConnectionError, possibly others
-        except Exception as exc:
-            log.exception(
-                "Error retrieving object storage bucket '%s'",
-                echo_config.bucket_name,
-            )
-            raise EchoS3Error("Error retrieving object storage bucket") from exc
+        self._bucket = None  # This will be set by the lifespan of the API on startup
 
     @staticmethod
     def format_record_id(record_id: str, use_subdirectories: bool = True) -> str:
@@ -79,6 +46,53 @@ class EchoInterface:
             return f"{record_id[:4]}/{record_id[4:6]}/{record_id[6:8]}/{record_id[8:]}"
         else:
             return record_id
+
+    async def create_bucket(
+        self,
+        resource: S3ServiceResource,
+        cache: bool = False,
+    ) -> Bucket:
+        """
+        Creates an interface to the storage bucket using `resource`. Note that this
+        bucket may be closed (no longer usable) when `resource` is closed, namely
+        when the context manager closes. Ideally we want to `cache` and re-use the
+        bucket to reduce overheads but this should ONLY be done when the app's lifespan
+        is going to keep the context open.
+        """
+        bucket = await resource.Bucket(Config.config.echo.bucket_name)
+        if not await bucket.creation_date:
+            msg = "Bucket for object storage cannot be found: %s"
+            log.error(msg, Config.config.echo.bucket_name)
+            raise EchoS3Error("Bucket for object storage cannot be found")
+
+        if cache:
+            self._bucket = bucket
+
+        return bucket
+
+    async def get_bucket(self) -> Bucket:
+        """
+        Utility method for returning the cached `self._bucket`.
+
+        If it does not exist, creates a new resource context manager and returns a new
+        Bucket object but does NOT cache. This cannot be cached/re-used as there may
+        be multiple concurrent calls and if the context manager closes anything else
+        using the bucket will fail. When the API is running we should never reach this,
+        but allow it so that EchoInterface can be used directly (e.g. in tests) and as
+        defensive code.
+        """
+        if self._bucket is not None:
+            return self._bucket
+        else:
+            msg = "EchoInterface._bucket unexpectedly None, creating with new resource"
+            log.warning(msg)
+            async with self.session.resource(
+                "s3",
+                endpoint_url=Config.config.echo.url,
+                aws_access_key_id=Config.config.echo.access_key.get_secret_value(),
+                aws_secret_access_key=Config.config.echo.secret_key.get_secret_value(),
+            ) as resource:
+                return await self.create_bucket(resource)
 
     async def head_object(self, object_path: str) -> bool:
         """

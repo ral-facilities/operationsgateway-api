@@ -12,9 +12,7 @@ from PIL import Image
 import pytest
 
 from operationsgateway_api.src.exceptions import EchoS3Error
-from test.conftest import (
-    assert_text_file_contents,
-)
+from test.conftest import assert_text_file_contents
 
 
 class TestExport:

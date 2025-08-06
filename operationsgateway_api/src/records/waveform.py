@@ -58,7 +58,6 @@ class Waveform(ChannelObjectABC):
                 "Failed to upload waveform for channel '%s'",
                 channel_name,
             )
-            get_echo_interface.cache_clear()  # Invalidate the cache as a precaution
             return channel_name
 
     def create_thumbnail(self) -> None:

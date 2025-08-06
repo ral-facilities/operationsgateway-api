@@ -11,20 +11,9 @@ from operationsgateway_api.src.records.echo_interface import EchoInterface
 
 class TestEchoInterface:
     @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        ["target", "match"],
-        [
-            pytest.param(
-                "operationsgateway_api.src.config.Config.config.echo.bucket_name",
-                "Bucket for object storage cannot be found",
-            ),
-            pytest.param(
-                "operationsgateway_api.src.config.Config.config.echo.url",
-                "Error retrieving object storage bucket",
-            ),
-        ],
-    )
-    async def test_get_bucket(self, target: str, match: str):
+    async def test_get_bucket(self):
+        target = "operationsgateway_api.src.config.Config.config.echo.bucket_name"
+        match = "Bucket for object storage cannot be found"
         echo_interface = EchoInterface()
         with patch(target, "test"):
             with pytest.raises(EchoS3Error, match=match):

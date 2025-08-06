@@ -17,7 +17,6 @@ from operationsgateway_api.src.exceptions import (
 )
 from operationsgateway_api.src.models import ImageModel
 from operationsgateway_api.src.records.image import Image
-from test.conftest import clear_lru_cache
 from test.records.conftest import remove_test_objects
 
 
@@ -180,7 +179,7 @@ class TestImage:
         bit_depth: int,
         path: str,
         remove_test_objects: None,
-        clear_lru_cache: None,
+        clear_cached_echo_interface: None,
     ):
         test_image = Image(
             ImageModel(
