@@ -942,6 +942,58 @@ class TestExport:
                     "waveform images using functions"
                 ),
             ),
+            pytest.param(
+                {
+                    "_id": {
+                        "$in": [
+                            "20230605080000",
+                            "20230605090000",
+                            "20230605100000",
+                            "20230605110000",
+                            "20230605120000",
+                        ],
+                    },
+                },
+                0,
+                10,
+                "metadata.shotnum ASC",
+                [
+                    "metadata.shotnum",
+                    "metadata.timestamp",
+                    "metadata.epac_ops_data_version",
+                    "channels.FE-204-PSO-EM.data",
+                    "channels.FE-204-PSO-CAM-1",
+                ],
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                5,
+                15,
+                "jet_r",
+                [
+                    {"name": "image", "expression": "FE-204-PSO-CAM-1 + (1 - 1)"},
+                ],
+                "20230605080000_to_20230605120000.zip",
+                None,
+                {
+                    "20230605080000_to_20230605120000.csv": (
+                        "export/20230605080000_to_20230605120000_asc.csv"
+                    ),
+                    "20230605080000_FE-204-PSO-CAM-1.png": "c73838c6c637c738",
+                    "20230605090000_FE-204-PSO-CAM-1.png": "c73838c7c73838c7",
+                    "20230605100000_FE-204-PSO-CAM-1.png": "c73838c7c73838c7",
+                    "20230605110000_FE-204-PSO-CAM-1.png": "c73938c7c427c738",
+                    "20230605120000_FE-204-PSO-CAM-1.png": "c4c43f273838c6fc",
+                },
+                id=(
+                    "Zip export of main CSV with images in false colour "
+                    "with functions defined but not included in projections"
+                ),
+            ),
         ],
     )
     def test_csv_export(

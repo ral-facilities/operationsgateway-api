@@ -13,23 +13,20 @@ from operationsgateway_api.src.records.record_retriever import RecordRetriever
 class TestRecordRetriever:
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "record",
+        "channels",
         [
-            pytest.param(PartialRecordModel(_id="20230605100000"), id="No channels"),
+            pytest.param({}, id="No channels"),
             pytest.param(
-                PartialRecordModel(
-                    _id="20230605100000",
-                    channels={
-                        "TS-202-TSM-P1-CAM-2-CENX": {"data": 4.145480878063205},
-                        "CM-202-CVC-SP": {
-                            "waveform_path": "20230605100000/CM-202-CVC-SP.json",
-                            "metadata": {"x_units": "nm"},
-                        },
-                        "FE-204-NSO-P1-CAM-1": {
-                            "image_path": "20230605100000/FE-204-NSO-P1-CAM-1.png",
-                        },
+                {
+                    "TS-202-TSM-P1-CAM-2-CENX": {"data": 4.145480878063205},
+                    "CM-202-CVC-SP": {
+                        "waveform_path": "20230605100000/CM-202-CVC-SP.json",
+                        "metadata": {"x_units": "nm"},
                     },
-                ),
+                    "FE-204-NSO-P1-CAM-1": {
+                        "image_path": "20230605100000/FE-204-NSO-P1-CAM-1.png",
+                    },
+                },
                 id="Channels loaded",
             ),
         ],
@@ -245,11 +242,15 @@ class TestRecordRetriever:
     )
     async def test_apply_functions(
         self,
-        record: PartialRecordModel,
+        channels: dict[str, dict[str, float | str | dict[str, str]]],
         functions: "list[dict[str, str]]",
         values: "dict[str, dict]",
         clear_cached_echo_interface: None,
     ):
+        # Use a copy to prevent in place modification of record.channels form persisting
+        # between test executions
+        record = PartialRecordModel(_id="20230605100000", channels=channels.copy())
+        print(record.channels)
         record_retriever = RecordRetriever(
             record=record,
             functions=functions,

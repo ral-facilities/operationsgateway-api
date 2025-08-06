@@ -158,43 +158,25 @@ class Image(ImageABC):
         database, an appropriate exception (and error message) is raised
         """
 
-        log.info("Retrieving image and returning BytesIO object")
+        msg = "Retrieving image and returning BytesIO object: %s %s"
+        log.info(msg, record_id, channel_name)
         image_bytes = await Image.get_bytes(
             record_id=record_id,
             channel_name=channel_name,
         )
-        if original_image:
-            log.debug(
-                "Original image requested, return unmodified image bytes: %s, %s",
-                record_id,
-                channel_name,
-            )
-            return image_bytes
-        else:
-            log.debug(
-                "False colour requested, applying false colour to image: %s, %s",
-                record_id,
-                channel_name,
-            )
-            img_src = PILImage.open(image_bytes)
-            orig_img_array = np.array(img_src)
-            storage_bit_depth = FalseColourHandler.get_pixel_depth(img_src)
-            false_colour_image = FalseColourHandler.apply_false_colour(
-                image_array=orig_img_array,
-                storage_bit_depth=storage_bit_depth,
-                lower_level=lower_level,
-                upper_level=upper_level,
-                limit_bit_depth=limit_bit_depth,
-                colourmap_name=colourmap_name,
-            )
-            img_src.close()
-            return false_colour_image
+        return Image.apply_false_colour(
+            image_bytes=image_bytes,
+            original_image=original_image,
+            lower_level=lower_level,
+            upper_level=upper_level,
+            limit_bit_depth=limit_bit_depth,
+            colourmap_name=colourmap_name,
+        )
 
     @staticmethod
     def apply_false_colour(
         image_bytes: BytesIO,
         original_image: bool,
-        relative_path: str,
         lower_level: int,
         upper_level: int,
         limit_bit_depth: int,
@@ -205,16 +187,10 @@ class Image(ImageABC):
         `image_bytes` using the other parameters.
         """
         if original_image:
-            log.debug(
-                "Original image requested, return unmodified image bytes: %s",
-                relative_path,
-            )
+            log.debug("Original image requested, return unmodified image bytes")
             return image_bytes
         else:
-            log.debug(
-                "False colour requested, applying false colour to image: %s",
-                relative_path,
-            )
+            log.debug("False colour requested, applying false colour to image")
             img_src = PILImage.open(image_bytes)
             orig_img_array = np.array(img_src)
             storage_bit_depth = FalseColourHandler.get_pixel_depth(img_src)

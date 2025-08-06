@@ -339,7 +339,6 @@ class ExportHandler:
                     image_bytes_io = Image.apply_false_colour(
                         image_bytes=raw_data[channel_name],
                         original_image=self.original_image,
-                        relative_path=channel_name,  # This is only used for logging
                         lower_level=self.lower_level,
                         upper_level=self.upper_level,
                         limit_bit_depth=self.limit_bit_depth,

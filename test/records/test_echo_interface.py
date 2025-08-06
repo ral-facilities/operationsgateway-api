@@ -1,12 +1,23 @@
 from io import BytesIO
+from typing import AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from botocore.exceptions import ClientError
-from pydantic import SecretStr
 import pytest
+import pytest_asyncio
 
 from operationsgateway_api.src.exceptions import EchoS3Error
-from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.echo_interface import EchoInterface, log
+
+
+@pytest_asyncio.fixture(scope="function")
+async def echo_interface_with_empty_object() -> AsyncGenerator[EchoInterface, None]:
+    bytes_io = BytesIO()
+    echo_interface = EchoInterface()
+    echo_interface._bucket = await echo_interface.get_bucket()
+    await echo_interface.upload_file_object(bytes_io, "empty_object")
+    yield echo_interface
+    await echo_interface.delete_file_object("empty_object")
 
 
 class TestEchoInterface:
@@ -18,6 +29,21 @@ class TestEchoInterface:
         with patch(target, "test"):
             with pytest.raises(EchoS3Error, match=match):
                 await echo_interface.get_bucket()
+
+    @pytest.mark.asyncio
+    async def test_empty_download_file_object(
+        self,
+        echo_interface_with_empty_object: EchoInterface,
+    ):
+        log.warning = MagicMock(wraps=log.warning)
+
+        await echo_interface_with_empty_object.download_file_object("empty_object")
+
+        msg = (
+            "Bytes array from downloaded object is empty, "
+            "file download from S3 might have been unsuccessful: %s"
+        )
+        log.warning.assert_called_once_with(msg, "empty_object")
 
     @pytest.mark.asyncio
     async def test_invalid_upload_file_object(self):
@@ -62,3 +88,9 @@ class TestEchoInterface:
         echo_interface._bucket = mock_bucket
         with pytest.raises(EchoS3Error, match="when deleting directory"):
             await echo_interface.delete_directory("test")
+
+    @pytest.mark.asyncio
+    async def test_head_object(self):
+        echo_interface = EchoInterface()
+        echo_interface._bucket = await echo_interface.get_bucket()
+        assert not await echo_interface.head_object("test")

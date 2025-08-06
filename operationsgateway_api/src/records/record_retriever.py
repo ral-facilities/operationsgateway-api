@@ -145,7 +145,6 @@ class RecordRetriever:
 
         # Build and execute a list of coroutines to fetch the data concurrently
         for variable in all_variables:
-            log.debug("variable %s", variable)
             await self._extract_variable(variable)
 
         async with asyncio.TaskGroup() as task_group:
