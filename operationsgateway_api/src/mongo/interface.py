@@ -13,7 +13,7 @@ from pymongo.results import (
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import DatabaseError, DuplicateSessionError
-from operationsgateway_api.src.mongo.connection import ConnectionInstance
+from operationsgateway_api.src.mongo.connection import get_mongodb_connection
 from operationsgateway_api.src.mongo.mongo_error_handling import mongodb_error_handling
 
 log = logging.getLogger()
@@ -40,7 +40,7 @@ class MongoDBInterface:
         manipulated (in a function within this class) to perform a CRUD operation
         """
         try:
-            return ConnectionInstance.db_connection.db[collection_name]
+            return get_mongodb_connection().db[collection_name]
         except InvalidName as exc:
             log.error("Invalid collection name given: %s", collection_name)
             raise DatabaseError("Invalid collection name given") from exc

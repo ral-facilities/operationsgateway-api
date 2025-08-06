@@ -10,12 +10,18 @@ import pytest
 
 from operationsgateway_api.src.experiments.unique_worker import UniqueWorker
 from operationsgateway_api.src.main import app
+from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 
 
-@pytest.fixture()
+@pytest.fixture(scope="function")
 def test_app():
-    return TestClient(app)
+    """
+    Using TestClient as a context manager runs the lifespan and initialises our
+    EchoInterface like it would be in production.
+    """
+    with TestClient(app) as client:
+        yield client
 
 
 @pytest.fixture()
@@ -89,12 +95,20 @@ def assert_thumbnails(record: dict, expected_thumbnails_hashes: dict):
     assert num_channels_found == len(expected_thumbnails_hashes.keys())
 
 
-def assert_text_file_contents(filepath: str, file_contents: str) -> None:
+def assert_text_file_contents(
+    filepath: str,
+    file_contents: list[bytes],
+    sort_lines: bool = False,
+) -> None:
     """
     Check that the text file at the given filepath contains the contents specified
     """
-    with open(f"{os.path.dirname(os.path.realpath(__file__))}/{filepath}") as f:
-        test_file_contents = f.read()
+    with open(f"{os.path.dirname(os.path.realpath(__file__))}/{filepath}", "rb") as f:
+        test_file_contents = f.readlines()
+
+    if sort_lines:
+        file_contents.sort()
+
     assert test_file_contents == file_contents
 
 
@@ -156,3 +170,12 @@ def unset_preferred_float_colourmap(test_app: TestClient, auth_token: str, do_it
             f"/users/preferences/{FalseColourHandler.preferred_float_colour_map_pref_name}",
             headers={"Authorization": f"Bearer {auth_token}"},
         )
+
+
+@pytest.fixture(scope="function")
+def clear_cached_echo_interface() -> None:
+    """
+    Clear the cache between tests to ensure we do not share the same event loop between
+    tests, as this gets closed.
+    """
+    get_echo_interface.cache_clear()

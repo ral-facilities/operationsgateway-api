@@ -10,7 +10,7 @@ from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import EchoS3Error
 from operationsgateway_api.src.models import FloatImageModel
-from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.image_abc import ImageABC
 from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
@@ -55,7 +55,7 @@ class FloatImage(ImageABC):
         la_image.close()
 
     @staticmethod
-    def upload_image(input_image: FloatImage) -> str | None:
+    async def upload_image(input_image: FloatImage) -> str | None:
         """
         Save the image on Echo S3 object storage as a compressed numpy array (.npz)
         """
@@ -63,12 +63,11 @@ class FloatImage(ImageABC):
         log.info("Storing float image in a Bytes object: %s", input_image.image.path)
         image_bytes = BytesIO()
         np.savez_compressed(image_bytes, input_image.image.data)
-        echo = EchoInterface()
         storage_path = FloatImage.get_full_path(input_image.image.path)
         log.info("Storing float image on S3: %s", storage_path)
-
+        echo_interface = get_echo_interface()
         try:
-            echo.upload_file_object(image_bytes, storage_path)
+            await echo_interface.upload_file_object(image_bytes, storage_path)
             return None  # No failure
         except EchoS3Error:
             # Extract the channel name and propagate it

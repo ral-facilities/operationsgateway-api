@@ -35,9 +35,10 @@ class TestWaveform:
         self,
         test_waveform: WaveformModel,
         remove_test_objects,
+        clear_cached_echo_interface: None,
     ):
         waveform_instance = Waveform(test_waveform)
-        response = waveform_instance.insert()
+        response = await waveform_instance.insert()
         assert response is None
 
         waveform = await Waveform.get_waveform("19520605070023", "test-channel-name")
@@ -45,7 +46,7 @@ class TestWaveform:
         assert waveform.model_dump() == test_waveform.model_dump()
 
     @pytest.mark.asyncio
-    async def test_waveform_not_found(self):
+    async def test_waveform_not_found(self, clear_cached_echo_interface: None):
         match = (
             "Waveform with id=19520605070023, channel=test-channel-name.json could not "
             "be found due to invalid id and or channel"

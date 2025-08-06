@@ -10,7 +10,7 @@ from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import EchoS3Error
 from operationsgateway_api.src.models import VectorModel
 from operationsgateway_api.src.records.channel_object_abc import ChannelObjectABC
-from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.users.preferences import UserPreferences
 
 
@@ -67,16 +67,17 @@ class Vector(ChannelObjectABC):
         """
         return self.vector.path.split("/")[-1].split(".json")[0]
 
-    def insert(self) -> str | None:
+    async def insert(self) -> str | None:
         """
         Upload the bytes of this vector to storage. Returns the channel name if the
         upload fails.
         """
         log.info("Storing vector: %s", self.vector.path)
-        echo = EchoInterface()
+        echo_interface = get_echo_interface()
         try:
             bytes_io = BytesIO(self.vector.model_dump_json(indent=2).encode())
-            echo.upload_file_object(bytes_io, Vector.get_full_path(self.vector.path))
+            full_path = Vector.get_full_path(self.vector.path)
+            await echo_interface.upload_file_object(bytes_io, full_path)
             return  # Successful upload
         except EchoS3Error:
             # Extract the channel name and propagate it

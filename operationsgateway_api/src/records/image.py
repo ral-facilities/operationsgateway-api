@@ -19,7 +19,7 @@ from operationsgateway_api.src.functions.builtins.centroid_y import CentroidY
 from operationsgateway_api.src.functions.builtins.fwhm import FWHM
 from operationsgateway_api.src.functions.variable_models import WaveformVariable
 from operationsgateway_api.src.models import ImageModel
-from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.image_abc import ImageABC
 from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
@@ -101,7 +101,7 @@ class Image(ImageABC):
         img.close()
 
     @staticmethod
-    def upload_image(input_image: Image) -> Optional[str]:
+    async def upload_image(input_image: Image) -> Optional[str]:
         """
         Save the image on Echo S3 object storage
         """
@@ -122,12 +122,12 @@ class Image(ImageABC):
             log.exception(msg=exc)
             raise ImageError("Image data is not in correct format to be read") from exc
 
-        echo = EchoInterface()
+        echo_interface = get_echo_interface()
         storage_path = Image.get_full_path(input_image.image.path)
         log.info("Storing image on S3: %s", storage_path)
 
         try:
-            echo.upload_file_object(image_bytes, storage_path)
+            await echo_interface.upload_file_object(image_bytes, storage_path)
             return None  # No failure
         except EchoS3Error:
             # Extract the channel name and propagate it
@@ -158,24 +158,39 @@ class Image(ImageABC):
         database, an appropriate exception (and error message) is raised
         """
 
-        log.info("Retrieving image and returning BytesIO object")
+        msg = "Retrieving image and returning BytesIO object: %s %s"
+        log.info(msg, record_id, channel_name)
         image_bytes = await Image.get_bytes(
             record_id=record_id,
             channel_name=channel_name,
         )
+        return Image.apply_false_colour(
+            image_bytes=image_bytes,
+            original_image=original_image,
+            lower_level=lower_level,
+            upper_level=upper_level,
+            limit_bit_depth=limit_bit_depth,
+            colourmap_name=colourmap_name,
+        )
+
+    @staticmethod
+    def apply_false_colour(
+        image_bytes: BytesIO,
+        original_image: bool,
+        lower_level: int,
+        upper_level: int,
+        limit_bit_depth: int,
+        colourmap_name: str,
+    ) -> BytesIO:
+        """
+        If not requesting the `original_image`, then false colour will be applied to
+        `image_bytes` using the other parameters.
+        """
         if original_image:
-            log.debug(
-                "Original image requested, return unmodified image bytes: %s, %s",
-                record_id,
-                channel_name,
-            )
+            log.debug("Original image requested, return unmodified image bytes")
             return image_bytes
         else:
-            log.debug(
-                "False colour requested, applying false colour to image: %s, %s",
-                record_id,
-                channel_name,
-            )
+            log.debug("False colour requested, applying false colour to image")
             img_src = PILImage.open(image_bytes)
             orig_img_array = np.array(img_src)
             storage_bit_depth = FalseColourHandler.get_pixel_depth(img_src)

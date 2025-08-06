@@ -61,6 +61,7 @@ class TestImage:
         thumbnail_checksum = str(imagehash.phash(img))
         assert thumbnail_checksum == phash
 
+    @pytest.mark.asyncio
     @patch(
         "operationsgateway_api.src.config.Config.config.echo.url",
         config_echo_url,
@@ -82,9 +83,9 @@ class TestImage:
         "operationsgateway_api.src.records.echo_interface.EchoInterface"
         ".upload_file_object",
     )
-    def test_valid_upload_image(self, mock_upload_file_object, _):
+    async def test_valid_upload_image(self, mock_upload_file_object, _):
         test_image = FloatImage(self.model)
-        FloatImage.upload_image(test_image)
+        await FloatImage.upload_image(test_image)
 
         assert mock_upload_file_object.call_count == 1
 
@@ -93,6 +94,7 @@ class TestImage:
         assert isinstance(uploaded_bytes_io, BytesIO)
         assert mock_upload_file_object.call_args.args[1] == f"float_images/{self.path}"
 
+    @pytest.mark.asyncio
     @patch(
         "operationsgateway_api.src.config.Config.config.echo.url",
         config_echo_url,
@@ -114,9 +116,9 @@ class TestImage:
         "operationsgateway_api.src.records.echo_interface.EchoInterface.upload_file_object",
         side_effect=EchoS3Error("Mocked Exception"),
     )
-    def test_invalid_upload_image(self, _, __):
+    async def test_invalid_upload_image(self, _, __):
         test_image = FloatImage(self.model)
-        response = FloatImage.upload_image(test_image)
+        response = await FloatImage.upload_image(test_image)
         assert response == "path"
 
     @pytest.mark.asyncio

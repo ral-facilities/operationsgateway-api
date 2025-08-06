@@ -4,7 +4,10 @@ import logging
 
 from operationsgateway_api.src.exceptions import EchoS3Error
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
-from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.echo_interface import (
+    EchoInterface,
+    get_echo_interface,
+)
 
 
 log = logging.getLogger()
@@ -52,7 +55,7 @@ class ChannelObjectABC(ABC):
         """
         Gets the bytes for this record and channel, handling any exceptions.
         """
-        echo = EchoInterface()
+        echo_interface = get_echo_interface()
         try:
             relative_path = cls.get_relative_path(
                 record_id=record_id,
@@ -60,7 +63,7 @@ class ChannelObjectABC(ABC):
                 use_subdirectories=use_subdirectories,
             )
             full_path = cls.get_full_path(relative_path)
-            return echo.download_file_object(full_path)
+            return await echo_interface.download_file_object(full_path)
         except EchoS3Error as exc:
             if use_subdirectories:
                 return await cls.get_bytes(

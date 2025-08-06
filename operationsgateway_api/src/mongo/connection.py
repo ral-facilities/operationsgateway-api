@@ -1,4 +1,5 @@
 import asyncio
+from functools import lru_cache
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
@@ -10,18 +11,18 @@ class MongoDBConnection:
     Class to store database connections, the database and collection
     """
 
-    mongo_client = AsyncIOMotorClient(
-        Config.config.mongodb.mongodb_url.get_secret_value(),
-    )
-    mongo_client.get_io_loop = asyncio.get_event_loop
+    def __init__(self) -> None:
+        mongodb_config = Config.config.mongodb
+        self.mongo_client = AsyncIOMotorClient(
+            mongodb_config.mongodb_url.get_secret_value(),
+        )
+        self.mongo_client.get_io_loop = asyncio.get_event_loop
+        self.db: AsyncIOMotorDatabase = self.mongo_client[mongodb_config.database_name]
 
-    db: AsyncIOMotorDatabase = mongo_client[Config.config.mongodb.database_name]
 
-
-class ConnectionInstance:
+@lru_cache
+def get_mongodb_connection() -> MongoDBConnection:
     """
-    Class containing the database connection as a class variable so it can be mocked
-    during testing
+    Get a cached instance of our database connection.
     """
-
-    db_connection = MongoDBConnection()
+    return MongoDBConnection()

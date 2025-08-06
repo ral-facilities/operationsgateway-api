@@ -34,7 +34,7 @@ class ImageABC(ChannelObjectABC):
 
     @staticmethod
     @abstractmethod
-    def upload_image(input_image: ImageABC) -> str | None: ...
+    async def upload_image(input_image: ImageABC) -> str | None: ...
 
     @staticmethod
     @abstractmethod
