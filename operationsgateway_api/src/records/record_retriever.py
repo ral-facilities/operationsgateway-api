@@ -1,4 +1,5 @@
 import asyncio
+from io import BytesIO
 import logging
 
 import numpy as np
@@ -260,7 +261,7 @@ class RecordRetriever:
         )
         self.raw_data[channel_name] = image_bytes
 
-        img_src = PILImage.open(image_bytes)
+        img_src = PILImage.open(BytesIO(image_bytes))
         img_array = np.array(img_src)
         variable_value = Record._bit_shift_to_raw(
             img_array=img_array,

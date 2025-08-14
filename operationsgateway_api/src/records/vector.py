@@ -36,7 +36,7 @@ class Vector(ChannelObjectABC):
             record_id=record_id,
             channel_name=channel_name,
         )
-        vector_dict = json.loads(bytes_io.getvalue().decode())
+        vector_dict = json.loads(bytes_io.decode())
         return VectorModel(**vector_dict)
 
     @staticmethod

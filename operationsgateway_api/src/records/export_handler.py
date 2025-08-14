@@ -334,9 +334,9 @@ class ExportHandler:
                 image_bytes = channels[channel_name].data
             elif channel_name in raw_data:
                 if self.original_image:
-                    image_bytes = raw_data[channel_name].getvalue()
+                    image_bytes = raw_data[channel_name]
                 else:
-                    image_bytes_io = Image.apply_false_colour(
+                    image_bytes = Image.apply_false_colour(
                         image_bytes=raw_data[channel_name],
                         original_image=self.original_image,
                         lower_level=self.lower_level,
@@ -344,9 +344,8 @@ class ExportHandler:
                         limit_bit_depth=self.limit_bit_depth,
                         colourmap_name=self.colourmap_name,
                     )
-                    image_bytes = image_bytes_io.getvalue()
             else:
-                image_bytes_io = await Image.get_image(
+                image_bytes = await Image.get_image(
                     record_id=record_id,
                     channel_name=channel_name,
                     original_image=self.original_image,
@@ -355,7 +354,6 @@ class ExportHandler:
                     limit_bit_depth=self.limit_bit_depth,
                     colourmap_name=self.colourmap_name,
                 )
-                image_bytes = image_bytes_io.getvalue()
             self.zip_file.writestr(f"{record_id}_{channel_name}.png", image_bytes)
             self._check_zip_file_size()
         except Exception:
@@ -383,10 +381,7 @@ class ExportHandler:
                 record_id,
                 channel_name,
             )
-            self.zip_file.writestr(
-                f"{record_id}_{channel_name}.npz",
-                storage_bytes.getvalue(),
-            )
+            self.zip_file.writestr(f"{record_id}_{channel_name}.npz", storage_bytes)
             self._check_zip_file_size()
         except Exception:
             self.errors_file_in_memory.write(
