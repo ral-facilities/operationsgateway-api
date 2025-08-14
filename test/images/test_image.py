@@ -192,7 +192,7 @@ class TestImage:
 
         assert response is None
 
-        bytes_io = await Image.get_image(
+        uploaded_bytes = await Image.get_image(
             record_id="19520605070023",
             channel_name="test-channel-name",
             original_image=True,
@@ -201,9 +201,8 @@ class TestImage:
             limit_bit_depth=8,
             colourmap_name=None,
         )
-        assert isinstance(bytes_io, BytesIO)
+        assert isinstance(uploaded_bytes, bytes)
 
-        uploaded_bytes = bytes_io.getvalue()
         s_bit_offset = uploaded_bytes.find(b"sBIT")
         if bit_depth is None:
             assert s_bit_offset == -1, uploaded_bytes[: s_bit_offset + 10]
@@ -278,12 +277,13 @@ class TestImage:
         with patch(
             "operationsgateway_api.src.records.echo_interface.EchoInterface"
             ".download_file_object",
-            return_value=self._get_bytes_of_image("original_image.png"),
+            return_value=self._get_bytes_of_image("original_image.png").getvalue(),
         ):
+            expected_bytes_io = self._get_bytes_of_image(expected_image_filename)
             with patch(
                 "operationsgateway_api.src.records.false_colour_handler"
                 ".FalseColourHandler.apply_false_colour",
-                return_value=self._get_bytes_of_image(expected_image_filename),
+                return_value=expected_bytes_io,
             ):
                 test_image = await Image.get_image(
                     record_id="test_record_id",
@@ -295,10 +295,7 @@ class TestImage:
                     colourmap_name="jet",
                 )
 
-            assert (
-                test_image.getvalue()
-                == self._get_bytes_of_image(expected_image_filename).getvalue()
-            )
+            assert test_image == expected_bytes_io.getvalue()
 
     @pytest.mark.asyncio
     @patch(

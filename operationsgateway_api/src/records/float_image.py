@@ -87,8 +87,7 @@ class FloatImage(ImageABC):
         """
         log.info("Retrieving float image and returning BytesIO object")
         array_bytes = await FloatImage.get_bytes(record_id, channel_name)
-        array_bytes.seek(0)
-        npz_file = np.load(array_bytes)
+        npz_file = np.load(BytesIO(array_bytes))
         array = npz_file["arr_0"]
         npz_file.close()
         absolute_max = FloatImage.get_absolute_max(array)
