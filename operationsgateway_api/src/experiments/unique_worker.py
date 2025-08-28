@@ -24,11 +24,9 @@ class UniqueWorker:
     worker) as a 'double check' to prevent race conditions.
     """
 
-    worker_file_path = Path(Config.config.experiments.worker_file_path)
-
-    def __init__(self) -> None:
+    def __init__(self, worker_file_path: str) -> None:
         self.id_ = str(os.getpid())
-
+        self.worker_file_path = Path(worker_file_path)
         self.file_empty = self._is_file_empty()
         log.debug(
             "File empty for PID %s: %s",
@@ -50,14 +48,10 @@ class UniqueWorker:
         pid = self._read_file()
         return True if self.id_ == pid else False
 
-    @staticmethod
-    def remove_file() -> None:
+    def remove_file(self) -> None:
         try:
-            log.debug(
-                "Worker file attempting to be deleted: %s",
-                UniqueWorker.worker_file_path,
-            )
-            os.remove(UniqueWorker.worker_file_path)
+            log.debug("Worker file attempting to be deleted: %s", self.worker_file_path)
+            os.remove(self.worker_file_path)
         except FileNotFoundError:
             # If the file doesn't exist, that's ok as the file cannot be deleted if it
             # doesn't exist
@@ -75,11 +69,9 @@ class UniqueWorker:
             return False if pid else True
         except FileNotFoundError:
             # Create file (including path to it)
-            log.debug(
-                "Worker file doesn't exist, going to create one at: %s",
-                UniqueWorker.worker_file_path,
-            )
-            UniqueWorker.worker_file_path.parents[0].mkdir(parents=True, exist_ok=True)
+            msg = "Worker file doesn't exist, going to create one at: %s"
+            log.debug(msg, self.worker_file_path)
+            self.worker_file_path.parents[0].mkdir(parents=True, exist_ok=True)
             return True
 
     def _assign(self) -> None:
@@ -87,25 +79,24 @@ class UniqueWorker:
         'Assign' the event to the PID by writing the PID to the file
         """
         try:
-            with open(UniqueWorker.worker_file_path, "w") as f:
+            with open(self.worker_file_path, "w") as f:
                 f.write(self.id_)
                 log.info("Worker assigned to PID: %s", self.id_)
         except OSError as exc:
             raise ApiError(f"Cannot open PID file: {self.worker_file_path}") from exc
 
     def _read_file(self) -> str:
-        with open(UniqueWorker.worker_file_path, "r") as f:
+        with open(self.worker_file_path, "r") as f:
             output = f.read()
 
         return output
 
 
-def assign_event_to_single_worker():
+def assign_event_to_single_worker(unique_worker: UniqueWorker):
     """
     This decorator ensures that an event that it's applied to only executed by a single
     worker rather than each worker part of the FastAPI app
     """
-    unique_worker = UniqueWorker()
 
     def decorator(func):
         @wraps(func)

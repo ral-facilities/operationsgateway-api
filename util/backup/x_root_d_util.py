@@ -1,33 +1,68 @@
 import argparse
-from typing import Literal
+import logging
+import os
 
 from operationsgateway_api.src.backup.x_root_d_client import XRootDClient
-
-
-def main(action: Literal["backup", "restore"], source: str) -> None:
-    if action == "backup":
-        XRootDClient.backup(source_top=source)
-    elif action == "restore":
-        XRootDClient.restore(source_top=source)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "action",
-        choices=["backup", "restore"],
-        help="Action to perform",
-        required=True,
+        "url",
+        help=(
+            "Url for remote XRootD server including top level directory path, "
+            "for example root://hostname.domain:1094//path/to/directory"
+        ),
     )
     parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Increase logging level to DEBUG.",
+    )
+    sub_parsers = parser.add_subparsers(required=True, dest="subcommand")
+
+    backup_parser = sub_parsers.add_parser(
+        "backup",
+        help="Backup files in local directory to tape.",
+    )
+    backup_parser.add_argument(
+        "source",
+        type=str,
+        help="Local source path. Directories will be walked to find all nested files.",
+    )
+
+    restore_parser = sub_parsers.add_parser(
+        "restore",
+        help="Restore files in a remote directory to tape",
+    )
+    restore_parser.add_argument(
         "source",
         type=str,
         help=(
-            "Source path, including the server address if restoring. "
+            "Remote relative source path. "
             "Directories will be walked to find all nested files."
         ),
-        required=True,
+    )
+    restore_parser.add_argument(
+        "target",
+        type=str,
+        help="Local directory to restore relative paths to.",
     )
 
     args = parser.parse_args()
-    main(action=args.action, source=args.source)
+
+    stream_handler = logging.StreamHandler()
+    if args.verbose:
+        stream_handler.setLevel(logging.DEBUG)
+    stream_handler.setFormatter(logging.Formatter("%(levelname)8s : %(message)s"))
+    logging.basicConfig(level=logging.DEBUG, handlers=[stream_handler])
+
+    x_root_d_client = XRootDClient(args.url)
+    if args.subcommand == "backup":
+        x_root_d_client.backup(source_top=os.path.abspath(args.source))
+    elif args.subcommand == "restore":
+        target_top = os.path.abspath(args.target)
+        x_root_d_client.restore(source_top=args.source, target_top=target_top)
+    else:
+        raise ValueError(f"Unrecognized subcommand {args.subcommand}")

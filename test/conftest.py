@@ -45,7 +45,7 @@ def remove_background_pid_file():
     """
     yield
 
-    UniqueWorker.remove_file()
+    UniqueWorker("test/path").remove_file()
 
 
 def assert_record(record, expected_channel_count, expected_channel_data):

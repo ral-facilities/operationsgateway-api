@@ -9,7 +9,6 @@ from fastapi.responses import JSONResponse
 import orjson
 import uvicorn
 
-from operationsgateway_api.src.backup.x_root_d_copy_runner import XRootDCopyRunner
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.constants import LOG_CONFIG_LOCATION, ROUTE_MAPPINGS
 import operationsgateway_api.src.experiments.runners as runners
@@ -60,8 +59,9 @@ This API is the backend to OperationsGateway that allows users to:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     ConnectionInstance()
+    experiment_worker = UniqueWorker(Config.config.experiments.worker_file_path)
 
-    @assign_event_to_single_worker()
+    @assign_event_to_single_worker(experiment_worker)
     async def get_experiments_on_startup():
         if Config.config.experiments.scheduler_background_task_enabled:
             log.info(
@@ -72,18 +72,26 @@ async def lifespan(app: FastAPI):
         else:
             log.info("Scheduler background task has not been enabled")
 
-    @assign_event_to_single_worker()
-    async def backup():
-        if Config.config.backup is not None:
-            log.info("Creating task for XRootD backups")
-            asyncio.create_task(XRootDCopyRunner().start_task())
-        else:
-            log.info("Backup task has not been enabled")
-
     await get_experiments_on_startup()
-    await backup()
+
+    if Config.config.backup is not None:
+        backup_worker = UniqueWorker(Config.config.backup.worker_file_path)
+
+        @assign_event_to_single_worker(backup_worker)
+        async def backup():
+            log.info("Creating task for XRootD backups")
+            asyncio.create_task(runners.x_root_d_copy_runner.start_task())
+
+        await backup()
+    else:
+        log.info("Backup task has not been enabled")
+
     yield
-    UniqueWorker.remove_file()
+
+    experiment_worker.remove_file()
+    if Config.config.backup is not None:
+        backup_worker.remove_file()
+
     ConnectionInstance.db_connection.mongo_client.close()
 
 

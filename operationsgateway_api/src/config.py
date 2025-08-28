@@ -153,6 +153,10 @@ class BackupConfig(BaseModel):
         default="Europe/London",
         description="String to pass to Cron for determining the schedule",
     )
+    worker_file_path: StrictStr = Field(
+        description="Path of file used to ensure back is only handled by one worker.",
+        examples=["/home/user/backup_worker"],
+    )
 
 
 class APIConfig(BaseModel):
