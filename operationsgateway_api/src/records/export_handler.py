@@ -1,4 +1,5 @@
-import io
+import asyncio
+from io import BytesIO, StringIO
 import logging
 from typing import Any, List, Tuple, Union
 import zipfile
@@ -13,10 +14,11 @@ from operationsgateway_api.src.models import (
     PartialRecordModel,
     PartialWaveformChannelModel,
     WaveformChannelMetadataModel,
+    WaveformModel,
 )
 from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
-from operationsgateway_api.src.records.record import Record
+from operationsgateway_api.src.records.record_retriever import RecordRetriever
 from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
 
@@ -64,15 +66,16 @@ class ExportHandler:
         self.export_vector_images = export_vector_images
 
         self.record_ids = []
-        self.errors_file_in_memory = io.StringIO()
-        self.main_csv_file_in_memory = io.StringIO()
-        self.zip_file_in_memory = io.BytesIO()
+        self.errors_file_in_memory = StringIO()
+        self.main_csv_file_in_memory = StringIO()
+        self.zip_file_in_memory = BytesIO()
         self.zip_file = zipfile.ZipFile(
             self.zip_file_in_memory,
             "a",
             zipfile.ZIP_DEFLATED,
             False,
         )
+        self.zip_lock = asyncio.Lock()
 
         self.functions = functions
         self.function_types = {}
@@ -113,54 +116,14 @@ class ExportHandler:
             await self._init_function_types()
 
         self._create_main_csv_headers()
-        for record_data in self.records_data:
-            log.debug("record_data: %s", record_data)
-            record_id = record_data.id_
-            self.record_ids.append(record_id)
-            log.debug("record_id: %s", record_id)
+        tasks = []
+        async with asyncio.TaskGroup() as task_group:
+            for record_data in self.records_data:
+                task = task_group.create_task(self._process_record(record_data))
+                tasks.append(task)
 
-            if self.functions:
-                await Record.apply_functions(
-                    record=record_data,
-                    functions=self.functions,
-                    original_image=self.original_image,
-                    lower_level=self.lower_level,
-                    upper_level=self.upper_level,
-                    limit_bit_depth=self.limit_bit_depth,
-                    colourmap_name=self.colourmap_name,
-                    return_thumbnails=False,
-                )
-
-            line = ""
-            for proj in self.projection:
-                log.debug("projection: %s", proj)
-                projection_parts = proj.split(".")
-                if proj == "_id":
-                    line = self._add_value_to_csv_line(
-                        line=line,
-                        value=record_data.id_,
-                        verbose=True,
-                    )
-                elif projection_parts[0] == "metadata":
-                    line = self._add_value_to_csv_line(
-                        line=line,
-                        value=getattr(record_data.metadata, projection_parts[1], ""),
-                        verbose=True,
-                    )
-                elif projection_parts[0] == "channels":
-                    # process one of the data channels
-                    line = await self._process_data_channel(
-                        record_data.channels,
-                        record_id,
-                        projection_parts[1],
-                        line,
-                    )
-                else:
-                    log.warning(
-                        "Unrecognised first projection part: %s",
-                        projection_parts[0],
-                    )
-
+        for task in tasks:
+            line = task.result()
             # don't put empty lines in the CSV file
             if line != "":
                 self.main_csv_file_in_memory.write(line + "\n")
@@ -232,10 +195,87 @@ class ExportHandler:
             message = f"'{channel_name}' is not a recognised channel or function name"
             raise ExportError(message)
 
+    async def _process_record(self, record_data: PartialRecordModel) -> str:
+        """
+        Process an individual record asynchronously. If functions are defined, these are
+        evaluated first. Any channels fetched as part of this are stored, and re-used
+        if present in self.projection to reduce the number of requests. Each projection
+        for this record is handled concurrently.
+        """
+        record_id = record_data.id_
+        self.record_ids.append(record_id)
+        raw_data = {}
+        if self.functions:
+            record_retriever = RecordRetriever(
+                record=record_data,
+                functions=self.functions,
+                original_image=self.original_image,
+                lower_level=self.lower_level,
+                upper_level=self.upper_level,
+                limit_bit_depth=self.limit_bit_depth,
+                colourmap_name=self.colourmap_name,
+                return_thumbnails=False,
+            )
+            await record_retriever.process_functions()
+            raw_data = record_retriever.raw_data
+
+        line = ""
+        tasks = []
+        async with asyncio.TaskGroup() as task_group:
+            for proj in self.projection:
+                coroutine = self._process_projection(record_data, raw_data, proj)
+                task = task_group.create_task(coroutine)
+                tasks.append(task)
+
+        for task in tasks:
+            line += task.result()
+
+        return line
+
+    async def _process_projection(
+        self,
+        record_data: PartialRecordModel,
+        raw_data: dict[str, BytesIO | WaveformModel],
+        proj: str,
+    ) -> str:
+        """
+        Asynchronously process a single projection. This may be metadata or may be
+        channel data which needs to be fetched, taking a non-trivial amount of time.
+        """
+        projection_parts = proj.split(".")
+        if proj == "_id":
+            return self._add_value_to_csv_line(
+                line="",
+                value=record_data.id_,
+                verbose=True,
+            )
+        elif projection_parts[0] == "metadata":
+            return self._add_value_to_csv_line(
+                line="",
+                value=getattr(record_data.metadata, projection_parts[1], ""),
+                verbose=True,
+            )
+        elif projection_parts[0] == "channels":
+            # process one of the data channels
+            return await self._process_data_channel(
+                record_data.channels,
+                record_data.id_,
+                raw_data,
+                projection_parts[1],
+                "",
+            )
+        else:
+            log.warning(
+                "Unrecognised first projection part: %s",
+                projection_parts[0],
+            )
+            return ""
+
     async def _process_data_channel(
         self,
         channels: PartialChannels,
         record_id: str,
+        raw_data: dict[str, BytesIO | WaveformModel],
         channel_name: str,
         line: str,
     ) -> str:
@@ -249,14 +289,14 @@ class ExportHandler:
         channel_type = self._get_channel_type(channel_name)
         if channel_type == "image":
             log.info("Channel %s is an image", channel_name)
-            await self._add_image_to_zip(channels, record_id, channel_name)
+            await self._add_image_to_zip(channels, record_id, raw_data, channel_name)
         elif channel_type == "float_image":
             log.info("Channel %s is a float image", channel_name)
             await self._add_float_image_to_zip(channels, record_id, channel_name)
         # process a waveform channel
         elif channel_type == "waveform":
             log.info("Channel %s is a waveform", channel_name)
-            await self._add_waveform_to_zip(channels, record_id, channel_name)
+            await self._add_waveform_to_zip(channels, record_id, raw_data, channel_name)
         elif channel_type == "vector":
             log.info("Channel %s is a vector", channel_name)
             await self._add_vector_to_zip(channels, record_id, channel_name)
@@ -274,6 +314,7 @@ class ExportHandler:
         self,
         channels: PartialChannels,
         record_id: str,
+        raw_data: dict[str, BytesIO],
         channel_name: str,
     ) -> None:
         """
@@ -292,6 +333,19 @@ class ExportHandler:
         try:
             if channel_name in self.function_types:
                 image_bytes = channels[channel_name].data
+            elif channel_name in raw_data:
+                if self.original_image:
+                    image_bytes = raw_data[channel_name].getvalue()
+                else:
+                    image_bytes_io = Image.apply_false_colour(
+                        image_bytes=raw_data[channel_name],
+                        original_image=self.original_image,
+                        lower_level=self.lower_level,
+                        upper_level=self.upper_level,
+                        limit_bit_depth=self.limit_bit_depth,
+                        colourmap_name=self.colourmap_name,
+                    )
+                    image_bytes = image_bytes_io.getvalue()
             else:
                 image_bytes_io = await Image.get_image(
                     record_id=record_id,
@@ -303,9 +357,10 @@ class ExportHandler:
                     colourmap_name=self.colourmap_name,
                 )
                 image_bytes = image_bytes_io.getvalue()
-            self.zip_file.writestr(f"{record_id}_{channel_name}.png", image_bytes)
+            await self._write_to_zip(f"{record_id}_{channel_name}.png", image_bytes)
             self._check_zip_file_size()
         except Exception:
+            log.exception("Could not find image for %s %s", record_id, channel_name)
             self.errors_file_in_memory.write(
                 f"Could not find image for {record_id} {channel_name}\n",
             )
@@ -325,14 +380,9 @@ class ExportHandler:
 
         log.info("Getting float image to add to zip: %s %s", record_id, channel_name)
         try:
-            storage_bytes = await FloatImage.get_bytes(
-                record_id,
-                channel_name,
-            )
-            self.zip_file.writestr(
-                f"{record_id}_{channel_name}.npz",
-                storage_bytes.getvalue(),
-            )
+            bytes_io = await FloatImage.get_bytes(record_id, channel_name)
+            storage_bytes = bytes_io.getvalue()
+            await self._write_to_zip(f"{record_id}_{channel_name}.npz", storage_bytes)
             self._check_zip_file_size()
         except Exception:
             self.errors_file_in_memory.write(
@@ -343,6 +393,7 @@ class ExportHandler:
         self,
         channels: PartialChannels,
         record_id: str,
+        raw_data: dict[str, WaveformModel],
         channel_name: str,
     ) -> None:
         """
@@ -364,6 +415,8 @@ class ExportHandler:
         try:
             if channel_name in self.function_types:
                 waveform_model = channel.data
+            elif channel_name in raw_data:
+                waveform_model = raw_data[channel_name]
             else:
                 waveform_model = await Waveform.get_waveform(record_id, channel_name)
         except Exception:
@@ -375,7 +428,7 @@ class ExportHandler:
 
         if self.export_waveform_csvs:
             num_points = len(waveform_model.x)
-            waveform_csv_in_memory = io.StringIO()
+            waveform_csv_in_memory = StringIO()
             for point_num in range(num_points):
                 waveform_csv_in_memory.write(
                     str(waveform_model.x[point_num])
@@ -383,23 +436,18 @@ class ExportHandler:
                     + str(waveform_model.y[point_num])
                     + "\n",
                 )
-            self.zip_file.writestr(
-                f"{record_id}_{channel_name}.csv",
-                waveform_csv_in_memory.getvalue(),
-            )
+            csv_bytes = waveform_csv_in_memory.getvalue()
+            await self._write_to_zip(f"{record_id}_{channel_name}.csv", csv_bytes)
             self._check_zip_file_size()
 
         if self.export_waveform_images:
             # if rendered trace images have been requested then add those
             waveform = Waveform(waveform_model)
-            waveform_png_bytes = waveform.get_fullsize_png(
+            png_bytes = waveform.get_fullsize_png(
                 x_label=channel.metadata.x_units,
                 y_label=channel.metadata.y_units,
             )
-            self.zip_file.writestr(
-                f"{record_id}_{channel_name}.png",
-                waveform_png_bytes,
-            )
+            await self._write_to_zip(f"{record_id}_{channel_name}.png", png_bytes)
             self._check_zip_file_size()
 
     async def _add_vector_to_zip(
@@ -435,7 +483,7 @@ class ExportHandler:
             return
 
         if self.export_vector_csvs:
-            string_io = io.StringIO()
+            string_io = StringIO()
             if labels:
                 for label, value in zip(labels, vector_model.data, strict=True):
                     string_io.write(f"{label},{value}\n")
@@ -444,13 +492,13 @@ class ExportHandler:
                     string_io.write(f"{value}\n")
 
             data = string_io.getvalue()
-            self.zip_file.writestr(f"{record_id}_{channel_name}.csv", data)
+            await self._write_to_zip(f"{record_id}_{channel_name}.csv", data)
             self._check_zip_file_size()
 
         if self.export_vector_images:
             vector = Vector(vector_model)
             vector_image = vector.get_fullsize_png(labels)
-            self.zip_file.writestr(f"{record_id}_{channel_name}.png", vector_image)
+            await self._write_to_zip(f"{record_id}_{channel_name}.png", vector_image)
             self._check_zip_file_size()
 
     def _add_main_csv_file_to_zip(self):
@@ -482,7 +530,7 @@ class ExportHandler:
             )
             log.error("Returning export errors file containing: \n%s", errors_str)
 
-    def get_export_file_bytes(self) -> Union[io.BytesIO, io.StringIO]:
+    def get_export_file_bytes(self) -> Union[BytesIO, StringIO]:
         """
         Return either the main CSV file or the zip file depending on what data channels
         have been requested
@@ -563,3 +611,13 @@ class ExportHandler:
                 "Too much data requested. Reduce either the number of records or "
                 "channels requested, or both.",
             )
+
+    async def _write_to_zip(self, arcname: str, data: str | bytes) -> None:
+        """
+        As a precaution, lock access to the zip_file to prevent simultaneous access.
+        This might not be strictly necessary as zip_file has it's own (synchronous)
+        lock, and since writestr is synchronous then the async event loop should not be
+        awaiting the outcome of one ongoing writestr while it performs another writestr.
+        """
+        async with self.zip_lock:
+            self.zip_file.writestr(arcname, data)

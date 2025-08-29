@@ -14,12 +14,10 @@ images:
   # Colour maps for Matplotlib can be used
   default_colour_map: viridis
   colourbar_height_pixels: 16
-  upload_image_threads: 4
   preferred_colour_map_pref_name: PREFERRED_COLOUR_MAP
 float_images:
   thumbnail_size: [50, 50]
   default_colour_map: bwr
-  upload_image_threads: 4
   preferred_colour_map_pref_name: PREFERRED_FLOAT_COLOUR_MAP
 waveforms:
   thumbnail_size: [100, 100]

@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 import pytest
 
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
@@ -33,6 +35,28 @@ class TestExportHandler:
         assert channel.metadata.y_units is not None
 
     @pytest.mark.asyncio
+    async def test_process_projection(self):
+        proj = "unrecognised.projection"
+        export_handler = ExportHandler(
+            [],
+            None,
+            [],
+            0,
+            255,
+            8,
+            None,
+            [],
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+        )
+        assert await export_handler._process_projection(None, {}, proj) == ""
+
+    @pytest.mark.asyncio
     @pytest.mark.parametrize(
         ["channel_name"],
         [
@@ -42,7 +66,11 @@ class TestExportHandler:
             pytest.param("FE-204-NSS-WFS-COEF", id="Vector"),
         ],
     )
-    async def test_process_channel(self, channel_name: str):
+    async def test_process_channel_empty_channels(self, channel_name: str):
+        """
+        Test that with `channels={}` we do not raise any KeyErrors. Nothing to assert,
+        just that the function runs without exception.
+        """
         export_handler = ExportHandler(
             records_data=[],
             channel_manifest=await ChannelManifest.get_most_recent_manifest(),
@@ -63,6 +91,46 @@ class TestExportHandler:
         await export_handler._process_data_channel(
             channels={},
             record_id="20230605080300",
+            raw_data={},
             channel_name=channel_name,
             line="",
         )
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ["channel_name"],
+        [
+            pytest.param("FE-204-NSS-CAM-1", id="Image"),
+            pytest.param("FE-204-NSS-SP", id="Waveform"),
+            pytest.param("FE-204-NSS-WFS", id="Float image"),
+            pytest.param("FE-204-NSS-WFS-COEF", id="Vector"),
+        ],
+    )
+    async def test_process_channel_missing_objects(self, channel_name: str):
+        export_handler = ExportHandler(
+            records_data=[],
+            channel_manifest=await ChannelManifest.get_most_recent_manifest(),
+            projection=[],
+            lower_level=0,
+            upper_level=255,
+            limit_bit_depth=8,
+            colourmap_name="viridis",
+            functions=[],
+            export_scalars=True,
+            export_images=True,
+            export_float_images=True,
+            export_waveform_images=True,
+            export_waveform_csvs=True,
+            export_vector_images=True,
+            export_vector_csvs=True,
+        )
+        await export_handler._process_data_channel(
+            channels={channel_name: MagicMock()},
+            record_id="19700101000000",
+            raw_data={},
+            channel_name=channel_name,
+            line="",
+        )
+        errors = export_handler.errors_file_in_memory.getvalue()
+        assert errors.startswith("Could not find")
+        assert errors.endswith(f"19700101000000 {channel_name}\n")

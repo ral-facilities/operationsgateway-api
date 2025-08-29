@@ -14,7 +14,7 @@ from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import EchoS3Error
 from operationsgateway_api.src.models import WaveformModel
 from operationsgateway_api.src.records.channel_object_abc import ChannelObjectABC
-from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.echo_interface import get_echo_interface
 
 
 log = logging.getLogger()
@@ -38,15 +38,15 @@ class Waveform(ChannelObjectABC):
         b.seek(0)
         return b
 
-    def insert(self) -> Optional[str]:
+    async def insert(self) -> Optional[str]:
         """
         Store the waveform from this object in Echo
         """
         log.info("Storing waveform: %s", self.waveform.path)
         bytes_json = self.to_json()
-        echo = EchoInterface()
+        echo_interface = get_echo_interface()
         try:
-            echo.upload_file_object(
+            await echo_interface.upload_file_object(
                 bytes_json,
                 Waveform.get_full_path(self.waveform.path),
             )

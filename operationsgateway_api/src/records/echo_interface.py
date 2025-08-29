@@ -1,8 +1,10 @@
+from functools import lru_cache
 from io import BytesIO
 import logging
 
-import boto3
+import aioboto3
 from botocore.exceptions import ClientError
+from mypy_boto3_s3.service_resource import Bucket, Object, S3ServiceResource
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import EchoS3Error
@@ -25,44 +27,8 @@ class EchoInterface:
 
     def __init__(self) -> None:
         log.debug("Creating S3 resource to connect to Echo")
-        try:
-            self.client = boto3.client(
-                "s3",
-                endpoint_url=Config.config.echo.url,
-                aws_access_key_id=Config.config.echo.access_key.get_secret_value(),
-                aws_secret_access_key=Config.config.echo.secret_key.get_secret_value(),
-            )
-            self.resource = boto3.resource(
-                "s3",
-                endpoint_url=Config.config.echo.url,
-                aws_access_key_id=Config.config.echo.access_key.get_secret_value(),
-                aws_secret_access_key=Config.config.echo.secret_key.get_secret_value(),
-            )
-
-            log.debug("Retrieving bucket '%s'", Config.config.echo.bucket_name)
-            self.bucket = self.resource.Bucket(Config.config.echo.bucket_name)
-        except ClientError as exc:
-            log.error(
-                "%s: %s. This error happened with bucket '%s'",
-                exc.response["Error"]["Code"],
-                exc.response["Error"].get("Message"),
-                Config.config.echo.bucket_name,
-            )
-            raise EchoS3Error(
-                "Error retrieving object storage bucket:"
-                f" {exc.response['Error']['Code']}",
-            ) from exc
-
-        # If a bucket doesn't exist, Bucket() won't raise an exception, so we have to
-        # check ourselves. Checking for a creation date means we don't need to make a
-        # second call using boto, where a low-level client API call would be needed.
-        # See https://stackoverflow.com/a/49817544
-        if not self.bucket.creation_date:
-            log.error(
-                "Bucket cannot be found: %s",
-                Config.config.echo.bucket_name,
-            )
-            raise EchoS3Error("Bucket for object storage cannot be found")
+        self.session = aioboto3.Session()
+        self._bucket = None  # This will be set by the lifespan of the API on startup
 
     @staticmethod
     def format_record_id(record_id: str, use_subdirectories: bool = True) -> str:
@@ -81,15 +47,63 @@ class EchoInterface:
         else:
             return record_id
 
-    def head_object(self, object_path: str) -> bool:
+    async def create_bucket(
+        self,
+        resource: S3ServiceResource,
+        cache: bool = False,
+    ) -> Bucket:
+        """
+        Creates an interface to the storage bucket using `resource`. Note that this
+        bucket may be closed (no longer usable) when `resource` is closed, namely
+        when the context manager closes. Ideally we want to `cache` and re-use the
+        bucket to reduce overheads but this should ONLY be done when the app's lifespan
+        is going to keep the context open.
+        """
+        bucket = await resource.Bucket(Config.config.echo.bucket_name)
+        if not await bucket.creation_date:
+            msg = "Bucket for object storage cannot be found: %s"
+            log.error(msg, Config.config.echo.bucket_name)
+            raise EchoS3Error("Bucket for object storage cannot be found")
+
+        if cache:
+            self._bucket = bucket
+
+        return bucket
+
+    async def get_bucket(self) -> Bucket:
+        """
+        Utility method for returning the cached `self._bucket`.
+
+        If it does not exist, creates a new resource context manager and returns a new
+        Bucket object but does NOT cache. This cannot be cached/re-used as there may
+        be multiple concurrent calls and if the context manager closes anything else
+        using the bucket will fail. When the API is running we should never reach this,
+        but allow it so that EchoInterface can be used directly (e.g. in tests) and as
+        defensive code.
+        """
+        if self._bucket is not None:
+            return self._bucket
+        else:
+            msg = "EchoInterface._bucket unexpectedly None, creating with new resource"
+            log.warning(msg)
+            async with self.session.resource(
+                "s3",
+                endpoint_url=Config.config.echo.url,
+                aws_access_key_id=Config.config.echo.access_key.get_secret_value(),
+                aws_secret_access_key=Config.config.echo.secret_key.get_secret_value(),
+            ) as resource:
+                return await self.create_bucket(resource)
+
+    async def head_object(self, object_path: str) -> bool:
         """
         https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/head_object.html
         Uses the head operation to check the existence of an object without downloading
         it.
         """
         log.info("Head object in Echo: %s", object_path)
+        bucket = await self.get_bucket()
         try:
-            self.client.head_object(
+            await bucket.meta.client.head_object(
                 Bucket=Config.config.echo.bucket_name,
                 Key=object_path,
             )
@@ -97,104 +111,85 @@ class EchoInterface:
         except ClientError:
             return False
 
-    def download_file_object(self, object_path: str) -> BytesIO:
+    async def download_file_object(self, object_path: str) -> BytesIO:
         """
         Download an object from S3 using `download_fileobj()` and return a BytesIO
         object
         """
         log.info("Download file from Echo: %s", object_path)
+        bucket = await self.get_bucket()
         file = BytesIO()
         try:
-            self.bucket.download_fileobj(Fileobj=file, Key=object_path)
+            await bucket.download_fileobj(Fileobj=file, Key=object_path)
         except ClientError as exc:
-            log.error(
-                "%s: %s",
-                exc.response["Error"]["Code"],
-                exc.response["Error"].get("Message"),
-            )
+            code = exc.response["Error"]["Code"]
+            log.exception("%s when downloading file at %s", code, object_path)
             raise EchoS3Error(
-                f"{exc.response['Error']['Code']} when downloading file at"
-                f" '{object_path}'",
-                status_code=exc.response["Error"]["Code"],
+                f"{code} when downloading file at '{object_path}'",
+                status_code=code,
             ) from exc
+
         if len(file.getvalue()) == 0:
             log.warning(
                 "Bytes array from downloaded object is empty, file download from S3"
                 " might have been unsuccessful: %s",
                 object_path,
             )
+
         return file
 
-    def upload_file_object(self, file_object: BytesIO, object_path: str) -> None:
+    async def upload_file_object(self, file_object: BytesIO, object_path: str) -> None:
         """
         Upload a file to S3 (using `upload_fileobj()`) to a given path using a BytesIO
         object
         """
         log.info("Uploading file to %s", object_path)
+        bucket = await self.get_bucket()
         file_object.seek(0)
         try:
-            self.bucket.upload_fileobj(file_object, object_path)
+            await bucket.upload_fileobj(file_object, object_path)
         except ClientError as exc:
-            log.error(
-                "%s: %s",
-                exc.response["Error"]["Code"],
-                exc.response["Error"].get("Message"),
-            )
-            raise EchoS3Error(
-                f"{exc.response['Error']['Code']} when uploading file at"
-                f" '{object_path}'",
-            ) from exc
+            code = exc.response["Error"]["Code"]
+            log.exception("%s when uploading file at %s", code, object_path)
+            raise EchoS3Error(f"{code} when uploading file at '{object_path}'") from exc
+
         log.debug("Uploaded file successfully to %s", object_path)
 
-    def delete_file_object(self, object_path: str) -> None:
+    async def delete_file_object(self, object_path: str) -> None:
         """
         Delete a file from Echo
         """
         log.info("Deleting file from %s", object_path)
+        bucket = await self.get_bucket()
         try:
-            self.bucket.Object(object_path).delete()
+            obj: Object = await bucket.Object(object_path)
+            await obj.delete()
         except ClientError as exc:
-            log.error(
-                "%s: %s",
-                exc.response["Error"]["Code"],
-                exc.response["Error"].get("Message"),
-            )
-            raise EchoS3Error(
-                f"{exc.response['Error']['Code']} when deleting file at"
-                f" '{object_path}'",
-            ) from exc
+            code = exc.response["Error"]["Code"]
+            log.exception("%s when deleting file at %s", code, object_path)
+            raise EchoS3Error(f"{code} when deleting file at '{object_path}'") from exc
 
-        obj = self.bucket.Object(object_path)
-        try:
-            obj.load()
-        except ClientError as exc:
-            if exc.response["Error"]["Code"] != "404":
-                log.error(
-                    "The object with key %s still exists. Deletion might not "
-                    "have been successful.",
-                    object_path,
-                )
-                raise EchoS3Error(
-                    f"Deletion of {object_path} was unsuccessful",
-                ) from exc
-
-    def delete_directory(self, dir_path: str) -> None:
+    async def delete_directory(self, dir_path: str) -> None:
         """
         Given a path, delete an entire 'directory' from Echo. This is used to delete
         waveforms and images when deleting a record by its ID
         """
 
         log.info("Deleting directory from %s", dir_path)
-
+        bucket = await self.get_bucket()
         try:
-            self.bucket.objects.filter(Prefix=dir_path).delete()
+            objects = bucket.objects.filter(Prefix=dir_path)
+            await objects.delete()
         except ClientError as exc:
-            log.error(
-                "%s: %s",
-                exc.response["Error"]["Code"],
-                exc.response["Error"].get("Message"),
-            )
-            raise EchoS3Error(
-                f"{exc.response['Error']['Code']} when deleting file at"
-                f" '{dir_path}'",
-            ) from exc
+            code = exc.response["Error"]["Code"]
+            log.exception("%s when deleting directory %s", code, dir_path)
+            raise EchoS3Error(f"{code} when deleting directory '{dir_path}'") from exc
+
+
+@lru_cache
+def get_echo_interface() -> EchoInterface:
+    """
+    Returns:
+        EchoInterface: Cached object for interacting with Echo object storage.
+    """
+    return EchoInterface()
