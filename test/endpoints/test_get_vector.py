@@ -1,11 +1,7 @@
-import json
-from urllib.parse import quote
-
 from fastapi.testclient import TestClient
-import pytest
 
 
-class TestGetWaveformByID:
+class TestGetVectorById:
     def test_get_vector(
         self,
         test_app: TestClient,
@@ -54,7 +50,8 @@ class TestGetWaveformByID:
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
 
-        assert test_response.status_code == 500
+        assert test_response.status_code == 404
         assert test_response.json()["detail"] == (
-            "Vector could not be found on object storage: 2023/06/05/080300/test.json"
+            "Vector with id=20230605080300, channel=test could not be found due to "
+            "invalid id and or channel"
         )

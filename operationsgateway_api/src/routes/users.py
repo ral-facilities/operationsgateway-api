@@ -5,6 +5,7 @@ from fastapi import APIRouter, Body, Depends, Path, Response, status
 from fastapi.responses import JSONResponse
 from typing_extensions import Annotated
 
+from operationsgateway_api.src.auth.authentication import Authentication
 from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import QueryParameterError, UnauthorisedError
@@ -66,6 +67,15 @@ async def add_user(
         # if an UnauthorisedError is raised, then the
         # username is not duplicated so can continue
         pass
+
+    if auth_type == "FedID":
+        log.debug("Performing email validation for FedID user")
+        email = Authentication.get_email_from_fedid(login_details.username)
+        if not email:
+            raise QueryParameterError(
+                f"No email found for FedID username '{login_details.username}'",
+            )
+        login_details.email = email
 
     await User.add(login_details)
 

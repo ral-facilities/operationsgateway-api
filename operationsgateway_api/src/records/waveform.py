@@ -4,23 +4,25 @@ import json
 import logging
 from typing import Optional
 
-from botocore.exceptions import ClientError
 import matplotlib
+
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: I202
 
 from operationsgateway_api.src.config import Config
-from operationsgateway_api.src.exceptions import EchoS3Error, WaveformError
+from operationsgateway_api.src.exceptions import EchoS3Error
 from operationsgateway_api.src.models import WaveformModel
-from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.channel_object_abc import ChannelObjectABC
+from operationsgateway_api.src.records.echo_interface import get_echo_interface
 
 
 log = logging.getLogger()
 
 
-class Waveform:
+class Waveform(ChannelObjectABC):
     echo_prefix = "waveforms"
+    echo_extension = "json"
 
     def __init__(self, waveform: WaveformModel) -> None:
         self.waveform = waveform
@@ -36,15 +38,15 @@ class Waveform:
         b.seek(0)
         return b
 
-    def insert(self) -> Optional[str]:
+    async def insert(self) -> Optional[str]:
         """
         Store the waveform from this object in Echo
         """
         log.info("Storing waveform: %s", self.waveform.path)
         bytes_json = self.to_json()
-        echo = EchoInterface()
+        echo_interface = get_echo_interface()
         try:
-            echo.upload_file_object(
+            await echo_interface.upload_file_object(
                 bytes_json,
                 Waveform.get_full_path(self.waveform.path),
             )
@@ -131,54 +133,15 @@ class Waveform:
         plt.clf()
 
     @staticmethod
-    def get_relative_path(
-        record_id: str,
-        channel_name: str,
-        use_subdirectories: bool = True,
-    ) -> str:
-        """
-        Returns a relative waveform path given a record ID and channel name. The path is
-        relative to the base directory of where waveforms are stored in Echo
-        """
-        directories = EchoInterface.format_record_id(record_id, use_subdirectories)
-        return f"{directories}/{channel_name}.json"
-
-    @staticmethod
-    def get_full_path(relative_path: str) -> str:
-        """
-        Converts a relative waveform path to a full path by adding the 'prefix' onto a
-        relative path of a waveform. The full path doesn't include the bucket name
-        """
-        return f"{Waveform.echo_prefix}/{relative_path}"
-
-    @staticmethod
-    def get_waveform(record_id: str, channel_name: str) -> WaveformModel:
+    async def get_waveform(record_id: str, channel_name: str) -> WaveformModel:
         """
         Given a waveform path, find the waveform from Echo. This function assumes that
-        the waveform should exist; if no waveform can be found, a `WaveformError` will
+        the waveform should exist; if no waveform can be found, an Exception will
         be raised
         """
-        echo = EchoInterface()
-
-        try:
-            try:
-                relative_path = Waveform.get_relative_path(record_id, channel_name)
-                full_path = Waveform.get_full_path(relative_path)
-                waveform_file = echo.download_file_object(full_path)
-            except EchoS3Error:
-                # Try again without subdirectories, might be stored in old format
-                relative_path = Waveform.get_relative_path(
-                    record_id=record_id,
-                    channel_name=channel_name,
-                    use_subdirectories=False,
-                )
-                full_path = Waveform.get_full_path(relative_path)
-                waveform_file = echo.download_file_object(full_path)
-
-            waveform_data = json.loads(waveform_file.getvalue().decode())
-            return WaveformModel(**waveform_data)
-        except (ClientError, EchoS3Error) as exc:
-            log.error("Waveform could not be found: %s", relative_path)
-            raise WaveformError(
-                f"Waveform could not be found on object storage: {relative_path}",
-            ) from exc
+        bytes_io = await Waveform.get_bytes(
+            record_id=record_id,
+            channel_name=channel_name,
+        )
+        waveform_data = json.loads(bytes_io.getvalue().decode())
+        return WaveformModel(**waveform_data)

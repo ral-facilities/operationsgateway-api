@@ -10,6 +10,7 @@ from pytest_mock import mocker, MockerFixture
 
 from operationsgateway_api.src.config import BackupConfig
 from operationsgateway_api.src.exceptions import DatabaseError, EchoS3Error
+from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from test.records.ingestion.create_test_hdf import create_test_hdf_file
 
 
@@ -203,6 +204,7 @@ class TestSubmitHDF:
         assert cache_path_1.exists()
         assert cache_path_1.stat().st_size == 115056
 
+        get_echo_interface.cache_clear()
         test_response = test_app.post(
             "/submit/hdf",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
@@ -383,6 +385,7 @@ class TestSubmitHDF:
 
         files = {"file": (test_file, open(test_file, "rb"))}
 
+        get_echo_interface.cache_clear()
         test_response = test_app.post(
             "/submit/hdf",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
