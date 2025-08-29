@@ -320,4 +320,7 @@ async def delete_record_by_id(
     await echo_interface.delete_directory(dir_path)
     await echo_interface.delete_directory(f"{FloatImage.echo_prefix}/{directory}/")
 
+    # In case any of the old data was in the cache, clear it
+    echo_interface.download_file_object.cache_clear()
+
     return Response(status_code=HTTPStatus.NO_CONTENT.value)

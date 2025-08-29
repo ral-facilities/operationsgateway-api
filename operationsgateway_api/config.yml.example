@@ -30,6 +30,10 @@ echo:
   access_key: access_key
   secret_key: secret_key
   bucket_name: test-bucket
+  # The returned bytes from this number of the most recent requests to GET objects from Echo will be cached in memory
+  # Higher values will result in greater memory usage, but may result in faster repeated requests for the same data
+  # If set to 0, then the caching will be disabled
+  cache_maxsize: 128
 mongodb:
   mongodb_url: mongodb://localhost:27017
   database_name: opsgateway

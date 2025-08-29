@@ -139,9 +139,9 @@ class Waveform(ChannelObjectABC):
         the waveform should exist; if no waveform can be found, an Exception will
         be raised
         """
-        bytes_io = await Waveform.get_bytes(
+        waveform_bytes = await Waveform.get_bytes(
             record_id=record_id,
             channel_name=channel_name,
         )
-        waveform_data = json.loads(bytes_io.getvalue().decode())
+        waveform_data = json.loads(waveform_bytes.decode())
         return WaveformModel(**waveform_data)

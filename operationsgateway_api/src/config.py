@@ -8,6 +8,7 @@ from pydantic import (
     BaseModel,
     field_validator,
     FilePath,
+    NonNegativeInt,
     SecretStr,
     StrictBool,
     StrictInt,
@@ -62,6 +63,7 @@ class EchoConfig(BaseModel):
     access_key: SecretStr
     secret_key: SecretStr
     bucket_name: StrictStr
+    cache_maxsize: NonNegativeInt = 128
 
 
 class MongoDB(BaseModel):

@@ -3,6 +3,7 @@ from io import BytesIO
 import logging
 
 import aioboto3
+from async_lru import alru_cache
 from botocore.exceptions import ClientError
 from mypy_boto3_s3.service_resource import Bucket, Object, S3ServiceResource
 
@@ -111,10 +112,10 @@ class EchoInterface:
         except ClientError:
             return False
 
-    async def download_file_object(self, object_path: str) -> BytesIO:
+    @alru_cache(maxsize=Config.config.echo.cache_maxsize)
+    async def download_file_object(self, object_path: str) -> bytes:
         """
-        Download an object from S3 using `download_fileobj()` and return a BytesIO
-        object
+        Download an object from S3 using `download_fileobj()` and return the bytes
         """
         log.info("Download file from Echo: %s", object_path)
         bucket = await self.get_bucket()
@@ -136,7 +137,7 @@ class EchoInterface:
                 object_path,
             )
 
-        return file
+        return file.getvalue()
 
     async def upload_file_object(self, file_object: BytesIO, object_path: str) -> None:
         """
