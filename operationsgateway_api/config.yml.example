@@ -83,3 +83,8 @@ observability:
   # used to view logs and traces in Elasticsearch run by Platforms & Services
   environment: dev
   secret_key: test
+# [Optional] if the backup config settings are defined, then incoming data will be cached to local disk
+# At a later date, these hdf5 files will then be copied to tape
+# Once successful, the local copy will be removed
+# backup:
+#   cache_directory: /home/user/cache
