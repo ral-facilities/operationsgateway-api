@@ -1,8 +1,11 @@
 from hashlib import sha256
 import logging
+import socket
 
 import ldap
+from starlette.responses import JSONResponse
 
+from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import (
     AuthServerError,
@@ -85,3 +88,76 @@ class Authentication:
         except Exception as exc:
             log.exception("Problem with LDAP/AD server")
             raise AuthServerError() from exc
+
+    @staticmethod
+    def get_email_from_fedid(fedid: str) -> str | None:
+        """
+        Look up a user's email address from LDAP using their FedID.
+        """
+        log.debug("Looking up email for FedID: %s", fedid)
+
+        ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, 5)  # 5 seconds network timeout
+        ldap.set_option(ldap.OPT_TIMEOUT, 5)  # 5 seconds search timeout
+
+        try:
+            conn = ldap.initialize(Config.config.auth.fedid_server_url)
+            ldap.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
+            ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+            conn.set_option(ldap.OPT_REFERRALS, 0)
+
+            conn.simple_bind_s()
+
+            base_dn = "dc=fed,dc=cclrc,dc=ac,dc=uk"
+            search_filter = f"(cn={fedid})"
+            attributes = ["mail"]
+
+            result = conn.search_s(
+                base_dn,
+                ldap.SCOPE_SUBTREE,
+                search_filter,
+                attributes,
+            )
+            conn.unbind()
+
+            if result:
+                dn, entry = result[0]
+                if isinstance(entry, dict):
+                    mail_values = entry.get("mail")
+                    if mail_values:
+                        email = mail_values[0].decode("utf-8")
+                        log.debug("Found email '%s' for FedID '%s'", email, fedid)
+                        return email
+
+            log.info("No email found for FedID '%s'", fedid)
+            return None
+
+        except (ldap.LDAPError, TimeoutError, socket.timeout) as exc:
+            log.warning("LDAP lookup failed or timed out for FedID '%s'", fedid)
+            raise AuthServerError() from exc
+
+    @staticmethod
+    def create_tokens_response(user_model):
+
+        # Create access/refresh tokens
+        jwt_handler = JwtHandler(user_model)
+        access_token = jwt_handler.get_access_token()
+        refresh_token = jwt_handler.get_refresh_token()
+
+        # Create response with access token and refresh token cookie
+        response = JSONResponse(content=access_token)
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            max_age=604800,  # 7 days
+            secure=True,
+            httponly=True,
+            samesite="Lax",
+            path="/refresh",
+        )
+
+        log.info(
+            "Refresh token created '%s':",
+            refresh_token,
+        )
+
+        return response

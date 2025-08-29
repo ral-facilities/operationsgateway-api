@@ -1,0 +1,34 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    command: start-dev --import-realm
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: dev-mem
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./testrealm.json:/opt/keycloak/data/import/testrealm.json
+
+
+#call with
+#curl -X POST http://localhost:8081/realms/testrealm/protocol/openid-connect/token \
+#    -H "Content-Type: application/x-www-form-urlencoded" \
+#    -d "grant_type=password" \
+#    -d "client_id=operations-gateway" \
+#    -d "scope=openid profile email" \
+#    -d "username=alice" \
+#    -d "password=password"
+
+#and use id token
+
+# if testing against the corporate one, it's pretty much the same:
+#curl -X POST https://login.microsoftonline.com/###/oauth2/v2.0/token \
+#  -H "Content-Type: application/x-www-form-urlencoded" \
+#  -d "grant_type=password" \
+#  -d "client_id=###" \
+#  -d "client_secret=###" \
+#  -d "scope=openid profile email" \
+#  -d "username=###@stfc.ac.uk" \
+#  -d "password=###"

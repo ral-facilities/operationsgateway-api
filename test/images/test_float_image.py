@@ -1,5 +1,6 @@
 import base64
 from io import BytesIO
+import re
 from unittest.mock import patch
 
 import imagehash
@@ -11,7 +12,6 @@ import pytest
 from operationsgateway_api.src.exceptions import (
     EchoS3Error,
     ImageError,
-    ImageNotFoundError,
 )
 from operationsgateway_api.src.models import FloatImageModel
 from operationsgateway_api.src.records.float_image import FloatImage
@@ -61,6 +61,7 @@ class TestImage:
         thumbnail_checksum = str(imagehash.phash(img))
         assert thumbnail_checksum == phash
 
+    @pytest.mark.asyncio
     @patch(
         "operationsgateway_api.src.config.Config.config.echo.url",
         config_echo_url,
@@ -82,9 +83,9 @@ class TestImage:
         "operationsgateway_api.src.records.echo_interface.EchoInterface"
         ".upload_file_object",
     )
-    def test_valid_upload_image(self, mock_upload_file_object, _):
+    async def test_valid_upload_image(self, mock_upload_file_object, _):
         test_image = FloatImage(self.model)
-        FloatImage.upload_image(test_image)
+        await FloatImage.upload_image(test_image)
 
         assert mock_upload_file_object.call_count == 1
 
@@ -93,6 +94,7 @@ class TestImage:
         assert isinstance(uploaded_bytes_io, BytesIO)
         assert mock_upload_file_object.call_args.args[1] == f"float_images/{self.path}"
 
+    @pytest.mark.asyncio
     @patch(
         "operationsgateway_api.src.config.Config.config.echo.url",
         config_echo_url,
@@ -114,9 +116,9 @@ class TestImage:
         "operationsgateway_api.src.records.echo_interface.EchoInterface.upload_file_object",
         side_effect=EchoS3Error("Mocked Exception"),
     )
-    def test_invalid_upload_image(self, _, __):
+    async def test_invalid_upload_image(self, _, __):
         test_image = FloatImage(self.model)
-        response = FloatImage.upload_image(test_image)
+        response = await FloatImage.upload_image(test_image)
         assert response == "path"
 
     @pytest.mark.asyncio
@@ -176,20 +178,40 @@ class TestImage:
         side_effect=EchoS3Error("Mocked Exception"),
     )
     @pytest.mark.parametrize(
-        "expected_exception, record_count",
+        ["record_count", "expected_msg"],
         [
-            pytest.param(ImageError, 1, id="Image cannot be found on object storage"),
-            pytest.param(ImageNotFoundError, 0, id="Invalid record ID/channel name"),
-            pytest.param(ImageError, 2, id="Unexpected error"),
+            pytest.param(
+                0,
+                (
+                    "FloatImage with id=test_record_id, channel=test_channel_name "
+                    "could not be found due to invalid id and or channel"
+                ),
+            ),
+            pytest.param(
+                1,
+                (
+                    "FloatImage with id=test_record_id, channel=test_channel_name "
+                    "could not be found in object storage, check deletion policy and "
+                    "age of requested data"
+                ),
+            ),
+            pytest.param(
+                2,
+                (
+                    "Unexpected number of records (2) found when verifying whether "
+                    "test_record_id, test_channel_name should be available on object "
+                    "storage"
+                ),
+            ),
         ],
     )
-    async def test_invalid_get_image(self, _, __, expected_exception, record_count):
+    async def test_invalid_get_image(self, _, __, record_count: int, expected_msg: str):
         with patch(
             "operationsgateway_api.src.mongo.interface.MongoDBInterface"
             ".count_documents",
             return_value=record_count,
         ):
-            with pytest.raises(expected_exception):
+            with pytest.raises(EchoS3Error, match=re.escape(expected_msg)):
                 await FloatImage.get_image(
                     record_id="test_record_id",
                     channel_name="test_channel_name",

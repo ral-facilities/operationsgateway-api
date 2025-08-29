@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from operationsgateway_api.src.exceptions import DatabaseError, EchoS3Error
+from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from test.records.ingestion.create_test_hdf import create_test_hdf_file
 
 
@@ -190,6 +191,7 @@ class TestSubmitHDF:
             files=files,
         )
 
+        get_echo_interface.cache_clear()
         test_response = test_app.post(
             "/submit/hdf",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
@@ -333,6 +335,7 @@ class TestSubmitHDF:
 
         files = {"file": (test_file, open(test_file, "rb"))}
 
+        get_echo_interface.cache_clear()
         test_response = test_app.post(
             "/submit/hdf",
             headers={"Authorization": f"Bearer {login_and_get_token}"},

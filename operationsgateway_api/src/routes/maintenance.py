@@ -25,7 +25,7 @@ def get_maintenance() -> MaintenanceModel:
     return _get_maintenance()
 
 
-@router.post(
+@router.put(
     "/maintenance",
     summary="Set the current maintenance message and whether to show it",
     tags=["Maintenance"],
@@ -51,7 +51,7 @@ def get_scheduled_maintenance() -> ScheduledMaintenanceModel:
     return _get_scheduled_maintenance()
 
 
-@router.post(
+@router.put(
     "/scheduled_maintenance",
     summary="Set the current scheduled maintenance message and whether to show it",
     tags=["Maintenance"],

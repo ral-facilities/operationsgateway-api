@@ -7,15 +7,19 @@ import numpy as np
 from pydantic import (
     BaseModel,
     ConfigDict,
-    constr,
+    EmailStr,
     Field,
     field_validator,
     model_validator,
+    StringConstraints,
 )
 from pydantic_core import core_schema
 from typing_extensions import Annotated
 
 from operationsgateway_api.src.exceptions import ChannelManifestError, ModelError
+
+
+NonEmptyString = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 
 class PyObjectId(ObjectId):
@@ -269,6 +273,8 @@ class UserModel(BaseModel):
     sha256_password: Optional[str] = None
     auth_type: str
     authorised_routes: Optional[List[str]] = None
+    # Email needs to be optional so local login can work
+    email: Optional[EmailStr] = None
 
 
 class UpdateUserModel(BaseModel):
@@ -415,8 +421,8 @@ class FavouriteFilterModel(BaseModel):
 
 
 class Function(BaseModel):
-    name: constr(strip_whitespace=True, min_length=1)
-    expression: constr(strip_whitespace=True, min_length=1)
+    name: NonEmptyString
+    expression: NonEmptyString
 
 
 class Severity(StrEnum):

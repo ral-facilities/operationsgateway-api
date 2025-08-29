@@ -7,8 +7,8 @@ from fastapi.testclient import TestClient
 
 class TestMaintenance:
     """
-    Both test combine the GET and POST requests in order to test the cache is cleared
-    after POSTing a new message.
+    Both test combine the GET and PUT requests in order to test the cache is cleared
+    after PUTing a new message.
     """
 
     def test_maintenance(self, test_app: TestClient, login_and_get_token: str):
@@ -17,8 +17,8 @@ class TestMaintenance:
         target = "operationsgateway_api.src.config.Config.config.app.maintenance_file"
         tmp_file = tempfile.NamedTemporaryFile()
         with patch(target, tmp_file.name):
-            # POST the initial contents (we are using a tmpfile, which will start empty)
-            response = test_app.post(
+            # PUT the initial contents (we are using a tmpfile, which will start empty)
+            response = test_app.put(
                 url="/maintenance",
                 content=json.dumps(initial_content),
                 headers={"Authorization": f"Bearer {login_and_get_token}"},
@@ -33,8 +33,8 @@ class TestMaintenance:
             assert response.status_code == 200
             assert json.loads(response.content) == initial_content
 
-            # Calling POST will clear the cache after writing to file
-            response = test_app.post(
+            # Calling PUT will clear the cache after writing to file
+            response = test_app.put(
                 url="/maintenance",
                 content=json.dumps(updated_content),
                 headers={"Authorization": f"Bearer {login_and_get_token}"},
@@ -53,13 +53,13 @@ class TestMaintenance:
         test_app: TestClient,
         login_as_frontend_and_get_token: str,
     ):
-        response = test_app.post(
+        response = test_app.put(
             url="/maintenance",
             content=json.dumps({"show": False, "message": ""}),
             headers={"Authorization": f"Bearer {login_as_frontend_and_get_token}"},
         )
         assert response.status_code == 403
-        detail = "User 'frontend' is not authorised to use endpoint '/maintenance POST'"
+        detail = "User 'frontend' is not authorised to use endpoint '/maintenance PUT'"
         assert json.loads(response.content)["detail"] == detail
 
     def test_scheduled_maintenance(
@@ -75,8 +75,8 @@ class TestMaintenance:
         )
         tmp_file = tempfile.NamedTemporaryFile()
         with patch(target, tmp_file.name):
-            # POST the initial contents (we are using a tmpfile, which will start empty)
-            response = test_app.post(
+            # PUT the initial contents (we are using a tmpfile, which will start empty)
+            response = test_app.put(
                 url="/scheduled_maintenance",
                 content=json.dumps(initial_content),
                 headers={"Authorization": f"Bearer {login_and_get_token}"},
@@ -91,8 +91,8 @@ class TestMaintenance:
             assert response.status_code == 200
             assert json.loads(response.content) == initial_content
 
-            # Calling POST will clear the cache after writing to file
-            response = test_app.post(
+            # Calling PUT will clear the cache after writing to file
+            response = test_app.put(
                 url="/scheduled_maintenance",
                 content=json.dumps(updated_content),
                 headers={"Authorization": f"Bearer {login_and_get_token}"},
@@ -111,7 +111,7 @@ class TestMaintenance:
         test_app: TestClient,
         login_as_frontend_and_get_token: str,
     ):
-        response = test_app.post(
+        response = test_app.put(
             url="/scheduled_maintenance",
             content=json.dumps({"show": False, "message": "", "severity": "info"}),
             headers={"Authorization": f"Bearer {login_as_frontend_and_get_token}"},
@@ -119,5 +119,5 @@ class TestMaintenance:
         assert response.status_code == 403
         assert json.loads(response.content)["detail"] == (
             "User 'frontend' is not authorised to use endpoint '/scheduled_maintenance "
-            "POST'"
+            "PUT'"
         )

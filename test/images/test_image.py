@@ -2,6 +2,7 @@ import base64
 from io import BytesIO
 import logging
 import os
+import re
 from unittest.mock import patch
 
 import imagehash
@@ -13,7 +14,6 @@ import pytest
 from operationsgateway_api.src.exceptions import (
     EchoS3Error,
     ImageError,
-    ImageNotFoundError,
 )
 from operationsgateway_api.src.models import ImageModel
 from operationsgateway_api.src.records.image import Image
@@ -179,6 +179,7 @@ class TestImage:
         bit_depth: int,
         path: str,
         remove_test_objects: None,
+        clear_cached_echo_interface: None,
     ):
         test_image = Image(
             ImageModel(
@@ -187,7 +188,7 @@ class TestImage:
                 bit_depth=bit_depth,
             ),
         )
-        response = Image.upload_image(test_image)
+        response = await Image.upload_image(test_image)
 
         assert response is None
 
@@ -205,12 +206,13 @@ class TestImage:
         uploaded_bytes = bytes_io.getvalue()
         s_bit_offset = uploaded_bytes.find(b"sBIT")
         if bit_depth is None:
-            assert s_bit_offset == -1
+            assert s_bit_offset == -1, uploaded_bytes[: s_bit_offset + 10]
         else:
             assert s_bit_offset != -1
             s_bit = uploaded_bytes[s_bit_offset + 4 : s_bit_offset + 5]
             assert int.from_bytes(s_bit, byteorder="big") == bit_depth
 
+    @pytest.mark.asyncio
     @patch(
         "operationsgateway_api.src.config.Config.config.echo.url",
         config_echo_url,
@@ -232,7 +234,7 @@ class TestImage:
         "PIL.Image.fromarray",
         side_effect=TypeError("Mocked Exception"),
     )
-    def test_invalid_upload_image(self, _, __):
+    async def test_invalid_upload_image(self, _, __):
         test_image = Image(
             ImageModel(
                 path="test/image/path.png",
@@ -240,7 +242,7 @@ class TestImage:
             ),
         )
         with pytest.raises(ImageError):
-            Image.upload_image(test_image)
+            await Image.upload_image(test_image)
 
     @pytest.mark.asyncio
     @patch(
@@ -322,20 +324,40 @@ class TestImage:
         side_effect=EchoS3Error("Mocked Exception"),
     )
     @pytest.mark.parametrize(
-        "expected_exception, record_count",
+        ["record_count", "expected_msg"],
         [
-            pytest.param(ImageError, 1, id="Image cannot be found on object storage"),
-            pytest.param(ImageNotFoundError, 0, id="Invalid record ID/channel name"),
-            pytest.param(ImageError, 2, id="Unexpected error"),
+            pytest.param(
+                0,
+                (
+                    "Image with id=test_record_id, channel=test_channel_name could not "
+                    "be found due to invalid id and or channel"
+                ),
+            ),
+            pytest.param(
+                1,
+                (
+                    "Image with id=test_record_id, channel=test_channel_name could not "
+                    "be found in object storage, check deletion policy and age of "
+                    "requested data"
+                ),
+            ),
+            pytest.param(
+                2,
+                (
+                    "Unexpected number of records (2) found when verifying whether "
+                    "test_record_id, test_channel_name should be available on object "
+                    "storage"
+                ),
+            ),
         ],
     )
-    async def test_invalid_get_image(self, _, __, expected_exception, record_count):
+    async def test_invalid_get_image(self, _, __, record_count: int, expected_msg: str):
         with patch(
             "operationsgateway_api.src.mongo.interface.MongoDBInterface"
             ".count_documents",
             return_value=record_count,
         ):
-            with pytest.raises(expected_exception):
+            with pytest.raises(EchoS3Error, match=re.escape(expected_msg)):
                 await Image.get_image(
                     record_id="test_record_id",
                     channel_name="test_channel_name",

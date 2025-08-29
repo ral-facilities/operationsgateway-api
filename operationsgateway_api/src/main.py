@@ -16,8 +16,8 @@ from operationsgateway_api.src.experiments.unique_worker import (
     assign_event_to_single_worker,
     UniqueWorker,
 )
-from operationsgateway_api.src.mongo.connection import ConnectionInstance
-from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.mongo.connection import get_mongodb_connection
+from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.routes import (
     auth,
     channels,
@@ -59,7 +59,7 @@ This API is the backend to OperationsGateway that allows users to:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    ConnectionInstance()
+    mongodb_connection = get_mongodb_connection()  # Initialises the connection
 
     @assign_event_to_single_worker()
     async def get_experiments_on_startup():
@@ -72,16 +72,30 @@ async def lifespan(app: FastAPI):
         else:
             log.info("Scheduler background task has not been enabled")
 
-    @assign_event_to_single_worker()
-    async def set_bucket_expiry() -> None:
-        echo_interface = EchoInterface()
-        echo_interface.put_lifecycle()
-
     await get_experiments_on_startup()
-    await set_bucket_expiry()
-    yield
+
+    echo_interface = get_echo_interface()
+    async with echo_interface.session.resource(
+        "s3",
+        endpoint_url=Config.config.echo.url,
+        aws_access_key_id=Config.config.echo.access_key.get_secret_value(),
+        aws_secret_access_key=Config.config.echo.secret_key.get_secret_value(),
+    ) as resource:
+        await echo_interface.create_bucket(resource, True)
+        log.debug("Bucket cached: %s", echo_interface._bucket)
+
+        @assign_event_to_single_worker()
+        async def set_bucket_expiry() -> None:
+            await echo_interface.put_lifecycle()
+
+        await set_bucket_expiry()
+
+        yield  # While the app runs we stay in this context and the bucket can be shared
+
     UniqueWorker.remove_file()
-    ConnectionInstance.db_connection.mongo_client.close()
+    # Remove the old mongodb_connection from the cache before we close the connection
+    get_mongodb_connection.cache_clear()
+    mongodb_connection.mongo_client.close()
 
 
 app = FastAPI(
