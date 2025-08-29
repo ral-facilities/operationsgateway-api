@@ -75,6 +75,7 @@ class ExportHandler:
             zipfile.ZIP_DEFLATED,
             False,
         )
+        self.zip_lock = asyncio.Lock()
 
         self.functions = functions
         self.function_types = {}
@@ -354,7 +355,7 @@ class ExportHandler:
                     limit_bit_depth=self.limit_bit_depth,
                     colourmap_name=self.colourmap_name,
                 )
-            self.zip_file.writestr(f"{record_id}_{channel_name}.png", image_bytes)
+            await self._write_to_zip(f"{record_id}_{channel_name}.png", image_bytes)
             self._check_zip_file_size()
         except Exception:
             log.exception("Could not find image for %s %s", record_id, channel_name)
@@ -377,11 +378,8 @@ class ExportHandler:
 
         log.info("Getting float image to add to zip: %s %s", record_id, channel_name)
         try:
-            storage_bytes = await FloatImage.get_bytes(
-                record_id,
-                channel_name,
-            )
-            self.zip_file.writestr(f"{record_id}_{channel_name}.npz", storage_bytes)
+            storage_bytes = await FloatImage.get_bytes(record_id, channel_name)
+            await self._write_to_zip(f"{record_id}_{channel_name}.npz", storage_bytes)
             self._check_zip_file_size()
         except Exception:
             self.errors_file_in_memory.write(
@@ -435,23 +433,18 @@ class ExportHandler:
                     + str(waveform_model.y[point_num])
                     + "\n",
                 )
-            self.zip_file.writestr(
-                f"{record_id}_{channel_name}.csv",
-                waveform_csv_in_memory.getvalue(),
-            )
+            csv_bytes = waveform_csv_in_memory.getvalue()
+            await self._write_to_zip(f"{record_id}_{channel_name}.csv", csv_bytes)
             self._check_zip_file_size()
 
         if self.export_waveform_images:
             # if rendered trace images have been requested then add those
             waveform = Waveform(waveform_model)
-            waveform_png_bytes = waveform.get_fullsize_png(
+            png_bytes = waveform.get_fullsize_png(
                 x_label=channel.metadata.x_units,
                 y_label=channel.metadata.y_units,
             )
-            self.zip_file.writestr(
-                f"{record_id}_{channel_name}.png",
-                waveform_png_bytes,
-            )
+            await self._write_to_zip(f"{record_id}_{channel_name}.png", png_bytes)
             self._check_zip_file_size()
 
     async def _add_vector_to_zip(
@@ -496,13 +489,13 @@ class ExportHandler:
                     string_io.write(f"{value}\n")
 
             data = string_io.getvalue()
-            self.zip_file.writestr(f"{record_id}_{channel_name}.csv", data)
+            await self._write_to_zip(f"{record_id}_{channel_name}.csv", data)
             self._check_zip_file_size()
 
         if self.export_vector_images:
             vector = Vector(vector_model)
             vector_image = vector.get_fullsize_png(labels)
-            self.zip_file.writestr(f"{record_id}_{channel_name}.png", vector_image)
+            await self._write_to_zip(f"{record_id}_{channel_name}.png", vector_image)
             self._check_zip_file_size()
 
     def _add_main_csv_file_to_zip(self):
@@ -615,3 +608,13 @@ class ExportHandler:
                 "Too much data requested. Reduce either the number of records or "
                 "channels requested, or both.",
             )
+
+    async def _write_to_zip(self, arcname: str, data: str | bytes) -> None:
+        """
+        As a precaution, lock access to the zip_file to prevent simultaneous access.
+        This might not be strictly necessary as zip_file has it's own (synchronous)
+        lock, and since writestr is synchronous then the async event loop should not be
+        awaiting the outcome of one ongoing writestr while it performs another writestr.
+        """
+        async with self.zip_lock:
+            self.zip_file.writestr(arcname, data)
