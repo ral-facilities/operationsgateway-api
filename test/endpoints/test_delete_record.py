@@ -19,6 +19,14 @@ class TestDeleteRecordById:
         data_for_delete_records,
     ):
         record_id = 19000000000011
+        test_app.get(
+            f"/images/{record_id}/test-image-channel-id",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+        )
+
+        echo = EchoInterface()
+        assert echo.download_file_object.cache_info().currsize == 1
+
         delete_response = test_app.delete(
             f"/records/{record_id}",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
@@ -30,7 +38,6 @@ class TestDeleteRecordById:
             await Record.find_record_by_id(record_id, {})
 
         # Check that waveform and image have been removed from Echo
-        echo = EchoInterface()
         bucket = await echo.get_bucket()
         waveform_query = bucket.objects.filter(
             Prefix=f"{Waveform.echo_prefix}/{record_id}/",
@@ -56,6 +63,8 @@ class TestDeleteRecordById:
         async for float_image in float_image_query:
             pytest.fail(f"{float_image} still exists")
 
+        assert echo.download_file_object.cache_info().currsize == 0
+
     @pytest.mark.asyncio
     async def test_delete_record_subdirectories_success(
         self,
@@ -63,6 +72,17 @@ class TestDeleteRecordById:
         login_and_get_token,
         data_for_delete_records_subdirectories: str,
     ):
+        subdirectories = EchoInterface.format_record_id(
+            data_for_delete_records_subdirectories,
+        )
+        test_app.get(
+            f"/images/{data_for_delete_records_subdirectories}/test-image-channel-id",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+        )
+
+        echo = EchoInterface()
+        assert echo.download_file_object.cache_info().currsize == 1
+
         delete_response = test_app.delete(
             f"/records/{data_for_delete_records_subdirectories}",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
@@ -74,10 +94,6 @@ class TestDeleteRecordById:
             await Record.find_record_by_id(data_for_delete_records_subdirectories, {})
 
         # Check that waveform and image have been removed from Echo
-        echo = EchoInterface()
-        subdirectories = EchoInterface.format_record_id(
-            data_for_delete_records_subdirectories,
-        )
         bucket = await echo.get_bucket()
         waveform_query = bucket.objects.filter(
             Prefix=f"{Waveform.echo_prefix}/{subdirectories}/",
@@ -102,3 +118,5 @@ class TestDeleteRecordById:
         )
         async for float_image in float_image_query:
             pytest.fail(f"{float_image} still exists")
+
+        assert echo.download_file_object.cache_info().currsize == 0

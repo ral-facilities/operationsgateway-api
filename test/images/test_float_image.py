@@ -143,7 +143,7 @@ class TestImage:
         with patch(
             "operationsgateway_api.src.records.echo_interface.EchoInterface"
             ".download_file_object",
-            return_value=BytesIO(self.stored_bytes),
+            return_value=self.stored_bytes,
         ):
             test_image = await FloatImage.get_image(
                 record_id="test_record_id",
@@ -151,7 +151,7 @@ class TestImage:
                 colourmap_name="bwr",
             )
 
-        phash = str(imagehash.phash(Image.open(BytesIO(test_image.getvalue()))))
+        phash = str(imagehash.phash(Image.open(test_image)))
         assert phash == "926e4ba649a6cc5e"
 
     @pytest.mark.asyncio

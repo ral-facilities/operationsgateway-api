@@ -1,3 +1,4 @@
+from io import BytesIO
 import logging
 from typing import List, Optional
 
@@ -282,7 +283,7 @@ async def get_image_bytes(
                 await record_retriever.process_functions()
                 return record_retriever.record.channels[channel_name].data
 
-    bytes_io = await Image.get_image(
+    return await Image.get_image(
         record_id=record_id,
         channel_name=channel_name,
         original_image=original_image,
@@ -291,7 +292,6 @@ async def get_image_bytes(
         limit_bit_depth=limit_bit_depth,
         colourmap_name=colourmap_name,
     )
-    return bytes_io.getvalue()
 
 
 async def get_image_array(
@@ -324,7 +324,7 @@ async def get_image_array(
                 await record_retriever.process_functions()
                 return record_retriever.record.channels[channel_name].variable_value
 
-    bytes_io = await Image.get_image(
+    image_bytes = await Image.get_image(
         record_id=record_id,
         channel_name=channel_name,
         original_image=original_image,
@@ -333,5 +333,5 @@ async def get_image_array(
         limit_bit_depth=limit_bit_depth,
         colourmap_name=colourmap_name,
     )
-    image = PILImage.open(bytes_io)
+    image = PILImage.open(BytesIO(image_bytes))
     return np.array(image)
