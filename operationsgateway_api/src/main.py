@@ -83,6 +83,13 @@ async def lifespan(app: FastAPI):
     ) as resource:
         await echo_interface.create_bucket(resource, True)
         log.debug("Bucket cached: %s", echo_interface._bucket)
+
+        @assign_event_to_single_worker()
+        async def set_bucket_expiry() -> None:
+            await echo_interface.put_lifecycle()
+
+        await set_bucket_expiry()
+
         yield  # While the app runs we stay in this context and the bucket can be shared
 
     UniqueWorker.remove_file()
