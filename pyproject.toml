@@ -41,7 +41,7 @@ lxml = "5.0.1"
 httpx = "^0.28.1"
 lark = "1.1.9"
 elastic-apm = "^6.23.0"
-xrootd = "^5.8.4"
+xrootd-utils = { git = "git@github.com:ral-facilities/xrootd-utils.git", branch = "backup_restore_directories" }
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.4.0"

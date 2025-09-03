@@ -80,7 +80,7 @@ async def lifespan(app: FastAPI):
         @assign_event_to_single_worker(backup_worker)
         async def backup():
             log.info("Creating task for XRootD backups")
-            asyncio.create_task(runners.x_root_d_copy_runner.start_task())
+            asyncio.create_task(runners.backup_runner.start_task())
 
         await backup()
     else:
