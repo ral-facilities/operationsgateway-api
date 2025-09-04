@@ -19,6 +19,7 @@ from pydantic import (
     StrictStr,
     ValidationError,
 )
+from xrootd_utils.common import AutoRemove
 import yaml
 
 
@@ -170,6 +171,14 @@ class BackupConfig(BaseModel):
     worker_file_path: StrictStr = Field(
         description="Path of file used to ensure back is only handled by one worker.",
         examples=["/home/user/backup_worker"],
+    )
+    auto_remove: AutoRemove = Field(
+        default=AutoRemove.BACKED_UP,
+        description=(
+            "Under what condition to remove local file copies: when there is a copy in "
+            "the XRootD cache, when it is backed up to tape, or never."
+        ),
+        examples=["cached", "backed_up", "never"],
     )
 
 

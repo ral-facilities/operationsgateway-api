@@ -97,3 +97,4 @@ observability:
 #   copy_cron_string: "0 0 * * *"
 #   timezone_str: Europe/London
 #   worker_file_path: /dev/shm/og-backup
+#   auto_remove: backed_up
