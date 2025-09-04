@@ -4361,6 +4361,36 @@ files = [
 ]
 
 [[package]]
+name = "xrootd"
+version = "5.8.2"
+description = "eXtended ROOT daemon"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "xrootd-5.8.2.tar.gz", hash = "sha256:4edac8c49f5e6094b585d88338e5a3a673e7f086806369095ab3b524bb433dcf"},
+]
+
+[[package]]
+name = "xrootd-utils"
+version = "0.1.0"
+description = "A collection of high-level utility scripts for moving data to and from offline archival storage using XRootD."
+optional = false
+python-versions = ">=3.11, <3.14"
+groups = ["main"]
+files = []
+develop = false
+
+[package.dependencies]
+xrootd = "5.8.2"
+
+[package.source]
+type = "git"
+url = "ssh://git@github.com/ral-facilities/xrootd-utils.git"
+reference = "backup_restore_directories"
+resolved_reference = "c136ce17d1d283c2bda74220ea25b91248c63719"
+
+[[package]]
 name = "yarl"
 version = "1.20.1"
 description = "Yet another URL library"
@@ -4510,4 +4540,4 @@ xmlsec = ["xmlsec (>=0.6.1)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.12"
-content-hash = "25ce797d47a7f01a0c43096322af4fb22fc89e59f0399cb9dd0754e40646bcff"
+content-hash = "f46beecac994caea6f42ae9d735454f891655c3ffb588a4f2a876392955d2bac"

@@ -10,7 +10,7 @@ from operationsgateway_api.src.experiments.background_scheduler_runner import (
 
 
 class TestBackgroundRunner:
-    def create_background_runner(self):
+    def create_background_runner(self) -> BackgroundSchedulerRunner:
         test_task_name = "Test Task"
         test_runner = BackgroundSchedulerRunner(test_task_name)
         return test_runner
@@ -18,24 +18,6 @@ class TestBackgroundRunner:
     def test_task_name(self):
         test_runner = self.create_background_runner()
         assert test_runner.task_name == "Test Task"
-
-    @pytest.mark.parametrize(
-        "cron_string",
-        [
-            pytest.param("0 9 * * 1", id="Every Monday at 09:00"),
-            pytest.param("* * * * *", id="Every minute of every day"),
-            pytest.param("30 20 1 * *", id="First day of each month at 20:30"),
-        ],
-    )
-    def test_valid_task_frequency(self, cron_string):
-        # Can't patch via decorator as this uses `cron_string` parameter
-        with patch(
-            "operationsgateway_api.src.config.Config.config.experiments"
-            ".scheduler_background_frequency",
-            cron_string,
-        ):
-            test_runner = self.create_background_runner()
-            assert test_runner.runner_timer.to_string() == cron_string
 
     @pytest.mark.parametrize(
         "cron_string, expected_exception",
@@ -110,7 +92,7 @@ class TestBackgroundRunner:
             assert next_run_date == expected_next_run_date
 
     @patch("cron_converter.sub_modules.seeker.datetime")
-    @patch("operationsgateway_api.src.experiments.background_scheduler_runner.datetime")
+    @patch("operationsgateway_api.src.runner_abc.datetime")
     @pytest.mark.parametrize(
         "cron_string, expected_wait_time",
         [
@@ -172,11 +154,13 @@ class TestBackgroundRunner:
     )
     @patch(
         "operationsgateway_api.src.experiments.background_scheduler_runner.log.error",
-        return_value=True,
+        side_effect=RuntimeError("Break for testing"),
     )
     @patch("asyncio.sleep")
     async def test_task_retry(self, mock_sleep, _, mock_experiment, __):
         test_runner = self.create_background_runner()
-        await test_runner.start_task()
+        with pytest.raises(RuntimeError, match="Break for testing"):
+            await test_runner.start_task()
+
         assert mock_experiment.call_count == 2
         assert mock_sleep.call_count == 2

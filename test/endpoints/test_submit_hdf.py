@@ -190,7 +190,12 @@ class TestSubmitHDF:
         _ = await create_test_hdf_file()
 
         # Mock in the tmp_path fixture
-        backup = BackupConfig(cache_directory=tmp_path)
+        backup = BackupConfig(
+            cache_directory=tmp_path,
+            target_url="",
+            copy_cron_string="",
+            worker_file_path="",
+        )
         mocker.patch("operationsgateway_api.src.config.Config.config.backup", backup)
 
         test_file = "test.h5"

@@ -61,7 +61,10 @@ This API is the backend to OperationsGateway that allows users to:
 async def lifespan(app: FastAPI):
     mongodb_connection = get_mongodb_connection()  # Initialises the connection
 
-    @assign_event_to_single_worker()
+    experiment_worker = UniqueWorker(Config.config.experiments.worker_file_path)
+    backup_worker = UniqueWorker(Config.config.backup.worker_file_path)
+
+    @assign_event_to_single_worker(experiment_worker)
     async def get_experiments_on_startup():
         if Config.config.experiments.scheduler_background_task_enabled:
             log.info(
@@ -72,7 +75,16 @@ async def lifespan(app: FastAPI):
         else:
             log.info("Scheduler background task has not been enabled")
 
+    @assign_event_to_single_worker(backup_worker)
+    async def backup():
+        if Config.config.backup is not None:
+            log.info("Creating backup task")
+            asyncio.create_task(runners.backup_runner.start_task())
+        else:
+            log.info("Backup task has not been enabled")
+
     await get_experiments_on_startup()
+    await backup()
 
     echo_interface = get_echo_interface()
     async with echo_interface.session.resource(
@@ -84,7 +96,7 @@ async def lifespan(app: FastAPI):
         await echo_interface.create_bucket(resource, True)
         log.debug("Bucket cached: %s", echo_interface._bucket)
 
-        @assign_event_to_single_worker()
+        @assign_event_to_single_worker(backup_worker)
         async def set_bucket_expiry() -> None:
             await echo_interface.put_lifecycle()
 
@@ -92,7 +104,9 @@ async def lifespan(app: FastAPI):
 
         yield  # While the app runs we stay in this context and the bucket can be shared
 
-    UniqueWorker.remove_file()
+    experiment_worker.remove_file()
+    if Config.config.backup is not None:
+        backup_worker.remove_file()
     # Remove the old mongodb_connection from the cache before we close the connection
     get_mongodb_connection.cache_clear()
     mongodb_connection.mongo_client.close()

@@ -10,11 +10,6 @@ from operationsgateway_api.src.experiments.unique_worker import (
 
 
 class TestUniqueWorker:
-    @patch(
-        "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
-        ".worker_file_path",
-        Path("test/path"),
-    )
     @patch("os.getpid", return_value=10)
     @patch(
         "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
@@ -25,7 +20,7 @@ class TestUniqueWorker:
         "operationsgateway_api.src.experiments.unique_worker.UniqueWorker._assign",
     )
     def test_init(self, mock_assign, _, __, remove_background_pid_file):
-        test_worker = UniqueWorker()
+        test_worker = UniqueWorker("test/path")
 
         assert test_worker.worker_file_path == Path("test/path")
         assert test_worker.id_ == "10"
@@ -33,11 +28,6 @@ class TestUniqueWorker:
         assert test_worker.is_assigned
         assert mock_assign.call_count == 1
 
-    @patch(
-        "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
-        ".worker_file_path",
-        Path("test/path"),
-    )
     @patch("os.getpid", return_value=10)
     @patch(
         "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
@@ -63,7 +53,7 @@ class TestUniqueWorker:
         expected_return,
         remove_background_pid_file,
     ):
-        test_worker = UniqueWorker()
+        test_worker = UniqueWorker("test/path")
 
         with patch(
             "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
@@ -73,11 +63,6 @@ class TestUniqueWorker:
             pid_match = test_worker.does_pid_match_file()
             assert pid_match == expected_return
 
-    @patch(
-        "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
-        ".worker_file_path",
-        Path("test/path"),
-    )
     @pytest.mark.parametrize(
         "expected_exception",
         [
@@ -87,14 +72,9 @@ class TestUniqueWorker:
     )
     def test_remove_file(self, expected_exception, remove_background_pid_file):
         with patch("os.remove", side_effect=expected_exception) as mock_remove:
-            UniqueWorker.remove_file()
+            UniqueWorker("test/path").remove_file()
             assert mock_remove.call_count == 1
 
-    @patch(
-        "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
-        ".worker_file_path",
-        Path("test/path"),
-    )
     @patch("os.getpid", return_value=10)
     @patch(
         "operationsgateway_api.src.experiments.unique_worker.UniqueWorker._assign",
@@ -129,7 +109,7 @@ class TestUniqueWorker:
             "._is_file_empty",
             return_value=True,
         ):
-            test_worker = UniqueWorker()
+            test_worker = UniqueWorker("test/path")
 
         with patch(
             "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
@@ -140,11 +120,6 @@ class TestUniqueWorker:
             file_empty = test_worker._is_file_empty()
             assert file_empty == expected_return
 
-    @patch(
-        "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
-        ".worker_file_path",
-        Path("test/path"),
-    )
     @patch("os.getpid", return_value=10)
     @patch(
         "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
@@ -155,18 +130,13 @@ class TestUniqueWorker:
         "operationsgateway_api.src.experiments.unique_worker.UniqueWorker._assign",
     )
     def test_read_file(self, _, __, ___, remove_background_pid_file):
-        test_worker = UniqueWorker()
+        test_worker = UniqueWorker("test/path")
 
         with patch("builtins.open", mock_open(read_data="123")):
             file_contents = test_worker._read_file()
             assert file_contents == "123"
 
     @pytest.mark.asyncio
-    @patch(
-        "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
-        ".worker_file_path",
-        Path("test/path"),
-    )
     @patch(
         "operationsgateway_api.src.config.Config.config.app.reload",
         False,
@@ -190,7 +160,7 @@ class TestUniqueWorker:
         expected_output,
         remove_background_pid_file,
     ):
-        @assign_event_to_single_worker()
+        @assign_event_to_single_worker(UniqueWorker("test/path"))
         async def decorated_func():
             return 1
 
@@ -206,11 +176,6 @@ class TestUniqueWorker:
 
     @pytest.mark.asyncio
     @patch("operationsgateway_api.src.config.Config.config.app.reload", True)
-    @patch(
-        "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
-        ".worker_file_path",
-        "test/path",
-    )
     @patch("os.getpid", return_value=10)
     @patch(
         "operationsgateway_api.src.experiments.unique_worker.UniqueWorker._assign",
@@ -236,7 +201,7 @@ class TestUniqueWorker:
             return_value=file_empty,
         ):
 
-            @assign_event_to_single_worker()
+            @assign_event_to_single_worker(UniqueWorker("test/path"))
             async def decorated_func():
                 return 1
 
