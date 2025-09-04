@@ -19,6 +19,14 @@ class TestDeleteRecordById:
         data_for_delete_records,
     ):
         record_id = 19000000000011
+        test_app.get(
+            f"/images/{record_id}/test-image-channel-id",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+        )
+
+        echo = EchoInterface()
+        assert echo.download_file_object.cache_info().currsize == 1
+
         delete_response = test_app.delete(
             f"/records/{record_id}",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
@@ -30,26 +38,32 @@ class TestDeleteRecordById:
             await Record.find_record_by_id(record_id, {})
 
         # Check that waveform and image have been removed from Echo
-        echo = EchoInterface()
-        waveform_query = echo.bucket.objects.filter(
+        bucket = await echo.get_bucket()
+        waveform_query = bucket.objects.filter(
             Prefix=f"{Waveform.echo_prefix}/{record_id}/",
         )
-        assert list(waveform_query) == []
+        async for waveform in waveform_query:
+            pytest.fail(f"{waveform} still exists")
 
-        image_query = echo.bucket.objects.filter(
+        image_query = bucket.objects.filter(
             Prefix=f"{Image.echo_prefix}/{record_id}/",
         )
-        assert list(image_query) == []
+        async for image in image_query:
+            pytest.fail(f"{image} still exists")
 
-        vector_query = echo.bucket.objects.filter(
+        vector_query = bucket.objects.filter(
             Prefix=f"{Vector.echo_prefix}/{record_id}/",
         )
-        assert list(vector_query) == []
+        async for vector in vector_query:
+            pytest.fail(f"{vector} still exists")
 
-        float_image_query = echo.bucket.objects.filter(
+        float_image_query = bucket.objects.filter(
             Prefix=f"{FloatImage.echo_prefix}/{record_id}/",
         )
-        assert list(float_image_query) == []
+        async for float_image in float_image_query:
+            pytest.fail(f"{float_image} still exists")
+
+        assert echo.download_file_object.cache_info().currsize == 0
 
     @pytest.mark.asyncio
     async def test_delete_record_subdirectories_success(
@@ -58,6 +72,17 @@ class TestDeleteRecordById:
         login_and_get_token,
         data_for_delete_records_subdirectories: str,
     ):
+        subdirectories = EchoInterface.format_record_id(
+            data_for_delete_records_subdirectories,
+        )
+        test_app.get(
+            f"/images/{data_for_delete_records_subdirectories}/test-image-channel-id",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+        )
+
+        echo = EchoInterface()
+        assert echo.download_file_object.cache_info().currsize == 1
+
         delete_response = test_app.delete(
             f"/records/{data_for_delete_records_subdirectories}",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
@@ -69,26 +94,29 @@ class TestDeleteRecordById:
             await Record.find_record_by_id(data_for_delete_records_subdirectories, {})
 
         # Check that waveform and image have been removed from Echo
-        echo = EchoInterface()
-        subdirectories = EchoInterface.format_record_id(
-            data_for_delete_records_subdirectories,
-        )
-        waveform_query = echo.bucket.objects.filter(
+        bucket = await echo.get_bucket()
+        waveform_query = bucket.objects.filter(
             Prefix=f"{Waveform.echo_prefix}/{subdirectories}/",
         )
-        assert list(waveform_query) == []
+        async for waveform in waveform_query:
+            pytest.fail(f"{waveform} still exists")
 
-        image_query = echo.bucket.objects.filter(
+        image_query = bucket.objects.filter(
             Prefix=f"{Image.echo_prefix}/{subdirectories}/",
         )
-        assert list(image_query) == []
+        async for image in image_query:
+            pytest.fail(f"{image} still exists")
 
-        vector_query = echo.bucket.objects.filter(
+        vector_query = bucket.objects.filter(
             Prefix=f"{Vector.echo_prefix}/{subdirectories}/",
         )
-        assert list(vector_query) == []
+        async for vector in vector_query:
+            pytest.fail(f"{vector} still exists")
 
-        float_image_query = echo.bucket.objects.filter(
+        float_image_query = bucket.objects.filter(
             Prefix=f"{FloatImage.echo_prefix}/{subdirectories}/",
         )
-        assert list(float_image_query) == []
+        async for float_image in float_image_query:
+            pytest.fail(f"{float_image} still exists")
+
+        assert echo.download_file_object.cache_info().currsize == 0

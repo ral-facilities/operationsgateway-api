@@ -1,13 +1,15 @@
 import logging
 
-from fastapi import APIRouter, Body, Cookie, Response, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Body, Cookie, Depends, Response, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authentication import Authentication
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
+from operationsgateway_api.src.auth.oidc_handler import OidcHandler
+from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.error_handling import endpoint_error_handling
-from operationsgateway_api.src.exceptions import ForbiddenError
+from operationsgateway_api.src.exceptions import ForbiddenError, UnauthorisedError
 from operationsgateway_api.src.models import AccessTokenModel, LoginDetailsModel
 from operationsgateway_api.src.users.user import User
 
@@ -64,25 +66,13 @@ async def login(
     authentication = Authentication(login_details, user_model)
     authentication.authenticate()
 
-    # # create their JWT access and refresh tokens
-    jwt_handler = JwtHandler(user_model)
-    access_token = jwt_handler.get_access_token()
-    refresh_token = jwt_handler.get_refresh_token()
     log.info(
-        "Refresh token assigned to '%s': %s",
+        "Creating refresh token for '%s':",
         login_details.username,
-        refresh_token,
     )
-    response = JSONResponse(content=access_token)
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        max_age=604800,
-        secure=True,
-        httponly=True,
-        samesite="Lax",
-        path="/refresh",
-    )
+
+    response = Authentication.create_tokens_response(user_model)
+
     return response
 
 
@@ -137,3 +127,65 @@ async def refresh(
     else:
         log.debug("refresh_token: %s", refresh_token)
     return JwtHandler.refresh_token(refresh_token, token.token)
+
+
+@router.post(
+    "/oidc_login",
+    summary="Login using an OpenID Connect (OIDC) token",
+    response_description="A JWT access token (and a refresh token cookie)",
+    responses={401: {"description": "Unauthorized"}},
+    tags=["Authentication"],
+)
+@endpoint_error_handling
+async def oidc_login(
+    oidc_handler: Annotated[OidcHandler, Depends(OidcHandler)],
+    bearer_token: Annotated[
+        HTTPAuthorizationCredentials,
+        Depends(HTTPBearer(description="OIDC ID token")),
+    ],
+):
+    """
+    This endpoint takes an OIDC token (usually from Keycloak), verifies it, and returns
+    a JWT access token and refresh token for this API.
+    """
+    log.info("Received OIDC login request")
+
+    encoded_token = bearer_token.credentials
+
+    # Validate the OIDC token and extract claims (throws error if invalid)
+    oidc_email = oidc_handler.handle(encoded_token)
+    log.debug("Validated OIDC claims: %s", oidc_email)
+
+    # Construct a User model (or dummy object) to use with JwtHandler
+    user_model = await User.get_user_by_email(oidc_email)
+
+    if not user_model:
+        log.warning("User '%s' not found in user database", oidc_email)
+        raise UnauthorisedError
+
+    log.info(
+        "Creating refresh token for '%s'",
+        oidc_email,
+    )
+
+    response = Authentication.create_tokens_response(user_model)
+
+    return response
+
+
+@router.get("/oidc_providers")
+@endpoint_error_handling
+async def list_oidc_providers():
+    """
+    Returns a list of available OIDC providers with display name,
+    configuration URL, and client ID (audience).
+    """
+    providers = [
+        {
+            "display_name": name,
+            "configuration_url": config.configuration_url,
+            "client_id": config.audience,
+        }
+        for name, config in Config.config.auth.oidc_providers.items()
+    ]
+    return providers

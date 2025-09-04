@@ -4,7 +4,6 @@ from io import BytesIO
 import logging
 from typing import Optional
 
-from botocore.exceptions import ClientError
 import numpy as np
 from PIL import Image as PILImage, PngImagePlugin
 from pydantic import Json
@@ -20,7 +19,7 @@ from operationsgateway_api.src.functions.builtins.centroid_y import CentroidY
 from operationsgateway_api.src.functions.builtins.fwhm import FWHM
 from operationsgateway_api.src.functions.variable_models import WaveformVariable
 from operationsgateway_api.src.models import ImageModel
-from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.image_abc import ImageABC
 from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
@@ -102,7 +101,7 @@ class Image(ImageABC):
         img.close()
 
     @staticmethod
-    def upload_image(input_image: Image) -> Optional[str]:
+    async def upload_image(input_image: Image) -> Optional[str]:
         """
         Save the image on Echo S3 object storage
         """
@@ -123,12 +122,12 @@ class Image(ImageABC):
             log.exception(msg=exc)
             raise ImageError("Image data is not in correct format to be read") from exc
 
-        echo = EchoInterface()
+        echo_interface = get_echo_interface()
         storage_path = Image.get_full_path(input_image.image.path)
         log.info("Storing image on S3: %s", storage_path)
 
         try:
-            echo.upload_file_object(image_bytes, storage_path)
+            await echo_interface.upload_file_object(image_bytes, storage_path)
             return None  # No failure
         except EchoS3Error:
             # Extract the channel name and propagate it
@@ -145,10 +144,10 @@ class Image(ImageABC):
         upper_level: int,
         limit_bit_depth: int,
         colourmap_name: str,
-    ) -> BytesIO:
+    ) -> bytes:
         """
-        Retrieve an image from Echo S3 and return the bytes of the image in a BytesIO
-        object depending on what the user has requested.
+        Retrieve an image from Echo S3 and return the bytes of the image depending on
+        what the user has requested.
 
         If 'original_image' is set to True then just return the unprocessed bytes of the
         image read from Echo S3, otherwise apply false colour to the image either using
@@ -159,46 +158,52 @@ class Image(ImageABC):
         database, an appropriate exception (and error message) is raised
         """
 
-        log.info("Retrieving image and returning BytesIO object")
-        echo = EchoInterface()
+        msg = "Retrieving image and returning BytesIO object: %s %s"
+        log.info(msg, record_id, channel_name)
+        image_bytes = await Image.get_bytes(
+            record_id=record_id,
+            channel_name=channel_name,
+        )
+        return Image.apply_false_colour(
+            image_bytes=image_bytes,
+            original_image=original_image,
+            lower_level=lower_level,
+            upper_level=upper_level,
+            limit_bit_depth=limit_bit_depth,
+            colourmap_name=colourmap_name,
+        )
 
-        try:
-            try:
-                relative_path = Image.get_relative_path(record_id, channel_name)
-                full_path = Image.get_full_path(relative_path)
-                image_bytes = echo.download_file_object(full_path)
-            except EchoS3Error:
-                # Try again without subdirectories, might be stored in old format
-                relative_path = Image.get_relative_path(record_id, channel_name, False)
-                full_path = Image.get_full_path(relative_path)
-                image_bytes = echo.download_file_object(full_path)
-
-            if original_image:
-                log.debug(
-                    "Original image requested, return unmodified image bytes: %s",
-                    relative_path,
-                )
-                return image_bytes
-            else:
-                log.debug(
-                    "False colour requested, applying false colour to image: %s",
-                    relative_path,
-                )
-                img_src = PILImage.open(image_bytes)
-                orig_img_array = np.array(img_src)
-                storage_bit_depth = FalseColourHandler.get_pixel_depth(img_src)
-                false_colour_image = FalseColourHandler.apply_false_colour(
-                    image_array=orig_img_array,
-                    storage_bit_depth=storage_bit_depth,
-                    lower_level=lower_level,
-                    upper_level=upper_level,
-                    limit_bit_depth=limit_bit_depth,
-                    colourmap_name=colourmap_name,
-                )
-                img_src.close()
-                return false_colour_image
-        except (ClientError, EchoS3Error) as exc:
-            await Image._handle_get_image_exception(record_id, channel_name, exc)
+    @staticmethod
+    def apply_false_colour(
+        image_bytes: bytes,
+        original_image: bool,
+        lower_level: int,
+        upper_level: int,
+        limit_bit_depth: int,
+        colourmap_name: str,
+    ) -> bytes:
+        """
+        If not requesting the `original_image`, then false colour will be applied to
+        `image_bytes` using the other parameters.
+        """
+        if original_image:
+            log.debug("Original image requested, return unmodified image bytes")
+            return image_bytes
+        else:
+            log.debug("False colour requested, applying false colour to image")
+            img_src = PILImage.open(BytesIO(image_bytes))
+            orig_img_array = np.array(img_src)
+            storage_bit_depth = FalseColourHandler.get_pixel_depth(img_src)
+            false_colour_image = FalseColourHandler.apply_false_colour(
+                image_array=orig_img_array,
+                storage_bit_depth=storage_bit_depth,
+                lower_level=lower_level,
+                upper_level=upper_level,
+                limit_bit_depth=limit_bit_depth,
+                colourmap_name=colourmap_name,
+            )
+            img_src.close()
+            return false_colour_image.getvalue()
 
     @staticmethod
     async def get_preferred_colourmap(access_token: str) -> str:

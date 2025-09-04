@@ -46,7 +46,7 @@ class BackupRunner(RunnerABC):
             else:
                 log.info(
                     "Backup completed: %s succeeded, %s failed, %s removed",
-                    len(results["succeeded"]), 
+                    len(results["succeeded"]),
                     len(results["failed"]),
                     len(results["removed"]),
                 )
@@ -55,8 +55,7 @@ class BackupRunner(RunnerABC):
 
     @staticmethod
     def _check_cache_usage():
-        """Log the current disk usage of the cache at an appropriate level.
-        """
+        """Log the current disk usage of the cache at an appropriate level."""
         total, used, free = shutil.disk_usage(Config.config.backup.cache_directory)
         percentage_used = 100 * used / total
         if percentage_used < Config.config.backup.warning_mark_percent:

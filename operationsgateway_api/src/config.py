@@ -11,6 +11,7 @@ from pydantic import (
     Field,
     field_validator,
     FilePath,
+    NonNegativeInt,
     PositiveInt,
     SecretStr,
     StrictBool,
@@ -40,14 +41,12 @@ class ImagesConfig(BaseModel):
     # the system default colour map (used if no user preference is set)
     default_colour_map: StrictStr
     colourbar_height_pixels: StrictInt
-    upload_image_threads: StrictInt
     preferred_colour_map_pref_name: StrictStr
 
 
 class FloatImagesConfig(BaseModel):
     thumbnail_size: tuple[int, int]
     default_colour_map: StrictStr
-    upload_image_threads: StrictInt
     preferred_colour_map_pref_name: StrictStr
 
 
@@ -68,6 +67,12 @@ class EchoConfig(BaseModel):
     access_key: SecretStr
     secret_key: SecretStr
     bucket_name: StrictStr
+    expiry_days: PositiveInt | None = Field(
+        default=None,
+        description="If defined, objects older than this will be marked for expiry",
+        examples=[1095],
+    )
+    cache_maxsize: NonNegativeInt = 128
 
 
 class MongoDB(BaseModel):
@@ -76,6 +81,14 @@ class MongoDB(BaseModel):
     mongodb_url: SecretStr
     database_name: StrictStr
     max_documents: StrictInt
+
+
+class OidcProviderConfig(BaseModel):
+    configuration_url: StrictStr
+    audience: StrictStr
+    verify_cert: StrictBool
+    mechanism: StrictStr
+    matching_claim: StrictStr
 
 
 class AuthConfig(BaseModel):
@@ -88,6 +101,7 @@ class AuthConfig(BaseModel):
     refresh_token_validity_days: StrictInt
     fedid_server_url: StrictStr
     fedid_server_ldap_realm: StrictStr
+    oidc_providers: dict[StrictStr, OidcProviderConfig] = {}
 
 
 class ExperimentsConfig(BaseModel):
@@ -133,7 +147,7 @@ class BackupConfig(BaseModel):
             "Directory to write incoming files to so that they can later be backed up "
             "to tape."
         ),
-        examples=["/home/user/cache/"],
+        examples=["/srv/og-api/cache"],
     )
     warning_mark_percent: Annotated[PositiveInt, annotated_types.Lt(100)] = Field(
         default=50,

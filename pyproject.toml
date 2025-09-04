@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "operationsgateway-api"
-version = "0.4.0"
+version = "0.6.0"
 description = ""
 readme = "README.md"
 authors = [
@@ -14,7 +14,7 @@ authors = [
 # but python3.8 is only compatible with scipy<=1.10.1
 # so it is not possible to target both at the same time
 python = ">=3.11,<3.12"
-fastapi = "^0.115.5"
+fastapi = "^0.116.1"
 motor = "^3.3.2"
 uvicorn = "^0.20.0"
 python-multipart = "^0.0.18"
@@ -30,10 +30,10 @@ matplotlib = "^3.5.2"
 gunicorn = "^23.0.0"
 orjson = "^3.10.3"
 python-dateutil = "^2.8.2"
+email-validator = "^2.1.1"
 PyJWT = "2.10.1"
 cryptography = "^44.0.1"
 python-ldap = "3.4.2"
-boto3 = ">=1.26.97,<1.36.0"
 cron-converter = "^1.0.1"
 zeep = "^4.2.1"
 # Indirect dependency lxml 5.1.0 causes symbol not found in flat namespace '_exsltDateXpathCtxtRegister' error
@@ -41,6 +41,11 @@ lxml = "5.0.1"
 httpx = "^0.28.1"
 lark = "1.1.9"
 elastic-apm = "^6.23.0"
+aioboto3 = "^13.0.0"
+aiobotocore = ">=2.16.0, <2.17.0"
+mypy-boto3-s3 = "^1.40.0"
+async-lru = "^2.0.5"
+# TODO once this is on pypi replace with a proper version dependency
 xrootd-utils = { git = "git@github.com:ral-facilities/xrootd-utils.git", branch = "backup_restore_directories" }
 
 [tool.poetry.group.dev.dependencies]
@@ -63,6 +68,7 @@ coverage = "^6.4.4"
 fabric = "^3.1.0"
 pytest-asyncio = "^0.21.0"
 s4cmd = "^2.1.0"
+pytest-mock = "^3.14.1"
 
 [tool.poetry.group.simulated-data.dependencies]
 epac-data-sim = {git = "git@github.com:CentralLaserFacility/EPAC-DataSim.git"}

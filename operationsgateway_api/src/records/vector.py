@@ -3,25 +3,23 @@ from io import BytesIO
 import json
 import logging
 
-from botocore.exceptions import ClientError
 from matplotlib import pyplot as plt
 
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.config import Config
-from operationsgateway_api.src.exceptions import (
-    EchoS3Error,
-    VectorError,
-)
+from operationsgateway_api.src.exceptions import EchoS3Error
 from operationsgateway_api.src.models import VectorModel
-from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.channel_object_abc import ChannelObjectABC
+from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.users.preferences import UserPreferences
 
 
 log = logging.getLogger()
 
 
-class Vector:
+class Vector(ChannelObjectABC):
     echo_prefix = "vectors"
+    echo_extension = "json"
 
     def __init__(self, vector: VectorModel) -> None:
         self.vector = vector
@@ -31,42 +29,15 @@ class Vector:
     async def get_vector(record_id: str, channel_name: str) -> VectorModel:
         """
         Get vector data from storage and return it as a VectorModel. If no vector can be
-        found, a VectorError will be raised.
+        found, an Exception will be raised.
         """
         log.info("Retrieving vector and returning a VectorModel")
-        echo = EchoInterface()
-
-        try:
-            relative_path = Vector.get_relative_path(record_id, channel_name)
-            full_path = Vector.get_full_path(relative_path)
-            bytes_io = echo.download_file_object(full_path)
-            vector_dict = json.loads(bytes_io.getvalue().decode())
-            return VectorModel(**vector_dict)
-        except (ClientError, EchoS3Error) as exc:
-            log.error("Vector could not be found: %s", relative_path)
-            msg = f"Vector could not be found on object storage: {relative_path}"
-            raise VectorError(msg) from exc
-
-    @staticmethod
-    def get_relative_path(
-        record_id: str,
-        channel_name: str,
-        use_subdirectories: bool = True,
-    ) -> str:
-        """
-        Returns a relative path given a record id and channel name. The path is relative
-        to the base directory.
-        """
-        directories = EchoInterface.format_record_id(record_id, use_subdirectories)
-        return f"{directories}/{channel_name}.json"
-
-    @staticmethod
-    def get_full_path(relative_path: str) -> str:
-        """
-        Returns the full path by adding the storage base directory to the start of the
-        path. The full path does not include the bucket name.
-        """
-        return f"{Vector.echo_prefix}/{relative_path}"
+        bytes_io = await Vector.get_bytes(
+            record_id=record_id,
+            channel_name=channel_name,
+        )
+        vector_dict = json.loads(bytes_io.decode())
+        return VectorModel(**vector_dict)
 
     @staticmethod
     async def get_skip_limit(access_token: str) -> tuple[int | None, int | None]:
@@ -96,16 +67,17 @@ class Vector:
         """
         return self.vector.path.split("/")[-1].split(".json")[0]
 
-    def insert(self) -> str | None:
+    async def insert(self) -> str | None:
         """
         Upload the bytes of this vector to storage. Returns the channel name if the
         upload fails.
         """
         log.info("Storing vector: %s", self.vector.path)
-        echo = EchoInterface()
+        echo_interface = get_echo_interface()
         try:
             bytes_io = BytesIO(self.vector.model_dump_json(indent=2).encode())
-            echo.upload_file_object(bytes_io, Vector.get_full_path(self.vector.path))
+            full_path = Vector.get_full_path(self.vector.path)
+            await echo_interface.upload_file_object(bytes_io, full_path)
             return  # Successful upload
         except EchoS3Error:
             # Extract the channel name and propagate it

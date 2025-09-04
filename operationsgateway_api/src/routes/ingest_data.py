@@ -1,14 +1,13 @@
 import ctypes
 import logging
-from multiprocessing.pool import ThreadPool
 
 from fastapi import APIRouter, Depends, status, UploadFile
 from fastapi.responses import JSONResponse
 from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authorisation import authorise_route
+from operationsgateway_api.src.backup.x_root_d_client import XRootDClient
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
-from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.models import SubmitHDFResponse
 from operationsgateway_api.src.records.float_image import FloatImage
@@ -46,12 +45,12 @@ def _update_checker_response(
     checker_response["rejected_channels"][channel].append("Upload to Echo failed")
 
 
-def _insert(
+async def _insert(
     entity: Waveform | Vector,
     failed_uploads: list[str],
     record: Record,
 ) -> None:
-    failed_upload = entity.insert()  # Returns channel name if failed
+    failed_upload = await entity.insert()  # Returns channel name if failed
     if failed_upload:
         # if the upload to echo fails, don't process the any further
         return failed_uploads.append(failed_upload)
@@ -138,7 +137,7 @@ async def submit_hdf(
     if stored_record:
         partial_import_checker = PartialImportChecks(record_data, stored_record)
         accept_type = partial_import_checker.metadata_checks()
-        checker_response = partial_import_checker.channel_checks(channel_dict)
+        checker_response = await partial_import_checker.channel_checks(channel_dict)
     else:
         checker_response = channel_dict
 
@@ -158,45 +157,18 @@ async def submit_hdf(
     log.debug("Processing waveforms")
     failed_waveform_uploads = []
     for w in waveforms:
-        _insert(Waveform(w), failed_waveform_uploads, record)
+        await _insert(Waveform(w), failed_waveform_uploads, record)
 
-    # This section distributes the Image.upload_image calls across
-    # the threads in the pool.It takes the image_instances list,
-    # applies the Image.upload_image function to each item, and collects
-    # the return values in upload_results. The map function blocks the main
-    # thread until all the tasks in the pool are complete.
-    log.debug("Processing images")
-    failed_image_uploads = []
-    image_instances = [Image(i) for i in images]
-    for image in image_instances:
-        image.create_thumbnail()
-        record.store_thumbnail(image)  # in the record not echo
-    if len(image_instances) > 0:
-        pool = ThreadPool(processes=Config.config.images.upload_image_threads)
-        upload_results = pool.map(Image.upload_image, image_instances)
-        # Filter out successful uploads, collect only failed ones
-        failed_image_uploads = [channel for channel in upload_results if channel]
-        pool.close()
-        image_instances = None
-
-    log.debug("Processing float images")
-    failed_float_image_uploads = []
-    float_image_instances = [FloatImage(i) for i in float_images]
-    for float_image in float_image_instances:
-        float_image.create_thumbnail()
-        record.store_thumbnail(float_image)  # in the record not echo
-    if len(float_image_instances) > 0:
-        pool = ThreadPool(processes=Config.config.float_images.upload_image_threads)
-        upload_results = pool.map(FloatImage.upload_image, float_image_instances)
-        # Filter out successful uploads, collect only failed ones
-        failed_float_image_uploads = [channel for channel in upload_results if channel]
-        pool.close()
-        float_image_instances = None
+    failed_image_uploads = await record.concurrent_upload(images, Image)
+    failed_float_image_uploads = await record.concurrent_upload(
+        float_images,
+        FloatImage,
+    )
 
     log.debug("Processing vectors")
     failed_vector_uploads = []
     for vector_model in vectors:
-        _insert(Vector(vector_model), failed_vector_uploads, record)
+        await _insert(Vector(vector_model), failed_vector_uploads, record)
 
     # Combine failed channels from waveforms and images and remove them from the record
     # Update the channel checker to reflect failed uploads
@@ -216,7 +188,10 @@ async def submit_hdf(
             " document",
             record.record.id_,
         )
+        record.record.version = stored_record.version + 1
         await record.update()
+        XRootDClient.cache_hdf(record_model=record.record, buffer=file.file)
+
         content = {
             "message": f"Updated {stored_record.id_}",
             "response": checker_response,
@@ -226,6 +201,7 @@ async def submit_hdf(
     else:
         log.debug("Inserting new record into MongoDB")
         await record.insert()
+        XRootDClient.cache_hdf(record_model=record.record, buffer=file.file)
         record_id = record.record.id_
         content = {
             "message": f"Added as {record_id}",

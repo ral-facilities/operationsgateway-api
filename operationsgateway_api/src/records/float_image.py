@@ -3,7 +3,6 @@ from __future__ import annotations
 from io import BytesIO
 import logging
 
-from botocore.exceptions import ClientError
 import numpy as np
 from PIL import Image
 
@@ -11,7 +10,7 @@ from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import EchoS3Error
 from operationsgateway_api.src.models import FloatImageModel
-from operationsgateway_api.src.records.echo_interface import EchoInterface
+from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.image_abc import ImageABC
 from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
@@ -56,7 +55,7 @@ class FloatImage(ImageABC):
         la_image.close()
 
     @staticmethod
-    def upload_image(input_image: FloatImage) -> str | None:
+    async def upload_image(input_image: FloatImage) -> str | None:
         """
         Save the image on Echo S3 object storage as a compressed numpy array (.npz)
         """
@@ -64,12 +63,11 @@ class FloatImage(ImageABC):
         log.info("Storing float image in a Bytes object: %s", input_image.image.path)
         image_bytes = BytesIO()
         np.savez_compressed(image_bytes, input_image.image.data)
-        echo = EchoInterface()
         storage_path = FloatImage.get_full_path(input_image.image.path)
         log.info("Storing float image on S3: %s", storage_path)
-
+        echo_interface = get_echo_interface()
         try:
-            echo.upload_file_object(image_bytes, storage_path)
+            await echo_interface.upload_file_object(image_bytes, storage_path)
             return None  # No failure
         except EchoS3Error:
             # Extract the channel name and propagate it
@@ -88,9 +86,8 @@ class FloatImage(ImageABC):
         The returned BytesIO encode the image as a png. For use when displaying data.
         """
         log.info("Retrieving float image and returning BytesIO object")
-        array_bytes = await FloatImage.get_storage_bytes(record_id, channel_name)
-        array_bytes.seek(0)
-        npz_file = np.load(array_bytes)
+        array_bytes = await FloatImage.get_bytes(record_id, channel_name)
+        npz_file = np.load(BytesIO(array_bytes))
         array = npz_file["arr_0"]
         npz_file.close()
         absolute_max = FloatImage.get_absolute_max(array)
@@ -99,24 +96,6 @@ class FloatImage(ImageABC):
             absolute_max,
             colourmap_name,
         )
-
-    @staticmethod
-    async def get_storage_bytes(record_id: str, channel_name: str) -> BytesIO:
-        """
-        Get and return the BytesIO of the original compressed npz file. For use when
-        exporting data.
-        """
-        echo = EchoInterface()
-        try:
-            relative_path = FloatImage.get_relative_path(record_id, channel_name)
-            full_path = FloatImage.get_full_path(relative_path)
-            return echo.download_file_object(full_path)
-        except (ClientError, EchoS3Error) as exc:
-            await FloatImage._handle_get_image_exception(
-                record_id=record_id,
-                channel_name=channel_name,
-                exc=exc,
-            )
 
     @staticmethod
     async def get_preferred_colourmap(access_token: str) -> str:
