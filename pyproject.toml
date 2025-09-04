@@ -65,6 +65,7 @@ coverage = "^6.4.4"
 fabric = "^3.1.0"
 pytest-asyncio = "^0.21.0"
 s4cmd = "^2.1.0"
+pytest-mock = "^3.14.1"
 
 [tool.poetry.group.simulated-data.dependencies]
 epac-data-sim = {git = "git@github.com:CentralLaserFacility/EPAC-DataSim.git"}

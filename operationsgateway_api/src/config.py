@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Tuple
 from dateutil import tz
 from pydantic import (
     BaseModel,
+    DirectoryPath,
     Field,
     field_validator,
     FilePath,
@@ -137,6 +138,16 @@ class ObservabilityConfig(BaseModel):
     secret_key: SecretStr  # apm key
 
 
+class BackupConfig(BaseModel):
+    cache_directory: DirectoryPath = Field(
+        description=(
+            "Directory to write incoming files to so that they can later be backed up "
+            "to tape."
+        ),
+        examples=["/home/user/cache/"],
+    )
+
+
 class APIConfig(BaseModel):
     """
     Class to store the API's configuration settings
@@ -156,6 +167,7 @@ class APIConfig(BaseModel):
     echo: EchoConfig
     export: ExportConfig
     observability: ObservabilityConfig
+    backup: BackupConfig | None = None
 
     @classmethod
     def load(cls, path=Path(__file__).parent.parent / "config.yml"):
