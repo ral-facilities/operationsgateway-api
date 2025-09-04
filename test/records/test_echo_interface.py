@@ -6,6 +6,7 @@ from botocore.exceptions import ClientError
 import pytest
 import pytest_asyncio
 
+from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import EchoS3Error
 from operationsgateway_api.src.records.echo_interface import EchoInterface, log
 
@@ -20,6 +21,16 @@ async def echo_interface_with_empty_object() -> AsyncGenerator[EchoInterface, No
     await echo_interface.delete_file_object("empty_object")
 
 
+@pytest_asyncio.fixture(scope="function")
+async def reset_lifecycle() -> AsyncGenerator[None, None]:
+    yield
+
+    echo_interface = EchoInterface()
+    bucket = await echo_interface.get_bucket()
+    lifecycle_configuration = await bucket.LifecycleConfiguration()
+    await lifecycle_configuration.delete()
+
+
 class TestEchoInterface:
     @pytest.mark.asyncio
     async def test_get_bucket(self):
@@ -29,6 +40,45 @@ class TestEchoInterface:
         with patch(target, "test"):
             with pytest.raises(EchoS3Error, match=match):
                 await echo_interface.get_bucket()
+
+    @pytest.mark.asyncio
+    @patch("operationsgateway_api.src.config.Config.config.echo.expiry_days", 1095)
+    async def test_put_lifecycle(self, reset_lifecycle: None):
+        echo_interface = EchoInterface()
+        await echo_interface.put_lifecycle()
+
+        bucket = await echo_interface.get_bucket()
+        lifecycle_configuration = await bucket.LifecycleConfiguration()
+        rules = await lifecycle_configuration.rules
+
+        assert len(rules) == 1
+        assert rules[0] == {
+            "Expiration": {"Days": 1095},
+            "ID": "expiry",
+            "Prefix": "",
+            "Status": "Enabled",
+        }
+
+    @pytest.mark.asyncio
+    async def test_put_lifecycle_unset(self, reset_lifecycle: None):
+        log.info = MagicMock(wraps=log.info)
+        echo_interface = EchoInterface()
+        # expiry_days defaults to None, no PUT sent
+        await echo_interface.put_lifecycle()
+
+        msg = "Expiry lifecycle not configured for %s"
+        log.info.assert_called_with(msg, Config.config.echo.bucket_name)
+
+    @pytest.mark.asyncio
+    # Pydantic config would normally prevent a negative value
+    @patch("operationsgateway_api.src.config.Config.config.echo.expiry_days", -1)
+    async def test_put_lifecycle_failure(self, reset_lifecycle: None):
+        log.exception = MagicMock(wraps=log.exception)
+        echo_interface = EchoInterface()
+        await echo_interface.put_lifecycle()  # Error on PUT caught and logged
+
+        msg = "Failed to put lifecycle for %s"
+        log.exception.assert_called_with(msg, Config.config.echo.bucket_name)
 
     @pytest.mark.asyncio
     async def test_empty_download_file_object(

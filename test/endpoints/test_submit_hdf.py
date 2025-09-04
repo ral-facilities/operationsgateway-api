@@ -1,10 +1,14 @@
+from pathlib import Path
+from tempfile import SpooledTemporaryFile, TemporaryFile
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 import h5py
 import numpy as np
 import pytest
+from pytest_mock import mocker, MockerFixture
 
+from operationsgateway_api.src.config import BackupConfig
 from operationsgateway_api.src.exceptions import DatabaseError, EchoS3Error
 from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from test.records.ingestion.create_test_hdf import create_test_hdf_file
@@ -179,9 +183,15 @@ class TestSubmitHDF:
         reset_record_storage,
         test_app: TestClient,
         login_and_get_token,
+        mocker: MockerFixture,
+        tmp_path: Path,
     ):
 
         _ = await create_test_hdf_file()
+
+        # Mock in the tmp_path fixture
+        backup = BackupConfig(cache_directory=tmp_path)
+        mocker.patch("operationsgateway_api.src.config.Config.config.backup", backup)
 
         test_file = "test.h5"
         files = {"file": (test_file, open(test_file, "rb"))}
@@ -190,6 +200,9 @@ class TestSubmitHDF:
             headers={"Authorization": f"Bearer {login_and_get_token}"},
             files=files,
         )
+        cache_path_1 = tmp_path / "2020/04/07/142816/1.hdf5"
+        assert cache_path_1.exists()
+        assert cache_path_1.stat().st_size == 115056
 
         get_echo_interface.cache_clear()
         test_response = test_app.post(
@@ -228,6 +241,43 @@ class TestSubmitHDF:
 
         assert test_response.json() == expected_response
         assert test_response.status_code == 200
+
+        cache_path_2 = tmp_path / "2020/04/07/142816/2.hdf5"
+        assert cache_path_2.exists()
+        assert cache_path_2.stat().st_size == 115056
+
+        temporary_file = SpooledTemporaryFile()
+        with h5py.File(temporary_file, "w") as f:
+            f.attrs.create("epac_ops_data_version", "1.0")
+            record = f["/"]
+            record.attrs.create("timestamp", "2020-04-07T14:28:16+00:00")
+            record.attrs.create("shotnum", 366272, dtype="u8")
+            record.attrs.create("active_area", "ea1")
+            record.attrs.create("active_experiment", "90097341")
+            group = record.create_group("PM-201-TJ-CRY-T")
+            group.attrs.create("channel_dtype", "scalar")
+            group.create_dataset("data", data=0)
+
+        test_response = test_app.post(
+            "/submit/hdf",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+            files={"file": (test_file, temporary_file)},
+        )
+
+        expected_response = {
+            "message": "Updated 20200407142816",
+            "response": {
+                "accepted_channels": ["PM-201-TJ-CRY-T"],
+                "rejected_channels": {},
+                "warnings": [],
+            },
+        }
+        assert test_response.json() == expected_response
+        assert test_response.status_code == 200
+
+        cache_path_3 = tmp_path / "2020/04/07/142816/3.hdf5"
+        assert cache_path_3.exists()
+        assert cache_path_3.stat().st_size == 7080
 
     @pytest.mark.parametrize(
         "data_version, active_area, expected_response",
