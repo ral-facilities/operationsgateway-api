@@ -10,6 +10,7 @@ from pydantic import (
     Field,
     field_validator,
     FilePath,
+    NonNegativeInt,
     PositiveInt,
     SecretStr,
     StrictBool,
@@ -70,6 +71,7 @@ class EchoConfig(BaseModel):
         description="If defined, objects older than this will be marked for expiry",
         examples=[1095],
     )
+    cache_maxsize: NonNegativeInt = 128
 
 
 class MongoDB(BaseModel):

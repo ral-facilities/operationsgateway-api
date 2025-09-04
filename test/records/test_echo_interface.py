@@ -1,7 +1,6 @@
 from io import BytesIO
-import re
-from typing import Any, AsyncGenerator, Generator
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import AsyncGenerator
+from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 from botocore.exceptions import ClientError
 import pytest
@@ -145,3 +144,24 @@ class TestEchoInterface:
         echo_interface = EchoInterface()
         echo_interface._bucket = await echo_interface.get_bucket()
         assert not await echo_interface.head_object("test")
+
+    @pytest.mark.asyncio
+    async def test_cached_bytes(self):
+        echo_interface = EchoInterface()
+        echo_interface._bucket = await echo_interface.get_bucket()
+        echo_interface._bucket.download_fileobj = MagicMock(
+            wraps=echo_interface._bucket.download_fileobj,
+        )
+        # First call results in download
+        object_path = "images/2023/06/05/100000/FE-204-NSO-P1-CAM-1.png"
+        await echo_interface.download_file_object(object_path)
+        echo_interface._bucket.download_fileobj.assert_called_once_with(
+            Fileobj=ANY,
+            Key=object_path,
+        )
+        # Second call does not result in an additional download as bytes are cached
+        await echo_interface.download_file_object(object_path)
+        echo_interface._bucket.download_fileobj.assert_called_once_with(
+            Fileobj=ANY,
+            Key=object_path,
+        )

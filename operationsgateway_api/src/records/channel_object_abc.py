@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from io import BytesIO
 import logging
 
 from operationsgateway_api.src.exceptions import EchoS3Error
@@ -51,7 +50,7 @@ class ChannelObjectABC(ABC):
         record_id: str,
         channel_name: str,
         use_subdirectories: bool = True,
-    ) -> BytesIO:
+    ) -> bytes:
         """
         Gets the bytes for this record and channel, handling any exceptions.
         """

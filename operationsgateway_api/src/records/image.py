@@ -144,10 +144,10 @@ class Image(ImageABC):
         upper_level: int,
         limit_bit_depth: int,
         colourmap_name: str,
-    ) -> BytesIO:
+    ) -> bytes:
         """
-        Retrieve an image from Echo S3 and return the bytes of the image in a BytesIO
-        object depending on what the user has requested.
+        Retrieve an image from Echo S3 and return the bytes of the image depending on
+        what the user has requested.
 
         If 'original_image' is set to True then just return the unprocessed bytes of the
         image read from Echo S3, otherwise apply false colour to the image either using
@@ -175,13 +175,13 @@ class Image(ImageABC):
 
     @staticmethod
     def apply_false_colour(
-        image_bytes: BytesIO,
+        image_bytes: bytes,
         original_image: bool,
         lower_level: int,
         upper_level: int,
         limit_bit_depth: int,
         colourmap_name: str,
-    ) -> BytesIO:
+    ) -> bytes:
         """
         If not requesting the `original_image`, then false colour will be applied to
         `image_bytes` using the other parameters.
@@ -191,7 +191,7 @@ class Image(ImageABC):
             return image_bytes
         else:
             log.debug("False colour requested, applying false colour to image")
-            img_src = PILImage.open(image_bytes)
+            img_src = PILImage.open(BytesIO(image_bytes))
             orig_img_array = np.array(img_src)
             storage_bit_depth = FalseColourHandler.get_pixel_depth(img_src)
             false_colour_image = FalseColourHandler.apply_false_colour(
@@ -203,7 +203,7 @@ class Image(ImageABC):
                 colourmap_name=colourmap_name,
             )
             img_src.close()
-            return false_colour_image
+            return false_colour_image.getvalue()
 
     @staticmethod
     async def get_preferred_colourmap(access_token: str) -> str:
