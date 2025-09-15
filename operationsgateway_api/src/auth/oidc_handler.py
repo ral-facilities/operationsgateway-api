@@ -16,7 +16,7 @@ log = logging.getLogger()
 
 class OidcProvider:
     def __init__(self, provider_config: OidcProviderConfig) -> None:
-        self._audience = provider_config.audience
+        self._audience = provider_config.client_id
         self._mechanism = provider_config.mechanism
         self._matching_claim = provider_config.matching_claim
 

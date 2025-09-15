@@ -173,19 +173,24 @@ async def oidc_login(
     return response
 
 
-@router.get("/oidc_providers")
+@router.get(
+    path="/oidc_providers",
+    summary="Get a list of OIDC providers",
+    response_description="Returns a list of OIDC providers",
+    tags=["Authentication"],
+)
 @endpoint_error_handling
 async def list_oidc_providers():
-    """
-    Returns a list of available OIDC providers with display name,
-    configuration URL, and client ID (audience).
-    """
-    providers = [
-        {
-            "display_name": name,
-            "configuration_url": config.configuration_url,
-            "client_id": config.audience,
+    log.info("Getting a list of OIDC providers")
+
+    providers = {
+        provider_id: {
+            "display_name": cfg.display_name,
+            "configuration_url": cfg.configuration_url,
+            "client_id": cfg.client_id,
+            "pkce": True,
+            "scope": cfg.scope,
         }
-        for name, config in Config.config.auth.oidc_providers.items()
-    ]
+        for provider_id, cfg in Config.config.auth.oidc_providers.items()
+    }
     return providers
