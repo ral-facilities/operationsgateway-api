@@ -127,3 +127,15 @@ class UserError(ApiError):
     def __init__(self, msg="User error", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)
         self.status_code = 400
+
+
+class InvalidJWTError(UserError):
+    def __init__(self, msg="Invalid OIDC id_token", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 403  # forbidden
+
+
+class OidcProviderNotFoundError(AuthServerError):
+    def __init__(self, msg="Unknown OIDC provider", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+        self.status_code = 404  # not found

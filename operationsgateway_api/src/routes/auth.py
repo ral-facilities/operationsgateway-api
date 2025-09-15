@@ -4,9 +4,9 @@ from fastapi import APIRouter, Body, Cookie, Depends, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing_extensions import Annotated
 
+from operationsgateway_api.src.auth import oidc
 from operationsgateway_api.src.auth.authentication import Authentication
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
-from operationsgateway_api.src.auth.oidc_handler import OidcHandler
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import ForbiddenError, UnauthorisedError
@@ -130,7 +130,7 @@ async def refresh(
 
 
 @router.post(
-    "/oidc_login",
+    path="/oidc_login/{provider_id}",
     summary="Login using an OpenID Connect (OIDC) token",
     response_description="A JWT access token (and a refresh token cookie)",
     responses={401: {"description": "Unauthorized"}},
@@ -138,39 +138,24 @@ async def refresh(
 )
 @endpoint_error_handling
 async def oidc_login(
-    oidc_handler: Annotated[OidcHandler, Depends(OidcHandler)],
+    provider_id: Annotated[str, "OIDC provider id"],
     bearer_token: Annotated[
         HTTPAuthorizationCredentials,
         Depends(HTTPBearer(description="OIDC ID token")),
     ],
 ):
-    """
-    This endpoint takes an OIDC token (usually from Keycloak), verifies it, and returns
-    a JWT access token and refresh token for this API.
-    """
     log.info("Received OIDC login request")
+    id_token = bearer_token.credentials
 
-    encoded_token = bearer_token.credentials
+    mechanism, oidc_username = oidc.get_username(provider_id, id_token)
+    log.debug("Validated OIDC user via %s: %s", mechanism, oidc_username)
 
-    # Validate the OIDC token and extract claims (throws error if invalid)
-    oidc_email = oidc_handler.handle(encoded_token)
-    log.debug("Validated OIDC claims: %s", oidc_email)
-
-    # Construct a User model (or dummy object) to use with JwtHandler
-    user_model = await User.get_user_by_email(oidc_email)
-
+    user_model = await User.get_user_by_email(oidc_username)
     if not user_model:
-        log.warning("User '%s' not found in user database", oidc_email)
+        log.warning("User '%s' not found in user database", oidc_username)
         raise UnauthorisedError
 
-    log.info(
-        "Creating refresh token for '%s'",
-        oidc_email,
-    )
-
-    response = Authentication.create_tokens_response(user_model)
-
-    return response
+    return Authentication.create_tokens_response(user_model)
 
 
 @router.get(
