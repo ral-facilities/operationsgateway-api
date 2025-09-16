@@ -1,4 +1,3 @@
-from functools import lru_cache
 import json
 import logging
 
@@ -36,7 +35,6 @@ def set_maintenance(
 ) -> None:
     with open(Config.config.app.maintenance_file, "w") as f:
         f.write(maintenance_body.model_dump_json())
-    _get_maintenance.cache_clear()
 
 
 @router.get(
@@ -62,16 +60,13 @@ def set_scheduled_maintenance(
 ) -> None:
     with open(Config.config.app.scheduled_maintenance_file, "w") as f:
         f.write(maintenance_body.model_dump_json())
-    _get_scheduled_maintenance.cache_clear()
 
 
-@lru_cache
 def _get_maintenance() -> dict:
     with open(Config.config.app.maintenance_file, "rb") as f:
         return json.load(f)
 
 
-@lru_cache
 def _get_scheduled_maintenance() -> dict:
     with open(Config.config.app.scheduled_maintenance_file, "rb") as f:
         return json.load(f)
