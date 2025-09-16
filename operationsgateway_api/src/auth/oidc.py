@@ -20,7 +20,8 @@ def get_well_known_config(provider_id: str) -> dict:
         raise OidcProviderNotFoundError from exc
 
     r = requests.get(
-        provider_config.configuration_url, verify=provider_config.verify_cert,
+        provider_config.configuration_url,
+        verify=provider_config.verify_cert,
     )
     r.raise_for_status()
     return r.json()
