@@ -98,3 +98,8 @@ observability:
 #   timezone_str: Europe/London
 #   worker_file_path: /dev/shm/og-backup
 #   auto_remove: backed_up
+#   mail:
+#     host: localhost:port
+#     to_addrs:
+#       - notify-me@stfc.ac.uk
+#     from_addr: no-reply@operationsgateway.stfc.ac.uk
