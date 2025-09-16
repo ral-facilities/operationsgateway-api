@@ -142,6 +142,12 @@ class ObservabilityConfig(BaseModel):
     secret_key: SecretStr  # apm key
 
 
+class MailConfig(BaseModel):
+    host: StrictStr = Field(description="Mail server address, including port.")
+    to_addrs: list[StrictStr] = Field(description="Address to send notifications to.")
+    from_addr: StrictStr = Field(description="Address to send the mail from")
+
+
 class BackupConfig(BaseModel):
     cache_directory: DirectoryPath = Field(
         description=(
@@ -179,6 +185,10 @@ class BackupConfig(BaseModel):
             "the XRootD cache, when it is backed up to tape, or never."
         ),
         examples=["cached", "backed_up", "never"],
+    )
+    mail: MailConfig | None = Field(
+        default=None,
+        description="Optional mail server to use to send email notifications to.",
     )
 
 
