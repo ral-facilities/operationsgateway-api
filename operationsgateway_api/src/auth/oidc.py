@@ -4,6 +4,7 @@ import requests
 
 from operationsgateway_api.src.config import Config, OidcProviderConfig
 from operationsgateway_api.src.exceptions import (
+    AuthServerError,
     InvalidJWTError,
     OidcProviderNotFoundError,
 )
@@ -19,11 +20,16 @@ def get_well_known_config(provider_id: str) -> dict:
     except KeyError as exc:
         raise OidcProviderNotFoundError from exc
 
-    r = requests.get(
-        provider_config.configuration_url,
-        verify=provider_config.verify_cert,
-    )
-    r.raise_for_status()
+    try:
+        r = requests.get(
+            provider_config.configuration_url,
+            verify=provider_config.verify_cert,
+        )
+    except requests.exceptions.RequestException as exc:
+        raise AuthServerError(
+            f"Request to {provider_config.configuration_url} failed",
+        ) from exc
+
     return r.json()
 
 
@@ -40,8 +46,11 @@ def get_jwks(provider_id: str) -> dict:
     well_known_config = get_well_known_config(provider_id)
     jwks_uri = well_known_config["jwks_uri"]
 
-    r = requests.get(jwks_uri, verify=provider_config.verify_cert)
-    r.raise_for_status()
+    try:
+        r = requests.get(jwks_uri, verify=provider_config.verify_cert)
+    except requests.exceptions.RequestException as exc:
+        raise AuthServerError(f"Request to {jwks_uri} failed") from exc
+
     jwks_config = r.json()
 
     keys = {}
