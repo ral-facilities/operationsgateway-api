@@ -24,6 +24,7 @@ def get_well_known_config(provider_id: str) -> dict:
         r = requests.get(
             provider_config.configuration_url,
             verify=provider_config.verify_cert,
+            timeout=5,
         )
     except requests.exceptions.RequestException as exc:
         raise AuthServerError(
@@ -47,7 +48,11 @@ def get_jwks(provider_id: str) -> dict:
     jwks_uri = well_known_config["jwks_uri"]
 
     try:
-        r = requests.get(jwks_uri, verify=provider_config.verify_cert)
+        r = requests.get(
+            jwks_uri,
+            verify=provider_config.verify_cert,
+            timeout=5,
+        )
     except requests.exceptions.RequestException as exc:
         raise AuthServerError(f"Request to {jwks_uri} failed") from exc
 
@@ -94,6 +99,9 @@ def get_username(provider_id: str, id_token: str) -> tuple[str, str]:
         )
 
         return provider_config.mechanism, payload[provider_config.username_claim]
+
+    except jwt.ExpiredSignatureError as exc:
+        raise InvalidJWTError("JWT has expired") from exc
 
     except jwt.exceptions.InvalidTokenError as exc:
         raise InvalidJWTError("Invalid OIDC id_token") from exc
