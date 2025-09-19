@@ -15,39 +15,46 @@ class TestOidcProviders:
                 "Provider",
                 (),
                 {
-                    "configuration_url": "http://localhost:8081/realms/"
-                    "testrealm/.well-known/openid-configuration",
-                    "audience": "operations-gateway",
+                    "display_name": "Keycloak",
+                    "configuration_url": "http://localhost:8081/realms/testrealm"
+                    "/.well-known/openid-configuration",
+                    "client_id": "operations-gateway",
+                    "scope": "openid profile email",
+                    "verify_cert": True,
                 },
             )(),
-            "AnotherProvider": type(
+            "STFC": type(
                 "Provider",
                 (),
                 {
+                    "display_name": "STFC Single Sign On",
                     "configuration_url": "https://example.com/oidc",
-                    "audience": "example-client-id",
+                    "client_id": "example-client-id",
+                    "scope": "openid",
+                    "verify_cert": True,
                 },
             )(),
         }
 
     def test_list_oidc_providers(self, test_app: TestClient, mock_oidc_providers):
-        """Test to check that the endpoint can return a list of oidc providers"""
-        # Patch the config.auth.oidc_providers dictionary
         with patch.object(Config.config.auth, "oidc_providers", mock_oidc_providers):
-            response = test_app.get("/oidc_providers")
+            resp = test_app.get("/oidc_providers")
 
-        # Assert correct structure and values
-        assert response.status_code == 200
-        assert response.json() == [
-            {
+        assert resp.status_code == 200
+        assert resp.json() == {
+            "Keycloak": {
                 "display_name": "Keycloak",
-                "configuration_url": "http://localhost:8081/realms/"
-                "testrealm/.well-known/openid-configuration",
+                "configuration_url": "http://localhost:8081/realms/testrealm/"
+                ".well-known/openid-configuration",
                 "client_id": "operations-gateway",
+                "pkce": True,  # because client_secret is set
+                "scope": "openid profile email",
             },
-            {
-                "display_name": "AnotherProvider",
+            "STFC": {
+                "display_name": "STFC Single Sign On",
                 "configuration_url": "https://example.com/oidc",
                 "client_id": "example-client-id",
+                "pkce": True,  # because client_secret is None
+                "scope": "openid",
             },
-        ]
+        }

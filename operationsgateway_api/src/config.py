@@ -75,11 +75,13 @@ class MongoDB(BaseModel):
 
 
 class OidcProviderConfig(BaseModel):
+    display_name: str
     configuration_url: StrictStr
-    audience: StrictStr
+    client_id: StrictStr
     verify_cert: StrictBool
     mechanism: StrictStr
-    matching_claim: StrictStr
+    scope: str = "openid"
+    username_claim: StrictStr
 
 
 class AuthConfig(BaseModel):
