@@ -80,8 +80,11 @@ class OidcProviderConfig(BaseModel):
     client_id: StrictStr
     verify_cert: StrictBool
     mechanism: StrictStr
-    scope: str = "openid"
     username_claim: StrictStr
+
+    @property
+    def scope(self) -> str:
+        return "openid " + self.username_claim
 
 
 class AuthConfig(BaseModel):
