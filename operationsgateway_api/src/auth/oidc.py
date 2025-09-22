@@ -9,6 +9,9 @@ from operationsgateway_api.src.exceptions import (
     OidcProviderNotFoundError,
 )
 
+# Amount of leeway (in seconds) when validating exp & iat
+LEEWAY = 5
+
 
 @ttl_cache(ttl=24 * 60 * 60)
 def get_well_known_config(provider_id: str) -> dict:
@@ -88,7 +91,7 @@ def get_username(provider_id: str, id_token: str) -> tuple[str, str]:
             key=key,
             algorithms=[key.algorithm_name],
             audience=provider_config.client_id,
-            isser=1,
+            issuer=1,
             verify=True,
             options={
                 "require": ["exp", "aud", "iss"],
@@ -96,6 +99,7 @@ def get_username(provider_id: str, id_token: str) -> tuple[str, str]:
                 "verify_aud": True,
                 "verify_iss": True,
             },
+            leeway=LEEWAY,
         )
 
         return provider_config.mechanism, payload[provider_config.username_claim]
