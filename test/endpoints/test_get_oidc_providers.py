@@ -3,7 +3,7 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 import pytest
 
-from operationsgateway_api.src.config import Config
+from operationsgateway_api.src.config import Config, OidcProviderConfig
 
 
 class TestOidcProviders:
@@ -11,29 +11,22 @@ class TestOidcProviders:
     @pytest.fixture
     def mock_oidc_providers(self):
         return {
-            "Keycloak": type(
-                "Provider",
-                (),
-                {
-                    "display_name": "Keycloak",
-                    "configuration_url": "http://localhost:8081/realms/testrealm"
-                    "/.well-known/openid-configuration",
-                    "client_id": "operations-gateway",
-                    "scope": "openid profile email",
-                    "verify_cert": True,
-                },
-            )(),
-            "STFC": type(
-                "Provider",
-                (),
-                {
-                    "display_name": "STFC Single Sign On",
-                    "configuration_url": "https://example.com/oidc",
-                    "client_id": "example-client-id",
-                    "scope": "openid",
-                    "verify_cert": True,
-                },
-            )(),
+            "Keycloak": OidcProviderConfig(
+                display_name="Keycloak",
+                configuration_url="http://localhost:8081/realms/testrealm/.well-known/openid-configuration",
+                client_id="operations-gateway",
+                verify_cert=True,
+                mechanism="oidc",
+                username_claim="email",
+            ),
+            "STFC": OidcProviderConfig(
+                display_name="STFC Single Sign On",
+                configuration_url="https://example.com/oidc",
+                client_id="example-client-id",
+                verify_cert=True,
+                mechanism="oidc",
+                username_claim="email",
+            ),
         }
 
     def test_list_oidc_providers(self, test_app: TestClient, mock_oidc_providers):
@@ -47,14 +40,14 @@ class TestOidcProviders:
                 "configuration_url": "http://localhost:8081/realms/testrealm/"
                 ".well-known/openid-configuration",
                 "client_id": "operations-gateway",
-                "pkce": True,  # because client_secret is set
-                "scope": "openid profile email",
+                "pkce": True,
+                "scope": "openid email",
             },
             "STFC": {
                 "display_name": "STFC Single Sign On",
                 "configuration_url": "https://example.com/oidc",
                 "client_id": "example-client-id",
-                "pkce": True,  # because client_secret is None
-                "scope": "openid",
+                "pkce": True,
+                "scope": "openid email",
             },
         }
