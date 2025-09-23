@@ -9,7 +9,7 @@ from operationsgateway_api.src.exceptions import (
     OidcProviderNotFoundError,
 )
 
-# Amount of leeway (in seconds) when validating exp & iat
+# Amount of leeway (in seconds) when validating exp
 LEEWAY = 5
 
 
