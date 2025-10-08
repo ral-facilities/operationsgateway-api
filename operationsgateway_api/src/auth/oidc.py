@@ -91,7 +91,7 @@ def get_username(provider_id: str, id_token: str) -> tuple[str, str]:
             key=key,
             algorithms=[key.algorithm_name],
             audience=provider_config.client_id,
-            issuer=1,
+            issuer=get_well_known_config(provider_id)["issuer"],
             verify=True,
             options={
                 "require": ["exp", "aud", "iss"],
