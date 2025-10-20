@@ -51,7 +51,7 @@ class TestBackupRunner:
         with patch(target, disk_usage):
             BackupRunner._check_cache_usage()
 
-        log.info.assert_called_with("Current cache usage %.1f", 10.0)
+        log.info.assert_called_with("Current cache usage %.1f%%", 10.0)
 
     def test_check_cache_usage_high(self) -> None:
         log.warning = MagicMock(wraps=log.warning)
@@ -61,4 +61,4 @@ class TestBackupRunner:
         with patch(target, disk_usage):
             BackupRunner._check_cache_usage()
 
-        log.warning.assert_called_with("Current cache usage %.1f", 90.0)
+        log.warning.assert_called_with("Current cache usage %.1f%%", 90.0)

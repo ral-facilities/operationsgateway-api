@@ -92,10 +92,10 @@ observability:
 # At a later date, these hdf5 files will then be copied to tape
 # Once successful, the local copy will be removed
 # backup:
-#   cache_directory: /srv/og-api/cache
-#   warning_mark_percent: 50
-#   target_url: root://localhost:1094//path/to/directory/
-#   copy_cron_string: "0 0 * * *"
-#   timezone_str: Europe/London
-#   worker_file_path: /dev/shm/og-backup
-#   auto_remove: backed_up
+#   cache_directory: /srv/og-api/cache  # Directory to write incoming files to so that they can later be backed up to tape
+#   warning_mark_percent: 50  # Above this level of disk usage for the cache_directory, log warnings
+#   target_url: root://localhost:1094//path/to/directory/  # XRootD URL defining the server and root directory path to copy to
+#   copy_cron_string: "0 0 * * *"  # Cron string defining the schedule of the backup tasks
+#   timezone_str: Europe/London  # String to pass to Cron for determining the schedule
+#   worker_file_path: /dev/shm/og-backup  # Path of file used to ensure back is only handled by one worker.
+#   auto_remove: backed_up  # Under what condition to remove local file copies: when there is a copy in the XRootD cache, when it is backed up to tape, or never.

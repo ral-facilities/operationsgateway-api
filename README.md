@@ -26,7 +26,7 @@ See commands below to install the development tools for specific operating syste
 #### Rocky 9
 
 ```bash
-sudo dnf install "@Development Tools" python3.11 python3.11-pip python3.11-setuptools python3.11-devel openldap-devel swig gcc gcc-c++ openssl-devel cmake3 libuv-1:1.41.1 libuuid-devel git
+sudo dnf install "@Development Tools" python3.11 python3.11-pip python3.11-setuptools python3.11-devel openldap-devel swig gcc gcc-c++ openssl-devel cmake3 libuv libuuid-devel git
 ```
 
 #### Debian 12
