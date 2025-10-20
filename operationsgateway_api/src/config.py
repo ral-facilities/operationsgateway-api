@@ -83,11 +83,16 @@ class MongoDB(BaseModel):
 
 
 class OidcProviderConfig(BaseModel):
+    display_name: str
     configuration_url: StrictStr
-    audience: StrictStr
+    client_id: StrictStr
     verify_cert: StrictBool
     mechanism: StrictStr
-    matching_claim: StrictStr
+    username_claim: StrictStr
+
+    @property
+    def scope(self) -> str:
+        return "openid " + self.username_claim
 
 
 class AuthConfig(BaseModel):

@@ -1,25 +1,18 @@
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 import pytest
 from starlette.responses import JSONResponse
 
-from operationsgateway_api.src.auth.oidc_handler import OidcHandler
-from operationsgateway_api.src.main import app
+from operationsgateway_api.src.exceptions import InvalidJWTError
 
 pytestmark = pytest.mark.asyncio
 
 
 class TestOidcAuth:
-    @pytest.fixture
-    def override_oidc_handler(self):
-        """Fixture to override the real OidcHandler dependency with a mock."""
-        mock_handler = Mock()
-        mock_handler.handle.return_value = "user@example.ac.uk"
-        app.dependency_overrides[OidcHandler] = lambda: mock_handler
-        yield
-        app.dependency_overrides.clear()
+    provider_id = "Keycloak"
 
+    @patch("operationsgateway_api.src.auth.oidc.get_username")
     @patch(
         "operationsgateway_api.src.users.user.User.get_user_by_email",
         new_callable=AsyncMock,
@@ -31,20 +24,24 @@ class TestOidcAuth:
         self,
         mock_create_tokens_response,
         mock_get_user_by_email,
-        override_oidc_handler,
+        mock_get_username,
         test_app: TestClient,
     ):
-        """Test successful OIDC login (Mocks token verification, user lookup,
-        and token generation.)"""
+        """Here we are trying to test that a valid ID token yields access
+        and refresh tokens."""
         fake_id_token = "does.not.matter"
 
+        # mock the OIDC username extraction (mechanism, username)
+        mock_get_username.return_value = ("OIDC", "user@example.ac.uk")
+
+        # mock the user lookup to return a minimal user object
         mock_get_user_by_email.return_value = type(
             "User",
             (),
             {"username": "user", "auth_type": "FedID"},
         )()
 
-        # Mock response from create_tokens_response
+        # mock the token response (access body + refresh cookie)
         response_body = {"access": "mock_access_token"}
         mock_response = JSONResponse(content=response_body)
         mock_response.set_cookie(
@@ -58,51 +55,59 @@ class TestOidcAuth:
         )
         mock_create_tokens_response.return_value = mock_response
 
-        response = test_app.post(
-            "/oidc_login",
+        # exercise the endpoint
+        resp = test_app.post(
+            f"/oidc_login/{self.provider_id}",
             headers={"Authorization": f"Bearer {fake_id_token}"},
         )
 
-        assert response.status_code == 200
-        assert response.json()["access"] == "mock_access_token"
-        assert "refresh_token=" in response.headers.get("set-cookie", "")
+        # assert success, access token in body and refresh cookie set
+        assert resp.status_code == 200
+        assert resp.json()["access"] == "mock_access_token"
+        assert "refresh_token=" in (resp.headers.get("set-cookie") or "")
 
-    def test_oidc_login_invalid_jwt_returns_400(
+    @patch("operationsgateway_api.src.auth.oidc.get_username")
+    def test_oidc_login_invalid_jwt_returns_403(
         self,
+        mock_get_username,
         test_app: TestClient,
     ):
-        """Test to check the case where the provided JWT is malformed or invalid."""
+        """Here we are trying to test that an invalid/malformed ID token
+        gives a 403."""
         invalid_token = "not.a.jwt"
 
-        response = test_app.post(
-            "/oidc_login",
+        # mock the OIDC layer to raise your domain error
+        mock_get_username.side_effect = InvalidJWTError("Invalid OIDC id_token")
+
+        resp = test_app.post(
+            f"/oidc_login/{self.provider_id}",
             headers={"Authorization": f"Bearer {invalid_token}"},
         )
 
-        assert response.status_code == 400
-        assert response.json() == {"detail": "Invalid OIDC ID token"}
+        assert resp.status_code == 403
+        assert resp.json() == {"detail": "Invalid OIDC id_token"}
 
-    @patch(
-        "operationsgateway_api.src.auth.oidc_handler.OidcHandler.handle",
-        new_callable=Mock,
-    )
+    @patch("operationsgateway_api.src.auth.oidc.get_username")
     @patch(
         "operationsgateway_api.src.users.user.User.get_user_by_email",
         new_callable=AsyncMock,
     )
-    async def test_oidc_login_user_not_found_returns_401(
+    def test_oidc_login_user_not_found_returns_401(
         self,
-        mock_user_get,
-        mock_oidc_handle,
+        mock_get_user_by_email,
+        mock_get_username,
         test_app: TestClient,
     ):
-        """Test to check the case where token is valid but user does not exist in DB"""
-        mock_oidc_handle.return_value = "missing_user@example.com"
-        mock_user_get.return_value = None  # Simulate user not in DB
+        """Here we are trying to test that a valid token but missing user
+        gives a 401."""
+        # mock OIDC to return a valid username
+        mock_get_username.return_value = ("OIDC", "missing_user@example.com")
+        # mock DB lookup to return nothing
+        mock_get_user_by_email.return_value = None
 
-        response = test_app.post(
-            "/oidc_login",
+        resp = test_app.post(
+            f"/oidc_login/{self.provider_id}",
             headers={"Authorization": "Bearer valid_token_but_user_not_found"},
         )
 
-        assert response.status_code == 401
+        assert resp.status_code == 401
