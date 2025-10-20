@@ -98,7 +98,7 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{og-api-local}}/oidc_login",
+							"raw": "{{og-api-local}}/oidc_login/stfc",
 							"host": [
 								"{{og-api-local}}"
 							],
