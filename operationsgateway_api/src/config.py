@@ -185,6 +185,14 @@ class BackupConfig(BaseModel):
         ),
         examples=["cached", "backed_up", "never"],
     )
+    keytab_file_path: FilePath = Field(
+        default=None,
+        description=(
+            "Path of keytab file used to authenticate to the XRootD server. If not "
+            "set, will attempt to use the environment variable XrdSecSSSKT."
+        ),
+        examples=["/home/user/.keytab"],
+    )
 
 
 class APIConfig(BaseModel):

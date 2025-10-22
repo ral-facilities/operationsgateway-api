@@ -99,3 +99,4 @@ observability:
 #   timezone_str: Europe/London  # String to pass to Cron for determining the schedule
 #   worker_file_path: /dev/shm/og-backup  # Path of file used to ensure back is only handled by one worker.
 #   auto_remove: backed_up  # Under what condition to remove local file copies: when there is a copy in the XRootD cache, when it is backed up to tape, or never.
+#   keytab_file_path: /srv/og-api/.keytab  # Path of keytab file used to authenticate to the XRootD server. If not set, will attempt to use the environment variable XrdSecSSSKT.
