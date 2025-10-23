@@ -51,11 +51,12 @@ auth:
   fedid_server_ldap_realm: FED.CCLRC.AC.UK
   oidc_providers:
     keycloak:
-      configuration_url: https://keycloak.example.com/realms/myrealm/.well-known/openid-configuration
-      audience: operations-gateway  # also known as the client id
+      display_name: A name # This gets displayed on the FE as an auth option
+      configuration_url: http://localhost:8081/realms/testrealm/.well-known/openid-configuration
+      client_id: operations-gateway
       verify_cert: true
       mechanism: oidc
-      matching_claim: email
+      username_claim: email
 experiments:
   user_office_rest_api_url: https://devapi.facilities.rl.ac.uk/users-service/v1
   scheduler_wsdl_url: https://devapis.facilities.rl.ac.uk/ws/ScheduleWebService?wsdl
@@ -91,15 +92,16 @@ observability:
 # At a later date, these hdf5 files will then be copied to tape
 # Once successful, the local copy will be removed
 # backup:
-#   cache_directory: /srv/og-api/cache
-#   warning_mark_percent: 50
-#   target_url: root://localhost:1094//path/to/directory/
-#   copy_cron_string: "0 0 * * *"
-#   timezone_str: Europe/London
-#   worker_file_path: /dev/shm/og-backup
-#   auto_remove: backed_up
-#   mail:
-#     host: localhost:port
-#     to_addrs:
+#   cache_directory: /srv/og-api/cache  # Directory to write incoming files to so that they can later be backed up to tape
+#   warning_mark_percent: 50  # Above this level of disk usage for the cache_directory, log warnings
+#   target_url: root://localhost:1094//path/to/directory/  # XRootD URL defining the server and root directory path to copy to
+#   copy_cron_string: "0 0 * * *"  # Cron string defining the schedule of the backup tasks
+#   timezone_str: Europe/London  # String to pass to Cron for determining the schedule
+#   worker_file_path: /dev/shm/og-backup  # Path of file used to ensure back is only handled by one worker.
+#   auto_remove: backed_up  # Under what condition to remove local file copies: when there is a copy in the XRootD cache, when it is backed up to tape, or never.
+#   keytab_file_path: /srv/og-api/.keytab  # Path of keytab file used to authenticate to the XRootD server. If not set, will attempt to use the environment variable XrdSecSSSKT.
+#   mail:  # Optional mail server to use to send email notifications to.
+#     host: localhost:port  # Mail server address, including port.
+#     to_addrs:  # Addresses to send notifications to.
 #       - notify-me@stfc.ac.uk
-#     from_addr: no-reply@operationsgateway.stfc.ac.uk
+#     from_addr: no-reply@operationsgateway.stfc.ac.uk  # Address to send the mail from

@@ -3,7 +3,7 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 import pytest
 
-from operationsgateway_api.src.config import Config
+from operationsgateway_api.src.config import Config, OidcProviderConfig
 
 
 class TestOidcProviders:
@@ -11,43 +11,43 @@ class TestOidcProviders:
     @pytest.fixture
     def mock_oidc_providers(self):
         return {
-            "Keycloak": type(
-                "Provider",
-                (),
-                {
-                    "configuration_url": "http://localhost:8081/realms/"
-                    "testrealm/.well-known/openid-configuration",
-                    "audience": "operations-gateway",
-                },
-            )(),
-            "AnotherProvider": type(
-                "Provider",
-                (),
-                {
-                    "configuration_url": "https://example.com/oidc",
-                    "audience": "example-client-id",
-                },
-            )(),
+            "Keycloak": OidcProviderConfig(
+                display_name="Keycloak",
+                configuration_url="http://localhost:8081/realms/testrealm/.well-known/openid-configuration",
+                client_id="operations-gateway",
+                verify_cert=True,
+                mechanism="oidc",
+                username_claim="email",
+            ),
+            "STFC": OidcProviderConfig(
+                display_name="STFC Single Sign On",
+                configuration_url="https://example.com/oidc",
+                client_id="example-client-id",
+                verify_cert=True,
+                mechanism="oidc",
+                username_claim="email",
+            ),
         }
 
     def test_list_oidc_providers(self, test_app: TestClient, mock_oidc_providers):
-        """Test to check that the endpoint can return a list of oidc providers"""
-        # Patch the config.auth.oidc_providers dictionary
         with patch.object(Config.config.auth, "oidc_providers", mock_oidc_providers):
-            response = test_app.get("/oidc_providers")
+            resp = test_app.get("/oidc_providers")
 
-        # Assert correct structure and values
-        assert response.status_code == 200
-        assert response.json() == [
-            {
+        assert resp.status_code == 200
+        assert resp.json() == {
+            "Keycloak": {
                 "display_name": "Keycloak",
-                "configuration_url": "http://localhost:8081/realms/"
-                "testrealm/.well-known/openid-configuration",
+                "configuration_url": "http://localhost:8081/realms/testrealm/"
+                ".well-known/openid-configuration",
                 "client_id": "operations-gateway",
+                "pkce": True,
+                "scope": "openid email",
             },
-            {
-                "display_name": "AnotherProvider",
+            "STFC": {
+                "display_name": "STFC Single Sign On",
                 "configuration_url": "https://example.com/oidc",
                 "client_id": "example-client-id",
+                "pkce": True,
+                "scope": "openid email",
             },
-        ]
+        }

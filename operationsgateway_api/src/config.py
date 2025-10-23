@@ -85,11 +85,16 @@ class MongoDB(BaseModel):
 
 
 class OidcProviderConfig(BaseModel):
+    display_name: str
     configuration_url: StrictStr
-    audience: StrictStr
+    client_id: StrictStr
     verify_cert: StrictBool
     mechanism: StrictStr
-    matching_claim: StrictStr
+    username_claim: StrictStr
+
+    @property
+    def scope(self) -> str:
+        return "openid " + self.username_claim
 
 
 class AuthConfig(BaseModel):
@@ -144,7 +149,7 @@ class ObservabilityConfig(BaseModel):
 
 class MailConfig(BaseModel):
     host: StrictStr = Field(description="Mail server address, including port.")
-    to_addrs: list[StrictStr] = Field(description="Address to send notifications to.")
+    to_addrs: list[StrictStr] = Field(description="Addresses to send notifications to.")
     from_addr: StrictStr = Field(description="Address to send the mail from")
 
 
@@ -185,6 +190,14 @@ class BackupConfig(BaseModel):
             "the XRootD cache, when it is backed up to tape, or never."
         ),
         examples=["cached", "backed_up", "never"],
+    )
+    keytab_file_path: FilePath = Field(
+        default=None,
+        description=(
+            "Path of keytab file used to authenticate to the XRootD server. If not "
+            "set, will attempt to use the environment variable XrdSecSSSKT."
+        ),
+        examples=["/home/user/.keytab"],
     )
     mail: MailConfig | None = Field(
         default=None,

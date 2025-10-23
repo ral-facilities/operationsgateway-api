@@ -26,7 +26,7 @@ See commands below to install the development tools for specific operating syste
 #### Rocky 9
 
 ```bash
-sudo dnf install "@Development Tools" python3.11 python3.11-pip python3.11-setuptools python3.11-devel openldap-devel swig gcc gcc-c++ openssl-devel cmake3 libuv-1:1.41.1 libuuid-devel git
+sudo dnf install "@Development Tools" python3.11 python3.11-pip python3.11-setuptools python3.11-devel openldap-devel swig gcc gcc-c++ openssl-devel cmake3 libuv libuuid-devel git
 ```
 
 #### Debian 12
@@ -129,6 +129,16 @@ In `operationsgateway_api/`, there are several example configuration files which
 - `logging.ini.example`
 - `maintenance.json.example`
 - `scheduled_maintenance.json.example`
+
+### Backup
+
+If using the tape backup feature (enabled by the `backup` section in `config.yml`) then authentication for XRootD will need to be configured. XRootD uses environment variables to define the credentials used to authenticate to the server. These can either be explicitly defined in the session as environment variables or in `config.yml`, which case this will be set as an environment variable on start up. Note that files containing keys need to be only readable/writable by the user, so it may be necessary to manually configure this:
+
+```bash
+chmod 600 /path/to/.keytab
+export XrdSecPROTOCOL=sss
+export XrdSecSSSKT=/path/to/.keytab
+```
 
 ## Test Data
 

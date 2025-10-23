@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 import orjson
 import uvicorn
 
+from operationsgateway_api.src.backup.backup_runner import BackupRunner
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.constants import LOG_CONFIG_LOCATION, ROUTE_MAPPINGS
 import operationsgateway_api.src.experiments.runners as runners
@@ -62,7 +63,6 @@ async def lifespan(app: FastAPI):
     mongodb_connection = get_mongodb_connection()  # Initialises the connection
 
     experiment_worker = UniqueWorker(Config.config.experiments.worker_file_path)
-    backup_worker = UniqueWorker(Config.config.backup.worker_file_path)
 
     @assign_event_to_single_worker(experiment_worker)
     async def get_experiments_on_startup():
@@ -75,16 +75,21 @@ async def lifespan(app: FastAPI):
         else:
             log.info("Scheduler background task has not been enabled")
 
-    @assign_event_to_single_worker(backup_worker)
-    async def backup():
-        if Config.config.backup is not None:
-            log.info("Creating backup task")
-            asyncio.create_task(runners.backup_runner.start_task())
-        else:
-            log.info("Backup task has not been enabled")
-
     await get_experiments_on_startup()
-    await backup()
+
+    if Config.config.backup is not None:
+        backup_worker = UniqueWorker(Config.config.backup.worker_file_path)
+
+        @assign_event_to_single_worker(backup_worker)
+        async def backup():
+            log.info("Creating backup task")
+            BackupRunner.validate_environment_variables()
+            asyncio.create_task(runners.backup_runner.start_task())
+
+        await backup()
+
+    else:
+        log.info("Backup task has not been enabled")
 
     echo_interface = get_echo_interface()
     async with echo_interface.session.resource(
@@ -96,11 +101,13 @@ async def lifespan(app: FastAPI):
         await echo_interface.create_bucket(resource, True)
         log.debug("Bucket cached: %s", echo_interface._bucket)
 
-        @assign_event_to_single_worker(backup_worker)
-        async def set_bucket_expiry() -> None:
-            await echo_interface.put_lifecycle()
+        if Config.config.backup is not None:
 
-        await set_bucket_expiry()
+            @assign_event_to_single_worker(backup_worker)
+            async def set_bucket_expiry() -> None:
+                await echo_interface.put_lifecycle()
+
+            await set_bucket_expiry()
 
         yield  # While the app runs we stay in this context and the bucket can be shared
 

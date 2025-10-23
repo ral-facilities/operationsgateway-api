@@ -1,6 +1,8 @@
 import logging
+import os
 import shutil
 from smtplib import SMTP
+import stat
 
 from xrootd_utils.client import Client
 from xrootd_utils.common import AutoRemove
@@ -18,12 +20,47 @@ class BackupRunner(RunnerABC):
     """
 
     def __init__(self) -> None:
-        super().__init__(
-            task_name="XRootD Copy",
-            cron_string=Config.config.backup.copy_cron_string,
-            timezone_str=Config.config.backup.timezone_str,
-        )
-        self.x_root_d_client = Client(Config.config.backup.target_url)
+        if Config.config.backup is not None:
+            super().__init__(
+                task_name="XRootD Copy",
+                cron_string=Config.config.backup.copy_cron_string,
+                timezone_str=Config.config.backup.timezone_str,
+            )
+            self.x_root_d_client = Client(Config.config.backup.target_url)
+
+    @staticmethod
+    def validate_environment_variables() -> None:
+        """
+        Ensures that the correct environment variables required by the underlying XRootD
+        libraries are defined (either explicitly, or in `Config` which will be used to
+        set the environment variables).
+
+        Raises:
+            FileNotFoundError:
+                If a keytab file is neither defined in `Config` nor the environment.
+            PermissionError:
+                If the keytab is defined, but does not have 600 permissions.
+        """
+        if "XrdSecPROTOCOL" not in os.environ:
+            os.environ["XrdSecPROTOCOL"] = "sss"
+
+        if Config.config.backup.keytab_file_path is not None:
+            os.environ["XrdSecSSSKT"] = str(Config.config.backup.keytab_file_path)
+        elif "XrdSecSSSKT" not in os.environ:
+            raise FileNotFoundError(
+                "Keytab file path neither defined in config.yml nor environment "
+                "variable.",
+            )
+
+        keytab_stat = os.stat(os.environ["XrdSecSSSKT"])
+        keytab_permissions = stat.S_IMODE(keytab_stat.st_mode)
+        if keytab_permissions != int("600", base=8):
+            # Full string is e.g. 0o600, 0o744: strip the 0o for readability
+            keytab_permissions_str = oct(keytab_permissions)[2:]
+            raise PermissionError(
+                f"Keytab file '{os.environ['XrdSecSSSKT']}' permissions must be '600', "
+                f"but they were '{keytab_permissions_str}'",
+            )
 
     async def run_task(self) -> None:
         """
@@ -73,9 +110,9 @@ class BackupRunner(RunnerABC):
         total, used, free = shutil.disk_usage(Config.config.backup.cache_directory)
         percentage_used = 100 * used / total
         if percentage_used < Config.config.backup.warning_mark_percent:
-            log.info("Current cache usage %.1f", percentage_used)
+            log.info("Current cache usage %.1f%%", percentage_used)
         else:
-            log.warning("Current cache usage %.1f", percentage_used)
+            log.warning("Current cache usage %.1f%%", percentage_used)
             lines = [f"Current cache usage: {percentage_used}"]
             BackupRunner._send_mail("Backup: high cache usage", lines)
 
