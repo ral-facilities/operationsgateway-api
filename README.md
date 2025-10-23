@@ -21,10 +21,19 @@ The following instructions will detail how to get a development instance up and 
 
 ### Python
 
-On the Rocky 9 machine, install development tools for Python:
+See commands below to install the development tools for specific operating systems. Others will need the same libraries, but exact names may differ.
+
+#### Rocky 9
 
 ```bash
-sudo dnf install "@Development Tools" python3.11 python3.11-pip python3.11-setuptools python3.11-devel openldap-devel git
+sudo dnf install "@Development Tools" python3.11 python3.11-pip python3.11-setuptools python3.11-devel openldap-devel swig gcc gcc-c++ openssl-devel cmake3 libuv libuuid-devel git
+```
+
+#### Debian 12
+
+```bash
+sudo agt-get update
+sudo apt-get install build-essential curl python3.11 python3.11-venv python3.11-dev python3-pip libldap2-dev libsasl2-dev cmake uuid-dev git
 ```
 
 Clone the codebase
@@ -79,6 +88,11 @@ sudo systemctl start mongod
 # Enable it to start on boot
 sudo systemctl enable mongod
 ```
+
+For instructions on installation on specific operating systems:
+
+https://www.mongodb.com/docs/manual/administration/install-on-linux/
+
 ### MongoDB Indexes:
 The following Indexes are uses and need to be set up on local, dev & prod databases.
 
@@ -115,6 +129,16 @@ In `operationsgateway_api/`, there are several example configuration files which
 - `logging.ini.example`
 - `maintenance.json.example`
 - `scheduled_maintenance.json.example`
+
+### Backup
+
+If using the tape backup feature (enabled by the `backup` section in `config.yml`) then authentication for XRootD will need to be configured. XRootD uses environment variables to define the credentials used to authenticate to the server. These can either be explicitly defined in the session as environment variables or in `config.yml`, which case this will be set as an environment variable on start up. Note that files containing keys need to be only readable/writable by the user, so it may be necessary to manually configure this:
+
+```bash
+chmod 600 /path/to/.keytab
+export XrdSecPROTOCOL=sss
+export XrdSecSSSKT=/path/to/.keytab
+```
 
 ## Test Data
 
