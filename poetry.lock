@@ -3476,13 +3476,13 @@ six = ">=1.5"
 
 [[package]]
 name = "python-ldap"
-version = "3.4.2"
+version = "3.4.5"
 description = "Python modules for implementing LDAP clients"
 optional = false
 python-versions = ">=3.6"
 groups = ["main"]
 files = [
-    {file = "python-ldap-3.4.2.tar.gz", hash = "sha256:b16470a0983aaf09a00ffb8f40b69a2446f3d0be639a229256bce381fcb268f7"},
+    {file = "python_ldap-3.4.5.tar.gz", hash = "sha256:b2f6ef1c37fe2c6a5a85212efe71311ee21847766a7d45fcb711f3b270a5f79a"},
 ]
 
 [package.dependencies]
@@ -4548,4 +4548,4 @@ xmlsec = ["xmlsec (>=0.6.1)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.12"
-content-hash = "1e3341e36cadeb68450e10611c45287bf60e65005cc62f2ce5546f7620e28fba"
+content-hash = "ac3d2c02d4253d7490ad7d6e8f60fbd97130e8cbbdc81eefbd86886fb39931f6"
