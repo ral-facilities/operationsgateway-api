@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from operationsgateway_api.src.backup.backup_runner import BackupRunner, log
-from operationsgateway_api.src.config import BackupConfig
+from operationsgateway_api.src.config import BackupConfig, MailConfig
 
 
 @pytest.fixture
@@ -78,6 +78,34 @@ class TestBackupRunner:
 
         log.warning.assert_called_with("Current cache usage %.1f%%", 90.0)
 
+    def test_send_mail(self, mocked_config: BackupConfig) -> None:
+        config_target = "operationsgateway_api.src.config.Config.config.backup.mail"
+        smtp_target = "operationsgateway_api.src.backup.backup_runner.SMTP"
+        mail_config = MailConfig(
+            host="localhost",
+            to_addrs=["person1@stfc.ac.uk", "person2@stfc.ac.uk"],
+            from_addr="no-reply@operationsgateway.stfc.ac.uk",
+        )
+        smtp_mock = MagicMock()
+        with patch(config_target, mail_config), patch(smtp_target, smtp_mock):
+            BackupRunner._send_mail("Test subject", ["Line 1", "", "Line 3"])
+
+        msg = (
+            "From: no-reply@operationsgateway.stfc.ac.uk\r\n"
+            "To: person1@stfc.ac.uk,person2@stfc.ac.uk\r\n"
+            "Subject: Test subject\r\n"
+            "\r\n"
+            "Line 1\r\n"
+            "\r\n"
+            "Line 3"
+        )
+        smtp_mock.assert_called_once_with(host="localhost")
+        smtp_mock.return_value.__enter__.return_value.sendmail.assert_called_once_with(
+            from_addr=mail_config.from_addr,
+            to_addrs=mail_config.to_addrs,
+            msg=msg,
+        )
+
     def test_validate_environment_variables_file_not_found(
         self,
         mocked_config: BackupConfig,
@@ -89,7 +117,9 @@ class TestBackupRunner:
             BackupRunner.validate_environment_variables()
 
     def test_validate_environment_variables_permission(self, tmp_path: Path) -> None:
-        match = "Keytab file permissions must be '600', but they were '644'"
+        match = (
+            r"Keytab file '[\w\./-]+' permissions must be '600', but they were '644'"
+        )
         keytab_file_path = tmp_path / ".keytab"
         keytab_file_path.write_text("")
         backup = BackupConfig(

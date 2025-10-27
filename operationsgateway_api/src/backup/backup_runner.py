@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+from smtplib import SMTP
 import stat
 
 from xrootd_utils.client import Client
@@ -57,8 +58,8 @@ class BackupRunner(RunnerABC):
             # Full string is e.g. 0o600, 0o744: strip the 0o for readability
             keytab_permissions_str = oct(keytab_permissions)[2:]
             raise PermissionError(
-                "Keytab file permissions must be '600', but they were "
-                f"'{keytab_permissions_str}'",
+                f"Keytab file '{os.environ['XrdSecSSSKT']}' permissions must be '600', "
+                f"but they were '{keytab_permissions_str}'",
             )
 
     async def run_task(self) -> None:
@@ -80,6 +81,17 @@ class BackupRunner(RunnerABC):
                     len(results["failed"]),
                     len(results["removed"]),
                 )
+                lines = [
+                    (
+                        f"Backup completed: {len(results['succeeded'])} succeeded, "
+                        f"{len(results['failed'])} failed, "
+                        f"{len(results['removed'])} removed"
+                    ),
+                    "",
+                    "Failed paths were:",
+                ]
+                lines += results["failed"]
+                BackupRunner._send_mail("Backup: transfer failures", lines)
             else:
                 log.info(
                     "Backup completed: %s succeeded, %s failed, %s removed",
@@ -87,8 +99,10 @@ class BackupRunner(RunnerABC):
                     len(results["failed"]),
                     len(results["removed"]),
                 )
-        except Exception:  # Catch all exceptions to keep the Runner alive
+        except Exception as e:  # Catch all exceptions to keep the Runner alive
             log.exception("Backup failed")
+            lines = ["Backup failed unexpectedly with:", str(e)]
+            BackupRunner._send_mail("Backup: unexpected errors", lines)
 
     @staticmethod
     def _check_cache_usage():
@@ -99,3 +113,23 @@ class BackupRunner(RunnerABC):
             log.info("Current cache usage %.1f%%", percentage_used)
         else:
             log.warning("Current cache usage %.1f%%", percentage_used)
+            lines = [f"Current cache usage: {percentage_used}"]
+            BackupRunner._send_mail("Backup: high cache usage", lines)
+
+    @staticmethod
+    def _send_mail(subject: str, msg_lines: list[str]) -> None:
+        """If configured, send an email notification for an error or warning."""
+        if Config.config.backup.mail is not None:
+            with SMTP(host=Config.config.backup.mail.host) as smtp:
+                lines = [
+                    f"From: {Config.config.backup.mail.from_addr}",
+                    f"To: {','.join(Config.config.backup.mail.to_addrs)}",
+                    f"Subject: {subject}",
+                    "",  # Newline needed between headers and body
+                ]
+                lines += msg_lines
+                smtp.sendmail(
+                    from_addr=Config.config.backup.mail.from_addr,
+                    to_addrs=Config.config.backup.mail.to_addrs,
+                    msg="\r\n".join(lines),
+                )

@@ -147,6 +147,12 @@ class ObservabilityConfig(BaseModel):
     secret_key: SecretStr  # apm key
 
 
+class MailConfig(BaseModel):
+    host: StrictStr = Field(description="Mail server address, including port.")
+    to_addrs: list[StrictStr] = Field(description="Addresses to send notifications to.")
+    from_addr: StrictStr = Field(description="Address to send the mail from")
+
+
 class BackupConfig(BaseModel):
     cache_directory: DirectoryPath = Field(
         description=(
@@ -192,6 +198,10 @@ class BackupConfig(BaseModel):
             "set, will attempt to use the environment variable XrdSecSSSKT."
         ),
         examples=["/home/user/.keytab"],
+    )
+    mail: MailConfig | None = Field(
+        default=None,
+        description="Optional mail server to use to send email notifications to.",
     )
 
 
