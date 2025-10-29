@@ -110,10 +110,10 @@ class BackupRunner(RunnerABC):
         total, used, free = shutil.disk_usage(Config.config.backup.cache_directory)
         percentage_used = 100 * used / total
         if percentage_used < Config.config.backup.warning_mark_percent:
-            log.info("Current cache usage %.1f%%", percentage_used)
+            log.info("Current cache usage %.0f%%", percentage_used)
         else:
-            log.warning("Current cache usage %.1f%%", percentage_used)
-            lines = [f"Current cache usage: {percentage_used}"]
+            log.warning("Current cache usage %.0f%%", percentage_used)
+            lines = [f"Current cache usage: {percentage_used:.0f}%"]
             BackupRunner._send_mail("Backup: high cache usage", lines)
 
     @staticmethod
