@@ -197,7 +197,7 @@ class VectorChannelModel(BaseModel):
 
 class StringChannelMetadataModel(BaseModel):
     channel_dtype: Literal[ChannelDtype.STRING] | Any | None = ChannelDtype.STRING
-
+    units: Optional[Union[str, Any]] = None
 
 class StringChannelModel(BaseModel):
     metadata: StringChannelMetadataModel
