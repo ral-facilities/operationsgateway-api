@@ -27,6 +27,8 @@ from operationsgateway_api.src.models import (
     WaveformChannelMetadataModel,
     WaveformChannelModel,
     WaveformModel,
+    StringChannelModel,
+    StringChannelMetadataModel,
 )
 from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
@@ -45,6 +47,7 @@ class HDFDataHandler:
         "float_image": ["data"],
         "waveform": ["x", "y"],
         "vector": ["data"],
+        "string": ["data"],
     }
 
     def __init__(self, hdf_temp_file: SpooledTemporaryFile) -> None:
@@ -58,6 +61,7 @@ class HDFDataHandler:
         self.images = []
         self.float_images = []
         self.vectors = []
+        self.strings = []
 
     async def extract_data(
         self,
@@ -331,6 +335,48 @@ class HDFDataHandler:
         except ValidationError as exc:
             raise ModelError(str(exc)) from exc
 
+    def _extract_string(
+        self,
+        internal_failed_channel,
+        channel_name,
+        channel_metadata,
+        value,
+    ):
+        """
+        Extract data for string in the HDF file and place the data into
+        relevant Pydantic models as well as performing string specific checks
+        """
+        if self._unexpected_attribute("string", value):
+            internal_failed_channel.append(
+                {channel_name: "unexpected group or dataset in channel group"},
+            )
+            return None, internal_failed_channel
+
+        try:
+            channel = StringChannelModel(
+                metadata=StringChannelMetadataModel(**channel_metadata),
+                data=value["data"][()],
+            )
+            return channel, False
+        except KeyError:
+            internal_failed_channel.append(
+                {channel_name: "data attribute is missing"},
+            )
+            return None, internal_failed_channel
+        except ValidationError as exc:
+            for error in exc.errors():
+                if (
+                    error["type"] == "int_type"
+                    or error["type"] == "float_type"
+                ):
+                    internal_failed_channel.append(
+                        {channel_name: "data has wrong datatype"},
+                    )
+                    break
+                else:
+                    raise ModelError(str(exc)) from exc
+            return None, internal_failed_channel
+
     async def _extract_channel(
         self,
         channel_name: str,
@@ -338,6 +384,7 @@ class HDFDataHandler:
         manifest: ChannelManifestModel,
         internal_failed_channel: list[dict[str, str]],
     ) -> list[dict[str, str]]:
+        fail = None
         channel_metadata = dict(value.attrs)
         channel_checks = ChannelChecks(
             ingested_record={channel_name: channel_metadata},
@@ -384,6 +431,13 @@ class HDFDataHandler:
             )
         elif value.attrs["channel_dtype"] == "vector":
             channel, fail = self._extract_vector(
+                internal_failed_channel,
+                channel_name,
+                channel_metadata,
+                value,
+            )
+        elif value.attrs["channel_dtype"] == "string":
+            channel, fail = self._extract_string(
                 internal_failed_channel,
                 channel_name,
                 channel_metadata,
