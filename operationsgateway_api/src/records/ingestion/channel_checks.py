@@ -51,6 +51,7 @@ class ChannelChecks:
             "rgb-image",
             "waveform",
             "vector",
+            "string"
         ]
 
     def set_channels(self, manifest) -> None:
