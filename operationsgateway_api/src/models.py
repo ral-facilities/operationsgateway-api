@@ -53,6 +53,7 @@ class ChannelDtype(StrEnum):
     WAVEFORM = "waveform"
     VECTOR = "vector"
     SCALAR = "scalar"
+    STRING = "string"
 
 
 class ImageModel(BaseModel):
@@ -194,9 +195,18 @@ class VectorChannelModel(BaseModel):
     vector_path: str | Any | None = None
 
 
+class StringChannelMetadataModel(BaseModel):
+    channel_dtype: Literal[ChannelDtype.STRING] | Any | None = ChannelDtype.STRING
+
+
+class StringChannelModel(BaseModel):
+    metadata: StringChannelMetadataModel
+    data: Optional[str]
+
+
 class RecordMetadataModel(BaseModel):
     epac_ops_data_version: Optional[Any] = None
-    shotnum: Optional[int] = None
+    shotnum: Optional[str] = None
     timestamp: Optional[Any] = None
     active_area: Optional[Any] = None
     active_experiment: Optional[Any] = None
@@ -211,7 +221,8 @@ class RecordModel(BaseModel):
         | FloatImageChannelModel
         | ScalarChannelModel
         | WaveformChannelModel
-        | VectorChannelModel,
+        | VectorChannelModel
+        | StringChannelModel,
     ]
 
 
@@ -243,6 +254,10 @@ class PartialVectorChannelModel(VectorChannelModel):
     thumbnail: bytes | None = None
     vector_path: str | None = None
 
+class PartialStringChannelModel(StringChannelModel):
+    metadata: StringChannelMetadataModel | None = None
+    data: str | None = None
+
 
 PartialChannelModel = (
     PartialImageChannelModel
@@ -250,6 +265,7 @@ PartialChannelModel = (
     | PartialScalarChannelModel
     | PartialWaveformChannelModel
     | PartialVectorChannelModel
+    | PartialStringChannelModel
 )
 PartialChannels = dict[str, PartialChannelModel]
 
