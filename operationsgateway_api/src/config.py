@@ -1,20 +1,25 @@
 from datetime import datetime
 from pathlib import Path
 import sys
-from typing import Dict, List, Optional, Tuple
+from typing import Annotated, List, Optional, Tuple
 
+import annotated_types
 from dateutil import tz
 from pydantic import (
     BaseModel,
+    DirectoryPath,
+    Field,
     field_validator,
     FilePath,
     NonNegativeInt,
+    PositiveInt,
     SecretStr,
     StrictBool,
     StrictInt,
     StrictStr,
     ValidationError,
 )
+from xrootd_utils.common import AutoRemove
 import yaml
 
 
@@ -63,6 +68,11 @@ class EchoConfig(BaseModel):
     access_key: SecretStr
     secret_key: SecretStr
     bucket_name: StrictStr
+    expiry_days: PositiveInt | None = Field(
+        default=None,
+        description="If defined, objects older than this will be marked for expiry",
+        examples=[1095],
+    )
     cache_maxsize: NonNegativeInt = 128
 
 
@@ -97,7 +107,7 @@ class AuthConfig(BaseModel):
     refresh_token_validity_days: StrictInt
     fedid_server_url: StrictStr
     fedid_server_ldap_realm: StrictStr
-    oidc_providers: Dict[StrictStr, OidcProviderConfig] = {}
+    oidc_providers: dict[StrictStr, OidcProviderConfig] = {}
 
 
 class ExperimentsConfig(BaseModel):
@@ -137,6 +147,64 @@ class ObservabilityConfig(BaseModel):
     secret_key: SecretStr  # apm key
 
 
+class MailConfig(BaseModel):
+    host: StrictStr = Field(description="Mail server address, including port.")
+    to_addrs: list[StrictStr] = Field(description="Addresses to send notifications to.")
+    from_addr: StrictStr = Field(description="Address to send the mail from")
+
+
+class BackupConfig(BaseModel):
+    cache_directory: DirectoryPath = Field(
+        description=(
+            "Directory to write incoming files to so that they can later be backed up "
+            "to tape."
+        ),
+        examples=["/srv/og-api/cache"],
+    )
+    warning_mark_percent: Annotated[PositiveInt, annotated_types.Lt(100)] = Field(
+        default=50,
+        description=(
+            "Above this level of disk usage for the cache_directory, log warnings"
+        ),
+    )
+    target_url: StrictStr = Field(
+        description="XRootD URL defining the server and root directory path to copy to",
+        examples=["root://localhost:1094//path/to/directory/"],
+    )
+    copy_cron_string: StrictStr = Field(
+        description="Cron string defining the schedule of the backup tasks",
+        examples=["0 * * * *", "0 18 * * 1-5"],
+    )
+    timezone_str: StrictStr = Field(
+        default="Europe/London",
+        description="String to pass to Cron for determining the schedule",
+    )
+    worker_file_path: StrictStr = Field(
+        description="Path of file used to ensure back is only handled by one worker.",
+        examples=["/home/user/backup_worker"],
+    )
+    auto_remove: AutoRemove = Field(
+        default=AutoRemove.BACKED_UP,
+        description=(
+            "Under what condition to remove local file copies: when there is a copy in "
+            "the XRootD cache, when it is backed up to tape, or never."
+        ),
+        examples=["cached", "backed_up", "never"],
+    )
+    keytab_file_path: FilePath = Field(
+        default=None,
+        description=(
+            "Path of keytab file used to authenticate to the XRootD server. If not "
+            "set, will attempt to use the environment variable XrdSecSSSKT."
+        ),
+        examples=["/home/user/.keytab"],
+    )
+    mail: MailConfig | None = Field(
+        default=None,
+        description="Optional mail server to use to send email notifications to.",
+    )
+
+
 class APIConfig(BaseModel):
     """
     Class to store the API's configuration settings
@@ -156,6 +224,7 @@ class APIConfig(BaseModel):
     echo: EchoConfig
     export: ExportConfig
     observability: ObservabilityConfig
+    backup: BackupConfig | None = None
 
     @classmethod
     def load(cls, path=Path(__file__).parent.parent / "config.yml"):

@@ -2,12 +2,15 @@ import base64
 import io
 import json
 import os
+from pathlib import Path
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 import imagehash
 from PIL import Image
 import pytest
 
+from operationsgateway_api.src.config import BackupConfig
 from operationsgateway_api.src.experiments.unique_worker import UniqueWorker
 from operationsgateway_api.src.main import app
 from operationsgateway_api.src.records.echo_interface import get_echo_interface
@@ -21,6 +24,32 @@ def test_app():
     EchoInterface like it would be in production.
     """
     with TestClient(app) as client:
+        yield client
+
+
+@pytest.fixture(scope="function")
+def test_app_backup_enabled(tmp_path: Path):
+    """
+    Using TestClient as a context manager runs the lifespan and initialises our
+    EchoInterface like it would be in production.
+    """
+    cache_directory = tmp_path / "cache"
+    cache_directory.mkdir()
+    keytab_file_path = tmp_path / ".keytab"
+    keytab_file_path.write_text("")
+    keytab_file_path.chmod(0o600)
+    backup = BackupConfig(
+        cache_directory=str(cache_directory),
+        target_url="",
+        copy_cron_string="* * * * *",
+        worker_file_path=str(tmp_path / "worker"),
+        keytab_file_path=str(keytab_file_path),
+    )
+
+    with (
+        patch("operationsgateway_api.src.config.Config.config.backup", backup),
+        TestClient(app) as client,
+    ):
         yield client
 
 
@@ -51,7 +80,7 @@ def remove_background_pid_file():
     """
     yield
 
-    UniqueWorker.remove_file()
+    UniqueWorker("test/path").remove_file()
 
 
 def assert_record(record, expected_channel_count, expected_channel_data):
