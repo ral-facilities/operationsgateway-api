@@ -60,9 +60,9 @@ class RecordChecks:
             and ingested_metadata.shotnum is not None
         ):
             shotnum_type = type(ingested_metadata.shotnum)
-            if shotnum_type not in (int, str):
+            if shotnum_type != int:
                 log.error(
-                    "Datatype of shotnum is '%s', expected integer or string",
+                    "Datatype of shotnum is '%s', expected integer",
                     shotnum_type,
                 )
-                raise RejectRecordError("shotnum has wrong datatype. Expected integer or String")
+                raise RejectRecordError("shotnum has wrong datatype. Expected integer")
