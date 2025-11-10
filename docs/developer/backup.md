@@ -27,3 +27,49 @@ The logic for handling the calls to XRootD is all contained within the `xrootd-u
 ## Notifications and logging
 
 The `xrootd-utils` package, like `operationsgateway-api`, uses the standard python `logging` library. This will log whenever one of the underlying XRootD commands fails, as well as updates on the progress of the copy at INFO and DEBUG levels.
+
+## General XRootD commands
+
+For the purposes of debugging, it may be useful to run XRootD commands directly. To start, install the CLI with the appropriate package installer for your OS, for example:
+
+```bash
+sudo dnf install xrootd-client
+```
+
+A typical workflow might include copying a file to or from tape, and checking for its presence on the remote XRootD server. When backup is enabled, all the appropriate commands should be invoked automatically by their Python bindings at the configured frequency. Note that while `xrdfs` commands are of the format `xrdfs <host> <command> <remote_path>`, `xrdcp` combines the host and path into a single URL with a double slash for remote files (`xrdcp <local_path> <host>//<remote_path>`).
+
+To copy to tape:
+```bash
+xrdcp filename root://antares-facilities.stfc.ac.uk:1094//eos/antaresfac/prod/epac/operationsgateway/prod/filename
+```
+The copy to the disk buffer should be quick (limited by network bandwidth).
+
+To list:
+```bash
+xrdfs root://antares-facilities.stfc.ac.uk:1094 ls /eos/antaresfac/prod/epac/operationsgateway/prod
+```
+
+To stat:
+```bash
+xrdfs root://antares-facilities.stfc.ac.uk:1094 stat /eos/antaresfac/prod/epac/operationsgateway/prod/filename
+```
+This includes information about create/mod times as well as details about whether the file is currently in the server's disk buffer (`Offline` if it is not) and whether a copy has made it from the buffer to tape (`BackUpExists`). Once the API has finished working on a file it should end up with both these flags set (i.e. on tape with the buffered copy automatically removed). It is the creation of the backup on tape which can take a long (and unpredictable) amount of time as it requires mechanical movement of tapes into drives to be written.
+
+To stage file from tape to disk:
+```bash
+xrdfs root://antares-facilities.stfc.ac.uk:1094 prepare -s /eos/antaresfac/prod/epac/operationsgateway/prod/filename
+```
+When staging is complete, the `Offline` flag will be removed. As with creating the backup, this can tape a long time as it required the tape to be mechanically mounted for reading.
+
+To copy out a staged file:
+```bash
+xrdcp root://antares-facilities.stfc.ac.uk:1094//eos/antaresfac/prod/epac/operationsgateway/prod/filename ./filename
+```
+
+To evict a staged file from the buffer:
+```bash
+xrdfs root://antares-facilities.stfc.ac.uk prepare:1094 -e /eos/antaresfac/prod/epac/operationsgateway/prod/filename
+```
+This will set the `Offline` flag again. This should be quick as it does not require mechanical mounting.
+
+For the restoration of large amounts of data (e.g. from a particular month) consider using the xrootd-utils library (imported by the API) which wraps the XRootD Python bindings with some utility scripts to automate operations across entire directories etc. For interrogating the outcome of single copies, the CLI is probably sufficient.
