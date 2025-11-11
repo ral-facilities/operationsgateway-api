@@ -12,7 +12,7 @@ from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
-from operationsgateway_api.src.constants import DATA_DATETIME_FORMAT
+from operationsgateway_api.src.constants import SESSION_DATETIME_FORMAT
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import ModelError
 from operationsgateway_api.src.models import UserSessionModel
@@ -151,7 +151,7 @@ async def save_user_session(
         name=name,
         summary=summary,
         auto_saved=auto_saved,
-        timestamp=datetime.strftime(datetime.now(), DATA_DATETIME_FORMAT),
+        timestamp=datetime.strftime(datetime.now(), SESSION_DATETIME_FORMAT),
         session=data,
     )
 
@@ -215,7 +215,7 @@ async def update_user_session(
             name=name,
             summary=summary,
             auto_saved=auto_saved,
-            timestamp=datetime.strftime(datetime.now(), DATA_DATETIME_FORMAT),
+            timestamp=datetime.strftime(datetime.now(), SESSION_DATETIME_FORMAT),
             session=data,
         )
     except ValidationError as exc:

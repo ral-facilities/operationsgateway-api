@@ -7,7 +7,7 @@ from pydantic import ValidationError
 import pymongo
 
 from operationsgateway_api.src.channels.manifest_validator import ManifestValidator
-from operationsgateway_api.src.constants import ID_DATETIME_FORMAT
+from operationsgateway_api.src.constants import MANIFEST_DATETIME_FORMAT
 from operationsgateway_api.src.exceptions import ChannelManifestError, ModelError
 from operationsgateway_api.src.models import ChannelManifestModel, ChannelModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
@@ -62,7 +62,7 @@ class ChannelManifest:
         used elsewhere in the code
         """
 
-        return datetime.now().strftime(ID_DATETIME_FORMAT)
+        return datetime.now().strftime(MANIFEST_DATETIME_FORMAT)
 
     @staticmethod
     def _use_model(data: dict) -> ChannelManifestModel:
