@@ -7,7 +7,7 @@ import h5py
 from pydantic import ValidationError
 
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
-from operationsgateway_api.src.constants import DATA_DATETIME_FORMAT, ID_DATETIME_FORMAT
+from operationsgateway_api.src.constants import ID_DATETIME_FORMAT, DATA_DATETIME_FORMATS
 from operationsgateway_api.src.exceptions import HDFDataExtractionError, ModelError
 from operationsgateway_api.src.models import (
     ChannelManifestModel,
@@ -81,18 +81,16 @@ class HDFDataHandler:
         log.debug("Extracting data from HDF files")
 
         metadata_hdf = dict(self.hdf_file.attrs)
-        try:
-            metadata_hdf["timestamp"] = datetime.strptime(
-                metadata_hdf["timestamp"],
-                DATA_DATETIME_FORMAT,
-            )
-        except (KeyError, ValueError, TypeError) as exc:
-            raise HDFDataExtractionError(
-                "Invalid timestamp metadata. Expected key 'timestamp' with value "
-                "formatted, for example as: '2025-04-07T14:28:16+00:00'.",
-            ) from exc
 
-        self.record_id = metadata_hdf["timestamp"].strftime(ID_DATETIME_FORMAT)
+        # takes a timestamp string from the HDF metadata, normalises it,
+        # and returns a proper timezone-aware datetime object, or raises an
+        # error if the format is wrong.
+        metadata_hdf["timestamp"] = self._parse_data_timestamp(metadata_hdf["timestamp"])
+
+        # Converts the parsed datetime object into a compact record ID string
+        # that includes milliseconds.
+        self.record_id = self._create_record_id(metadata_hdf["timestamp"])
+
         await self.extract_channels()
 
         try:
@@ -112,6 +110,34 @@ class HDFDataHandler:
             self.vectors,
             self.internal_failed_channel,
         )
+
+    def _parse_data_timestamp(self,timestamp):
+        # Optional: normalise 'Z' to '+00:00'
+        if timestamp.endswith("Z"):
+            timestamp = timestamp[:-1] + "+00:00"
+        last_exc = None
+        for fmt in DATA_DATETIME_FORMATS:
+            try:
+                return datetime.strptime(timestamp, fmt)
+            except (ValueError, TypeError) as exc:
+                last_exc = exc
+        raise HDFDataExtractionError(
+            "Invalid timestamp metadata. Expected 'timestamp' like "
+            "'2025-04-07T14:28:16.123+00:00' or without milliseconds."
+        ) from last_exc
+
+    def _create_record_id(self, timestamp: datetime) -> str:
+        """
+        Create a compact record ID string based on a datetime,
+        including milliseconds for precision.
+        Example: 2025-10-30 22:45:07.106000 becomes "20251030224507106"
+        """
+        # Format up to seconds
+        record_id_base = timestamp.strftime(ID_DATETIME_FORMAT)
+        # Convert microseconds to milliseconds
+        milliseconds = int(timestamp.microsecond / 1000)
+        # Combine and pad milliseconds to 3 digits
+        return f"{record_id_base}{milliseconds:03d}"
 
     def _unexpected_attribute(self, channel_type, value):
         """
