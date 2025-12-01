@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from unittest.mock import mock_open, patch
 
@@ -74,6 +75,13 @@ class TestUniqueWorker:
         with patch("os.remove", side_effect=expected_exception) as mock_remove:
             UniqueWorker("test/path").remove_file()
             assert mock_remove.call_count == 1
+
+    def test_remove_file_different_pid(self, remove_background_pid_file):
+        with patch("os.remove", wraps=os.remove) as mock_remove:
+            unique_worker = UniqueWorker("test/path")
+            unique_worker.id_ = "different_id"
+            unique_worker.remove_file()
+            assert mock_remove.call_count == 0
 
     @patch("os.getpid", return_value=10)
     @patch(
