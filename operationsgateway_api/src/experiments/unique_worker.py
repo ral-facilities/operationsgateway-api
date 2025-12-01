@@ -50,8 +50,10 @@ class UniqueWorker:
 
     def remove_file(self) -> None:
         try:
-            log.debug("Worker file attempting to be deleted: %s", self.worker_file_path)
-            os.remove(self.worker_file_path)
+            if self.does_pid_match_file():
+                msg = "Worker file attempting to be deleted: %s"
+                log.debug(msg, self.worker_file_path)
+                os.remove(self.worker_file_path)
         except FileNotFoundError:
             # If the file doesn't exist, that's ok as the file cannot be deleted if it
             # doesn't exist

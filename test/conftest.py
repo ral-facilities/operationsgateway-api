@@ -80,7 +80,10 @@ def remove_background_pid_file():
     """
     yield
 
-    UniqueWorker("test/path").remove_file()
+    try:
+        os.remove("test/path")
+    except FileNotFoundError:
+        pass
 
 
 def assert_record(record, expected_channel_count, expected_channel_data):
