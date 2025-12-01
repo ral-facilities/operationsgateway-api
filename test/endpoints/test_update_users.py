@@ -290,4 +290,4 @@ class TestUpdateUsers:
             ),
         )
 
-        assert update_local_response.status_code == 403
+        assert update_local_response.status_code == 401

@@ -98,7 +98,7 @@ class TestDeleteUsers:
             f"/users/{username}",
         )
 
-        assert delete_fed_response.status_code == 403
+        assert delete_fed_response.status_code == 401
 
         try:
             await User.get_user(username)
