@@ -35,7 +35,7 @@ class AuthServerError(ApiError):
 
 
 class UnauthorisedError(ApiError):
-    def __init__(self, msg="User not authorised", *args, **kwargs):
+    def __init__(self, msg="You are not authorised to access this service", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)
         self.status_code = 401
 
