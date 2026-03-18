@@ -473,6 +473,7 @@ class Record:
                 range_input = DateConverterRange(**date_range)
             except ValidationError as exc:
                 raise ModelError(str(exc)) from exc
+
         elif shotnum_range:
             # Convert shot number range to date range
             comparison_field_name = "metadata.shotnum"
@@ -491,6 +492,7 @@ class Record:
             {
                 "$match": {
                     "$and": [
+                        {"metadata.active_area": range_input.type},
                         {
                             comparison_field_name: {
                                 "$gte": getattr(
@@ -524,9 +526,9 @@ class Record:
 
         try:
             if shotnum_range:
-                return DateConverterRange(**converted_range[0])
+                return DateConverterRange(type=range_input.type, **converted_range[0])
             else:
-                return ShotnumConverterRange(**converted_range[0])
+                return ShotnumConverterRange(type=range_input.type, **converted_range[0])
         except ValidationError as exc:
             raise ModelError(str(exc)) from exc
 

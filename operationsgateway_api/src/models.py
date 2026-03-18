@@ -379,37 +379,60 @@ class ExperimentPartMappingModel(BaseModel):
 class ShotnumConverterRange(BaseModel):
     opposite_range_fields: ClassVar[Dict[str, str]] = {"from": "min_", "to": "max_"}
 
-    min_: Union[int, datetime] = Field(alias="min")
-    max_: Union[int, datetime] = Field(alias="max")
+    type: Literal["GA", "GS", "GQ", "GD"]
+    min_: str = Field(alias="min")
+    max_: str = Field(alias="max")
+
+    @field_validator("min_", "max_")
+    def validate_shotnum_matches_type(
+        cls,  # noqa: N805
+        value,
+        values,
+    ) -> str:
+        range_type = values.data.get("type")
+
+        if range_type is None:
+            return value
+
+        if range_type == "GD":
+            if len(value) != 15:
+                raise ModelError(
+                    "GD shot numbers must be in the format yyyymmdd-hhmmss"
+                )
+        else:
+            if not value.startswith(range_type):
+                raise ModelError(
+                    f"Shot number '{value}' does not match type '{range_type}'"
+                )
+        return value
 
     @field_validator("max_")
     def validate_min_max(
         cls,  # noqa: N805
         value,
         values,
-    ) -> Union[int, datetime]:
+    ) -> str:
         if value < values.data["min_"]:
             raise ModelError("max cannot be less than min value")
-        else:
-            return value
+        return value
 
 
 class DateConverterRange(BaseModel):
     opposite_range_fields: ClassVar[Dict[str, str]] = {"min": "from_", "max": "to"}
 
-    from_: Union[int, datetime] = Field(alias="from")
-    to: Union[int, datetime]
+    type: Literal["GA", "GS", "GQ", "GD"]
+    from_: datetime = Field(alias="from")
+    to: datetime
 
     @field_validator("to")
     def validate_min_max(
         cls,  # noqa: N805
         value,
         values,
-    ) -> Union[int, datetime]:
+    ) -> datetime:
         if value < values.data["from_"]:
             raise ModelError("to cannot be less than from value")
-        else:
-            return value
+        return value
 
 
 class UserSessionModel(BaseModel):
