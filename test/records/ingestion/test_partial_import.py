@@ -18,7 +18,6 @@ from operationsgateway_api.src.records.ingestion.partial_import_checks import (
 from test.endpoints.conftest import reset_record_storage
 from test.records.ingestion.create_test_hdf import create_test_hdf_file
 
-
 CHANNEL_PRESENT_MESSAGE = "Channel is already present in existing record"
 
 

@@ -19,7 +19,6 @@ from operationsgateway_api.src.models import UserSessionModel
 from operationsgateway_api.src.sessions.user_session import UserSession
 from operationsgateway_api.src.sessions.user_session_list import UserSessionList
 
-
 log = logging.getLogger()
 router = APIRouter()
 AuthoriseToken = Annotated[str, Depends(authorise_token)]

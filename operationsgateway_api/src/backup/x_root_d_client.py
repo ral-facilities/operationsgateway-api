@@ -6,7 +6,6 @@ from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.models import RecordModel
 from operationsgateway_api.src.records.echo_interface import EchoInterface
 
-
 log = logging.getLogger()
 
 

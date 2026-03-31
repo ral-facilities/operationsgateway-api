@@ -11,7 +11,6 @@ from operationsgateway_api.src.exceptions import FunctionParseError
 from operationsgateway_api.src.functions import TOKENS, TypeTransformer
 from operationsgateway_api.src.models import Function
 
-
 log = logging.getLogger()
 router = APIRouter()
 AuthoriseToken = Annotated[str, Depends(authorise_token)]

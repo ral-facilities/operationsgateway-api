@@ -18,7 +18,6 @@ from operationsgateway_api.src.models import (
     WaveformModel,
 )
 
-
 log = logging.getLogger()
 
 

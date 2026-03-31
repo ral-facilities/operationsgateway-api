@@ -11,7 +11,6 @@ from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import QueryParameterError
 from operationsgateway_api.src.users.favourite_filter import FavouriteFilter
 
-
 log = logging.getLogger()
 router = APIRouter()
 AuthoriseToken = Annotated[str, Depends(authorise_token)]

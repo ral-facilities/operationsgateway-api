@@ -8,7 +8,6 @@ from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.models import MaintenanceModel, ScheduledMaintenanceModel
 
-
 log = logging.getLogger()
 router = APIRouter()
 AuthoriseRoute = Annotated[str, Depends(authorise_route)]

@@ -3,7 +3,6 @@ import logging
 from operationsgateway_api.src.exceptions import ChannelManifestError
 from operationsgateway_api.src.models import ChannelManifestModel, ChannelModel
 
-
 log = logging.getLogger()
 
 

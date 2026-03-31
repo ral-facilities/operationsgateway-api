@@ -1,6 +1,5 @@
 from lark import Lark
 
-
 parser = Lark(
     r"""
     ?term         : SIGNED_NUMBER -> constant

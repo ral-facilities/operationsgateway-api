@@ -8,7 +8,6 @@ from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.records.vector import Vector
 
-
 log = logging.getLogger()
 router = APIRouter()
 
