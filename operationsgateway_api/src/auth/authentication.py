@@ -14,7 +14,6 @@ from operationsgateway_api.src.exceptions import (
 )
 from operationsgateway_api.src.models import LoginDetailsModel, UserModel
 
-
 log = logging.getLogger()
 
 

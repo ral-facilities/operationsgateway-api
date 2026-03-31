@@ -26,7 +26,6 @@ from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
 from operationsgateway_api.src.routes.common_parameters import ParameterHandler
 
-
 log = logging.getLogger()
 router = APIRouter()
 AuthoriseToken = Annotated[str, Depends(authorise_token)]

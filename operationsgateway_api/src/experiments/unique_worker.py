@@ -6,7 +6,6 @@ from pathlib import Path
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import ApiError
 
-
 log = logging.getLogger()
 
 

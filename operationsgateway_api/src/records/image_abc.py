@@ -7,7 +7,6 @@ import logging
 from operationsgateway_api.src.models import ImageModel
 from operationsgateway_api.src.records.channel_object_abc import ChannelObjectABC
 
-
 log = logging.getLogger()
 
 

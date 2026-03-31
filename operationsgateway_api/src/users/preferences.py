@@ -4,7 +4,6 @@ from typing import Union
 from operationsgateway_api.src.exceptions import MissingAttributeError
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
-
 log = logging.getLogger()
 
 
