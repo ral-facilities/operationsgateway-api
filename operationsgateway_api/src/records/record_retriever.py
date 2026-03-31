@@ -17,7 +17,6 @@ from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.waveform import Waveform
 
-
 log = logging.getLogger()
 
 

@@ -13,7 +13,6 @@ from operationsgateway_api.src.exceptions import ForbiddenError, UnauthorisedErr
 from operationsgateway_api.src.models import AccessTokenModel, LoginDetailsModel
 from operationsgateway_api.src.users.user import User
 
-
 log = logging.getLogger()
 router = APIRouter()
 

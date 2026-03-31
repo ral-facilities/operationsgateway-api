@@ -8,7 +8,6 @@ from operationsgateway_api.src.constants import ROUTE_MAPPINGS
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import ForbiddenError
 
-
 log = logging.getLogger()
 security = HTTPBearer()
 

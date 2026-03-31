@@ -3,7 +3,6 @@ import logging
 from operationsgateway_api.src.exceptions import RejectFileError
 from operationsgateway_api.src.models import RecordModel
 
-
 log = logging.getLogger()
 
 

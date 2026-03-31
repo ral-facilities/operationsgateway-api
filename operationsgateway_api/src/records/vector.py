@@ -13,7 +13,6 @@ from operationsgateway_api.src.records.channel_object_abc import ChannelObjectAB
 from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.users.preferences import UserPreferences
 
-
 log = logging.getLogger()
 
 

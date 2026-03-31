@@ -18,7 +18,6 @@ from operationsgateway_api.src.records.export_handler import ExportHandler
 from operationsgateway_api.src.records.record import Record as Record
 from operationsgateway_api.src.routes.common_parameters import ParameterHandler
 
-
 log = logging.getLogger()
 router = APIRouter()
 AuthoriseToken = Annotated[str, Depends(authorise_token)]

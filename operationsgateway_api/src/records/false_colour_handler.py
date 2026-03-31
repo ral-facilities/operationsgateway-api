@@ -15,7 +15,6 @@ from operationsgateway_api.src.exceptions import (
 from operationsgateway_api.src.records.colourmap_mapping import ColourmapMapping
 from operationsgateway_api.src.users.preferences import UserPreferences
 
-
 log = logging.getLogger()
 
 

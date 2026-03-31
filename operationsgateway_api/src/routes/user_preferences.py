@@ -10,7 +10,6 @@ from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import MissingAttributeError
 from operationsgateway_api.src.users.preferences import UserPreferences
 
-
 log = logging.getLogger()
 router = APIRouter()
 

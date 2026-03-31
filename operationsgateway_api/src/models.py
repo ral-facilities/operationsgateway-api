@@ -18,7 +18,6 @@ from typing_extensions import Annotated
 
 from operationsgateway_api.src.exceptions import ChannelManifestError, ModelError
 
-
 NonEmptyString = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 

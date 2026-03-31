@@ -9,7 +9,6 @@ from operationsgateway_api.src.exceptions import ChannelManifestError, ModelErro
 from operationsgateway_api.src.models import ChannelManifestModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
-
 success_manifest_content = (
     '{"_id": "19830222132431", "channels": {"PM-201-FE-CAM-1": '
     '{"name": "D100 front-end NF", "path": "/PM-201/FE", "type": "image"}, '

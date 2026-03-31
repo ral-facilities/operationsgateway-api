@@ -12,7 +12,6 @@ from operationsgateway_api.src.models import PartialRecordModel
 from operationsgateway_api.src.records.record_retriever import RecordRetriever
 from operationsgateway_api.src.records.waveform import Waveform
 
-
 log = logging.getLogger()
 router = APIRouter()
 
