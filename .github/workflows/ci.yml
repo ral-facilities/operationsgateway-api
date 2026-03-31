@@ -40,15 +40,18 @@ jobs:
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.12.1
         with:
-          mongodb-version: '7.0'
+          mongodb-version: '8.0'
 
       # Used to install mongoimport when Ubuntu 22.04 is used, identified at https://github.com/actions/runner-images/issues/6626#issuecomment-1327744126
       - name: Install MongoDB Database Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget gnupg
-          wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | sudo apt-key add -
-          echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+          sudo apt-get install -y wget gnupg curl
+          curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc \
+            | sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor
+          echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0 multiverse" \
+            | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
+
           sudo apt-get update
           sudo apt-get install -y mongodb-database-tools
 
