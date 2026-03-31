@@ -10,7 +10,6 @@ from mypy_boto3_s3.service_resource import Bucket, Object, S3ServiceResource
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import EchoS3Error
 
-
 log = logging.getLogger()
 
 

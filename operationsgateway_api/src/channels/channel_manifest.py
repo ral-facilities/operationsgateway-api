@@ -12,7 +12,6 @@ from operationsgateway_api.src.exceptions import ChannelManifestError, ModelErro
 from operationsgateway_api.src.models import ChannelManifestModel, ChannelModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
-
 log = logging.getLogger()
 
 

@@ -6,7 +6,6 @@ from typing import Optional
 
 import matplotlib
 
-
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: I202
 
@@ -15,7 +14,6 @@ from operationsgateway_api.src.exceptions import EchoS3Error
 from operationsgateway_api.src.models import WaveformModel
 from operationsgateway_api.src.records.channel_object_abc import ChannelObjectABC
 from operationsgateway_api.src.records.echo_interface import get_echo_interface
-
 
 log = logging.getLogger()
 

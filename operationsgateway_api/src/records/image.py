@@ -24,7 +24,6 @@ from operationsgateway_api.src.records.false_colour_handler import FalseColourHa
 from operationsgateway_api.src.records.image_abc import ImageABC
 from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
 
-
 log = logging.getLogger()
 
 
