@@ -2,6 +2,7 @@ from datetime import datetime
 import logging
 from tempfile import SpooledTemporaryFile
 from typing import Any, Literal
+from operationsgateway_api.src.config import Config
 
 import h5py
 from pydantic import ValidationError
@@ -85,7 +86,9 @@ class HDFDataHandler:
         # takes a timestamp string from the HDF metadata, normalises it,
         # and returns a proper timezone-aware datetime object, or raises an
         # error if the format is wrong.
-        metadata_hdf["timestamp"] = self._parse_data_timestamp(metadata_hdf["timestamp"])
+        metadata_hdf["timestamp"] = self._parse_data_timestamp(
+            metadata_hdf.get("timestamp")
+        )
 
         # Converts the parsed datetime object into a compact record ID string
         # that includes milliseconds.
@@ -111,16 +114,32 @@ class HDFDataHandler:
             self.internal_failed_channel,
         )
 
-    def _parse_data_timestamp(self,timestamp):
-        # Optional: normalise 'Z' to '+00:00'
+    def _parse_data_timestamp(self, timestamp):
+        if timestamp in (None, ""):
+            raise HDFDataExtractionError(
+                "Invalid timestamp metadata. Expected 'timestamp' like "
+                "'2025-04-07T14:28:16.123+00:00' or without milliseconds."
+            )
+
+        if isinstance(timestamp, bytes):
+            timestamp = timestamp.decode()
+
+        if not isinstance(timestamp, str):
+            raise HDFDataExtractionError(
+                "Invalid timestamp metadata. Expected 'timestamp' like "
+                "'2025-04-07T14:28:16.123+00:00' or without milliseconds."
+            )
+
         if timestamp.endswith("Z"):
             timestamp = timestamp[:-1] + "+00:00"
+
         last_exc = None
         for fmt in DATA_DATETIME_FORMATS:
             try:
                 return datetime.strptime(timestamp, fmt)
             except (ValueError, TypeError) as exc:
                 last_exc = exc
+
         raise HDFDataExtractionError(
             "Invalid timestamp metadata. Expected 'timestamp' like "
             "'2025-04-07T14:28:16.123+00:00' or without milliseconds."
@@ -134,10 +153,15 @@ class HDFDataHandler:
         """
         # Format up to seconds
         record_id_base = timestamp.strftime(ID_DATETIME_FORMAT)
-        # Convert microseconds to milliseconds
-        milliseconds = int(timestamp.microsecond / 1000)
-        # Combine and pad milliseconds to 3 digits
-        return f"{record_id_base}{milliseconds:03d}"
+
+        if Config.config.app.use_sub_second_timestamps:
+            # Convert microseconds to milliseconds
+            milliseconds = int(timestamp.microsecond / 1000)
+            # Combine and pad milliseconds to 3 digits
+            return f"{record_id_base}{milliseconds:03d}"
+
+        return record_id_base
+
 
     def _unexpected_attribute(self, channel_type, value):
         """
