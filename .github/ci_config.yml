@@ -6,6 +6,7 @@ app:
   url_prefix: ""
   maintenance_file: operationsgateway_api/maintenance.json.example
   scheduled_maintenance_file: operationsgateway_api/scheduled_maintenance.json.example
+  use_sub_second_timestamps: false
 images:
   thumbnail_size: [50, 50]
   default_colour_map: viridis
