@@ -282,7 +282,7 @@ class TestCreateUsers:
                 "FedID",
                 ["/submit/hdf POST", "/experiments POST"],
                 None,
-                403,
+                401,
                 id="Failed fed user creation blank password",
             ),
             pytest.param(
@@ -290,7 +290,7 @@ class TestCreateUsers:
                 "local",
                 ["/submit/hdf POST", "/experiments POST"],
                 "password",
-                403,
+                401,
                 id="Failed fed user creation blank password",
             ),
         ],

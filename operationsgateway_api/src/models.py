@@ -18,7 +18,6 @@ from typing_extensions import Annotated
 
 from operationsgateway_api.src.exceptions import ChannelManifestError, ModelError
 
-
 NonEmptyString = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 
@@ -215,6 +214,13 @@ class RecordMetadataModel(BaseModel):
 
 class RecordModel(BaseModel):
     id_: str = Field(alias="_id")
+    version: int = Field(
+        default=1,
+        description=(
+            "Indicates the number of updates to this record "
+            "(starting at 1 for the initial insert)."
+        ),
+    )
     metadata: RecordMetadataModel
     channels: dict[
         str,

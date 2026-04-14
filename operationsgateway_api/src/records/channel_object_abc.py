@@ -8,7 +8,6 @@ from operationsgateway_api.src.records.echo_interface import (
     get_echo_interface,
 )
 
-
 log = logging.getLogger()
 
 

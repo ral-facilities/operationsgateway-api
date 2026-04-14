@@ -10,7 +10,6 @@ from mypy_boto3_s3.service_resource import Bucket, Object, S3ServiceResource
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import EchoS3Error
 
-
 log = logging.getLogger()
 
 
@@ -47,6 +46,32 @@ class EchoInterface:
             return f"{record_id[:4]}/{record_id[4:6]}/{record_id[6:8]}/{record_id[8:]}"
         else:
             return record_id
+
+    async def put_lifecycle(self) -> None:
+        """
+        https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/put_bucket_lifecycle_configuration.html
+        Puts the lifecycle configuration of the bucket to delete objects after a certain
+        number of days.
+        """
+        expiry_days = Config.config.echo.expiry_days
+        bucket_name = Config.config.echo.bucket_name
+        if expiry_days is not None:
+            log.info("Put expiry lifecycle of %s days for %s", expiry_days, bucket_name)
+            rule = {
+                "Expiration": {"Days": expiry_days},
+                "ID": "expiry",
+                "Prefix": "",
+                "Status": "Enabled",
+            }
+            config_dict = {"Rules": [rule]}
+            try:
+                bucket = await self.get_bucket()
+                lifecycle_configuration = await bucket.LifecycleConfiguration()
+                await lifecycle_configuration.put(LifecycleConfiguration=config_dict)
+            except ClientError:
+                log.exception("Failed to put lifecycle for %s", bucket_name)
+        else:
+            log.info("Expiry lifecycle not configured for %s", bucket_name)
 
     async def create_bucket(
         self,

@@ -22,7 +22,6 @@ from operationsgateway_api.src.records.record_retriever import RecordRetriever
 from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
 
-
 log = logging.getLogger()
 
 

@@ -43,7 +43,6 @@ from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
 
-
 log = logging.getLogger()
 
 
@@ -113,6 +112,11 @@ class Record:
         times
         """
 
+        await MongoDBInterface.update_one(
+            "records",
+            {"_id": self.record.id_},
+            {"$set": {"version": self.record.version}},
+        )
         for metadata_key, value in self.record.metadata.model_dump(
             exclude_unset=True,
             exclude={"epac_ops_data_version"},
@@ -159,12 +163,7 @@ class Record:
         )
 
         if record_dict:
-            existing_record = RecordModel(
-                _id=record_dict["_id"],
-                metadata=record_dict["metadata"],
-                channels=record_dict["channels"],
-            )
-            return existing_record
+            return RecordModel(**record_dict)
         else:
             return None
 

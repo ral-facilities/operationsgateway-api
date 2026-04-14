@@ -40,7 +40,6 @@ from operationsgateway_api.src.records.ingestion.channel_checks import ChannelCh
 from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
 
-
 log = logging.getLogger()
 
 

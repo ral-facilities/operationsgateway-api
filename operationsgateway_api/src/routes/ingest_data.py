@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authorisation import authorise_route
+from operationsgateway_api.src.backup.x_root_d_client import XRootDClient
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.models import SubmitHDFResponse
@@ -187,7 +188,10 @@ async def submit_hdf(
             " document",
             record.record.id_,
         )
+        record.record.version = stored_record.version + 1
         await record.update()
+        XRootDClient.cache_hdf(record_model=record.record, buffer=file.file)
+
         content = {
             "message": f"Updated {stored_record.id_}",
             "response": checker_response,
@@ -197,6 +201,7 @@ async def submit_hdf(
     else:
         log.debug("Inserting new record into MongoDB")
         await record.insert()
+        XRootDClient.cache_hdf(record_model=record.record, buffer=file.file)
         record_id = record.record.id_
         content = {
             "message": f"Added as {record_id}",

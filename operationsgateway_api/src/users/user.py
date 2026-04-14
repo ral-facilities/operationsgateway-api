@@ -5,7 +5,6 @@ from operationsgateway_api.src.exceptions import QueryParameterError, Unauthoris
 from operationsgateway_api.src.models import UserModel
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
 
-
 log = logging.getLogger()
 
 

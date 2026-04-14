@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "operationsgateway-api"
-version = "1.0.0"
+version = "1.1.1"
 description = ""
 readme = "README.md"
 authors = [
@@ -14,7 +14,7 @@ authors = [
 # but python3.8 is only compatible with scipy<=1.10.1
 # so it is not possible to target both at the same time
 python = ">=3.11,<3.12"
-fastapi = "^0.116.1"
+fastapi = "^0.123.0"
 motor = "^3.3.2"
 uvicorn = "^0.20.0"
 python-multipart = "^0.0.22"
@@ -53,7 +53,7 @@ aiohttp = "^3.13.5"
 [tool.poetry.group.dev.dependencies]
 black = "^26.3.1"
 flake8 = "^4.0.1"
-flake8-black = "^0.2.1"
+flake8-black = "^0.4.0"
 flake8-broken-line = "0.4.0"
 flake8-bugbear = "^22.4.25"
 flake8-builtins = "^1.5.3"
@@ -64,12 +64,13 @@ flake8-logging-format = "^0.6.0"
 pep8-naming = "^0.12.1"
 safety = "^3.5.2"
 pytest = "^7.2.0"
-requests = "2.32.4"
+requests = "2.33.0"
 pytest-cov = "^3.0.0"
 coverage = "^6.4.4"
 fabric = "^3.1.0"
 pytest-asyncio = "^0.21.0"
 s4cmd = "^2.1.0"
+pytest-mock = "^3.14.1"
 
 [tool.poetry.group.simulated-data.dependencies]
 epac-data-sim = {git = "git@github.com:CentralLaserFacility/EPAC-DataSim.git"}
