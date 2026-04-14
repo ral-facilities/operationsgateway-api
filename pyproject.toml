@@ -47,6 +47,8 @@ mypy-boto3-s3 = "^1.40.0"
 async-lru = "^2.0.5"
 cachetools = "^6.2.0"
 Authlib = "^1.6.10"
+urllib3 = "^2.6.3"
+aiohttp = "^3.13.5"
 
 [tool.poetry.group.dev.dependencies]
 black = "^26.3.1"
