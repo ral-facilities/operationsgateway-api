@@ -28,6 +28,7 @@ class App(BaseModel):
     url_prefix: StrictStr
     maintenance_file: FilePath
     scheduled_maintenance_file: FilePath
+    use_sub_second_timestamps: StrictBool = False
 
 
 class ImagesConfig(BaseModel):
