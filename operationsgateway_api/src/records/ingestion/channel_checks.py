@@ -12,11 +12,11 @@ from operationsgateway_api.src.models import (
     ImageChannelMetadataModel,
     ImageModel,
     ScalarChannelMetadataModel,
+    StringChannelMetadataModel,
     VectorChannelMetadataModel,
     VectorModel,
     WaveformChannelMetadataModel,
     WaveformModel,
-    StringChannelMetadataModel,
 )
 
 
@@ -52,7 +52,7 @@ class ChannelChecks:
             "rgb-image",
             "waveform",
             "vector",
-            "string"
+            "string",
         ]
 
     def set_channels(self, manifest) -> None:
@@ -374,10 +374,10 @@ class ChannelChecks:
 
     @classmethod
     def string_metadata_checks(
-            cls,
-            key: str,
-            value_dict: dict | StringChannelMetadataModel,
-            rejected_channels: list[dict[str, str]],
+        cls,
+        key: str,
+        value_dict: dict | StringChannelMetadataModel,
+        rejected_channels: list[dict[str, str]],
     ) -> list[dict[str, str]]:
         """
         Various checks brought out of the main function to simplify it

@@ -199,6 +199,7 @@ class StringChannelMetadataModel(BaseModel):
     channel_dtype: Literal[ChannelDtype.STRING] | Any | None = ChannelDtype.STRING
     units: Optional[Union[str, Any]] = None
 
+
 class StringChannelModel(BaseModel):
     metadata: StringChannelMetadataModel
     data: Optional[str]
@@ -253,6 +254,7 @@ class PartialVectorChannelModel(VectorChannelModel):
     metadata: VectorChannelMetadataModel | None = None
     thumbnail: bytes | None = None
     vector_path: str | None = None
+
 
 class PartialStringChannelModel(StringChannelModel):
     metadata: StringChannelMetadataModel | None = None

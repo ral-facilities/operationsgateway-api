@@ -65,4 +65,6 @@ class RecordChecks:
                     "Datatype of shotnum is '%s', expected integer or string",
                     shotnum_type,
                 )
-                raise RejectRecordError("shotnum has wrong datatype. Expected integer or string")
+                raise RejectRecordError(
+                    "shotnum has wrong datatype. Expected integer or string",
+                )

@@ -8,7 +8,7 @@ ROUTE_MAPPINGS = {}
 ID_DATETIME_FORMAT = "%Y%m%d%H%M%S"
 DATA_DATETIME_FORMATS = [
     "%Y-%m-%dT%H:%M:%S.%f%z",  # with fractional seconds (1–6 digits)
-    "%Y-%m-%dT%H:%M:%S%z",     # without fractional seconds
+    "%Y-%m-%dT%H:%M:%S%z",  # without fractional seconds
 ]
 MANIFEST_DATETIME_FORMAT = "%Y%m%d%H%M%S"
 SESSION_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S%z"

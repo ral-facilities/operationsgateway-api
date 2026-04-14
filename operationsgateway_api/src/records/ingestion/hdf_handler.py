@@ -2,13 +2,16 @@ from datetime import datetime
 import logging
 from tempfile import SpooledTemporaryFile
 from typing import Any, Literal
-from operationsgateway_api.src.config import Config
 
 import h5py
 from pydantic import ValidationError
 
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
-from operationsgateway_api.src.constants import ID_DATETIME_FORMAT, DATA_DATETIME_FORMATS
+from operationsgateway_api.src.config import Config
+from operationsgateway_api.src.constants import (
+    DATA_DATETIME_FORMATS,
+    ID_DATETIME_FORMAT,
+)
 from operationsgateway_api.src.exceptions import HDFDataExtractionError, ModelError
 from operationsgateway_api.src.models import (
     ChannelManifestModel,
@@ -22,14 +25,14 @@ from operationsgateway_api.src.models import (
     RecordModel,
     ScalarChannelMetadataModel,
     ScalarChannelModel,
+    StringChannelMetadataModel,
+    StringChannelModel,
     VectorChannelMetadataModel,
     VectorChannelModel,
     VectorModel,
     WaveformChannelMetadataModel,
     WaveformChannelModel,
     WaveformModel,
-    StringChannelModel,
-    StringChannelMetadataModel,
 )
 from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
@@ -87,7 +90,7 @@ class HDFDataHandler:
         # and returns a proper timezone-aware datetime object, or raises an
         # error if the format is wrong.
         metadata_hdf["timestamp"] = self._parse_data_timestamp(
-            metadata_hdf.get("timestamp")
+            metadata_hdf.get("timestamp"),
         )
 
         # Converts the parsed datetime object into a compact record ID string
@@ -118,7 +121,7 @@ class HDFDataHandler:
         if timestamp in (None, ""):
             raise HDFDataExtractionError(
                 "Invalid timestamp metadata. Expected 'timestamp' like "
-                "'2025-04-07T14:28:16.123+00:00' or without milliseconds."
+                "'2025-04-07T14:28:16.123+00:00' or without milliseconds.",
             )
 
         if isinstance(timestamp, bytes):
@@ -127,7 +130,7 @@ class HDFDataHandler:
         if not isinstance(timestamp, str):
             raise HDFDataExtractionError(
                 "Invalid timestamp metadata. Expected 'timestamp' like "
-                "'2025-04-07T14:28:16.123+00:00' or without milliseconds."
+                "'2025-04-07T14:28:16.123+00:00' or without milliseconds.",
             )
 
         if timestamp.endswith("Z"):
@@ -142,7 +145,7 @@ class HDFDataHandler:
 
         raise HDFDataExtractionError(
             "Invalid timestamp metadata. Expected 'timestamp' like "
-            "'2025-04-07T14:28:16.123+00:00' or without milliseconds."
+            "'2025-04-07T14:28:16.123+00:00' or without milliseconds.",
         ) from last_exc
 
     def _create_record_id(self, timestamp: datetime) -> str:
@@ -161,7 +164,6 @@ class HDFDataHandler:
             return f"{record_id_base}{milliseconds:03d}"
 
         return record_id_base
-
 
     def _unexpected_attribute(self, channel_type, value):
         """
@@ -415,10 +417,7 @@ class HDFDataHandler:
             return None, internal_failed_channel
         except ValidationError as exc:
             for error in exc.errors():
-                if (
-                    error["type"] == "int_type"
-                    or error["type"] == "float_type"
-                ):
+                if error["type"] == "int_type" or error["type"] == "float_type":
                     internal_failed_channel.append(
                         {channel_name: "data has wrong datatype"},
                     )
