@@ -527,7 +527,10 @@ class Record:
             if shotnum_range:
                 return DateConverterRange(type=range_input.type, **converted_range[0])
             else:
-                return ShotnumConverterRange(type=range_input.type, **converted_range[0])
+                return ShotnumConverterRange(
+                    type=range_input.type,
+                    **converted_range[0],
+                )
         except ValidationError as exc:
             raise ModelError(str(exc)) from exc
 

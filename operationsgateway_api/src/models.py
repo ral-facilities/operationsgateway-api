@@ -387,7 +387,7 @@ class ExperimentPartMappingModel(BaseModel):
 class ShotnumConverterRange(BaseModel):
     opposite_range_fields: ClassVar[Dict[str, str]] = {"from": "min_", "to": "max_"}
 
-    type: Literal["GA", "GS", "GQ", "GD"]
+    type_: Literal["GA", "GS", "GQ", "GD"] = Field(alias="type")
     min_: str = Field(alias="min")
     max_: str = Field(alias="max")
 
@@ -397,7 +397,7 @@ class ShotnumConverterRange(BaseModel):
         value,
         values,
     ) -> str:
-        range_type = values.data.get("type")
+        range_type = values.data.get("type_")
 
         if range_type is None:
             return value
@@ -405,12 +405,12 @@ class ShotnumConverterRange(BaseModel):
         if range_type == "GD":
             if len(value) != 15:
                 raise ModelError(
-                    "GD shot numbers must be in the format yyyymmdd-hhmmss"
+                    "GD shot numbers must be in the format yyyymmdd-hhmmss",
                 )
         else:
             if not value.startswith(range_type):
                 raise ModelError(
-                    f"Shot number '{value}' does not match type '{range_type}'"
+                    f"Shot number '{value}' does not match type '{range_type}'",
                 )
         return value
 
@@ -428,7 +428,7 @@ class ShotnumConverterRange(BaseModel):
 class DateConverterRange(BaseModel):
     opposite_range_fields: ClassVar[Dict[str, str]] = {"min": "from_", "max": "to"}
 
-    type: Literal["GA", "GS", "GQ", "GD"]
+    type_: Literal["GA", "GS", "GQ", "GD"] = Field(alias="type")
     from_: datetime = Field(alias="from")
     to: datetime
 
