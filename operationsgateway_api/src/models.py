@@ -387,48 +387,63 @@ class ExperimentPartMappingModel(BaseModel):
 class ShotnumConverterRange(BaseModel):
     opposite_range_fields: ClassVar[Dict[str, str]] = {"from": "min_", "to": "max_"}
 
-    type_: Literal["GA", "GS", "GQ", "GD"] = Field(alias="type")
-    min_: str = Field(alias="min")
-    max_: str = Field(alias="max")
+    type_: Literal["GA", "GS", "GQ", "GD"] | None = Field(
+        default=None,
+        alias="type",
+        exclude=True,
+    )
+    min_: int | str = Field(alias="min")
+    max_: int | str = Field(alias="max")
 
-    @field_validator("min_", "max_")
-    def validate_shotnum_matches_type(
-        cls,  # noqa: N805
-        value,
-        values,
-    ) -> str:
-        range_type = values.data.get("type_")
+    @model_validator(mode="after")
+    def validate_range(self):
+        # int mode
+        if self.type_ is None:
+            if not isinstance(self.min_, int) or not isinstance(self.max_, int):
+                raise ModelError(
+                    "When type is not provided, min and max must both be integers",
+                )
 
-        if range_type is None:
-            return value
+            if self.max_ < self.min_:
+                raise ModelError("max cannot be less than min value")
 
-        if range_type == "GD":
-            if len(value) != 15:
+            return self
+
+        # typed string mode
+        if not isinstance(self.min_, str) or not isinstance(self.max_, str):
+            raise ModelError(
+                "When type is provided, min and max must both be strings",
+            )
+
+        if self.type_ == "GD":
+            if len(self.min_) != 15 or len(self.max_) != 15:
                 raise ModelError(
                     "GD shot numbers must be in the format yyyymmdd-hhmmss",
                 )
         else:
-            if not value.startswith(range_type):
+            if not self.min_.startswith(self.type_):
                 raise ModelError(
-                    f"Shot number '{value}' does not match type '{range_type}'",
+                    f"Shot number '{self.min_}' does not match type '{self.type_}'",
                 )
-        return value
+            if not self.max_.startswith(self.type_):
+                raise ModelError(
+                    f"Shot number '{self.max_}' does not match type '{self.type_}'",
+                )
 
-    @field_validator("max_")
-    def validate_min_max(
-        cls,  # noqa: N805
-        value,
-        values,
-    ) -> str:
-        if value < values.data["min_"]:
+        if self.max_ < self.min_:
             raise ModelError("max cannot be less than min value")
-        return value
+
+        return self
 
 
 class DateConverterRange(BaseModel):
     opposite_range_fields: ClassVar[Dict[str, str]] = {"min": "from_", "max": "to"}
 
-    type_: Literal["GA", "GS", "GQ", "GD"] = Field(alias="type")
+    type_: Literal["GA", "GS", "GQ", "GD"] | None = Field(
+        default=None,
+        alias="type",
+        exclude=True,
+    )
     from_: datetime = Field(alias="from")
     to: datetime
 
