@@ -586,7 +586,7 @@ class ExportHandler:
         if value is None or value == "":
             # leave cell empty in these cases
             return line + ","
-        if type(value) == str:
+        if type(value) is str:
             # put quotes round string values in case they contain a comma
             # which would upset the formatting
             return line + '"' + value + '"' + ","
