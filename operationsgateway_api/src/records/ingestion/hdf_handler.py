@@ -116,21 +116,31 @@ class HDFDataHandler:
             self.internal_failed_channel,
         )
 
-    def _parse_data_timestamp(self, timestamp):
+    def _parse_data_timestamp(
+        self,
+        timestamp: str | bytes | None,
+    ) -> datetime:
+        """
+        Parse a timestamp value from HDF metadata into a datetime object.
+
+        The timestamp is expected to be an ISO 8601 formatted string, for example:
+        "2025-04-07T14:28:16.123+00:00" or without milliseconds. A trailing
+        "Z" (UTC) is also supported and will be normalised to "+00:00".
+        """
+
+        error_message = (
+            "Invalid timestamp metadata. Expected 'timestamp' like "
+            "'2025-04-07T14:28:16.123+00:00' or without milliseconds."
+        )
+
         if timestamp in (None, ""):
-            raise HDFDataExtractionError(
-                "Invalid timestamp metadata. Expected 'timestamp' like "
-                "'2025-04-07T14:28:16.123+00:00' or without milliseconds.",
-            )
+            raise HDFDataExtractionError(error_message)
 
         if isinstance(timestamp, bytes):
             timestamp = timestamp.decode()
 
         if not isinstance(timestamp, str):
-            raise HDFDataExtractionError(
-                "Invalid timestamp metadata. Expected 'timestamp' like "
-                "'2025-04-07T14:28:16.123+00:00' or without milliseconds.",
-            )
+            raise HDFDataExtractionError(error_message)
 
         if timestamp.endswith("Z"):
             timestamp = timestamp[:-1] + "+00:00"
@@ -142,10 +152,7 @@ class HDFDataHandler:
             except (ValueError, TypeError) as exc:
                 last_exc = exc
 
-        raise HDFDataExtractionError(
-            "Invalid timestamp metadata. Expected 'timestamp' like "
-            "'2025-04-07T14:28:16.123+00:00' or without milliseconds.",
-        ) from last_exc
+        raise HDFDataExtractionError(error_message) from last_exc
 
     def _create_record_id(self, timestamp: datetime) -> str:
         """

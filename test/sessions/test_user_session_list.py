@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from operationsgateway_api.src.constants import DATA_DATETIME_FORMATS
+from operationsgateway_api.src.constants import SESSION_DATETIME_FORMAT
 from operationsgateway_api.src.models import UserSessionListModel
 from operationsgateway_api.src.sessions.user_session_list import UserSessionList
 
@@ -25,7 +25,7 @@ class TestUserSessionList:
                     "summary": "Test Summary",
                     "timestamp": datetime.strftime(
                         datetime.now(),
-                        DATA_DATETIME_FORMATS[1],
+                        SESSION_DATETIME_FORMAT,
                     ),
                     "auto_saved": False,
                     "session": {"mySessionData": [1, 2, 3]},
