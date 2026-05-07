@@ -27,7 +27,3 @@ api:
   gunicorn_num_workers: "1"
   timeout_seconds: 1000
   storage_bucket: og-bucket
-observability:
-  # used to view logs and traces in Elasticsearch run by Platforms & Services
-  environment: dev
-  secret_key: test
