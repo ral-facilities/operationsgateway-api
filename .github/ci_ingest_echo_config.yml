@@ -11,12 +11,11 @@ database:
   connection_uri: mongodb://localhost:27017/opsgateway
   remote_experiments_file_path: /tmp/experiments_for_mongoimport.json
   test_users_file_path: util/users_for_mongoimport.json
-echo:
+source:
   endpoint_url: https://s3.echo.stfc.ac.uk
-  access_key: access_key
-  secret_key: secret_key
-  simulated_data_bucket: og-ci-simulated-data
-  storage_bucket: og-bucket
+  # access_key: set by env
+  # secret_key: set by env
+  # simulated_data_bucket: set by env
   page_size: 400
 api:
   https: false
@@ -27,6 +26,7 @@ api:
   log_config_path: /home/runner/work/operationsgateway-api/operationsgateway-api/operationsgateway_api/logging.ini
   gunicorn_num_workers: "1"
   timeout_seconds: 1000
+  storage_bucket: og-bucket
 observability:
   # used to view logs and traces in Elasticsearch run by Platforms & Services
   environment: dev
