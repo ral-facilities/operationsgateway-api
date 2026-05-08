@@ -2,7 +2,7 @@ from io import BytesIO
 import json
 from pprint import pprint
 import threading
-from time import time
+from time import sleep, time
 from typing import Dict
 
 import requests
@@ -13,13 +13,14 @@ from util.realistic_data.ingest.api_starter import APIStarter
 
 class APIClient:
     def __init__(self, url: str, username: str, password: str, process=None) -> None:
+        self.retries = 3
         self.url = url
         self.username = username
         self.password = password
         self.access_token, self.refresh_token = self.login()
         self.process = process
 
-    def login(self) -> str:
+    def login(self) -> tuple[str, str]:
         # Login to get an access token
         print(f"Login as {self.username!r} to get access token")
 
@@ -45,11 +46,18 @@ class APIClient:
             return access_token, refresh_token
         except ConnectionError:
             print(f"Cannot connect with API at {self.url} for {endpoint}")
+            if self.retries > 0:
+                self.retries -= 1
+                sleep(10)
+                return self.login()
+            else:
+                raise
         except requests.exceptions.InvalidSchema:
             print(
                 "Invalid schema when logging in with requests. Have you added"
                 " http/https to the start of the API URL?",
             )
+            raise
 
     def refresh(self) -> str:
         print(f"Refresh token as {self.username!r}")
