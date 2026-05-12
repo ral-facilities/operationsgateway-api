@@ -166,13 +166,13 @@ Alternatively, you can use the Postman requests in this repo. This gives a more 
 
 While initially developed for a single facility (EPAC), the API is now designed to support multiple facilities with specific anticipated behaviour. This behaviour is controlled by configuration settings. These settings should be applied both during ingest of test data and while the tests are run. For ease, there is a `"session"` scoped fixture which ingests the test data, but only if the database is empty. This means when developing locally, the first execution of the tests may hang for around 4 minutes while ingestion occurs, but subsequent executions will start testing immediately.
 
-By default, the "usual" location of the configuration at [operationsgateway_api/config.yml](operationsgateway_api/config.yml) will apply, but pytest can be configured to override settings using the `pytest-env` plugin.
+By default, the "usual" location of the configuration at [operationsgateway_api/config.yml](operationsgateway_api/config.yml) will apply (as it does when running the API locally). However, pytest can be configured to override these settings using the `pytest-env` plugin.
 
 ### pytest.ini
 
-To support test suites for EPAC and Gemini style data, [test/pytest.ini.example](test/pytest.ini.example) contains sections for both facilities. This file can be copied to `test/pytest_epac.ini` and `test/pytest_gemini.ini` with the appropriate settings.
+To support test suites for EPAC and Gemini style data, [test/pytest_epac.ini.example](test/pytest_epac.ini.example) and [test/pytest_gemini.ini.example](test/pytest_gemini.ini.example) should be copied to `test/pytest_epac.ini` and `test/pytest_gemini.ini` respectively. While the majority of the settings can then be used as is, it will also be necessary to choose bucket name(s) (i.e. replace `yourname`) and create a bucket and Mongo database with the corresponding name(s) before the tests will run. As mentioned above, it is not necessary to manually ingest the data if the database starts empty.
 
-It will also be necessary to choose bucket name(s) (i.e. replace `yourname`) and create a bucket and Mongo database with the corresponding name(s) before the tests will run.
+Note that because of how [Pydantic parses environment variables](https://pydantic.dev/docs/validation/latest/concepts/pydantic_settings/#parsing-environment-variable-values), settings in the `env` section of `pytest.ini` will always take precedence over the `config.yml`. If one of the env settings is commented out (`;`), or removed, then whatever setting is in `config.yml` will be used as the next highest priority source. Conversely, if a new field is added the env, this will then override the corresponding setting in `config.yml`. There are therefore multiple ways to make config changes for the tests, and the appropriate method to use will depend on the circumstances.
 
 ### nox
 
