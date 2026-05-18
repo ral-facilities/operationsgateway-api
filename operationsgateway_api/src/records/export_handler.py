@@ -39,6 +39,7 @@ class ExportHandler:
         colourmap_name: str,
         functions: "list[dict[str, str]]",
         export_scalars: bool,
+        export_strings: bool,
         export_images: bool,
         export_float_images: bool,
         export_waveform_csvs: bool,
@@ -57,6 +58,7 @@ class ExportHandler:
         self.limit_bit_depth = limit_bit_depth
         self.colourmap_name = colourmap_name
         self.export_scalars = export_scalars
+        self.export_strings = export_strings
         self.export_images = export_images
         self.export_float_images = export_float_images
         self.export_waveform_csvs = export_waveform_csvs
@@ -299,14 +301,21 @@ class ExportHandler:
         elif channel_type == "vector":
             log.info("Channel %s is a vector", channel_name)
             await self._add_vector_to_zip(channels, record_id, channel_name)
-        # process a scalar channel
+        # process a scalar or string channel
+        # process a scalar or string channel
         else:
-            log.info("Channel %s is a scalar", channel_name)
-            if channel_name in channels and channels[channel_name].data is not None:
+            log.info("Channel %s is a %s", channel_name, channel_type)
+            if channel_type == "scalar" and not self.export_scalars:
+                return line
+            if channel_type == "string" and not self.export_strings:
+                return line
+            if channel_name in channels and channels[
+                channel_name].data is not None:
                 value = channels[channel_name].data
             else:
                 value = ""
-            line = self._add_value_to_csv_line(line=line, value=value, verbose=True)
+            line = self._add_value_to_csv_line(line=line, value=value,
+                                               verbose=True)
         return line
 
     async def _add_image_to_zip(
@@ -502,7 +511,7 @@ class ExportHandler:
         If other files have been exported and therefore a zip file is being prepared
         for export then add the CSV file to the zip file.
         """
-        if self.export_scalars:
+        if self.export_scalars or self.export_strings:
             if (
                 len(self.zip_file.infolist()) > 0
                 and len(self.main_csv_file_in_memory.getvalue()) > 0
@@ -534,7 +543,7 @@ class ExportHandler:
         if len(self.zip_file.infolist()) > 0:
             return self.zip_file_in_memory
         else:
-            if self.export_scalars:
+            if self.export_scalars or self.export_strings:
                 return self.main_csv_file_in_memory
             else:
                 raise ExportError("Nothing to export")

@@ -246,20 +246,24 @@ class Record:
         piece of data that exists for a particular channel. If no data can be found, a
         `ChannelSummaryError` will be raised
         """
-        channel_exist_condition = {f"channels.{channel_name}": {"$exists": True}}
+        channel_exist_condition = {
+            f"channels.{channel_name}": {"$exists": True},
+            "metadata.timestamp": {"$exists": True},
+        }
+
         data = await MongoDBInterface.find_one(
             "records",
             filter_=channel_exist_condition,
             sort=direction,
-            projection=["metadata.timestamp"],
+            projection={"metadata.timestamp": 1},
         )
 
-        if data:
+        if data and data.get("metadata", {}).get("timestamp"):
             return data["metadata"]["timestamp"]
-        else:
-            raise ChannelSummaryError(
-                f"There is no timestamp data for {channel_name}",
-            )
+
+        raise ChannelSummaryError(
+            f"There is no timestamp data for {channel_name}",
+        )
 
     @staticmethod
     async def get_recent_channel_values(
@@ -294,7 +298,7 @@ class Record:
             channel = record.channels[channel_name]
             data = None
 
-            if channel.metadata.channel_dtype == "scalar":
+            if channel.metadata.channel_dtype in {"scalar", "string"}:
                 data = channel.data
             elif channel.metadata.channel_dtype == "image":
                 thumbnail_bytes = FalseColourHandler.apply_false_colour_to_b64_img(
