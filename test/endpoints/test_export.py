@@ -34,6 +34,7 @@ class TestExport:
             "export_waveform_csvs",
             "export_images",
             "export_scalars",
+            "export_strings",
             "export_float_images",
             "export_vector_images",
             "export_vector_csvs",
@@ -60,6 +61,7 @@ class TestExport:
                     "metadata.epac_ops_data_version",
                     "channels.FE-204-PSO-EM.data",
                 ],
+                None,
                 None,
                 None,
                 None,
@@ -97,6 +99,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
                 f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv",
                 f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}_desc.csv",
@@ -114,6 +117,7 @@ class TestExport:
                     "metadata.epac_ops_data_version",
                     "channels.FE-204-PSO-EM.data",
                 ],
+                None,
                 None,
                 None,
                 None,
@@ -142,6 +146,7 @@ class TestExport:
                     "channels.FE-204-PSO-EM.data",
                     "channels.FE-204-PSO-CAM-1",
                 ],
+                None,
                 None,
                 None,
                 None,
@@ -194,6 +199,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
                 f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_1700}.csv",
                 f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_1700}.csv",
@@ -212,6 +218,7 @@ class TestExport:
                     "channels.FE-204-PSO-EM.data",
                     "channels.FE-204-PSO-CAM-1",
                 ],
+                None,
                 None,
                 None,
                 None,
@@ -248,6 +255,7 @@ class TestExport:
                     "channels.FE-204-PSO-CAM-1",
                     "channels.FE-204-PSO-P1-SP",
                 ],
+                None,
                 None,
                 None,
                 None,
@@ -301,6 +309,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
                 f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.zip",
                 None,
@@ -344,6 +353,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
                 f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.zip",
                 None,
@@ -376,6 +386,7 @@ class TestExport:
                 None,
                 None,
                 False,  # export_scalars - don't export the main CSV file
+                False, # export_strings
                 None,
                 None,
                 None,
@@ -414,6 +425,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
                 f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.zip",
                 None,
@@ -439,6 +451,7 @@ class TestExport:
                     "channels.FE-204-NSS-WFS",
                     "channels.FE-204-NSS-WFS-COEF",
                 ],
+                None,
                 None,
                 None,
                 None,
@@ -474,6 +487,7 @@ class TestExport:
                     "channels.FE-204-LT-WFS",
                     "channels.FE-204-LT-WFS-COEF",
                 ],
+                None,
                 None,
                 None,
                 None,
@@ -519,6 +533,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
                 f"{RECORD_ID_05_0800}.csv",
                 f"export/{RECORD_ID_05_0800}.csv",
@@ -537,6 +552,7 @@ class TestExport:
                     "channels.FE-204-PSO-EM.data",
                     "channels.FE-204-PSO-CAM-1",
                 ],
+                None,
                 None,
                 None,
                 None,
@@ -572,6 +588,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
                 f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}_FE-204-PSO-EM.csv",
                 f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}_FE-204-PSO-EM.csv",
@@ -584,6 +601,7 @@ class TestExport:
                 None,
                 None,
                 ["channels.FE-204-PSO-CAM-1"],
+                None,
                 None,
                 None,
                 None,
@@ -608,6 +626,7 @@ class TestExport:
                 10,
                 "metadata.shotnum ASC",
                 ["_id"],
+                None,
                 None,
                 None,
                 None,
@@ -647,6 +666,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
                 f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv",
                 f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}_incl_id.csv",
@@ -669,6 +689,7 @@ class TestExport:
                     "channels.FE-204-PSO-P1-SP",
                 ],
                 True,  # export_waveform_images - request these
+                None,
                 None,
                 None,
                 None,
@@ -729,6 +750,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [
                     {"name": "scalar", "expression": "FE-204-PSO-EM + 1"},
                     {"name": "waveform", "expression": "FE-204-PSO-P1-SP + (1 - 1)"},
@@ -775,6 +797,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 5,
                 15,
                 "jet_r",
@@ -810,6 +833,7 @@ class TestExport:
         export_waveform_csvs,
         export_images,
         export_scalars,
+        export_strings,
         export_float_images: bool,
         export_vector_images: bool,
         export_vector_csvs: bool,
@@ -844,6 +868,7 @@ class TestExport:
         )
         TestExport.compile_get_params(get_params, "export_images", export_images)
         TestExport.compile_get_params(get_params, "export_scalars", export_scalars)
+        TestExport.compile_get_params(get_params, "export_strings", export_strings)
         TestExport.compile_get_params(
             get_params,
             "export_float_images",

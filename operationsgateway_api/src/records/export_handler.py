@@ -309,13 +309,11 @@ class ExportHandler:
                 return line
             if channel_type == "string" and not self.export_strings:
                 return line
-            if channel_name in channels and channels[
-                channel_name].data is not None:
+            if channel_name in channels and channels[channel_name].data is not None:
                 value = channels[channel_name].data
             else:
                 value = ""
-            line = self._add_value_to_csv_line(line=line, value=value,
-                                               verbose=True)
+            line = self._add_value_to_csv_line(line=line, value=value, verbose=True)
         return line
 
     async def _add_image_to_zip(
