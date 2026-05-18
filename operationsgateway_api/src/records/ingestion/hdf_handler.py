@@ -423,7 +423,7 @@ class HDFDataHandler:
             return None, internal_failed_channel
         except ValidationError as exc:
             for error in exc.errors():
-                if error["type"] == "int_type" or error["type"] == "float_type":
+                if error["type"] == "string_type":
                     internal_failed_channel.append(
                         {channel_name: "data has wrong datatype"},
                     )

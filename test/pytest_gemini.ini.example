@@ -1,0 +1,11 @@
+[pytest]
+asyncio_mode=auto
+env = 
+    ; Gemini ingest config overrides
+    DATABASE__CONNECTION_URI=mongodb://localhost:27017/opsgateway-gemini
+    SOURCE__SIMULATED_DATA_BUCKET=og-ci-simulated-data-gemini
+    API__STORAGE_BUCKET=og-yourname-dev-gemini
+    ; Gemini API config overrides
+    APP__USE_SUB_SECOND_TIMESTAMPS=True
+    ECHO__BUCKET_NAME=og-yourname-dev-gemini
+    MONGODB__DATABASE_NAME=opsgateway-gemini

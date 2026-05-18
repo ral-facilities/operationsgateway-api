@@ -5,7 +5,9 @@ from pathlib import Path
 from pprint import pprint
 
 from dateutil import tz
+
 from util.realistic_data.ingest.api_client import APIClient
+from util.realistic_data.ingest.config import IngestEchoDataConfig
 
 
 def main():
@@ -60,7 +62,12 @@ def main():
     pprint([file.name for file in files_to_ingest])
 
     try:
-        og_api = APIClient(og_api_url)
+        config = IngestEchoDataConfig()
+        og_api = APIClient(
+            url=og_api_url,
+            username=config.api.username,
+            password=config.api.password,
+        )
 
         for file_to_ingest in files_to_ingest:
             with open(file_to_ingest, "rb") as hdf_file:

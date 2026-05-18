@@ -7,7 +7,12 @@ import imagehash
 from PIL import Image
 import pytest
 
-from test.conftest import set_preferred_colourmap, unset_preferred_colourmap
+from test.conftest import (
+    RECORD_ID_05_0800,
+    RECORD_ID_06_1200,
+    set_preferred_colourmap,
+    unset_preferred_colourmap,
+)
 
 
 class TestGetImage:
@@ -25,7 +30,7 @@ class TestGetImage:
         ],
         [
             pytest.param(
-                "20230605100000",
+                RECORD_ID_05_0800,
                 "FE-204-NSO-P1-CAM-1",
                 True,
                 False,
@@ -33,11 +38,11 @@ class TestGetImage:
                 None,
                 None,
                 None,
-                "c8b624a4275e37b5",
+                "da4a6956047f246f",
                 id="Original image",
             ),
             pytest.param(
-                "20230605100000",
+                RECORD_ID_05_0800,
                 "FE-204-NSO-P1-CAM-1",
                 False,
                 False,
@@ -45,13 +50,13 @@ class TestGetImage:
                 None,
                 None,
                 None,
-                "c4073b6f3832c799",
+                "c4343ec13ec33f64",
                 id="Image with default false colour settings",
             ),
             # repeat the above test but with the user's preferred colour map set to
             # check that the preference is used when no specific map is chosen
             pytest.param(
-                "20230605100000",
+                RECORD_ID_05_0800,
                 "FE-204-NSO-P1-CAM-1",
                 False,
                 True,
@@ -59,11 +64,11 @@ class TestGetImage:
                 None,
                 None,
                 None,
-                "c417386737333a1b",
+                "c43f38c8243e3b8f",
                 id="Image using user's preferred colourmap",
             ),
             pytest.param(
-                "20230605100000",
+                RECORD_ID_05_0800,
                 "FE-204-NSO-P1-CAM-1",
                 None,
                 False,
@@ -77,7 +82,7 @@ class TestGetImage:
             # repeat the test above but with the user's preferred colour map set to
             # ensure that it is ignored and the specified colour map used
             pytest.param(
-                "20230605100000",
+                RECORD_ID_05_0800,
                 "FE-204-NSO-P1-CAM-1",
                 None,
                 True,
@@ -90,7 +95,7 @@ class TestGetImage:
                 "user's pref)",
             ),
             pytest.param(
-                "20230606120000",
+                RECORD_ID_06_1200,
                 "CM-202-CVC-CAM-1",
                 True,
                 False,
@@ -102,7 +107,7 @@ class TestGetImage:
                 id="v1.1 12 bit image, original",
             ),
             pytest.param(
-                "20230606120000",
+                RECORD_ID_06_1200,
                 "CM-202-CVC-CAM-1",
                 None,
                 False,
@@ -114,7 +119,7 @@ class TestGetImage:
                 id="v1.1 12 bit image, limits in 8 bit",
             ),
             pytest.param(
-                "20230606120000",
+                RECORD_ID_06_1200,
                 "CM-202-CVC-CAM-1",
                 None,
                 False,

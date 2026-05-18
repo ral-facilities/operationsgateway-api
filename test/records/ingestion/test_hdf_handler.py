@@ -138,6 +138,7 @@ class TestHDFDataHandler:
         ["channel_name", "channel_dtype"],
         [
             pytest.param("PM-201-FE-EM", "scalar"),
+            pytest.param("ASTRA_CONTROL_MODE_STRING", "string"),
             pytest.param("PM-201-FE-CAM-1", "image"),
             pytest.param("TS-202-TSM-WFS", "float_image"),
             pytest.param("PM-201-FE-PD", "waveform"),
@@ -175,6 +176,11 @@ class TestHDFDataHandler:
                 "PM-201-FE-EM",
                 "scalar",
                 [{"PM-201-FE-EM": "data attribute is missing"}],
+            ),
+            pytest.param(
+                "ASTRA_CONTROL_MODE_STRING",
+                "string",
+                [{"ASTRA_CONTROL_MODE_STRING": "data attribute is missing"}],
             ),
             pytest.param(
                 "PM-201-FE-CAM-1",

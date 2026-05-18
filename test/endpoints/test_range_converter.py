@@ -5,6 +5,7 @@ import pytest
 
 from operationsgateway_api.src.exceptions import ModelError
 from operationsgateway_api.src.models import ShotnumConverterRange
+from test.conftest import MARK_EPAC_TEST, MARK_GEMINI_TEST
 
 
 class TestRangeConverter:
@@ -13,43 +14,132 @@ class TestRangeConverter:
         [
             pytest.param(
                 None,
-                {"min": 423648036000, "max": 423648288000},
-                {"from": "2023-06-05T09:00:00", "to": "2023-06-05T16:00:00"},
-                id="Shotnum to date range",
+                {"min": 423648001800, "max": 423648291600},
+                {"from": "2023-06-05T08:03:00", "to": "2023-06-05T08:03:00"},
+                marks=MARK_EPAC_TEST,
+                id="EPAC: Shotnum to date range",
             ),
             pytest.param(
-                {"from": "2023-06-05 08:16:19", "to": "2023-06-05 21:00:00"},
+                {"from": "2023-06-05 08:02:19", "to": "2023-06-05 21:00:00"},
                 None,
-                {"min": 423648036000, "max": 423648288000},
-                id="Date to shotnum range",
+                {"min": 423648001800, "max": 423648001800},
+                marks=MARK_EPAC_TEST,
+                id="EPAC: Date to shotnum range",
             ),
             pytest.param(
                 None,
                 {"min": 1234, "max": 423648072000},
-                {"from": "2023-06-05T08:00:00", "to": "2023-06-05T10:00:00"},
-                id="Shotnum to date range where min shotnum < first shotnum stored in"
-                " database",
+                {"from": "2023-06-05T08:00:00", "to": "2023-06-05T08:03:00"},
+                marks=MARK_EPAC_TEST,
+                id=(
+                    "EPAC: Shotnum to date range where min shotnum < first shotnum "
+                    "stored in database"
+                ),
             ),
             pytest.param(
                 None,
                 {"min": 423648072000, "max": 999999999999},
-                {"from": "2023-06-05T10:00:00", "to": "2023-06-06T12:00:00"},
-                id="Shotnum to date range where max shotnum > last shotnum stored in"
-                " database",
+                {"from": "2023-06-06T12:00:00", "to": "2023-06-06T12:00:00"},
+                marks=MARK_EPAC_TEST,
+                id=(
+                    "EPAC: Shotnum to date range where max shotnum > last shotnum "
+                    "stored in database"
+                ),
             ),
             pytest.param(
                 {"from": "2000-01-01 00:00:00", "to": "2023-06-05 12:00:00"},
                 None,
-                {"min": 423648000000, "max": 423648144000},
-                id="Date to shotnum range where from date < first timestamp stored in"
-                " database",
+                {"min": 423648000000, "max": 423648001800},
+                marks=MARK_EPAC_TEST,
+                id=(
+                    "EPAC: Date to shotnum range where from date < first timestamp "
+                    "stored in database"
+                ),
             ),
             pytest.param(
                 {"from": "2022-04-07T15:10:00", "to": "2100-01-01 18:00:00"},
                 None,
                 {"min": 423648000000, "max": 423649008000},
-                id="Date to shotnum range where to date > last timestamp stored in"
-                " database",
+                marks=MARK_EPAC_TEST,
+                id=(
+                    "EPAC: Date to shotnum range where to date > last timestamp stored "
+                    "in database"
+                ),
+            ),
+            pytest.param(
+                None,
+                {"min": "20230605-080000", "max": "20230605-090000", "type": "GD"},
+                {
+                    "from": "2023-06-05T08:03:00.234000",
+                    "to": "2023-06-05T08:03:00.234000",
+                },
+                marks=MARK_GEMINI_TEST,
+                id="Gemini: Shotnum to date range",
+            ),
+            pytest.param(
+                {
+                    "from": "2023-06-05 08:02:19",
+                    "to": "2023-06-05 21:00:00",
+                    "type": "GD",
+                },
+                None,
+                {"min": "20230605-080259", "max": "20230605-080259"},
+                marks=MARK_GEMINI_TEST,
+                id="Gemini: Date to shotnum range",
+            ),
+            pytest.param(
+                None,
+                {"min": "20200101-080000", "max": "20230605-090000", "type": "GD"},
+                {
+                    "from": "2023-06-05T08:00:00.123000",
+                    "to": "2023-06-05T08:03:00.234000",
+                },
+                marks=MARK_GEMINI_TEST,
+                id=(
+                    "Gemini: Shotnum to date range where min shotnum < first shotnum "
+                    "stored in database"
+                ),
+            ),
+            pytest.param(
+                None,
+                {"min": "20230605-080000", "max": "30000101-090000", "type": "GD"},
+                {
+                    "from": "2023-06-05T08:03:00.234000",
+                    "to": "2023-06-06T12:00:00.456000",
+                },
+                marks=MARK_GEMINI_TEST,
+                id=(
+                    "Gemini: Shotnum to date range where max shotnum > last shotnum "
+                    "stored in database"
+                ),
+            ),
+            pytest.param(
+                {
+                    "from": "2000-01-01 00:00:00",
+                    "to": "2023-06-05 12:00:00",
+                    "type": "GD",
+                },
+                None,
+                {"min": "20230605-075959", "max": "20230605-080259"},
+                marks=MARK_GEMINI_TEST,
+                id=(
+                    "Gemini: Date to shotnum range where from date < first timestamp "
+                    "stored in database"
+                ),
+            ),
+            pytest.param(
+                {
+                    "from": "2022-04-07T15:10:00",
+                    "to": "2100-01-01 18:00:00",
+                    "type": "GD",
+                },
+                None,
+                {"min": "20230605-075959", "max": "20230606-115959"},
+                marks=MARK_GEMINI_TEST,
+                id=(
+                    "Gemini: Date to shotnum range where to date > last timestamp "
+                    "stored in database"
+                ),
             ),
         ],
     )
@@ -214,8 +304,12 @@ class TestShotnumConverterRange:
                 id="Mixed min int max string",
             ),
             pytest.param(
-                {"type": "GS", "min": "GA123", "max": "GA456"},
-                id="Shotnums do not match type",
+                {"type": "GS", "min": "GA123", "max": "GS456"},
+                id="Min shotnum does not match type",
+            ),
+            pytest.param(
+                {"type": "GS", "min": "GS123", "max": "GA456"},
+                id="Max shotnum does not match type",
             ),
             pytest.param(
                 {"type": "GA", "min": "GA456", "max": "GA123"},

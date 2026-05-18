@@ -51,6 +51,7 @@ Authlib = "^1.6.10"
 urllib3 = "^2.6.3"
 aiohttp = "^3.13.5"
 starlette = "^0.49.1"
+pydantic-settings = "^2.14.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^26.3.1"
@@ -72,6 +73,7 @@ fabric = "^3.1.0"
 pytest-asyncio = "^0.21.0"
 s4cmd = "^2.1.0"
 pytest-mock = "^3.14.1"
+pytest-env = "^1.6.0"
 
 [tool.poetry.group.simulated-data.dependencies]
 epac-data-sim = {git = "git@github.com:CentralLaserFacility/EPAC-DataSim.git"}

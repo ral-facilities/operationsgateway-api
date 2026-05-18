@@ -1,20 +1,109 @@
+import asyncio
 import base64
 import io
 import json
 import os
 from pathlib import Path
+from typing import AsyncGenerator
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 import imagehash
-from PIL import Image
+from PIL import Image as PILImage
 import pytest
+import pytest_asyncio
 
-from operationsgateway_api.src.config import BackupConfig
-from operationsgateway_api.src.experiments.unique_worker import UniqueWorker
+from operationsgateway_api.src.config import BackupConfig, Config
 from operationsgateway_api.src.main import app
-from operationsgateway_api.src.records.echo_interface import get_echo_interface
+from operationsgateway_api.src.mongo.interface import MongoDBInterface
+from operationsgateway_api.src.records.echo_interface import (
+    EchoInterface,
+    get_echo_interface,
+)
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
+from operationsgateway_api.src.records.float_image import FloatImage
+from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.vector import Vector
+from operationsgateway_api.src.records.waveform import Waveform
+from util.realistic_data.ingest_echo_data import DataIngester
+
+MARK_EPAC_TEST = pytest.mark.skipif(
+    condition=Config.config.app.use_sub_second_timestamps,
+    reason="Skip EPAC style data",
+)
+MARK_GEMINI_TEST = pytest.mark.skipif(
+    condition=not Config.config.app.use_sub_second_timestamps,
+    reason="Skip Gemini style data",
+)
+
+
+def format_id(record_id: str) -> str:
+    """
+    Format `record_id` appropriately based on
+    `Config.config.app.use_sub_second_timestamps`.
+
+    Args:
+        record_id (str): Record id string including ms in the form "YYYYMMDDHHMMSSfff".
+
+    Returns:
+        str:
+            Record id string possibly including ms in the form "YYYYMMDDHHMMSSfff" or
+            "YYYYMMDDHHMMSS".
+    """
+    if Config.config.app.use_sub_second_timestamps:
+        return record_id
+    else:
+        return record_id[:14]
+
+
+def format_datetime_str(datetime_str: str) -> str:
+    """
+    Format `datetime_str` appropriately based on
+    `Config.config.app.use_sub_second_timestamps`.
+
+    Args:
+        datetime_str (str):
+            Datetime string including ms in the form "YYYY-MM-DDTHH:MM:SS.ffffff".
+
+    Returns:
+        str:
+            Datetime string possibly including ms in the form
+            "YYYY-MM-DDTHH:MM:SS.ffffff" or "YYYY-MM-DDTHH:MM:SS".
+    """
+    if Config.config.app.use_sub_second_timestamps:
+        return datetime_str
+    else:
+        return datetime_str.split(".")[0]
+
+
+RECORD_ID_TMP = format_id("20200407142816000")
+RECORD_ID_05_0800 = format_id("20230605080000123")
+RECORD_ID_05_0803 = format_id("20230605080300234")
+RECORD_ID_05_1700 = format_id("20230605170000345")
+RECORD_ID_06_1200 = format_id("20230606120000456")
+DATETIME_STR_05_0800 = format_datetime_str("2023-06-05T08:00:00.123000")
+DATETIME_STR_05_0803 = format_datetime_str("2023-06-05T08:03:00.234000")
+DATETIME_STR_05_1700 = format_datetime_str("2023-06-05T17:00:00.345000")
+DATETIME_STR_06_1200 = format_datetime_str("2023-06-06T12:00:00.456000")
+
+
+@pytest.fixture(scope="session")
+def event_loop():
+    loop = asyncio.get_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def ingest() -> AsyncGenerator[None, None]:
+    record = await MongoDBInterface.find_one(collection_name="records")
+    if record is None:
+        data_ingester = DataIngester()
+        data_ingester.main()
+
+    yield
+
+    # Session tear down code could go here, if needed
 
 
 @pytest.fixture(scope="function")
@@ -86,6 +175,29 @@ def remove_background_pid_file():
         pass
 
 
+async def remove_record(timestamp_id):
+    await MongoDBInterface.delete_one(
+        "records",
+        filter_={"_id": f"{timestamp_id}"},
+    )
+
+
+@pytest_asyncio.fixture(scope="function")
+async def reset_record_storage():
+    yield
+    await remove_record(RECORD_ID_TMP)
+    await MongoDBInterface.delete_one("records", {"metadata.shotnum": 366272})
+    echo = EchoInterface()
+    subdirectories = echo.format_record_id(RECORD_ID_TMP)
+    await echo.delete_directory(f"{Waveform.echo_prefix}/{subdirectories}/")
+    await echo.delete_directory(f"{Image.echo_prefix}/{subdirectories}/")
+    await echo.delete_directory(f"{FloatImage.echo_prefix}/{subdirectories}/")
+    await echo.delete_directory(f"{Vector.echo_prefix}/{subdirectories}/")
+
+    if os.path.exists("test.h5"):
+        os.remove("test.h5")
+
+
 def assert_record(record, expected_channel_count, expected_channel_data):
     assert list(record.keys()) == ["_id", "metadata", "channels"]
     assert len(record["channels"]) == expected_channel_count
@@ -100,7 +212,7 @@ def assert_record(record, expected_channel_count, expected_channel_data):
                 assert value["data"] == expected_channel_data[channel_name]
             else:
                 image_bytes = base64.b64decode(value["thumbnail"])
-                image = Image.open(io.BytesIO(image_bytes))
+                image = PILImage.open(io.BytesIO(image_bytes))
                 image_phash = str(imagehash.phash(image))
                 assert image_phash == expected_channel_data[channel_name]
 
@@ -121,7 +233,7 @@ def assert_thumbnails(record: dict, expected_thumbnails_hashes: dict):
             num_channels_found += 1
             b64_thumbnail_string = value["thumbnail"]
             thumbnail_bytes = base64.b64decode(b64_thumbnail_string)
-            img = Image.open(io.BytesIO(thumbnail_bytes))
+            img = PILImage.open(io.BytesIO(thumbnail_bytes))
             thumbnail_phash = str(imagehash.phash(img))
             assert thumbnail_phash == expected_thumbnails_hashes[channel_name]
     assert num_channels_found == len(expected_thumbnails_hashes.keys())
