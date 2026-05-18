@@ -386,7 +386,7 @@ class TestExport:
                 None,
                 None,
                 False,  # export_scalars - don't export the main CSV file
-                False, # export_strings
+                False,  # export_strings
                 None,
                 None,
                 None,
