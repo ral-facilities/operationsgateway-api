@@ -8,6 +8,7 @@ app:
   url_prefix: ""
   maintenance_file: operationsgateway_api/maintenance.json.example
   scheduled_maintenance_file: operationsgateway_api/scheduled_maintenance.json.example
+  use_sub_second_timestamps: false
 images:
   # Thumbnail sizes should only ever be two element lists, of a x, y resolution
   thumbnail_size: [50, 50]
@@ -49,6 +50,7 @@ auth:
   refresh_token_validity_days: 7
   fedid_server_url: ldap://fed.cclrc.ac.uk:389
   fedid_server_ldap_realm: FED.CCLRC.AC.UK
+  allow_user_office_login: false
   oidc_providers:
     keycloak:
       display_name: A name # This gets displayed on the FE as an auth option

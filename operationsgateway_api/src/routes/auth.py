@@ -58,17 +58,22 @@ async def login(
     """
     log.info("Login request for '%s'", login_details.username)
 
-    # authenticate the user
-    user_model = await User.get_user(login_details.username)
+    username = login_details.username
+
+    if Config.config.auth.allow_user_office_login and "@" in username:
+        user_id = Authentication.do_user_office_auth(login_details)
+
+        # User Office returns the ICAT/User Office user id.
+        user_model = await User.get_user(user_id)
+    else:
+        user_model = await User.get_user(username)
+
+        authentication = Authentication(login_details, user_model)
+        authentication.authenticate()
+
     log.debug("user_model: %s", user_model)
 
-    authentication = Authentication(login_details, user_model)
-    authentication.authenticate()
-
-    log.info(
-        "Creating refresh token for '%s':",
-        login_details.username,
-    )
+    log.info("Creating refresh token for '%s':", user_model.username)
 
     response = Authentication.create_tokens_response(user_model)
 
