@@ -71,11 +71,11 @@ class TestChannelSummary:
         ],
     )
     def test_valid_string_channel_summary(
-            self,
-            test_app: TestClient,
-            login_and_get_token,
-            channel_name,
-            expected_summary,
+        self,
+        test_app: TestClient,
+        login_and_get_token,
+        channel_name,
+        expected_summary,
     ):
         test_response = test_app.get(
             f"/channels/summary/{channel_name}",
