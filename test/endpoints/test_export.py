@@ -841,7 +841,7 @@ class TestExport:
                 None,
                 None,
                 [],  # functions
-                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}_ASTRA_CONTROL_MODE_STRING.csv",
+                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv",
                 f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}_ASTRA_CONTROL_MODE_STRING.csv",
                 None,
                 marks=MARK_GEMINI_TEST,
