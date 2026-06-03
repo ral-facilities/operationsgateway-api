@@ -53,6 +53,39 @@ class TestChannelSummary:
         assert test_response.json() == expected_summary
 
     @pytest.mark.parametrize(
+        "channel_name, expected_summary",
+        [
+            pytest.param(
+                "ASTRA_CONTROL_MODE_STRING",
+                {
+                    "first_date": DATETIME_STR_05_0800,
+                    "most_recent_date": DATETIME_STR_06_1200,
+                    "recent_sample": [
+                        {DATETIME_STR_06_1200: "2USERS"},
+                        {DATETIME_STR_05_0803: "2USERS"},
+                        {DATETIME_STR_05_0800: "2USERS"},
+                    ],
+                },
+                id="String channel summary",
+            ),
+        ],
+    )
+    def test_valid_string_channel_summary(
+            self,
+            test_app: TestClient,
+            login_and_get_token,
+            channel_name,
+            expected_summary,
+    ):
+        test_response = test_app.get(
+            f"/channels/summary/{channel_name}",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+        )
+
+        assert test_response.status_code == 200
+        assert test_response.json() == expected_summary
+
+    @pytest.mark.parametrize(
         "channel_name, expected_summary, use_preferred_colourmap",
         [
             pytest.param(

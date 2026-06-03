@@ -460,6 +460,28 @@ class TestGetRecords:
                 marks=MARK_GEMINI_TEST,
                 id="Gemini: Query for bit_depth, present",
             ),
+            pytest.param(
+                {"metadata.shotnum": "20230606-115959"},
+                0,
+                1,
+                "metadata.shotnum ASC",
+                ["channels.ASTRA_CONTROL_MODE_STRING.data"],
+                False,
+                None,
+                [],
+                [
+                    {
+                        "_id": "20230606120000456",
+                        "channels": {
+                            "ASTRA_CONTROL_MODE_STRING": {
+                                "data": "2USERS",
+                            },
+                        },
+                    },
+                ],
+                marks=MARK_GEMINI_TEST,
+                id="Gemini: Query using string channel projection",
+            ),
         ],
     )
     def test_valid_get_records(

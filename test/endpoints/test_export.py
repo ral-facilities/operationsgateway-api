@@ -818,6 +818,35 @@ class TestExport:
                     "with functions defined but not included in projections"
                 ),
             ),
+            pytest.param(
+                {"_id": {"$in": [RECORD_ID_05_0800, RECORD_ID_05_0803]}},
+                0,
+                10,
+                "metadata.shotnum ASC",
+                [
+                    "metadata.shotnum",
+                    "metadata.timestamp",
+                    "metadata.epac_ops_data_version",
+                    "channels.ASTRA_CONTROL_MODE_STRING.data",
+                ],
+                None,
+                None,
+                None,
+                None,
+                True,  # export_strings
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                [],  # functions
+                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}_ASTRA_CONTROL_MODE_STRING.csv",
+                f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}_ASTRA_CONTROL_MODE_STRING.csv",
+                None,
+                marks=MARK_GEMINI_TEST,
+                id="CSV export of string channel",
+            ),
         ],
     )
     def test_csv_export(
