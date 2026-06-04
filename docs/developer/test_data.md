@@ -67,5 +67,9 @@ Depending on which options are enabled, the script will do the following things:
 - Ingest HDF files and a channel manifest file 
 - Stop the API
 
+### Facility specific data
+
+Now that there is facility specific functionality/data formats, the single bucket for simulated data has been replaced with two buckets which are facility specific and contain a smaller number of hdf files to reduce ingest time in the CI/CD workflows. The names for these buckets are defined in [test/pytest.ini.example](test/pytest.ini.example), and will be used by configuring the `pytest.ini` files as specified in the [README](/README.md).
+
 ## Reverting from Simulated Data back to Gemini Data
 As previously stated, there may be cases where you have simulated data loaded into your development environment and you need to reload the Gemini data. As the script used to load Gemini data contains options to wipe the database and Echo, there should be no additional steps required. Clone the test data repo, run the script and check the tests pass!

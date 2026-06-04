@@ -3,6 +3,8 @@ import json
 from fastapi.testclient import TestClient
 import pytest
 
+from test.conftest import MARK_EPAC_TEST, MARK_GEMINI_TEST
+
 
 class TestCountRecords:
     @pytest.mark.parametrize(
@@ -10,18 +12,38 @@ class TestCountRecords:
         [
             pytest.param(
                 {},
-                401,
+                4,
                 id="No conditions",
             ),
             pytest.param(
                 {"metadata.shotnum": 423648000000},
                 1,
-                id="Specific shot number",
+                marks=MARK_EPAC_TEST,
+                id="EPAC: Specific shot number",
             ),
             pytest.param(
                 {"metadata.shotnum": {"$gt": 423648072000}},
-                7,
-                id="Shot number range with operator",
+                1,
+                marks=MARK_EPAC_TEST,
+                id="EPAC: Shot number range with operator",
+            ),
+            pytest.param(
+                {
+                    "metadata.shotnum": "20230605-075959",
+                    "metadata.active_area": {"$in": ["GD"]},
+                },
+                1,
+                marks=MARK_GEMINI_TEST,
+                id="Gemini: Specific shot number",
+            ),
+            pytest.param(
+                {
+                    "metadata.shotnum": {"$gt": "20230605-120000"},
+                    "metadata.active_area": {"$in": ["GD"]},
+                },
+                1,
+                marks=MARK_GEMINI_TEST,
+                id="Gemini: Shot number range with operator",
             ),
         ],
     )

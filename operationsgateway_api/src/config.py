@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 import sys
-from typing import Annotated, List, Optional, Tuple
+from typing import Annotated, List, Optional, Tuple, Type
 
 import annotated_types
 from dateutil import tz
@@ -17,10 +17,14 @@ from pydantic import (
     StrictBool,
     StrictInt,
     StrictStr,
-    ValidationError,
+)
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+    YamlConfigSettingsSource,
 )
 from xrootd_utils.common import AutoRemove
-import yaml
 
 
 class App(BaseModel):
@@ -33,6 +37,7 @@ class App(BaseModel):
     url_prefix: StrictStr
     maintenance_file: FilePath
     scheduled_maintenance_file: FilePath
+    use_sub_second_timestamps: bool = False  # Cannot use StrictBool if loading from env
 
 
 class ImagesConfig(BaseModel):
@@ -107,6 +112,7 @@ class AuthConfig(BaseModel):
     refresh_token_validity_days: StrictInt
     fedid_server_url: StrictStr
     fedid_server_ldap_realm: StrictStr
+    allow_user_office_login: StrictBool
     oidc_providers: dict[StrictStr, OidcProviderConfig] = {}
 
 
@@ -205,7 +211,7 @@ class BackupConfig(BaseModel):
     )
 
 
-class APIConfig(BaseModel):
+class APIConfig(BaseSettings):
     """
     Class to store the API's configuration settings
     """
@@ -226,21 +232,31 @@ class APIConfig(BaseModel):
     observability: ObservabilityConfig
     backup: BackupConfig | None = None
 
-    @classmethod
-    def load(cls, path=Path(__file__).parent.parent / "config.yml"):
-        """
-        Load the config data from the .yml file and store it as a dict
-        """
+    model_config = SettingsConfigDict(
+        yaml_file=Path(__file__).parent.parent / "config.yml",
+        env_nested_delimiter="__",
+        hide_input_in_errors=True,
+    )
 
-        try:
-            with open(path, encoding="utf-8") as config_file:
-                config = yaml.safe_load(config_file)
-                return cls(**config)
-        except (IOError, ValidationError, yaml.YAMLError) as e:
-            sys.exit(f"An error occurred while loading the config data: {e}")
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: Type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> Tuple[PydanticBaseSettingsSource, ...]:
+        return (
+            init_settings,
+            env_settings,
+            dotenv_settings,
+            YamlConfigSettingsSource(settings_cls),
+            file_secret_settings,
+        )
 
 
 class Config:
     """Class containing config as a class variable so it can mocked during testing"""
 
-    config = APIConfig.load()
+    config = APIConfig()

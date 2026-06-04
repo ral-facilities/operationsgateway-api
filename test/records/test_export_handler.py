@@ -53,6 +53,7 @@ class TestExportHandler:
             False,
             False,
             False,
+            False,
         )
         assert await export_handler._process_projection(None, {}, proj) == ""
 
@@ -81,6 +82,7 @@ class TestExportHandler:
             colourmap_name="viridis",
             functions=[],
             export_scalars=True,
+            export_strings=True,
             export_images=True,
             export_float_images=True,
             export_waveform_images=True,
@@ -117,6 +119,7 @@ class TestExportHandler:
             colourmap_name="viridis",
             functions=[],
             export_scalars=True,
+            export_strings=True,
             export_images=True,
             export_float_images=True,
             export_waveform_images=True,

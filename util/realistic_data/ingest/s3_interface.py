@@ -2,27 +2,35 @@ from io import BytesIO
 from time import time
 
 import boto3
-from util.realistic_data.ingest.config import Config
+
+from util.realistic_data.ingest.config import SourceConfig
 
 
 class S3Interface:
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        source_config: SourceConfig,
+        storage_bucket: str,
+        remote_experiments_file_path: str,
+    ) -> None:
+        self.source_config = source_config
+        self.remote_experiments_file_path = remote_experiments_file_path
         self.resource = boto3.resource(
             "s3",
-            endpoint_url=Config.config.echo.endpoint_url,
-            aws_access_key_id=Config.config.echo.access_key.get_secret_value(),
-            aws_secret_access_key=Config.config.echo.secret_key.get_secret_value(),
+            endpoint_url=source_config.endpoint_url,
+            aws_access_key_id=source_config.access_key.get_secret_value(),
+            aws_secret_access_key=source_config.secret_key.get_secret_value(),
         )
         self.client = boto3.client(
             "s3",
-            endpoint_url=Config.config.echo.endpoint_url,
-            aws_access_key_id=Config.config.echo.access_key.get_secret_value(),
-            aws_secret_access_key=Config.config.echo.secret_key.get_secret_value(),
+            endpoint_url=source_config.endpoint_url,
+            aws_access_key_id=source_config.access_key.get_secret_value(),
+            aws_secret_access_key=source_config.secret_key.get_secret_value(),
         )
         self.simulated_data_bucket = self.resource.Bucket(
-            Config.config.echo.simulated_data_bucket,
+            source_config.simulated_data_bucket,
         )
-        self.bucket = self.resource.Bucket(Config.config.echo.storage_bucket)
+        self.bucket = self.resource.Bucket(storage_bucket)
 
     def download_manifest_file(self) -> BytesIO:
         channel_manifest = BytesIO()
@@ -43,20 +51,18 @@ class S3Interface:
         experiments_import.seek(0)
         print("Downloaded experiments (in format for mongoimport) from S3")
 
-        binary_file = open(Config.config.database.remote_experiments_file_path, "wb")
+        binary_file = open(self.remote_experiments_file_path, "wb")
         binary_file.write(experiments_import.getvalue())
         binary_file.close()
 
-        print(
-            f"Written '{Config.config.database.remote_experiments_file_path}' to file",
-        )
+        print(f"Written {self.remote_experiments_file_path!r} to file")
 
     def paginate_hdf_data(self):
         paginator = self.client.get_paginator("list_objects_v2")
         return paginator.paginate(
-            Bucket=Config.config.echo.simulated_data_bucket,
+            Bucket=self.source_config.simulated_data_bucket,
             Prefix="data/",
-            PaginationConfig={"PageSize": Config.config.echo.page_size},
+            PaginationConfig={"PageSize": self.source_config.page_size},
         )
 
     def download_hdf_file(self, object_key: str):

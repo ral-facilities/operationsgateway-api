@@ -3,6 +3,7 @@ import logging
 import socket
 
 import ldap
+import requests
 from starlette.responses import JSONResponse
 
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
@@ -160,3 +161,70 @@ class Authentication:
         )
 
         return response
+
+    @staticmethod
+    def do_user_office_auth(login_details: LoginDetailsModel) -> str:
+        """
+        Authenticate a User Office user.
+        User enters email + password.
+        User Office returns userId
+        The returned userId is used to find the user in Mongo.
+        """
+        username = login_details.username
+        password = login_details.password
+
+        log.debug("Doing User Office auth for '%s'", username)
+
+        login_url = "https://api.facilities.rl.ac.uk/users-service/v2/sessions"
+
+        try:
+            response = requests.post(
+                login_url,
+                json={
+                    "username": username,
+                    "password": password,
+                },
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                },
+                timeout=10,
+            )
+
+            if response.status_code in (401, 403):
+                log.info("Invalid User Office username or password for '%s'", username)
+                raise UnauthorisedError()
+
+            if response.status_code != 201:
+                log.error(
+                    "Unexpected User Office auth response for '%s': %s %s",
+                    username,
+                    response.status_code,
+                    response.text,
+                )
+                response.raise_for_status()
+                raise AuthServerError()
+
+            login_response = response.json()
+            user_id = login_response.get("userId")
+
+            if not user_id:
+                log.error("User Office auth response did not contain userId")
+                raise AuthServerError()
+
+            log.info(
+                "User Office login successful for '%s', userId '%s'",
+                username,
+                user_id,
+            )
+
+            return user_id
+
+        except UnauthorisedError:
+            raise
+        except requests.exceptions.RequestException as exc:
+            log.exception("Problem with User Office auth service")
+            raise AuthServerError() from exc
+        except ValueError as exc:
+            log.exception("Invalid JSON response from User Office auth service")
+            raise AuthServerError() from exc

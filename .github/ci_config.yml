@@ -6,6 +6,7 @@ app:
   url_prefix: ""
   maintenance_file: operationsgateway_api/maintenance.json.example
   scheduled_maintenance_file: operationsgateway_api/scheduled_maintenance.json.example
+  # use_sub_second_timestamps: set by env
 images:
   thumbnail_size: [50, 50]
   default_colour_map: viridis
@@ -39,6 +40,7 @@ auth:
   refresh_token_validity_days: 7
   fedid_server_url: ldap://fed.cclrc.ac.uk:389
   fedid_server_ldap_realm: FED.CCLRC.AC.UK
+  allow_user_office_login: false
 experiments:
   user_office_rest_api_url: https://devapi.facilities.rl.ac.uk/users-service/v1
   scheduler_wsdl_url: https://devapis.facilities.rl.ac.uk/ws/ScheduleWebService?wsdl

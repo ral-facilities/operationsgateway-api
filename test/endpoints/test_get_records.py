@@ -6,6 +6,11 @@ import pytest
 from test.conftest import (
     assert_record,
     assert_thumbnails,
+    format_datetime_str,
+    MARK_EPAC_TEST,
+    MARK_GEMINI_TEST,
+    RECORD_ID_05_0800,
+    RECORD_ID_05_0803,
     set_preferred_colourmap,
     unset_preferred_colourmap,
 )
@@ -29,7 +34,8 @@ class TestGetRecords:
                     {"TS-202-TSM-P1-CAM-2-CENX": 3.0393419803062542},
                     {"TS-202-TSM-P1-CAM-2-CENX": -9.545737525173104},
                 ],
-                id="Simple example",
+                marks=MARK_EPAC_TEST,
+                id="EPAC: Simple example",
             ),
             pytest.param(
                 {"metadata.shotnum": {"$exists": True}},
@@ -60,7 +66,8 @@ class TestGetRecords:
                         },
                     },
                 ],
-                id="Query using a single projection",
+                marks=MARK_EPAC_TEST,
+                id="EPAC: Query using a single projection",
             ),
             pytest.param(
                 {"metadata.shotnum": {"$exists": True}},
@@ -87,7 +94,8 @@ class TestGetRecords:
                         },
                     },
                 ],
-                id="Query using multiple projections",
+                marks=MARK_EPAC_TEST,
+                id="EPAC: Query using multiple projections",
             ),
             pytest.param(
                 {"metadata.shotnum": {"$exists": True}},
@@ -100,13 +108,13 @@ class TestGetRecords:
                 [],
                 [
                     {
-                        "_id": "20230605080000",
+                        "_id": RECORD_ID_05_0800,
                         "channels": {
                             "TS-202-TSM-P1-CAM-2-FWHMX": {"data": 46.402748185135856},
                         },
                     },
                     {
-                        "_id": "20230605080300",
+                        "_id": RECORD_ID_05_0803,
                         "channels": {
                             "TS-202-TSM-P1-CAM-2-FWHMX": {"data": 48.99072710782586},
                         },
@@ -139,7 +147,8 @@ class TestGetRecords:
                     {"TS-202-TSM-P1-CAM-2-CENX": 3.0393419803062542},
                     {"TS-202-TSM-P1-CAM-2-CENX": -9.545737525173104},
                 ],
-                id="Query with truncate",
+                marks=MARK_EPAC_TEST,
+                id="EPAC: Query with truncate",
             ),
             pytest.param(
                 {"metadata.shotnum": {"$exists": True}},
@@ -154,7 +163,8 @@ class TestGetRecords:
                     {"TS-202-TSM-P1-CAM-2-CENX": 3.0393419803062542, "test": 1},
                     {"TS-202-TSM-P1-CAM-2-CENX": -9.545737525173104, "test": 1},
                 ],
-                id="Example with functions",
+                marks=MARK_EPAC_TEST,
+                id="EPAC: Example with functions",
             ),
             pytest.param(
                 {"channels.CM-202-CVC-SP": {"$exists": True}},
@@ -169,7 +179,8 @@ class TestGetRecords:
                     {"test": "bab14eb3d04eb04e"},
                     {"test": "bb914fb1816e914e"},
                 ],
-                id="Example with Waveform function",
+                marks=MARK_EPAC_TEST,
+                id="EPAC: Example with Waveform function",
             ),
             pytest.param(
                 {"channels.FE-204-NSO-P1-CAM-1": {"$exists": True}},
@@ -184,7 +195,8 @@ class TestGetRecords:
                     {"test": "c73b39c0c00fcc7e"},
                     {"test": "b712d9f6c061c731"},
                 ],
-                id="Example with Image function",
+                marks=MARK_EPAC_TEST,
+                id="EPAC: Example with Image function",
             ),
             pytest.param(
                 {"metadata.shotnum": 423648000000},
@@ -209,7 +221,8 @@ class TestGetRecords:
                         },
                     },
                 ],
-                id="Query for bit_depth, not present",
+                marks=MARK_EPAC_TEST,
+                id="EPAC: Query for bit_depth, not present",
             ),
             pytest.param(
                 {"metadata.shotnum": 423649008000},
@@ -235,10 +248,15 @@ class TestGetRecords:
                         },
                     },
                 ],
-                id="Query for bit_depth, present",
+                marks=MARK_EPAC_TEST,
+                id="EPAC: Query for bit_depth, present",
             ),
             pytest.param(
-                {"metadata.timestamp": "2023-06-05T08:03:00"},
+                {
+                    "metadata.timestamp": format_datetime_str(
+                        "2023-06-05T08:03:00.234000",
+                    ),
+                },
                 0,
                 1,
                 "metadata.shotnum ASC",
@@ -248,6 +266,221 @@ class TestGetRecords:
                 [],  # functions
                 [{"FE-204-NSS-WFS-COEF": "83c0e03ef8c77f30"}],  # expected_channels_data
                 id="Query for vector thumbnail",
+            ),
+            pytest.param(
+                {"metadata.shotnum": {"$exists": True}},
+                0,
+                2,
+                "metadata.shotnum ASC",
+                None,
+                False,
+                [354, 362],
+                [],
+                [
+                    {"TS-202-TSM-P1-CAM-2-CENX": 3.0393419803062542},
+                    {"TS-202-TSM-P1-CAM-2-CENX": -9.545737525173104},
+                ],
+                marks=MARK_GEMINI_TEST,
+                id="Gemini: Simple example",
+            ),
+            pytest.param(
+                {"metadata.shotnum": {"$exists": True}},
+                0,
+                2,
+                "metadata.shotnum ASC",
+                ["metadata"],
+                False,
+                None,
+                [],
+                [
+                    {
+                        "_id": "20230605080000123",
+                        "metadata": {
+                            "active_area": "GD",
+                            "epac_ops_data_version": "1.0",
+                            "shotnum": "20230605-075959",
+                            "timestamp": "2023-06-05T08:00:00.123000",
+                        },
+                    },
+                    {
+                        "_id": "20230605080300234",
+                        "metadata": {
+                            "active_area": "GD",
+                            "epac_ops_data_version": "1.2",
+                            "shotnum": "20230605-080259",
+                            "timestamp": "2023-06-05T08:03:00.234000",
+                        },
+                    },
+                ],
+                marks=MARK_GEMINI_TEST,
+                id="Gemini: Query using a single projection",
+            ),
+            pytest.param(
+                {"metadata.shotnum": {"$exists": True}},
+                0,
+                2,
+                "metadata.shotnum ASC",
+                ["metadata.shotnum", "metadata.timestamp"],
+                False,
+                None,
+                [],
+                [
+                    {
+                        "_id": "20230605080000123",
+                        "metadata": {
+                            "shotnum": "20230605-075959",
+                            "timestamp": "2023-06-05T08:00:00.123000",
+                        },
+                    },
+                    {
+                        "_id": "20230605080300234",
+                        "metadata": {
+                            "shotnum": "20230605-080259",
+                            "timestamp": "2023-06-05T08:03:00.234000",
+                        },
+                    },
+                ],
+                marks=MARK_GEMINI_TEST,
+                id="Gemini: Query using multiple projections",
+            ),
+            pytest.param(
+                {"metadata.shotnum": {"$exists": True}},
+                0,
+                2,
+                "metadata.shotnum ASC",
+                None,
+                True,
+                [354, 362],
+                [],
+                [
+                    {"TS-202-TSM-P1-CAM-2-CENX": 3.0393419803062542},
+                    {"TS-202-TSM-P1-CAM-2-CENX": -9.545737525173104},
+                ],
+                marks=MARK_GEMINI_TEST,
+                id="Gemini: Query with truncate",
+            ),
+            pytest.param(
+                {"metadata.shotnum": {"$exists": True}},
+                0,
+                2,
+                "metadata.shotnum ASC",
+                None,
+                False,
+                [355, 363],
+                [{"name": "test", "expression": "1"}],
+                [
+                    {"TS-202-TSM-P1-CAM-2-CENX": 3.0393419803062542, "test": 1},
+                    {"TS-202-TSM-P1-CAM-2-CENX": -9.545737525173104, "test": 1},
+                ],
+                marks=MARK_GEMINI_TEST,
+                id="Gemini: Example with functions",
+            ),
+            pytest.param(
+                {"channels.CM-202-CVC-SP": {"$exists": True}},
+                0,
+                2,
+                "metadata.shotnum ASC",
+                None,
+                False,
+                [355, 363],
+                [{"name": "test", "expression": "CM-202-CVC-SP - 700"}],
+                [
+                    {"test": "bab14eb3d04eb04e"},
+                    {"test": "bb914fb1816e914e"},
+                ],
+                marks=MARK_GEMINI_TEST,
+                id="Gemini: Example with Waveform function",
+            ),
+            pytest.param(
+                {"channels.FE-204-NSO-P1-CAM-1": {"$exists": True}},
+                0,
+                2,
+                "metadata.shotnum ASC",
+                None,
+                False,
+                [355, 363],
+                [{"name": "test", "expression": "FE-204-NSO-P1-CAM-1 - 700"}],
+                [
+                    {"test": "c73b39c0c00fcc7e"},
+                    {"test": "b712d9f6c061c731"},
+                ],
+                marks=MARK_GEMINI_TEST,
+                id="Gemini: Example with Image function",
+            ),
+            pytest.param(
+                {"metadata.shotnum": "20230605-075959"},
+                0,
+                1,
+                "metadata.shotnum ASC",
+                ["channels.CM-202-CVC-CAM-1.metadata"],
+                False,
+                None,
+                [],
+                [
+                    {
+                        "_id": "20230605080000123",
+                        "channels": {
+                            "CM-202-CVC-CAM-1": {
+                                "metadata": {
+                                    "channel_dtype": "image",
+                                    "exposure_time_s": 0.0012,
+                                    "gain": 4.826012758558324,
+                                },
+                            },
+                        },
+                    },
+                ],
+                marks=MARK_GEMINI_TEST,
+                id="Gemini: Query for bit_depth, not present",
+            ),
+            pytest.param(
+                {"metadata.shotnum": "20230606-115959"},
+                0,
+                1,
+                "metadata.shotnum ASC",
+                ["channels.CM-202-CVC-CAM-1.metadata"],
+                False,
+                None,
+                [],
+                [
+                    {
+                        "_id": "20230606120000456",
+                        "channels": {
+                            "CM-202-CVC-CAM-1": {
+                                "metadata": {
+                                    "bit_depth": 12,
+                                    "channel_dtype": "image",
+                                    "exposure_time_s": 0.0012,
+                                    "gain": 0.7862722445526737,
+                                },
+                            },
+                        },
+                    },
+                ],
+                marks=MARK_GEMINI_TEST,
+                id="Gemini: Query for bit_depth, present",
+            ),
+            pytest.param(
+                {"metadata.shotnum": "20230606-115959"},
+                0,
+                1,
+                "metadata.shotnum ASC",
+                ["channels.ASTRA_CONTROL_MODE_STRING.data"],
+                False,
+                None,
+                [],
+                [
+                    {
+                        "_id": "20230606120000456",
+                        "channels": {
+                            "ASTRA_CONTROL_MODE_STRING": {
+                                "data": "2USERS",
+                            },
+                        },
+                    },
+                ],
+                marks=MARK_GEMINI_TEST,
+                id="Gemini: Query using string channel projection",
             ),
         ],
     )
@@ -306,86 +539,176 @@ class TestGetRecords:
         "use_preferred_colourmap, expected_thumbnails_hashes",
         [
             pytest.param(
-                {"metadata.shotnum": 423648072000},
+                {"metadata.shotnum": 423648000000},
                 None,
                 None,
                 None,
                 None,
                 False,
-                {
-                    "TS-202-TSM-P2-CAM-1": "cdc134273f0e36e1",
-                },
-                id="Whole record: all channels have channel_dtype returned",
+                {"TS-202-TSM-P2-CAM-1": "c53933c53bce3146"},
+                marks=MARK_EPAC_TEST,
+                id="EPAC: Whole record: all channels have channel_dtype returned",
             ),
             # ensure setting the user's preferred colour map overrides the system
             # default
             pytest.param(
-                {"metadata.shotnum": 423648072000},
+                {"metadata.shotnum": 423648000000},
                 None,
                 None,
                 None,
                 None,
                 True,
-                {
-                    "TS-202-TSM-P2-CAM-1": "ccc139332d6c3733",
-                },
-                id="Whole record: all channels have channel_dtype returned and user's "
-                "preferred colour map is set",
+                {"TS-202-TSM-P2-CAM-1": "c53d32563aaa73c2"},
+                marks=MARK_EPAC_TEST,
+                id=(
+                    "EPAC: Whole record: all channels have channel_dtype returned and "
+                    "user's preferred colour map is set"
+                ),
             ),
             pytest.param(
-                {"metadata.shotnum": 423648072000},
+                {"metadata.shotnum": 423648000000},
                 "channels.TS-202-TSM-P2-CAM-1.thumbnail",
                 None,
                 None,
                 None,
                 False,
-                {
-                    "TS-202-TSM-P2-CAM-1": "cdc134273f0e36e1",
-                },
-                id="Partial record: only TS-202-TSM-P2-CAM-1 and no channel_dtype"
-                " returned",
+                {"TS-202-TSM-P2-CAM-1": "c53933c53bce3146"},
+                marks=MARK_EPAC_TEST,
+                id=(
+                    "EPAC: Partial record: only TS-202-TSM-P2-CAM-1 and no "
+                    "channel_dtype returned"
+                ),
             ),
             pytest.param(
-                {"metadata.shotnum": 423648072000},
+                {"metadata.shotnum": 423648000000},
                 None,
                 50,
                 200,
                 "jet_r",
                 False,
-                {
-                    "TS-202-TSM-P2-CAM-1": "8000000000000000",
-                },
-                id="Whole record: all channels have channel_dtype returned "
-                "and custom false colour settings applied",
+                {"TS-202-TSM-P2-CAM-1": "8000000000000000"},
+                marks=MARK_EPAC_TEST,
+                id=(
+                    "EPAC: Whole record: all channels have channel_dtype returned and "
+                    "custom false colour settings applied"
+                ),
             ),
             # repeat the test above but with the user's preferred colour map set
             # ensure this does not affect the outcome
             pytest.param(
-                {"metadata.shotnum": 423648072000},
+                {"metadata.shotnum": 423648000000},
                 None,
                 50,
                 200,
                 "jet_r",
                 True,
-                {
-                    "TS-202-TSM-P2-CAM-1": "8000000000000000",
-                },
-                id="Whole record: all channels have channel_dtype returned "
-                "and custom false colour settings applied even with user's "
-                "preferred colour map set",
+                {"TS-202-TSM-P2-CAM-1": "8000000000000000"},
+                marks=MARK_EPAC_TEST,
+                id=(
+                    "EPAC: Whole record: all channels have channel_dtype returned and "
+                    "custom false colour settings applied even with user's preferred "
+                    "colour map set"
+                ),
             ),
             pytest.param(
-                {"metadata.shotnum": 423648072000},
+                {"metadata.shotnum": 423648000000},
                 "channels.TS-202-TSM-P2-CAM-1.thumbnail",
                 50,
                 200,
                 "jet_r",
                 False,
-                {
-                    "TS-202-TSM-P2-CAM-1": "8000000000000000",
-                },
-                id="Partial record: only TS-202-TSM-P2-CAM-1 and no channel_dtype"
-                " returned and custom false colour settings applied",
+                {"TS-202-TSM-P2-CAM-1": "8000000000000000"},
+                marks=MARK_EPAC_TEST,
+                id=(
+                    "EPAC: Partial record: only TS-202-TSM-P2-CAM-1 and no "
+                    "channel_dtype returned and custom false colour settings applied"
+                ),
+            ),
+            pytest.param(
+                {"metadata.shotnum": "20230605-075959"},
+                None,
+                None,
+                None,
+                None,
+                False,
+                {"TS-202-TSM-P2-CAM-1": "c53933c53bce3146"},
+                marks=MARK_GEMINI_TEST,
+                id="Gemini: Whole record: all channels have channel_dtype returned",
+            ),
+            # ensure setting the user's preferred colour map overrides the system
+            # default
+            pytest.param(
+                {"metadata.shotnum": "20230605-075959"},
+                None,
+                None,
+                None,
+                None,
+                True,
+                {"TS-202-TSM-P2-CAM-1": "c53d32563aaa73c2"},
+                marks=MARK_GEMINI_TEST,
+                id=(
+                    "Gemini: Whole record: all channels have channel_dtype returned "
+                    "and user's preferred colour map is set"
+                ),
+            ),
+            pytest.param(
+                {"metadata.shotnum": "20230605-075959"},
+                "channels.TS-202-TSM-P2-CAM-1.thumbnail",
+                None,
+                None,
+                None,
+                False,
+                {"TS-202-TSM-P2-CAM-1": "c53933c53bce3146"},
+                marks=MARK_GEMINI_TEST,
+                id=(
+                    "Gemini: Partial record: only TS-202-TSM-P2-CAM-1 and no "
+                    "channel_dtype returned"
+                ),
+            ),
+            pytest.param(
+                {"metadata.shotnum": "20230605-075959"},
+                None,
+                50,
+                200,
+                "jet_r",
+                False,
+                {"TS-202-TSM-P2-CAM-1": "8000000000000000"},
+                marks=MARK_GEMINI_TEST,
+                id=(
+                    "Gemini: Whole record: all channels have channel_dtype returned "
+                    "and custom false colour settings applied"
+                ),
+            ),
+            # repeat the test above but with the user's preferred colour map set
+            # ensure this does not affect the outcome
+            pytest.param(
+                {"metadata.shotnum": "20230605-075959"},
+                None,
+                50,
+                200,
+                "jet_r",
+                True,
+                {"TS-202-TSM-P2-CAM-1": "8000000000000000"},
+                marks=MARK_GEMINI_TEST,
+                id=(
+                    "Gemini: Whole record: all channels have channel_dtype returned "
+                    "and custom false colour settings applied even with user's "
+                    "preferred colour map set"
+                ),
+            ),
+            pytest.param(
+                {"metadata.shotnum": "20230605-075959"},
+                "channels.TS-202-TSM-P2-CAM-1.thumbnail",
+                50,
+                200,
+                "jet_r",
+                False,
+                {"TS-202-TSM-P2-CAM-1": "8000000000000000"},
+                marks=MARK_GEMINI_TEST,
+                id=(
+                    "Gemini: Partial record: only TS-202-TSM-P2-CAM-1 and no "
+                    "channel_dtype returned and custom false colour settings applied"
+                ),
             ),
         ],
     )

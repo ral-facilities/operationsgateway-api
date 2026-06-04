@@ -92,6 +92,10 @@ async def export_records(
         True,
         description="Whether to export the scalar values from the main data table",
     ),
+    export_strings: Optional[bool] = Query(
+        True,
+        description="Whether to export string values from the main data table",
+    ),
     export_images: Optional[bool] = Query(
         True,
         description="Whether to export the images for image channels",
@@ -167,6 +171,7 @@ async def export_records(
         colourmap_name,
         functions,
         export_scalars,
+        export_strings,
         export_images,
         export_float_images,
         export_waveform_csvs,
@@ -180,7 +185,7 @@ async def export_records(
     # ensure the "file pointer" is reset
     file_bytes_to_export.seek(0)
     filename = export_handler.get_filename_stem()
-    if type(file_bytes_to_export) == io.BytesIO:
+    if type(file_bytes_to_export) is io.BytesIO:
         # this is a zip file
         headers = {"Content-Disposition": f'attachment; filename="{filename}.zip"'}
         return Response(
@@ -188,7 +193,7 @@ async def export_records(
             headers=headers,
             media_type="application/zip",
         )
-    elif type(file_bytes_to_export) == io.StringIO:
+    elif type(file_bytes_to_export) is io.StringIO:
         # this is a csv file
         headers = {"Content-Disposition": f'attachment; filename="{filename}.csv"'}
         return Response(

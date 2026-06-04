@@ -2,37 +2,39 @@ from io import BytesIO
 import json
 from pprint import pprint
 import threading
-from time import time
+from time import sleep, time
 from typing import Dict
 
 import requests
 from requests.exceptions import ConnectionError
+
 from util.realistic_data.ingest.api_starter import APIStarter
-from util.realistic_data.ingest.config import Config
 
 
 class APIClient:
-    def __init__(self, url: str, process=None) -> None:
+    def __init__(self, url: str, username: str, password: str, process=None) -> None:
+        self.retries = 3
         self.url = url
+        self.username = username
+        self.password = password
         self.access_token, self.refresh_token = self.login()
         self.process = process
 
-    def login(self) -> str:
+    def login(self) -> tuple[str, str]:
         # Login to get an access token
-        print(f"Login as '{Config.config.api.username}' to get access token")
+        print(f"Login as {self.username!r} to get access token")
 
         endpoint = "/login"
         credentials_json = json.dumps(
-            {
-                "username": Config.config.api.username,
-                "password": Config.config.api.password,
-            },
+            {"username": self.username, "password": self.password},
         )
         try:
             response = requests.post(
                 f"{self.url}{endpoint}",
                 data=credentials_json,
             )
+            if response.status_code != 200:
+                raise RuntimeError(f"{response.status_code}: {response.text}")
 
             # strip the first and last characters off the response
             # (the double quotes that surround it)
@@ -44,14 +46,21 @@ class APIClient:
             return access_token, refresh_token
         except ConnectionError:
             print(f"Cannot connect with API at {self.url} for {endpoint}")
+            if self.retries > 0:
+                self.retries -= 1
+                sleep(10)
+                return self.login()
+            else:
+                raise
         except requests.exceptions.InvalidSchema:
             print(
                 "Invalid schema when logging in with requests. Have you added"
                 " http/https to the start of the API URL?",
             )
+            raise
 
     def refresh(self) -> str:
-        print(f"Refresh token as '{Config.config.api.username}'")
+        print(f"Refresh token as {self.username!r}")
 
         endpoint = "/refresh"
 

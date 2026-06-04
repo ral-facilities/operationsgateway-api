@@ -27,6 +27,18 @@ def lint(session):
 def safety(session):
     session.env["POETRY_VIRTUALENVS_CREATE"] = "false"
     session.run("poetry", "install", "--without", "simulated-data", external=True)
+    session.run(
+        "poetry",
+        "run",
+        "python",
+        "-m",
+        "pip",
+        "install",
+        "--upgrade",
+        "pip>=26.0",
+        external=True,
+    )
+
     # Can't fix 70790 because epac data sim uses it
     session.run(
         "poetry",
@@ -46,3 +58,33 @@ def tests(session):
     session.env["POETRY_VIRTUALENVS_CREATE"] = "false"
     session.run("poetry", "install", "--without", "simulated-data", external=True)
     session.run("poetry", "run", "pytest", *args, external=True)
+
+
+@nox.session(python=False)
+def tests_epac(session):
+    args = session.posargs
+    session.env["POETRY_VIRTUALENVS_CREATE"] = "false"
+    session.run("poetry", "install", "--without", "simulated-data", external=True)
+    session.run(
+        "poetry",
+        "run",
+        "pytest",
+        "--config-file=test/pytest_epac.ini",
+        *args,
+        external=True,
+    )
+
+
+@nox.session(python=False)
+def tests_gemini(session):
+    args = session.posargs
+    session.env["POETRY_VIRTUALENVS_CREATE"] = "false"
+    session.run("poetry", "install", "--without", "simulated-data", external=True)
+    session.run(
+        "poetry",
+        "run",
+        "pytest",
+        "--config-file=test/pytest_gemini.ini",
+        *args,
+        external=True,
+    )

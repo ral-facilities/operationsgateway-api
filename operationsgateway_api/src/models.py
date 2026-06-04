@@ -52,6 +52,7 @@ class ChannelDtype(StrEnum):
     WAVEFORM = "waveform"
     VECTOR = "vector"
     SCALAR = "scalar"
+    STRING = "string"
 
 
 class ImageModel(BaseModel):
@@ -193,9 +194,19 @@ class VectorChannelModel(BaseModel):
     vector_path: str | Any | None = None
 
 
+class StringChannelMetadataModel(BaseModel):
+    channel_dtype: Literal[ChannelDtype.STRING] | Any | None = ChannelDtype.STRING
+    units: Optional[Union[str, Any]] = None
+
+
+class StringChannelModel(BaseModel):
+    metadata: StringChannelMetadataModel
+    data: Optional[str]
+
+
 class RecordMetadataModel(BaseModel):
     epac_ops_data_version: Optional[Any] = None
-    shotnum: Optional[int] = None
+    shotnum: int | str | None = None
     timestamp: Optional[Any] = None
     active_area: Optional[Any] = None
     active_experiment: Optional[Any] = None
@@ -217,7 +228,8 @@ class RecordModel(BaseModel):
         | FloatImageChannelModel
         | ScalarChannelModel
         | WaveformChannelModel
-        | VectorChannelModel,
+        | VectorChannelModel
+        | StringChannelModel,
     ]
 
 
@@ -250,12 +262,18 @@ class PartialVectorChannelModel(VectorChannelModel):
     vector_path: str | None = None
 
 
+class PartialStringChannelModel(StringChannelModel):
+    metadata: StringChannelMetadataModel | None = None
+    data: str | None = None
+
+
 PartialChannelModel = (
     PartialImageChannelModel
     | PartialFloatImageChannelModel
     | PartialScalarChannelModel
     | PartialWaveformChannelModel
     | PartialVectorChannelModel
+    | PartialStringChannelModel
 )
 PartialChannels = dict[str, PartialChannelModel]
 
@@ -369,37 +387,75 @@ class ExperimentPartMappingModel(BaseModel):
 class ShotnumConverterRange(BaseModel):
     opposite_range_fields: ClassVar[Dict[str, str]] = {"from": "min_", "to": "max_"}
 
-    min_: Union[int, datetime] = Field(alias="min")
-    max_: Union[int, datetime] = Field(alias="max")
+    type_: Literal["GA", "GS", "GQ", "GD"] | None = Field(
+        default=None,
+        alias="type",
+        exclude=True,
+    )
+    min_: int | str = Field(alias="min")
+    max_: int | str = Field(alias="max")
 
-    @field_validator("max_")
-    def validate_min_max(
-        cls,  # noqa: N805
-        value,
-        values,
-    ) -> Union[int, datetime]:
-        if value < values.data["min_"]:
-            raise ModelError("max cannot be less than min value")
+    @model_validator(mode="after")
+    def validate_range(self):
+        # int mode
+        if self.type_ is None:
+            if not isinstance(self.min_, int) or not isinstance(self.max_, int):
+                raise ModelError(
+                    "When type is not provided, min and max must both be integers",
+                )
+
+            if self.max_ < self.min_:
+                raise ModelError("max cannot be less than min value")
+
+            return self
+
+        # typed string mode
+        if not isinstance(self.min_, str) or not isinstance(self.max_, str):
+            raise ModelError(
+                "When type is provided, min and max must both be strings",
+            )
+
+        if self.type_ == "GD":
+            if len(self.min_) != 15 or len(self.max_) != 15:
+                raise ModelError(
+                    "GD shot numbers must be in the format yyyymmdd-hhmmss",
+                )
         else:
-            return value
+            if not self.min_.startswith(self.type_):
+                raise ModelError(
+                    f"Shot number '{self.min_}' does not match type '{self.type_}'",
+                )
+            if not self.max_.startswith(self.type_):
+                raise ModelError(
+                    f"Shot number '{self.max_}' does not match type '{self.type_}'",
+                )
+
+        if self.max_ < self.min_:
+            raise ModelError("max cannot be less than min value")
+
+        return self
 
 
 class DateConverterRange(BaseModel):
     opposite_range_fields: ClassVar[Dict[str, str]] = {"min": "from_", "max": "to"}
 
-    from_: Union[int, datetime] = Field(alias="from")
-    to: Union[int, datetime]
+    type_: Literal["GA", "GS", "GQ", "GD"] | None = Field(
+        default=None,
+        alias="type",
+        exclude=True,
+    )
+    from_: datetime = Field(alias="from")
+    to: datetime
 
     @field_validator("to")
     def validate_min_max(
         cls,  # noqa: N805
         value,
         values,
-    ) -> Union[int, datetime]:
+    ) -> datetime:
         if value < values.data["from_"]:
             raise ModelError("to cannot be less than from value")
-        else:
-            return value
+        return value
 
 
 class UserSessionModel(BaseModel):

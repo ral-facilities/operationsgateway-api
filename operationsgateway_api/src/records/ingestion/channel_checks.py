@@ -12,6 +12,7 @@ from operationsgateway_api.src.models import (
     ImageChannelMetadataModel,
     ImageModel,
     ScalarChannelMetadataModel,
+    StringChannelMetadataModel,
     VectorChannelMetadataModel,
     VectorModel,
     WaveformChannelMetadataModel,
@@ -50,6 +51,7 @@ class ChannelChecks:
             "rgb-image",
             "waveform",
             "vector",
+            "string",
         ]
 
     def set_channels(self, manifest) -> None:
@@ -91,7 +93,7 @@ class ChannelChecks:
         """
         ingested_channels = self.ingested_record
         dump = False
-        if type(ingested_channels) != dict:
+        if type(ingested_channels) is not dict:
             ingested_channels = ingested_channels.channels
             dump = True
 
@@ -370,6 +372,23 @@ class ChannelChecks:
         return rejected_channels
 
     @classmethod
+    def string_metadata_checks(
+        cls,
+        key: str,
+        value_dict: dict | StringChannelMetadataModel,
+        rejected_channels: list[dict[str, str]],
+    ) -> list[dict[str, str]]:
+        """
+        Various checks brought out of the main function to simplify it
+
+        when called it returns a list of rejected_channels (if any) from the checks ran
+        """
+        value_dict = ChannelChecks._ensure_dict(value_dict)
+        ChannelChecks._check_str(key, "units", value_dict, rejected_channels)
+
+        return rejected_channels
+
+    @classmethod
     def image_metadata_checks(
         cls,
         key: str,
@@ -471,6 +490,13 @@ class ChannelChecks:
                     rejected_channels,
                 )
 
+            elif value.metadata.channel_dtype == "string":
+                rejected_channels = self.string_metadata_checks(
+                    key,
+                    value.metadata,
+                    rejected_channels,
+                )
+
             elif value.metadata.channel_dtype == "image":
                 rejected_channels = self.image_metadata_checks(
                     key,
@@ -513,7 +539,7 @@ class ChannelChecks:
         this generates a rejected channel message depending on what was fed to this
         function (which dataset and why it failed)
         """
-        if type(value) != list:
+        if type(value) is not list:
             rejected_channels.append({key: letter + " attribute has wrong shape"})
         else:
             if not all(isinstance(element, float) for element in value):

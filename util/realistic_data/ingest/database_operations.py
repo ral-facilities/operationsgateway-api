@@ -4,18 +4,14 @@ from typing import List
 from dateutil import parser
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.uri_parser import parse_uri
-from util.realistic_data.ingest.config import Config
 
 
 class DatabaseOperations:
-    def __init__(self) -> None:
+    def __init__(self, connection_uri: str) -> None:
         # Async client allows insert_many() to work as an upsert, simplfying
         # implementation of import_data()
-        self.client = AsyncIOMotorClient(Config.config.database.connection_uri)
-        self.db = self.client[self.get_database_name()]
-
-    def get_database_name(self) -> str:
-        return parse_uri(Config.config.database.connection_uri)["database"]
+        self.client = AsyncIOMotorClient(connection_uri)
+        self.db = self.client[parse_uri(connection_uri)["database"]]
 
     def drop_collections(self, collection_names: List[str]) -> None:
         for collection_name in collection_names:

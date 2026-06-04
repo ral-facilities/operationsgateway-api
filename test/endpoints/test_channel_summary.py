@@ -7,6 +7,11 @@ from PIL import Image
 import pytest
 
 from test.conftest import (
+    DATETIME_STR_05_0800,
+    DATETIME_STR_05_0803,
+    DATETIME_STR_05_1700,
+    DATETIME_STR_06_1200,
+    MARK_GEMINI_TEST,
     set_preferred_colourmap,
     set_preferred_float_colourmap,
     unset_preferred_colourmap,
@@ -21,12 +26,12 @@ class TestChannelSummary:
             pytest.param(
                 "SER-202-BI-RH-1",
                 {
-                    "first_date": "2023-06-04T00:00:00",
-                    "most_recent_date": "2023-06-06T12:00:00",
+                    "first_date": DATETIME_STR_05_0800,
+                    "most_recent_date": DATETIME_STR_06_1200,
                     "recent_sample": [
-                        {"2023-06-06T12:00:00": 48.761769913881054},
-                        {"2023-06-05T23:54:00": 45.105075954471815},
-                        {"2023-06-05T23:48:00": 42.7879518924901},
+                        {DATETIME_STR_06_1200: 48.761769913881054},
+                        {DATETIME_STR_05_1700: 44.550989418488655},
+                        {DATETIME_STR_05_0803: 40.81474627800218},
                     ],
                 },
                 id="Scalar channel (number) summary",
@@ -49,17 +54,51 @@ class TestChannelSummary:
         assert test_response.json() == expected_summary
 
     @pytest.mark.parametrize(
+        "channel_name, expected_summary",
+        [
+            pytest.param(
+                "ASTRA_CONTROL_MODE_STRING",
+                {
+                    "first_date": DATETIME_STR_05_0800,
+                    "most_recent_date": DATETIME_STR_06_1200,
+                    "recent_sample": [
+                        {DATETIME_STR_06_1200: "2USERS"},
+                        {DATETIME_STR_05_0803: "2USERS"},
+                        {DATETIME_STR_05_0800: "2USERS"},
+                    ],
+                },
+                marks=MARK_GEMINI_TEST,
+                id="String channel summary",
+            ),
+        ],
+    )
+    def test_valid_string_channel_summary(
+        self,
+        test_app: TestClient,
+        login_and_get_token,
+        channel_name,
+        expected_summary,
+    ):
+        test_response = test_app.get(
+            f"/channels/summary/{channel_name}",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+        )
+
+        assert test_response.status_code == 200
+        assert test_response.json() == expected_summary
+
+    @pytest.mark.parametrize(
         "channel_name, expected_summary, use_preferred_colourmap",
         [
             pytest.param(
                 "FE-204-PSO-P2-CAM-2",
                 {
-                    "first_date": "2023-06-05T08:00:00",
-                    "most_recent_date": "2023-06-06T12:00:00",
+                    "first_date": DATETIME_STR_05_0800,
+                    "most_recent_date": DATETIME_STR_06_1200,
                     "recent_sample": [
-                        {"2023-06-06T12:00:00": "c63939c6c63139c7"},
-                        {"2023-06-05T16:00:00": "c63939c63939c639"},
-                        {"2023-06-05T15:00:00": "ce3131cece3131ce"},
+                        {DATETIME_STR_06_1200: "c63939c6c63139c7"},
+                        {DATETIME_STR_05_0803: "c73838c7c738c6c6"},
+                        {DATETIME_STR_05_0800: "cc3333ccc333cccc"},
                     ],
                 },
                 False,
@@ -70,12 +109,12 @@ class TestChannelSummary:
             pytest.param(
                 "FE-204-PSO-P2-CAM-2",
                 {
-                    "first_date": "2023-06-05T08:00:00",
-                    "most_recent_date": "2023-06-06T12:00:00",
+                    "first_date": DATETIME_STR_05_0800,
+                    "most_recent_date": DATETIME_STR_06_1200,
                     "recent_sample": [
-                        {"2023-06-06T12:00:00": "c63939c6c63939c6"},
-                        {"2023-06-05T16:00:00": "c63939c63939c639"},
-                        {"2023-06-05T15:00:00": "ce3131cece3131ce"},
+                        {DATETIME_STR_06_1200: "c63939c6c63939c6"},
+                        {DATETIME_STR_05_0803: "c73838c6c43ff838"},
+                        {DATETIME_STR_05_0800: "cc3333cccc33cccc"},
                     ],
                 },
                 True,
@@ -84,11 +123,9 @@ class TestChannelSummary:
             pytest.param(
                 "FE-204-NSS-WFS",
                 {
-                    "first_date": "2023-06-05T08:03:00",
-                    "most_recent_date": "2023-06-05T08:03:00",
-                    "recent_sample": [
-                        {"2023-06-05T08:03:00": "93cf6c1833976165"},
-                    ],
+                    "first_date": DATETIME_STR_05_0803,
+                    "most_recent_date": DATETIME_STR_05_0803,
+                    "recent_sample": [{DATETIME_STR_05_0803: "93cf6c1833976165"}],
                 },
                 False,
                 id="Float image channel summary (using system default colourmap)",
@@ -96,11 +133,9 @@ class TestChannelSummary:
             pytest.param(
                 "FE-204-NSS-WFS",
                 {
-                    "first_date": "2023-06-05T08:03:00",
-                    "most_recent_date": "2023-06-05T08:03:00",
-                    "recent_sample": [
-                        {"2023-06-05T08:03:00": "ec3893c79c688f92"},
-                    ],
+                    "first_date": DATETIME_STR_05_0803,
+                    "most_recent_date": DATETIME_STR_05_0803,
+                    "recent_sample": [{DATETIME_STR_05_0803: "ec3893c79c688f92"}],
                 },
                 True,
                 id="Float image channel summary (using user's preferred colourmap)",
@@ -108,11 +143,9 @@ class TestChannelSummary:
             pytest.param(
                 "FE-204-NSS-WFS-COEF",
                 {
-                    "first_date": "2023-06-05T08:03:00",
-                    "most_recent_date": "2023-06-05T08:03:00",
-                    "recent_sample": [
-                        {"2023-06-05T08:03:00": "83c0e03ef8c77f30"},
-                    ],
+                    "first_date": DATETIME_STR_05_0803,
+                    "most_recent_date": DATETIME_STR_05_0803,
+                    "recent_sample": [{DATETIME_STR_05_0803: "83c0e03ef8c77f30"}],
                 },
                 False,
                 id="Vector channel summary",
@@ -120,12 +153,12 @@ class TestChannelSummary:
             pytest.param(
                 "FE-204-PSO-P1-PD",
                 {
-                    "first_date": "2023-06-05T08:00:00",
-                    "most_recent_date": "2023-06-06T12:00:00",
+                    "first_date": DATETIME_STR_05_0800,
+                    "most_recent_date": DATETIME_STR_06_1200,
                     "recent_sample": [
-                        {"2023-06-06T12:00:00": "e6e619e419e59859"},
-                        {"2023-06-05T16:00:00": "e6e41be41be19a19"},
-                        {"2023-06-05T15:00:00": "e6e61be41ae11a39"},
+                        {DATETIME_STR_06_1200: "e6e619e419e59859"},
+                        {DATETIME_STR_05_0803: "e6e619e419e59859"},
+                        {DATETIME_STR_05_0800: "e6e41be41be51a19"},
                     ],
                 },
                 False,

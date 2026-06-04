@@ -246,20 +246,24 @@ class Record:
         piece of data that exists for a particular channel. If no data can be found, a
         `ChannelSummaryError` will be raised
         """
-        channel_exist_condition = {f"channels.{channel_name}": {"$exists": True}}
+        channel_exist_condition = {
+            f"channels.{channel_name}": {"$exists": True},
+            "metadata.timestamp": {"$exists": True},
+        }
+
         data = await MongoDBInterface.find_one(
             "records",
             filter_=channel_exist_condition,
             sort=direction,
-            projection=["metadata.timestamp"],
+            projection={"metadata.timestamp": 1},
         )
 
-        if data:
+        if data and data.get("metadata", {}).get("timestamp"):
             return data["metadata"]["timestamp"]
-        else:
-            raise ChannelSummaryError(
-                f"There is no timestamp data for {channel_name}",
-            )
+
+        raise ChannelSummaryError(
+            f"There is no timestamp data for {channel_name}",
+        )
 
     @staticmethod
     async def get_recent_channel_values(
@@ -294,7 +298,7 @@ class Record:
             channel = record.channels[channel_name]
             data = None
 
-            if channel.metadata.channel_dtype == "scalar":
+            if channel.metadata.channel_dtype in {"scalar", "string"}:
                 data = channel.data
             elif channel.metadata.channel_dtype == "image":
                 thumbnail_bytes = FalseColourHandler.apply_false_colour_to_b64_img(
@@ -472,6 +476,7 @@ class Record:
                 range_input = DateConverterRange(**date_range)
             except ValidationError as exc:
                 raise ModelError(str(exc)) from exc
+
         elif shotnum_range:
             # Convert shot number range to date range
             comparison_field_name = "metadata.shotnum"
@@ -486,23 +491,28 @@ class Record:
         else:
             raise RecordError("Both date range and shot number range are None")
 
+        match_conditions = [
+            {
+                comparison_field_name: {
+                    "$gte": getattr(
+                        range_input,
+                        range_input.opposite_range_fields[min_field_name],
+                    ),
+                    "$lte": getattr(
+                        range_input,
+                        range_input.opposite_range_fields[max_field_name],
+                    ),
+                },
+            },
+        ]
+
+        if range_input.type_ is not None:
+            match_conditions.append({"metadata.active_area": range_input.type_})
+
         pipeline = [
             {
                 "$match": {
-                    "$and": [
-                        {
-                            comparison_field_name: {
-                                "$gte": getattr(
-                                    range_input,
-                                    range_input.opposite_range_fields[min_field_name],
-                                ),
-                                "$lte": getattr(
-                                    range_input,
-                                    range_input.opposite_range_fields[max_field_name],
-                                ),
-                            },
-                        },
-                    ],
+                    "$and": match_conditions,
                 },
             },
             {
@@ -520,11 +530,20 @@ class Record:
             # there's no records stored in the ranges provided by the request, hence
             # the database is unable to find anything from the query
             raise DatabaseError("No results have been found from database query")
-
         try:
             if shotnum_range:
+                if range_input.type_ is not None:
+                    return DateConverterRange(
+                        type=range_input.type_,
+                        **converted_range[0],
+                    )
                 return DateConverterRange(**converted_range[0])
             else:
+                if range_input.type_ is not None:
+                    return ShotnumConverterRange(
+                        type=range_input.type_,
+                        **converted_range[0],
+                    )
                 return ShotnumConverterRange(**converted_range[0])
         except ValidationError as exc:
             raise ModelError(str(exc)) from exc

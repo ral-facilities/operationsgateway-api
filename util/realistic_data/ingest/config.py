@@ -1,10 +1,14 @@
 from enum import Enum
 from pathlib import Path
-import sys
-from typing import Optional
+from typing import Optional, Tuple, Type
 
-from pydantic import BaseModel, SecretStr, ValidationError
-import yaml
+from pydantic import BaseModel, Field, SecretStr
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+    YamlConfigSettingsSource,
+)
 
 
 class IngestModeEnum(str, Enum):
@@ -27,12 +31,11 @@ class Database(BaseModel):
     test_users_file_path: str
 
 
-class Echo(BaseModel):
+class SourceConfig(BaseModel):
     endpoint_url: str
     access_key: SecretStr
     secret_key: SecretStr
     simulated_data_bucket: str
-    storage_bucket: str
     page_size: int
 
 
@@ -45,23 +48,42 @@ class API(BaseModel):
     log_config_path: str
     gunicorn_num_workers: str
     timeout_seconds: int
+    storage_bucket: str = Field(
+        description=(
+            "Bucket used for storage by the API when running. Should correspond to "
+            "`echo.bucket_name` in the main `config.yaml`. Only used if "
+            "`script_options.wipe_echo` is True, in which case entire contents of the "
+            "bucket will be deleted."
+        ),
+        examples=["og-yourname-dev"],
+    )
 
 
-class IngestEchoDataConfig(BaseModel):
+class IngestEchoDataConfig(BaseSettings):
     script_options: ScriptOptions
     database: Database
-    echo: Echo
+    source: SourceConfig
     api: API
 
+    model_config = SettingsConfigDict(
+        yaml_file=Path(__file__).parent.parent / "config.yml",
+        env_nested_delimiter="__",
+        hide_input_in_errors=True,
+    )
+
     @classmethod
-    def load(cls, path=Path(__file__).parent.parent / "config.yml"):
-        try:
-            with open(path, encoding="utf-8") as config_file:
-                config = yaml.safe_load(config_file)
-                return cls(**config)
-        except (IOError, ValidationError, yaml.YAMLError) as e:
-            sys.exit(f"An error occurred while loading the config data: {e}")
-
-
-class Config:
-    config = IngestEchoDataConfig.load()
+    def settings_customise_sources(
+        cls,
+        settings_cls: Type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> Tuple[PydanticBaseSettingsSource, ...]:
+        return (
+            init_settings,
+            env_settings,
+            dotenv_settings,
+            YamlConfigSettingsSource(settings_cls),
+            file_secret_settings,
+        )

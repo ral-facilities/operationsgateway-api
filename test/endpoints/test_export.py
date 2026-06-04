@@ -12,7 +12,14 @@ from PIL import Image
 import pytest
 
 from operationsgateway_api.src.exceptions import EchoS3Error
-from test.conftest import assert_text_file_contents
+from test.conftest import (
+    assert_text_file_contents,
+    MARK_EPAC_TEST,
+    MARK_GEMINI_TEST,
+    RECORD_ID_05_0800,
+    RECORD_ID_05_0803,
+    RECORD_ID_05_1700,
+)
 
 
 class TestExport:
@@ -27,6 +34,7 @@ class TestExport:
             "export_waveform_csvs",
             "export_images",
             "export_scalars",
+            "export_strings",
             "export_float_images",
             "export_vector_images",
             "export_vector_csvs",
@@ -40,17 +48,7 @@ class TestExport:
         ],
         [
             pytest.param(
-                {
-                    "_id": {
-                        "$in": [
-                            "20230605080000",
-                            "20230605090000",
-                            "20230605100000",
-                            "20230605110000",
-                            "20230605120000",
-                        ],
-                    },
-                },
+                {"_id": {"$in": [RECORD_ID_05_0800, RECORD_ID_05_0803]}},
                 0,
                 10,
                 "metadata.shotnum ASC",
@@ -73,24 +71,15 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
-                "20230605080000_to_20230605120000.csv",
-                "export/20230605080000_to_20230605120000_asc.csv",
+                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv",
+                f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv",
                 None,
                 id="Basic CSV export of different channel types",
             ),
             pytest.param(
-                {
-                    "_id": {
-                        "$in": [
-                            "20230605080000",
-                            "20230605090000",
-                            "20230605100000",
-                            "20230605110000",
-                            "20230605120000",
-                        ],
-                    },
-                },
+                {"_id": {"$in": [RECORD_ID_05_0800, RECORD_ID_05_0803]}},
                 0,
                 10,
                 "metadata.shotnum DESC",
@@ -110,24 +99,15 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
-                "20230605080000_to_20230605120000.csv",
-                "export/20230605080000_to_20230605120000_desc.csv",
+                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv",
+                f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}_desc.csv",
                 None,
                 id="Basic CSV export in descending shotnum order",
             ),
             pytest.param(
-                {
-                    "_id": {
-                        "$in": [
-                            "20230605080000",
-                            "20230605090000",
-                            "20230605100000",
-                            "20230605110000",
-                            "20230605120000",
-                        ],
-                    },
-                },
+                {"_id": {"$in": [RECORD_ID_05_0800, RECORD_ID_05_0803]}},
                 1,
                 2,
                 "metadata.shotnum DESC",
@@ -147,24 +127,15 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
-                "20230605100000_to_20230605110000.csv",
-                "export/20230605100000_to_20230605110000_desc_s_l.csv",
+                f"{RECORD_ID_05_0800}.csv",
+                f"export/{RECORD_ID_05_0800}.csv",
                 None,
                 id="Basic CSV export with skip and limit set",
             ),
             pytest.param(
-                {
-                    "_id": {
-                        "$in": [
-                            "20230605080000",
-                            "20230605090000",
-                            "20230605100000",
-                            "20230605110000",
-                            "20230605120000",
-                        ],
-                    },
-                },
+                {"_id": {"$in": [RECORD_ID_05_0800, RECORD_ID_05_0803]}},
                 0,
                 10,
                 "metadata.shotnum ASC",
@@ -185,17 +156,16 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
-                "20230605080000_to_20230605120000.zip",
+                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.zip",
                 None,
                 {
-                    "20230605080000_to_20230605120000.csv": "export/"
-                    "20230605080000_to_20230605120000_asc.csv",
-                    "20230605080000_FE-204-PSO-CAM-1.png": "da2d4927045f24bf",
-                    "20230605090000_FE-204-PSO-CAM-1.png": "c8270437263f26bf",
-                    "20230605100000_FE-204-PSO-CAM-1.png": "c8262437273b373d",
-                    "20230605110000_FE-204-PSO-CAM-1.png": "da6d49270437247f",
-                    "20230605120000_FE-204-PSO-CAM-1.png": "dad7495b04ab04fa",
+                    f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv": (
+                        f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv"
+                    ),
+                    f"{RECORD_ID_05_0800}_FE-204-PSO-CAM-1.png": "da2d4927045f24bf",
+                    f"{RECORD_ID_05_0803}_FE-204-PSO-CAM-1.png": "d5b55a554aaa4a55",
                 },
                 id="Zip export of main CSV and images",
             ),
@@ -205,7 +175,7 @@ class TestExport:
                         {
                             "metadata.timestamp": {
                                 "$gt": "2023-06-05T07:00:00",
-                                "$lt": "2023-06-05T13:00:00",
+                                "$lt": "2023-06-05T18:00:00",
                             },
                         },
                     ],
@@ -229,24 +199,15 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
-                "20230605070600_to_20230605120000.csv",
-                "export/20230605070600_to_20230605120000.csv",
+                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_1700}.csv",
+                f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_1700}.csv",
                 None,
                 id="Basic CSV export of sparse data (some values missing)",
             ),
             pytest.param(
-                {
-                    "_id": {
-                        "$in": [
-                            "20230605080000",
-                            "20230605090000",
-                            "20230605100000",
-                            "20230605110000",
-                            "20230605120000",
-                        ],
-                    },
-                },
+                {"_id": {"$in": [RECORD_ID_05_0800, RECORD_ID_05_0803]}},
                 0,
                 10,
                 "metadata.shotnum ASC",
@@ -264,35 +225,24 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 5,
                 15,
                 "jet_r",
                 [],  # functions
-                "20230605080000_to_20230605120000.zip",
+                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.zip",
                 None,
                 {
-                    "20230605080000_to_20230605120000.csv": "export/"
-                    "20230605080000_to_20230605120000_asc.csv",
-                    "20230605080000_FE-204-PSO-CAM-1.png": "c73838c6c637c738",
-                    "20230605090000_FE-204-PSO-CAM-1.png": "c73838c7c73838c7",
-                    "20230605100000_FE-204-PSO-CAM-1.png": "c73838c7c73838c7",
-                    "20230605110000_FE-204-PSO-CAM-1.png": "c73938c7c427c738",
-                    "20230605120000_FE-204-PSO-CAM-1.png": "c4c43f273838c6fc",
+                    f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv": (
+                        f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv"
+                    ),
+                    f"{RECORD_ID_05_0800}_FE-204-PSO-CAM-1.png": "c73838c6c637c738",
+                    f"{RECORD_ID_05_0803}_FE-204-PSO-CAM-1.png": "b624db22fb26d903",
                 },
                 id="Zip export of main CSV with images in false colour",
             ),
             pytest.param(
-                {
-                    "_id": {
-                        "$in": [
-                            "20230605080000",
-                            "20230605090000",
-                            "20230605100000",
-                            "20230605110000",
-                            "20230605120000",
-                        ],
-                    },
-                },
+                {"_id": {"$in": [RECORD_ID_05_0800, RECORD_ID_05_0803]}},
                 0,
                 10,
                 "metadata.shotnum ASC",
@@ -315,42 +265,27 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
-                "20230605080000_to_20230605120000.zip",
+                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.zip",
                 None,
                 {
-                    "20230605080000_to_20230605120000.csv": "export/"
-                    "20230605080000_to_20230605120000_asc.csv",
-                    "20230605080000_FE-204-PSO-CAM-1.png": "da2d4927045f24bf",
-                    "20230605090000_FE-204-PSO-CAM-1.png": "c8270437263f26bf",
-                    "20230605100000_FE-204-PSO-CAM-1.png": "c8262437273b373d",
-                    "20230605110000_FE-204-PSO-CAM-1.png": "da6d49270437247f",
-                    "20230605120000_FE-204-PSO-CAM-1.png": "dad7495b04ab04fa",
-                    "20230605080000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605080000_FE-204-PSO-P1-SP.csv",
-                    "20230605090000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605090000_FE-204-PSO-P1-SP.csv",
-                    "20230605100000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605100000_FE-204-PSO-P1-SP.csv",
-                    "20230605110000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605110000_FE-204-PSO-P1-SP.csv",
-                    "20230605120000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605120000_FE-204-PSO-P1-SP.csv",
+                    f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv": (
+                        f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv"
+                    ),
+                    f"{RECORD_ID_05_0800}_FE-204-PSO-CAM-1.png": "da2d4927045f24bf",
+                    f"{RECORD_ID_05_0800}_FE-204-PSO-P1-SP.csv": (
+                        "export/20230605080000_FE-204-PSO-P1-SP.csv"
+                    ),
+                    f"{RECORD_ID_05_0803}_FE-204-PSO-CAM-1.png": "d5b55a554aaa4a55",
+                    f"{RECORD_ID_05_0803}_FE-204-PSO-P1-SP.csv": (
+                        "export/20230605080300_FE-204-PSO-P1-SP.csv"
+                    ),
                 },
                 id="Zip export of main CSV, images & waveform CSVs",
             ),
             pytest.param(
-                {
-                    "_id": {
-                        "$in": [
-                            "20230605080000",
-                            "20230605090000",
-                            "20230605100000",
-                            "20230605110000",
-                            "20230605120000",
-                        ],
-                    },
-                },
+                {"_id": {"$in": [RECORD_ID_05_0800, RECORD_ID_05_0803]}},
                 0,
                 10,
                 "metadata.shotnum ASC",
@@ -374,47 +309,29 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
-                "20230605080000_to_20230605120000.zip",
+                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.zip",
                 None,
                 {
-                    "20230605080000_to_20230605120000.csv": "export/"
-                    "20230605080000_to_20230605120000_asc.csv",
-                    "20230605080000_FE-204-PSO-CAM-1.png": "da2d4927045f24bf",
-                    "20230605090000_FE-204-PSO-CAM-1.png": "c8270437263f26bf",
-                    "20230605100000_FE-204-PSO-CAM-1.png": "c8262437273b373d",
-                    "20230605110000_FE-204-PSO-CAM-1.png": "da6d49270437247f",
-                    "20230605120000_FE-204-PSO-CAM-1.png": "dad7495b04ab04fa",
-                    "20230605080000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605080000_FE-204-PSO-P1-SP.csv",
-                    "20230605090000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605090000_FE-204-PSO-P1-SP.csv",
-                    "20230605100000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605100000_FE-204-PSO-P1-SP.csv",
-                    "20230605110000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605110000_FE-204-PSO-P1-SP.csv",
-                    "20230605120000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605120000_FE-204-PSO-P1-SP.csv",
-                    "20230605080000_FE-204-PSO-P1-SP.png": "fa914e6e914eb04d",
-                    "20230605090000_FE-204-PSO-P1-SP.png": "fa916e6e916e9181",
-                    "20230605100000_FE-204-PSO-P1-SP.png": "fab14f6e914e90c1",
-                    "20230605110000_FE-204-PSO-P1-SP.png": "fb914e6e914eb091",
-                    "20230605120000_FE-204-PSO-P1-SP.png": "ff914e6e914eb081",
+                    f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv": (
+                        f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv"
+                    ),
+                    f"{RECORD_ID_05_0800}_FE-204-PSO-CAM-1.png": "da2d4927045f24bf",
+                    f"{RECORD_ID_05_0800}_FE-204-PSO-P1-SP.csv": (
+                        "export/20230605080000_FE-204-PSO-P1-SP.csv"
+                    ),
+                    f"{RECORD_ID_05_0800}_FE-204-PSO-P1-SP.png": "fa914e6e914eb04d",
+                    f"{RECORD_ID_05_0803}_FE-204-PSO-CAM-1.png": "d5b55a554aaa4a55",
+                    f"{RECORD_ID_05_0803}_FE-204-PSO-P1-SP.csv": (
+                        "export/20230605080300_FE-204-PSO-P1-SP.csv"
+                    ),
+                    f"{RECORD_ID_05_0803}_FE-204-PSO-P1-SP.png": "fa916e6e916e9181",
                 },
                 id="Zip export of main CSV, images, waveform CSVs and waveform images",
             ),
             pytest.param(
-                {
-                    "_id": {
-                        "$in": [
-                            "20230605080000",
-                            "20230605090000",
-                            "20230605100000",
-                            "20230605110000",
-                            "20230605120000",
-                        ],
-                    },
-                },
+                {"_id": {"$in": [RECORD_ID_05_0800, RECORD_ID_05_0803]}},
                 0,
                 10,
                 "metadata.shotnum ASC",
@@ -436,37 +353,25 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
-                "20230605080000_to_20230605120000.zip",
+                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.zip",
                 None,
                 {
-                    "20230605080000_to_20230605120000.csv": "export/"
-                    "20230605080000_to_20230605120000_asc.csv",
-                    "20230605080000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605080000_FE-204-PSO-P1-SP.csv",
-                    "20230605090000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605090000_FE-204-PSO-P1-SP.csv",
-                    "20230605100000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605100000_FE-204-PSO-P1-SP.csv",
-                    "20230605110000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605110000_FE-204-PSO-P1-SP.csv",
-                    "20230605120000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605120000_FE-204-PSO-P1-SP.csv",
+                    f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv": (
+                        f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv"
+                    ),
+                    f"{RECORD_ID_05_0800}_FE-204-PSO-P1-SP.csv": (
+                        "export/20230605080000_FE-204-PSO-P1-SP.csv"
+                    ),
+                    f"{RECORD_ID_05_0803}_FE-204-PSO-P1-SP.csv": (
+                        "export/20230605080300_FE-204-PSO-P1-SP.csv"
+                    ),
                 },
                 id="Zip export of main CSV and waveform CSVs but no images",
             ),
             pytest.param(
-                {
-                    "_id": {
-                        "$in": [
-                            "20230605080000",
-                            "20230605090000",
-                            "20230605100000",
-                            "20230605110000",
-                            "20230605120000",
-                        ],
-                    },
-                },
+                {"_id": {"$in": [RECORD_ID_05_0800, RECORD_ID_05_0803]}},
                 0,
                 10,
                 "metadata.shotnum ASC",
@@ -481,6 +386,7 @@ class TestExport:
                 None,
                 None,
                 False,  # export_scalars - don't export the main CSV file
+                False,  # export_strings
                 None,
                 None,
                 None,
@@ -488,29 +394,16 @@ class TestExport:
                 None,
                 None,
                 [],  # functions
-                "20230605080000_to_20230605120000.zip",
+                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.zip",
                 None,
                 {
-                    "20230605080000_FE-204-PSO-CAM-1.png": "da2d4927045f24bf",
-                    "20230605090000_FE-204-PSO-CAM-1.png": "c8270437263f26bf",
-                    "20230605100000_FE-204-PSO-CAM-1.png": "c8262437273b373d",
-                    "20230605110000_FE-204-PSO-CAM-1.png": "da6d49270437247f",
-                    "20230605120000_FE-204-PSO-CAM-1.png": "dad7495b04ab04fa",
+                    f"{RECORD_ID_05_0800}_FE-204-PSO-CAM-1.png": "da2d4927045f24bf",
+                    f"{RECORD_ID_05_0803}_FE-204-PSO-CAM-1.png": "d5b55a554aaa4a55",
                 },
                 id="Zip export without main CSV so just images",
             ),
             pytest.param(
-                {
-                    "_id": {
-                        "$in": [
-                            "20230605080000",
-                            "20230605090000",
-                            "20230605100000",
-                            "20230605110000",
-                            "20230605120000",
-                        ],
-                    },
-                },
+                {"_id": {"$in": [RECORD_ID_05_0800, RECORD_ID_05_0803]}},
                 0,
                 10,
                 "metadata.shotnum ASC",
@@ -532,22 +425,21 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
-                "20230605080000_to_20230605120000.zip",
+                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.zip",
                 None,
                 {
-                    "20230605080000_to_20230605120000.csv": "export/"
-                    "20230605080000_to_20230605120000_asc.csv",
-                    "20230605080000_FE-204-PSO-CAM-1.png": "da2d4927045f24bf",
-                    "20230605090000_FE-204-PSO-CAM-1.png": "c8270437263f26bf",
-                    "20230605100000_FE-204-PSO-CAM-1.png": "c8262437273b373d",
-                    "20230605110000_FE-204-PSO-CAM-1.png": "da6d49270437247f",
-                    "20230605120000_FE-204-PSO-CAM-1.png": "dad7495b04ab04fa",
+                    f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv": (
+                        f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv"
+                    ),
+                    f"{RECORD_ID_05_0800}_FE-204-PSO-CAM-1.png": "da2d4927045f24bf",
+                    f"{RECORD_ID_05_0803}_FE-204-PSO-CAM-1.png": "d5b55a554aaa4a55",
                 },
                 id="Zip export of main CSV and images but no waveform CSVs",
             ),
             pytest.param(
-                {"_id": {"$in": ["20230605080300"]}},
+                {"_id": {"$in": [RECORD_ID_05_0803]}},
                 0,
                 10,
                 "metadata.shotnum ASC",
@@ -563,6 +455,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 True,
                 True,
                 True,
@@ -570,20 +463,20 @@ class TestExport:
                 None,
                 None,
                 [],  # functions
-                "20230605080300.zip",
+                f"{RECORD_ID_05_0803}.zip",
                 None,
                 {
-                    "20230605080300.csv": "export/20230605080300_asc.csv",
-                    "20230605080300_FE-204-NSS-WFS.npz": (500, 680),
-                    "20230605080300_FE-204-NSS-WFS-COEF.csv": (
+                    f"{RECORD_ID_05_0803}.csv": f"export/{RECORD_ID_05_0803}.csv",
+                    f"{RECORD_ID_05_0803}_FE-204-NSS-WFS.npz": (500, 680),
+                    f"{RECORD_ID_05_0803}_FE-204-NSS-WFS-COEF.csv": (
                         "export/20230605080300_FE-204-NSS-WFS-COEF.csv"
                     ),
-                    "20230605080300_FE-204-NSS-WFS-COEF.png": "9f87e03838c77c38",
+                    f"{RECORD_ID_05_0803}_FE-204-NSS-WFS-COEF.png": "9f87e03838c77c38",
                 },
                 id="Zip export of vector CSV/image and float images",
             ),
             pytest.param(
-                {"_id": {"$in": ["20230605080300"]}},
+                {"_id": {"$in": [RECORD_ID_05_0803]}},
                 0,
                 10,
                 "metadata.shotnum ASC",
@@ -598,6 +491,7 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 False,  # export_float_images
                 True,  # export_vector_images
                 True,  # export_vector_csvs
@@ -605,19 +499,21 @@ class TestExport:
                 None,
                 None,
                 [],  # functions
-                "20230605080300.zip",
+                f"{RECORD_ID_05_0803}.zip",
                 None,
                 {
-                    "20230605080300.csv": "export/20230605080300_no_channels.csv",
-                    "20230605080300_FE-204-LT-WFS-COEF.csv": (
+                    f"{RECORD_ID_05_0803}.csv": (
+                        f"export/{RECORD_ID_05_0803}_no_channels.csv"
+                    ),
+                    f"{RECORD_ID_05_0803}_FE-204-LT-WFS-COEF.csv": (
                         "export/20230605080300_FE-204-LT-WFS-COEF.csv"
                     ),
-                    "20230605080300_FE-204-LT-WFS-COEF.png": "9fc7c080719fcf60",
+                    f"{RECORD_ID_05_0803}_FE-204-LT-WFS-COEF.png": "9fc7c080719fcf60",
                 },
                 id="Zip export of vector CSV/image with labels",
             ),
             pytest.param(
-                {"_id": {"$in": ["20230605080000"]}},
+                {"_id": {"$in": [RECORD_ID_05_0800]}},
                 0,
                 10,
                 "metadata.shotnum ASC",
@@ -637,14 +533,15 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
-                "20230605080000.csv",
-                "export/20230605080000.csv",
+                f"{RECORD_ID_05_0800}.csv",
+                f"export/{RECORD_ID_05_0800}.csv",
                 None,
                 id="CSV export of single record to test filename",
             ),
             pytest.param(
-                {"_id": {"$in": ["20230605080000"]}},
+                {"_id": {"$in": [RECORD_ID_05_0800]}},
                 None,
                 None,
                 None,
@@ -665,27 +562,18 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
-                "20230605080000.zip",
+                f"{RECORD_ID_05_0800}.zip",
                 None,
                 {
-                    "20230605080000.csv": "export/20230605080000.csv",
-                    "20230605080000_FE-204-PSO-CAM-1.png": "da2d4927045f24bf",
+                    f"{RECORD_ID_05_0800}.csv": f"export/{RECORD_ID_05_0800}.csv",
+                    f"{RECORD_ID_05_0800}_FE-204-PSO-CAM-1.png": "da2d4927045f24bf",
                 },
                 id="Zip export of single record to test filename",
             ),
             pytest.param(
-                {
-                    "_id": {
-                        "$in": [
-                            "20230605080000",
-                            "20230605090000",
-                            "20230605100000",
-                            "20230605110000",
-                            "20230605120000",
-                        ],
-                    },
-                },
+                {"_id": {"$in": [RECORD_ID_05_0800, RECORD_ID_05_0803]}},
                 0,
                 10,
                 "metadata.shotnum ASC",
@@ -700,14 +588,15 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
-                "20230605080000_to_20230605120000_FE-204-PSO-EM.csv",
-                "export/20230605080000_to_20230605120000_FE-204-PSO-EM.csv",
+                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}_FE-204-PSO-EM.csv",
+                f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}_FE-204-PSO-EM.csv",
                 None,
                 id="CSV export of single channel to test filename",
             ),
             pytest.param(
-                {"_id": {"$in": ["20230605080000"]}},
+                {"_id": {"$in": [RECORD_ID_05_0800]}},
                 None,
                 None,
                 None,
@@ -722,26 +611,17 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
-                "20230605080000_FE-204-PSO-CAM-1.zip",
+                f"{RECORD_ID_05_0800}_FE-204-PSO-CAM-1.zip",
                 None,
                 {
-                    "20230605080000_FE-204-PSO-CAM-1.png": "da2d4927045f24bf",
+                    f"{RECORD_ID_05_0800}_FE-204-PSO-CAM-1.png": "da2d4927045f24bf",
                 },
                 id="Zip export of single channel to test filename",
             ),
             pytest.param(
-                {
-                    "_id": {
-                        "$in": [
-                            "20230605080000",
-                            "20230605090000",
-                            "20230605100000",
-                            "20230605110000",
-                            "20230605120000",
-                        ],
-                    },
-                },
+                {"_id": {"$in": [RECORD_ID_05_0800, RECORD_ID_05_0803]}},
                 0,
                 10,
                 "metadata.shotnum ASC",
@@ -756,24 +636,15 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
-                "20230605080000_to_20230605120000_ID.csv",
-                "export/20230605080000_to_20230605120000_ID.csv",
+                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}_ID.csv",
+                f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}_ID.csv",
                 None,
                 id="CSV export of _id channel to test filename",
             ),
             pytest.param(
-                {
-                    "_id": {
-                        "$in": [
-                            "20230605080000",
-                            "20230605090000",
-                            "20230605100000",
-                            "20230605110000",
-                            "20230605120000",
-                        ],
-                    },
-                },
+                {"_id": {"$in": [RECORD_ID_05_0800, RECORD_ID_05_0803]}},
                 0,
                 10,
                 "metadata.shotnum ASC",
@@ -795,24 +666,15 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [],  # functions
-                "20230605080000_to_20230605120000.csv",
-                "export/20230605080000_to_20230605120000_asc_incl_id.csv",
+                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv",
+                f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}_incl_id.csv",
                 None,
                 id="Basic CSV export of different channel types incl. _id channel",
             ),
             pytest.param(
-                {
-                    "_id": {
-                        "$in": [
-                            "20230605080000",
-                            "20230605090000",
-                            "20230605100000",
-                            "20230605110000",
-                            "20230605120000",
-                        ],
-                    },
-                },
+                {"_id": {"$in": [RECORD_ID_05_0800, RECORD_ID_05_0803]}},
                 0,
                 10,
                 "metadata.shotnum ASC",
@@ -836,36 +698,28 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [
                     {"name": "scalar", "expression": "FE-204-PSO-EM + 1"},
                     {"name": "waveform", "expression": "FE-204-PSO-P1-SP + (1 - 1)"},
                     {"name": "image", "expression": "FE-204-PSO-CAM-1 + (1 - 1)"},
                 ],
-                "20230605080000_to_20230605120000.zip",
+                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.zip",
                 None,
                 {
-                    "20230605080000_to_20230605120000.csv": "export/"
-                    "20230605080000_to_20230605120000_asc.csv",
-                    "20230605080000_FE-204-PSO-CAM-1.png": "da2d4927045f24bf",
-                    "20230605090000_FE-204-PSO-CAM-1.png": "c8270437263f26bf",
-                    "20230605100000_FE-204-PSO-CAM-1.png": "c8262437273b373d",
-                    "20230605110000_FE-204-PSO-CAM-1.png": "da6d49270437247f",
-                    "20230605120000_FE-204-PSO-CAM-1.png": "dad7495b04ab04fa",
-                    "20230605080000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605080000_FE-204-PSO-P1-SP.csv",
-                    "20230605090000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605090000_FE-204-PSO-P1-SP.csv",
-                    "20230605100000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605100000_FE-204-PSO-P1-SP.csv",
-                    "20230605110000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605110000_FE-204-PSO-P1-SP.csv",
-                    "20230605120000_FE-204-PSO-P1-SP.csv": "export/"
-                    "20230605120000_FE-204-PSO-P1-SP.csv",
-                    "20230605080000_FE-204-PSO-P1-SP.png": "fa914e6e914eb04d",
-                    "20230605090000_FE-204-PSO-P1-SP.png": "fa916e6e916e9181",
-                    "20230605100000_FE-204-PSO-P1-SP.png": "fab14f6e914e90c1",
-                    "20230605110000_FE-204-PSO-P1-SP.png": "fb914e6e914eb091",
-                    "20230605120000_FE-204-PSO-P1-SP.png": "ff914e6e914eb081",
+                    f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv": (
+                        f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv"
+                    ),
+                    f"{RECORD_ID_05_0800}_FE-204-PSO-CAM-1.png": "da2d4927045f24bf",
+                    f"{RECORD_ID_05_0800}_FE-204-PSO-P1-SP.csv": (
+                        "export/20230605080000_FE-204-PSO-P1-SP.csv"
+                    ),
+                    f"{RECORD_ID_05_0800}_FE-204-PSO-P1-SP.png": "fa914e6e914eb04d",
+                    f"{RECORD_ID_05_0803}_FE-204-PSO-CAM-1.png": "d5b55a554aaa4a55",
+                    f"{RECORD_ID_05_0803}_FE-204-PSO-P1-SP.csv": (
+                        "export/20230605080300_FE-204-PSO-P1-SP.csv"
+                    ),
+                    f"{RECORD_ID_05_0803}_FE-204-PSO-P1-SP.png": "fa916e6e916e9181",
                 },
                 id=(
                     "Zip export of main CSV, images, waveform CSVs and waveform images "
@@ -873,17 +727,7 @@ class TestExport:
                 ),
             ),
             pytest.param(
-                {
-                    "_id": {
-                        "$in": [
-                            "20230605080000",
-                            "20230605090000",
-                            "20230605100000",
-                            "20230605110000",
-                            "20230605120000",
-                        ],
-                    },
-                },
+                {"_id": {"$in": [RECORD_ID_05_0800, RECORD_ID_05_0803]}},
                 0,
                 10,
                 "metadata.shotnum ASC",
@@ -906,36 +750,28 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 [
                     {"name": "scalar", "expression": "FE-204-PSO-EM + 1"},
                     {"name": "waveform", "expression": "FE-204-PSO-P1-SP + (1 - 1)"},
                     {"name": "image", "expression": "FE-204-PSO-CAM-1 + (1 - 1)"},
                 ],
-                "20230605080000_to_20230605120000.zip",
+                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.zip",
                 None,
                 {
-                    "20230605080000_to_20230605120000.csv": "export/"
-                    "20230605080000_to_20230605120000_functions.csv",
-                    "20230605080000_image.png": "da2d4927045f24bf",
-                    "20230605090000_image.png": "c8270437263f26bf",
-                    "20230605100000_image.png": "c8262437273b373d",
-                    "20230605110000_image.png": "da6d49270437247f",
-                    "20230605120000_image.png": "dad7495b04ab04fa",
-                    "20230605080000_waveform.csv": "export/"
-                    "20230605080000_FE-204-PSO-P1-SP.csv",
-                    "20230605090000_waveform.csv": "export/"
-                    "20230605090000_FE-204-PSO-P1-SP.csv",
-                    "20230605100000_waveform.csv": "export/"
-                    "20230605100000_FE-204-PSO-P1-SP.csv",
-                    "20230605110000_waveform.csv": "export/"
-                    "20230605110000_FE-204-PSO-P1-SP.csv",
-                    "20230605120000_waveform.csv": "export/"
-                    "20230605120000_FE-204-PSO-P1-SP.csv",
-                    "20230605080000_waveform.png": "fa914e6e914eb04d",
-                    "20230605090000_waveform.png": "fa916e6e916e9181",
-                    "20230605100000_waveform.png": "fab14f6e914e90c1",
-                    "20230605110000_waveform.png": "fb914e6e914eb091",
-                    "20230605120000_waveform.png": "ff914e6e914eb081",
+                    f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv": (
+                        f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}_functions.csv"
+                    ),
+                    f"{RECORD_ID_05_0800}_image.png": "da2d4927045f24bf",
+                    f"{RECORD_ID_05_0800}_waveform.csv": (
+                        "export/20230605080000_FE-204-PSO-P1-SP.csv"
+                    ),
+                    f"{RECORD_ID_05_0800}_waveform.png": "fa914e6e914eb04d",
+                    f"{RECORD_ID_05_0803}_image.png": "d5b55a554aaa4a55",
+                    f"{RECORD_ID_05_0803}_waveform.csv": (
+                        "export/20230605080300_FE-204-PSO-P1-SP.csv"
+                    ),
+                    f"{RECORD_ID_05_0803}_waveform.png": "fa916e6e916e9181",
                 },
                 id=(
                     "Zip export of main CSV, images, waveform CSVs and "
@@ -943,17 +779,7 @@ class TestExport:
                 ),
             ),
             pytest.param(
-                {
-                    "_id": {
-                        "$in": [
-                            "20230605080000",
-                            "20230605090000",
-                            "20230605100000",
-                            "20230605110000",
-                            "20230605120000",
-                        ],
-                    },
-                },
+                {"_id": {"$in": [RECORD_ID_05_0800, RECORD_ID_05_0803]}},
                 0,
                 10,
                 "metadata.shotnum ASC",
@@ -971,28 +797,55 @@ class TestExport:
                 None,
                 None,
                 None,
+                None,
                 5,
                 15,
                 "jet_r",
                 [
                     {"name": "image", "expression": "FE-204-PSO-CAM-1 + (1 - 1)"},
                 ],
-                "20230605080000_to_20230605120000.zip",
+                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.zip",
                 None,
                 {
-                    "20230605080000_to_20230605120000.csv": (
-                        "export/20230605080000_to_20230605120000_asc.csv"
+                    f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv": (
+                        f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv"
                     ),
-                    "20230605080000_FE-204-PSO-CAM-1.png": "c73838c6c637c738",
-                    "20230605090000_FE-204-PSO-CAM-1.png": "c73838c7c73838c7",
-                    "20230605100000_FE-204-PSO-CAM-1.png": "c73838c7c73838c7",
-                    "20230605110000_FE-204-PSO-CAM-1.png": "c73938c7c427c738",
-                    "20230605120000_FE-204-PSO-CAM-1.png": "c4c43f273838c6fc",
+                    f"{RECORD_ID_05_0800}_FE-204-PSO-CAM-1.png": "c73838c6c637c738",
+                    f"{RECORD_ID_05_0803}_FE-204-PSO-CAM-1.png": "b624db22fb26d903",
                 },
                 id=(
                     "Zip export of main CSV with images in false colour "
                     "with functions defined but not included in projections"
                 ),
+            ),
+            pytest.param(
+                {"_id": {"$in": [RECORD_ID_05_0800, RECORD_ID_05_0803]}},
+                0,
+                10,
+                "metadata.shotnum ASC",
+                [
+                    "metadata.shotnum",
+                    "metadata.timestamp",
+                    "metadata.epac_ops_data_version",
+                    "channels.ASTRA_CONTROL_MODE_STRING.data",
+                ],
+                None,
+                None,
+                None,
+                None,
+                True,  # export_strings
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                [],  # functions
+                f"{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}.csv",
+                f"export/{RECORD_ID_05_0800}_to_{RECORD_ID_05_0803}_ASTRA_CONTROL_MODE_STRING.csv",
+                None,
+                marks=MARK_GEMINI_TEST,
+                id="CSV export of string channel",
             ),
         ],
     )
@@ -1009,6 +862,7 @@ class TestExport:
         export_waveform_csvs,
         export_images,
         export_scalars,
+        export_strings,
         export_float_images: bool,
         export_vector_images: bool,
         export_vector_csvs: bool,
@@ -1043,6 +897,7 @@ class TestExport:
         )
         TestExport.compile_get_params(get_params, "export_images", export_images)
         TestExport.compile_get_params(get_params, "export_scalars", export_scalars)
+        TestExport.compile_get_params(get_params, "export_strings", export_strings)
         TestExport.compile_get_params(
             get_params,
             "export_float_images",
@@ -1094,13 +949,21 @@ class TestExport:
 
         assert test_response.status_code == 200
 
+    @pytest.mark.parametrize(
+        ["file_prefix"],
+        [
+            pytest.param("EPAC_", marks=MARK_EPAC_TEST),
+            pytest.param("GEMINI_", marks=MARK_GEMINI_TEST),
+        ],
+    )
     def test_export_errors(
         self,
         test_app: TestClient,
         login_and_get_token,
+        file_prefix: str,
     ):
         get_params = [
-            f"conditions={json.dumps({'_id': {'$eq': '20230605080300'}})}",
+            f"conditions={json.dumps({'_id': {'$eq': RECORD_ID_05_0803}})}",
             "projection=metadata.shotnum",
             "projection=metadata.timestamp",
             "projection=metadata.epac_ops_data_version",
@@ -1123,10 +986,14 @@ class TestExport:
         TestExport.check_export_headers(
             test_response,
             "application/zip",
-            "20230605080300.zip",
+            f"{RECORD_ID_05_0803}.zip",
         )
-        zip_contents_dict = {"EXPORT_ERRORS.txt": "export/EXPORT_ERRORS.txt"}
-        TestExport.check_zip_file_contents(zip_contents_dict, test_response)
+        TestExport.check_zip_file_contents(
+            zip_contents_dict={
+                "EXPORT_ERRORS.txt": f"export/{file_prefix}EXPORT_ERRORS.txt",
+            },
+            response=test_response,
+        )
 
     @pytest.mark.parametrize(
         ["projection", "message"],
@@ -1149,7 +1016,7 @@ class TestExport:
         message: str,
     ):
         get_params = []
-        conditions = {"_id": {"$in": ["20230605080000"]}}
+        conditions = {"_id": {"$in": [RECORD_ID_05_0800]}}
         get_params.append(f"conditions={json.dumps(conditions)}")
         get_params.append(f"projection={projection}")
         TestExport.compile_get_params(get_params, "skip", 0)

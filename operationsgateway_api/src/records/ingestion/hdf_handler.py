@@ -7,7 +7,11 @@ import h5py
 from pydantic import ValidationError
 
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
-from operationsgateway_api.src.constants import DATA_DATETIME_FORMAT, ID_DATETIME_FORMAT
+from operationsgateway_api.src.config import Config
+from operationsgateway_api.src.constants import (
+    DATA_DATETIME_FORMATS,
+    ID_DATETIME_FORMAT,
+)
 from operationsgateway_api.src.exceptions import HDFDataExtractionError, ModelError
 from operationsgateway_api.src.models import (
     ChannelManifestModel,
@@ -21,6 +25,8 @@ from operationsgateway_api.src.models import (
     RecordModel,
     ScalarChannelMetadataModel,
     ScalarChannelModel,
+    StringChannelMetadataModel,
+    StringChannelModel,
     VectorChannelMetadataModel,
     VectorChannelModel,
     VectorModel,
@@ -44,6 +50,7 @@ class HDFDataHandler:
         "float_image": ["data"],
         "waveform": ["x", "y"],
         "vector": ["data"],
+        "string": ["data"],
     }
 
     def __init__(self, hdf_temp_file: SpooledTemporaryFile) -> None:
@@ -57,6 +64,7 @@ class HDFDataHandler:
         self.images = []
         self.float_images = []
         self.vectors = []
+        self.strings = []
 
     async def extract_data(
         self,
@@ -76,18 +84,18 @@ class HDFDataHandler:
         log.debug("Extracting data from HDF files")
 
         metadata_hdf = dict(self.hdf_file.attrs)
-        try:
-            metadata_hdf["timestamp"] = datetime.strptime(
-                metadata_hdf["timestamp"],
-                DATA_DATETIME_FORMAT,
-            )
-        except (KeyError, ValueError, TypeError) as exc:
-            raise HDFDataExtractionError(
-                "Invalid timestamp metadata. Expected key 'timestamp' with value "
-                "formatted, for example as: '2025-04-07T14:28:16+00:00'.",
-            ) from exc
 
-        self.record_id = metadata_hdf["timestamp"].strftime(ID_DATETIME_FORMAT)
+        # takes a timestamp string from the HDF metadata, normalises it,
+        # and returns a proper timezone-aware datetime object, or raises an
+        # error if the format is wrong.
+        metadata_hdf["timestamp"] = self._parse_data_timestamp(
+            metadata_hdf.get("timestamp"),
+        )
+
+        # Converts the parsed datetime object into a compact record ID string
+        # that includes milliseconds.
+        self.record_id = self._create_record_id(metadata_hdf["timestamp"])
+
         await self.extract_channels()
 
         try:
@@ -107,6 +115,61 @@ class HDFDataHandler:
             self.vectors,
             self.internal_failed_channel,
         )
+
+    def _parse_data_timestamp(
+        self,
+        timestamp: str | bytes | None,
+    ) -> datetime:
+        """
+        Parse a timestamp value from HDF metadata into a datetime object.
+
+        The timestamp is expected to be an ISO 8601 formatted string, for example:
+        "2025-04-07T14:28:16.123+00:00" or without milliseconds. A trailing
+        "Z" (UTC) is also supported and will be normalised to "+00:00".
+        """
+
+        error_message = (
+            "Invalid timestamp metadata. Expected 'timestamp' like "
+            "'2025-04-07T14:28:16.123+00:00' or without milliseconds."
+        )
+
+        if timestamp in (None, ""):
+            raise HDFDataExtractionError(error_message)
+
+        if isinstance(timestamp, bytes):
+            timestamp = timestamp.decode()
+
+        if not isinstance(timestamp, str):
+            raise HDFDataExtractionError(error_message)
+
+        if timestamp.endswith("Z"):
+            timestamp = timestamp[:-1] + "+00:00"
+
+        last_exc = None
+        for fmt in DATA_DATETIME_FORMATS:
+            try:
+                return datetime.strptime(timestamp, fmt)
+            except (ValueError, TypeError) as exc:
+                last_exc = exc
+
+        raise HDFDataExtractionError(error_message) from last_exc
+
+    def _create_record_id(self, timestamp: datetime) -> str:
+        """
+        Create a compact record ID string based on a datetime,
+        including milliseconds for precision.
+        Example: 2025-10-30 22:45:07.106000 becomes "20251030224507106"
+        """
+        # Format up to seconds
+        record_id_base = timestamp.strftime(ID_DATETIME_FORMAT)
+
+        if Config.config.app.use_sub_second_timestamps:
+            # Convert microseconds to milliseconds
+            milliseconds = int(timestamp.microsecond / 1000)
+            # Combine and pad milliseconds to 3 digits
+            return f"{record_id_base}{milliseconds:03d}"
+
+        return record_id_base
 
     def _unexpected_attribute(self, channel_type, value):
         """
@@ -330,6 +393,45 @@ class HDFDataHandler:
         except ValidationError as exc:
             raise ModelError(str(exc)) from exc
 
+    def _extract_string(
+        self,
+        internal_failed_channel,
+        channel_name,
+        channel_metadata,
+        value,
+    ):
+        """
+        Extract data for string in the HDF file and place the data into
+        relevant Pydantic models as well as performing string specific checks
+        """
+        if self._unexpected_attribute("string", value):
+            internal_failed_channel.append(
+                {channel_name: "unexpected group or dataset in channel group"},
+            )
+            return None, internal_failed_channel
+
+        try:
+            channel = StringChannelModel(
+                metadata=StringChannelMetadataModel(**channel_metadata),
+                data=value["data"][()],
+            )
+            return channel, False
+        except KeyError:
+            internal_failed_channel.append(
+                {channel_name: "data attribute is missing"},
+            )
+            return None, internal_failed_channel
+        except ValidationError as exc:
+            for error in exc.errors():
+                if error["type"] == "string_type":
+                    internal_failed_channel.append(
+                        {channel_name: "data has wrong datatype"},
+                    )
+                    break
+                else:
+                    raise ModelError(str(exc)) from exc
+            return None, internal_failed_channel
+
     async def _extract_channel(
         self,
         channel_name: str,
@@ -337,6 +439,7 @@ class HDFDataHandler:
         manifest: ChannelManifestModel,
         internal_failed_channel: list[dict[str, str]],
     ) -> list[dict[str, str]]:
+        fail = None
         channel_metadata = dict(value.attrs)
         channel_checks = ChannelChecks(
             ingested_record={channel_name: channel_metadata},
@@ -383,6 +486,13 @@ class HDFDataHandler:
             )
         elif value.attrs["channel_dtype"] == "vector":
             channel, fail = self._extract_vector(
+                internal_failed_channel,
+                channel_name,
+                channel_metadata,
+                value,
+            )
+        elif value.attrs["channel_dtype"] == "string":
+            channel, fail = self._extract_string(
                 internal_failed_channel,
                 channel_name,
                 channel_metadata,
