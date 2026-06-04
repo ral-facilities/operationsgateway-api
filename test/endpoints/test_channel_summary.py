@@ -11,11 +11,11 @@ from test.conftest import (
     DATETIME_STR_05_0803,
     DATETIME_STR_05_1700,
     DATETIME_STR_06_1200,
+    MARK_GEMINI_TEST,
     set_preferred_colourmap,
     set_preferred_float_colourmap,
     unset_preferred_colourmap,
     unset_preferred_float_colourmap,
-    MARK_GEMINI_TEST,
 )
 
 
