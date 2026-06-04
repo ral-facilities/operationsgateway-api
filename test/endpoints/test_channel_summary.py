@@ -14,7 +14,8 @@ from test.conftest import (
     set_preferred_colourmap,
     set_preferred_float_colourmap,
     unset_preferred_colourmap,
-    unset_preferred_float_colourmap, MARK_GEMINI_TEST,
+    unset_preferred_float_colourmap,
+    MARK_GEMINI_TEST,
 )
 
 
