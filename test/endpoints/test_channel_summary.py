@@ -14,7 +14,7 @@ from test.conftest import (
     set_preferred_colourmap,
     set_preferred_float_colourmap,
     unset_preferred_colourmap,
-    unset_preferred_float_colourmap,
+    unset_preferred_float_colourmap, MARK_GEMINI_TEST,
 )
 
 
@@ -66,6 +66,7 @@ class TestChannelSummary:
                         {DATETIME_STR_05_0800: "2USERS"},
                     ],
                 },
+                marks=MARK_GEMINI_TEST,
                 id="String channel summary",
             ),
         ],
