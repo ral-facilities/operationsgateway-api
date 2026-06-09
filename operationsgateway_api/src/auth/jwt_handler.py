@@ -66,6 +66,7 @@ class JwtHandler:
         :return: The refresh JWT
         """
         payload = {}
+        payload["username"] = self.user_model.username
         payload["exp"] = datetime.now(timezone.utc) + timedelta(
             days=Config.config.auth.refresh_token_validity_days,
         )
@@ -95,18 +96,29 @@ class JwtHandler:
         :param access_token: The JWT access token
         :return: The access token JWT with an updated expiry time
         """
-        JwtHandler.verify_token(refresh_token)
+        refresh_payload = JwtHandler.verify_token(refresh_token)
+
         # additional check to ensure the token has not been blacklisted
         if refresh_token in JwtHandler.get_blacklisted_tokens():
             message = "Token is blacklisted"
             log.warning(message)
             raise ForbiddenError(message)
         try:
-            payload = JwtHandler.get_payload(access_token, {"verify_exp": False})
-            payload["exp"] = datetime.now(timezone.utc) + timedelta(
+            access_payload = JwtHandler.get_payload(access_token, {"verify_exp": False})
+
+            if refresh_payload.get("username") != access_payload.get("username"):
+                message = "Refresh token does not match access token user"
+                log.warning(message)
+                raise ForbiddenError(message)
+
+            access_payload["exp"] = datetime.now(timezone.utc) + timedelta(
                 minutes=Config.config.auth.access_token_validity_mins,
             )
-            return JwtHandler._pack_jwt(payload)
+
+            return JwtHandler._pack_jwt(access_payload)
+
+        except ForbiddenError:
+            raise
         except Exception as exc:
             message = "Unable to refresh token"
             log.warning(message, exc_info=1)

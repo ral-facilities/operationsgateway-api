@@ -49,3 +49,25 @@ class TestJwtHandler:
             return_value = jwt_handler_instance.get_blacklisted_tokens()
 
         assert return_value == ["test_token1", "test_token2", "test_token3"]
+
+    def test_refresh_token_user_mismatch(self, jwt_handler_instance):
+        with patch(
+                "operationsgateway_api.src.auth.jwt_handler.JwtHandler.verify_token",
+                return_value={"username": "refresh_user"},
+        ):
+            with patch(
+                    "operationsgateway_api.src.auth.jwt_handler.JwtHandler.get_blacklisted_tokens",
+                    return_value=[],
+            ):
+                with patch(
+                        "operationsgateway_api.src.auth.jwt_handler.JwtHandler.get_payload",
+                        return_value={"username": "access_user"},
+                ):
+                    with pytest.raises(
+                            ForbiddenError,
+                            match="Refresh token does not match access token user",
+                    ):
+                        jwt_handler_instance.refresh_token(
+                            "test_refresh_token",
+                            "test_access_token",
+                        )
