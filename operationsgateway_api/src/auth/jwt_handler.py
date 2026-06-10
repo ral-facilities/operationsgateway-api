@@ -106,6 +106,7 @@ class JwtHandler:
         try:
             access_payload = JwtHandler.get_payload(access_token, {"verify_exp": False})
 
+            # make sure the user associated with the refresh token is also associated with the access token
             if refresh_payload.get("username") != access_payload.get("username"):
                 message = "Refresh token does not match access token user"
                 log.warning(message)
