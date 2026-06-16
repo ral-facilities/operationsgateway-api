@@ -27,7 +27,15 @@ def lint(session):
 def safety(session):
     session.env["POETRY_VIRTUALENVS_CREATE"] = "false"
     session.run("poetry", "install", "--without", "simulated-data", external=True)
-    # Can't fix 70790 because epac data sim uses it
+    # Can't fix 70790 because epac data sim uses it.
+    # SFTY-20260410-84041. Operations Gateway only uses the XRootD
+    # client libraries to access remote storage and does not run an XRootD
+    # server, so the vulnerable code path is not applicable.
+    #
+    # xrootd-utils currently requires xrootd==5.8.2, which is affected by
+    # this advisory, preventing us from upgrading to a patched version
+    # without removing or replacing xrootd-utils. We need to wait until
+    # # xrootd-utils is updated to support a patched version of xrootd.
     session.run(
         "poetry",
         "run",
@@ -36,6 +44,8 @@ def safety(session):
         "--full-report",
         "--ignore",
         "70790",
+        "--ignore",
+        "SFTY-20260410-84041",
         external=True,
     )
 
