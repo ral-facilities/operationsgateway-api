@@ -27,6 +27,18 @@ def lint(session):
 def safety(session):
     session.env["POETRY_VIRTUALENVS_CREATE"] = "false"
     session.run("poetry", "install", "--without", "simulated-data", external=True)
+    session.run(
+        "poetry",
+        "run",
+        "python",
+        "-m",
+        "pip",
+        "install",
+        "--upgrade",
+        "pip>=26.0",
+        external=True,
+    )
+
     # Can't fix 70790 because epac data sim uses it
     session.run(
         "poetry",
