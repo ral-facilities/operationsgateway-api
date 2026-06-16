@@ -52,6 +52,8 @@ def main():
 
     channel_manifest = echo.download_manifest_file()
     og_api = APIClient(api_url, starter.process)
+    print("submitting manifest")
+
     og_api.submit_manifest(channel_manifest)
 
     hdf_page_iterator = echo.paginate_hdf_data()
