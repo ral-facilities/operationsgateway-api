@@ -12,23 +12,6 @@ updates:
       - dependency-name: "epac-data-sim"
 
     groups:
-      fastapi-stack:
-        patterns:
-          - "fastapi"
-          - "starlette"
-
-      flake8-stack:
-        patterns:
-          - "flake8"
-          - "flake8-*"
-          - "pep8-naming"
-
       python-dependencies:
         patterns:
           - "*"
-        exclude-patterns:
-          - "fastapi"
-          - "starlette"
-          - "flake8"
-          - "flake8-*"
-          - "pep8-naming"
