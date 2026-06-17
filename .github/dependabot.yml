@@ -1,8 +1,17 @@
+version: 2
+
 updates:
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
 
+    # EPAC-DataSim is a private SSH Git repository outside this
+    # GitHub organisation and cannot be updated by Dependabot.
     ignore:
       - dependency-name: "epac-data-sim"
+
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
