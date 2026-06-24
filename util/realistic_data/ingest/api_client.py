@@ -32,7 +32,6 @@ class APIClient:
             response = requests.post(
                 f"{self.url}{endpoint}",
                 data=credentials_json,
-                headers={"Content-Type": "application/json"},
             )
 
             # strip the first and last characters off the response
@@ -59,11 +58,8 @@ class APIClient:
         try:
             response = requests.post(
                 f"{self.url}{endpoint}",
-                json={"token": self.access_token},
-                headers={
-                    "Content-Type": "application/json",
-                    "Cookie": f"refresh_token={self.refresh_token}",
-                },
+                data=json.dumps({"token": f"{self.access_token}"}),
+                headers={"Cookie": f"refresh_token={self.refresh_token}"},
             )
             self.access_token = response.text[1:-1]
 
