@@ -49,7 +49,7 @@ def safety(session):
         "--ignore",
         "70790",
         "--ignore",
-        "SFTY-20260410-84041",
+        "99546",
         external=True,
     )
 

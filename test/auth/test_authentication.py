@@ -10,7 +10,7 @@ from operationsgateway_api.src.exceptions import AuthServerError, UnauthorisedEr
 
 class TestAuthentication:
     def test_fed_server_problem(self, authentication_fed_instance):
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             authentication_fed_instance.authenticate()
 
     def test_local_unauthorised(self, authentication_local_instance):
