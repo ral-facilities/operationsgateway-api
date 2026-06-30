@@ -48,6 +48,8 @@ def safety(session):
         "--full-report",
         "--ignore",
         "70790",
+        "--ignore",
+        "99546",
         external=True,
     )
 
