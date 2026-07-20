@@ -228,3 +228,141 @@ class Authentication:
         except ValueError as exc:
             log.exception("Invalid JSON response from User Office auth service")
             raise AuthServerError() from exc
+
+    @staticmethod
+    def get_user_id_from_user_office_email(email: str) -> str | None:
+        """
+        Look up a User Office user by email address.
+
+        Returns the User Office userId if found, otherwise None.
+        """
+        log.debug("Looking up User Office user '%s'", email)
+
+        lookup_url = (
+            "https://api.facilities.rl.ac.uk/users-service/v2/basic-person-details"
+        )
+
+        try:
+            response = requests.get(
+                lookup_url,
+                params={"emails": email},
+                headers={
+                    "Authorization": (
+                        f"Api-key {Config.config.auth.user_office_api_key}"
+                    ),
+                    "Accept": "application/json",
+                },
+                timeout=10,
+            )
+
+            if response.status_code != 200:
+                log.error(
+                    "Unexpected User Office lookup response for '%s': %s %s",
+                    email,
+                    response.status_code,
+                    response.text,
+                )
+                response.raise_for_status()
+                raise AuthServerError()
+
+            lookup_response = response.json()
+
+            if not lookup_response:
+                log.info("No User Office account found for '%s'", email)
+                return None
+
+            user_id = lookup_response[0].get("userNumber")
+
+            if not user_id:
+                log.error(
+                    "User Office lookup response did not contain userNumber"
+                )
+                raise AuthServerError()
+
+            log.info(
+                "User Office lookup successful for '%s', userId '%s'",
+                email,
+                user_id,
+            )
+
+            return str(user_id)
+
+        except requests.exceptions.RequestException as exc:
+            log.exception("Problem with User Office lookup service")
+            raise AuthServerError() from exc
+        except ValueError as exc:
+            log.exception("Invalid JSON response from User Office lookup service")
+            raise AuthServerError() from exc
+
+    @staticmethod
+    def get_user_office_emails(
+            user_numbers: list[str],
+    ) -> dict[str, str | None]:
+        """
+        Look up multiple User Office users in one request.
+
+        Returns a mapping of user number to email address.
+        """
+        lookup_url = (
+            "https://api.facilities.rl.ac.uk/"
+            "users-service/v2/basic-person-details"
+        )
+
+        log.debug(
+            "Looking up %d User Office users",
+            len(user_numbers),
+        )
+
+        try:
+            response = requests.get(
+                lookup_url,
+                params=[
+                    ("userNumbers", user_number)
+                    for user_number in user_numbers
+                ],
+                headers={
+                    "Authorization": (
+                        f"Api-key {Config.config.auth.user_office_api_key}"
+                    ),
+                    "Accept": "application/json",
+                },
+                timeout=10,
+            )
+
+            if response.status_code != 200:
+                log.error(
+                    "Unexpected User Office lookup response: %s %s",
+                    response.status_code,
+                    response.text,
+                )
+                response.raise_for_status()
+                raise AuthServerError()
+
+            lookup_response = response.json()
+
+            if not isinstance(lookup_response, list):
+                log.error("Unexpected User Office lookup response format")
+                raise AuthServerError()
+
+            requested_numbers = {str(number) for number in user_numbers}
+
+            emails = {
+                str(person["userNumber"]): person.get("email")
+                for person in lookup_response
+                if person.get("userNumber") is not None
+                   and str(person["userNumber"]) in requested_numbers
+            }
+
+            # Include users not returned by User Office with a None email.
+            return {
+                user_number: emails.get(user_number)
+                for user_number in requested_numbers
+            }
+
+        except requests.exceptions.RequestException as exc:
+            log.exception("Problem with User Office lookup service")
+            raise AuthServerError() from exc
+        except ValueError as exc:
+            log.exception(
+                "Invalid JSON response from User Office lookup service")
+            raise AuthServerError() from exc

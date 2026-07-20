@@ -1,3 +1,4 @@
+import asyncio
 from http import HTTPStatus
 import logging
 
@@ -76,6 +77,19 @@ async def add_user(
                 f"No email found for FedID username '{login_details.username}'",
             )
         login_details.email = email
+
+    if auth_type == "user_office":
+        log.debug("Performing User Office lookup for '%s'",
+                  login_details.username)
+        user_id = Authentication.get_user_id_from_user_office_email(login_details.username)
+
+        if not user_id:
+            raise QueryParameterError(
+                f"No User Office account found for '{login_details.username}'",
+            )
+
+        # Store the User Office ID instead of the email.
+        login_details.username = user_id
 
     await User.add(login_details)
 
@@ -186,10 +200,16 @@ async def get_all_users(access_token: AuthoriseRoute):
     """
     Fetch all users from the database, including their usernames (_id),
     authentication types, and authorised routes.
+
+    # For User Office users, display the email address as the username while
+    # preserving the MongoDB _id (User Office user number) as the unique identifier.
+
     """
     users = await User.get_all_users()
 
-    response_data = []
+    valid_users = []
+    user_office_numbers = []
+
     for user in users:
         # Skip users without a valid auth_type or those missing essential fields
         if (
@@ -200,11 +220,33 @@ async def get_all_users(access_token: AuthoriseRoute):
             log.warning("Skipping invalid or incomplete user '%s':", user)
             continue
 
+        valid_users.append(user)
+
+        if user["auth_type"] == "user_office":
+            user_office_numbers.append(str(user["_id"]))
+
+    user_office_emails = {}
+
+    if user_office_numbers:
+        user_office_emails = await asyncio.to_thread(
+            Authentication.get_user_office_emails,
+            user_office_numbers,
+        )
+
+    response_data = []
+
+    for user in valid_users:
         user_info = {
-            "username": user["_id"],
+            "_id": user["_id"],
+            "username": (
+                user_office_emails.get(str(user["_id"]), user["_id"])
+                if user["auth_type"] == "user_office"
+                else user["_id"]
+            ),
             "auth_type": user["auth_type"],
             "authorised_routes": user.get("authorised_routes", []),
         }
+
         response_data.append(user_info)
 
     log.info("Successfully retrieved all users.")

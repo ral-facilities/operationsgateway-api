@@ -113,6 +113,7 @@ class AuthConfig(BaseModel):
     fedid_server_url: StrictStr
     fedid_server_ldap_realm: StrictStr
     allow_user_office_login: StrictBool
+    user_office_api_key: StrictStr
     oidc_providers: dict[StrictStr, OidcProviderConfig] = {}
 
 
