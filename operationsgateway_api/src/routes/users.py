@@ -203,6 +203,7 @@ async def get_all_users(access_token: AuthoriseRoute):
 
     # For User Office users, display the email address as the username while
     # preserving the MongoDB _id (User Office user number) as the unique identifier.
+    # Detail: https://stfc.atlassian.net/browse/DSEGOG-552
 
     """
     users = await User.get_all_users()
