@@ -198,13 +198,15 @@ async def delete_user(
 @endpoint_error_handling
 async def get_all_users(access_token: AuthoriseRoute):
     """
-    Fetch all users from the database, including their usernames (_id),
+    Fetch all users from the database, including their usernames,
     authentication types, and authorised routes.
 
-    # For User Office users, display the email address as the username while
-    # preserving the MongoDB _id (User Office user number) as the unique identifier.
-    # Detail: https://stfc.atlassian.net/browse/DSEGOG-552
+    For User Office users:
+    - The MongoDB `_id` (User Office user number) remains the unique identifier.
+    - The associated email address is returned as the username.
+    - Deactivated or unavailable User Office accounts are excluded.
 
+    See: DSEGOG-552
     """
     users = await User.get_all_users()
 
@@ -237,13 +239,23 @@ async def get_all_users(access_token: AuthoriseRoute):
     response_data = []
 
     for user in valid_users:
+        if user["auth_type"] == "user_office":
+            user_number = str(user["_id"])
+
+            if user_number not in user_office_emails:
+                log.info(
+                    "Skipping User Office users with no email or deactivated'%s'",
+                    user["_id"],
+                )
+                continue
+
+            username = user_office_emails[user_number]
+        else:
+            username = user["_id"]
+
         user_info = {
             "_id": user["_id"],
-            "username": (
-                user_office_emails.get(str(user["_id"]), user["_id"])
-                if user["auth_type"] == "user_office"
-                else user["_id"]
-            ),
+            "username": username,
             "auth_type": user["auth_type"],
             "authorised_routes": user.get("authorised_routes", []),
         }

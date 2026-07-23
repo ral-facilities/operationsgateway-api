@@ -297,34 +297,41 @@ class Authentication:
     @staticmethod
     def get_user_office_emails(
             user_numbers: list[str],
-    ) -> dict[str, str | None]:
+    ) -> dict[str, str]:
         """
         Look up multiple User Office users in one request.
 
-        Returns a mapping of user number to email address.
+        Returns a mapping of User Office user numbers to email addresses.
+        Accounts marked as deactivated or without an email address are
+        excluded from the returned mapping.
         """
+
         lookup_url = (
             "https://api.facilities.rl.ac.uk/"
-            "users-service/v2/basic-person-details"
+            "users-service/v2/basic-person-details/search"
         )
+
+        requested_numbers = {str(number) for number in user_numbers}
 
         log.debug(
             "Looking up %d User Office users",
-            len(user_numbers),
+            len(requested_numbers),
         )
 
         try:
-            response = requests.get(
+            response = requests.post(
                 lookup_url,
-                params=[
-                    ("userNumbers", user_number)
-                    for user_number in user_numbers
-                ],
+                params={"searchable": "false"},
+                json={
+                    "userNumbers": list(requested_numbers),
+                },
                 headers={
                     "Authorization": (
-                        f"Api-key {Config.config.auth.user_office_api_key}"
+                        f"Api-key "
+                        f"{Config.config.auth.user_office_api_key}"
                     ),
                     "Accept": "application/json",
+                    "Content-Type": "application/json",
                 },
                 timeout=10,
             )
@@ -341,28 +348,31 @@ class Authentication:
             lookup_response = response.json()
 
             if not isinstance(lookup_response, list):
-                log.error("Unexpected User Office lookup response format")
+                log.error(
+                    "Unexpected User Office lookup response format"
+                )
                 raise AuthServerError()
 
-            requested_numbers = {str(number) for number in user_numbers}
-
             emails = {
-                str(person["userNumber"]): person.get("email")
+                str(person["userNumber"]): person["email"]
                 for person in lookup_response
-                if person.get("userNumber") is not None
-                   and str(person["userNumber"]) in requested_numbers
+                if (
+                        person.get("userNumber") is not None
+                        and str(person["userNumber"]) in requested_numbers
+                        and "[deactivated]" not in person.get("familyName",
+                                                              "").lower()
+                        and person.get("email")
+                )
             }
 
-            # Include users not returned by User Office with a None email.
-            return {
-                user_number: emails.get(user_number)
-                for user_number in requested_numbers
-            }
+            return emails
 
         except requests.exceptions.RequestException as exc:
             log.exception("Problem with User Office lookup service")
             raise AuthServerError() from exc
+
         except ValueError as exc:
             log.exception(
-                "Invalid JSON response from User Office lookup service")
+                "Invalid JSON response from User Office lookup service"
+            )
             raise AuthServerError() from exc
