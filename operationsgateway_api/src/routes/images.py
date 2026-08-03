@@ -13,6 +13,7 @@ from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.models import PartialRecordModel
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.record_retriever import RecordRetriever
 
 log = logging.getLogger()
@@ -320,10 +321,15 @@ async def get_image_array(
                     limit_bit_depth=limit_bit_depth,
                     colourmap_name=colourmap_name,
                     return_thumbnails=False,
+                    return_raw_bit_depth=True,
                 )
                 await record_retriever.process_functions()
                 return record_retriever.record.channels[channel_name].variable_value
 
+    raw_bit_depth = await Record.get_raw_bit_depth(
+        record_id=record_id,
+        channel_name=channel_name,
+    )
     image_bytes = await Image.get_image(
         record_id=record_id,
         channel_name=channel_name,
@@ -334,4 +340,5 @@ async def get_image_array(
         colourmap_name=colourmap_name,
     )
     image = PILImage.open(BytesIO(image_bytes))
-    return np.array(image)
+    img_array = np.array(image)
+    return Record._bit_shift_to_raw(img_array=img_array, raw_bit_depth=raw_bit_depth)
