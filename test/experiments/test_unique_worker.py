@@ -12,9 +12,6 @@ from operationsgateway_api.src.experiments.unique_worker import (
 
 class TestUniqueWorker:
     @patch("os.getpid", return_value=10)
-    @patch(
-        "operationsgateway_api.src.experiments.unique_worker.UniqueWorker._assign",
-    )
     @pytest.mark.parametrize(
         ["file_pid"],
         [
@@ -22,7 +19,7 @@ class TestUniqueWorker:
             pytest.param(0, id="PID of process that does not exist"),
         ],
     )
-    def test_init(self, mock_assign, _, file_pid: int | None, tmp_path: Path):
+    def test_init(self, _, file_pid: int | None, tmp_path: Path):
         worker_file_path = tmp_path / "worker"
         if file_pid is not None:
             with open(worker_file_path, "w") as f:
@@ -34,7 +31,8 @@ class TestUniqueWorker:
         assert test_worker.id_ == "10"
         assert test_worker.existing_pid is file_pid
         assert test_worker.is_assigned
-        assert mock_assign.call_count == 1
+        with open(worker_file_path) as f:
+            assert f.read() == "10"
 
     @patch("os.getpid", return_value=10)
     @patch(
@@ -107,7 +105,7 @@ class TestUniqueWorker:
             ),
         ],
     )
-    def test_is_file_empty(
+    def test_get_existing_pid(
         self,
         _,
         __,
