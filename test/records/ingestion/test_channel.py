@@ -583,9 +583,7 @@ class TestChannel:
         assert channel_checker.optional_dtype_checks() == expected
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        ["bit_depth"], [pytest.param(8), pytest.param(16)],
-    )
+    @pytest.mark.parametrize(["bit_depth"], [pytest.param(8), pytest.param(16)])
     @pytest.mark.parametrize(
         ["bit_depth_inferred"],
         [pytest.param(False), pytest.param(True)],
