@@ -1,5 +1,4 @@
 from io import BytesIO
-import json
 from pprint import pprint
 import threading
 from time import time
