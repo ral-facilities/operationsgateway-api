@@ -22,16 +22,13 @@ class APIClient:
         print(f"Login as '{Config.config.api.username}' to get access token")
 
         endpoint = "/login"
-        credentials_json = json.dumps(
-            {
-                "username": Config.config.api.username,
-                "password": Config.config.api.password,
-            },
-        )
         try:
             response = requests.post(
                 f"{self.url}{endpoint}",
-                data=credentials_json,
+                json={
+                    "username": Config.config.api.username,
+                    "password": Config.config.api.password,
+                },
             )
 
             # strip the first and last characters off the response
@@ -58,7 +55,7 @@ class APIClient:
         try:
             response = requests.post(
                 f"{self.url}{endpoint}",
-                data=json.dumps({"token": f"{self.access_token}"}),
+                json={"token": f"{self.access_token}"},
                 headers={"Cookie": f"refresh_token={self.refresh_token}"},
             )
             self.access_token = response.text[1:-1]

@@ -198,10 +198,9 @@ if not args.url:
 
 # Login to get an access token
 print(f"Login as '{USERNAME}' to get access token")
-credentials_json = json.dumps({"username": USERNAME, "password": PASSWORD})
 response = requests.post(
     f"{API_URL}/login",
-    data=credentials_json,
+    json={"username": USERNAME, "password": PASSWORD},
 )
 # strip the first and last characters off the response
 # (the double quotes that surround it)
