@@ -3,6 +3,8 @@ import logging
 import os
 from pathlib import Path
 
+from psutil import pid_exists
+
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import ApiError
 
@@ -16,7 +18,8 @@ class UniqueWorker:
     to contact the Scheduler on a regular basis only needs to be performed by a single
     worker. The worker chosen to perform the task (i.e. the 'assigned worker') is
     selected by checking whether a particular file is empty or not. If the object finds
-    an empty file, it becomes the assigned worker and writes its process ID to the file.
+    an empty file or a pid which does not (i.e. no longer) exists, it becomes the
+    assigned worker and writes its process ID to the file.
 
     The decorator (not in this class but at the bottom of this file) checks the contents
     of the file (looking to match the process ID in the file with the process ID of the
@@ -26,18 +29,17 @@ class UniqueWorker:
     def __init__(self, worker_file_path: str) -> None:
         self.id_ = str(os.getpid())
         self.worker_file_path = Path(worker_file_path)
-        self.file_empty = self._is_file_empty()
-        log.debug(
-            "File empty for PID %s: %s",
-            self.id_,
-            self.file_empty,
-        )
-        if self.file_empty:
+        self.existing_pid = self._get_existing_pid()
+        log.debug("File contents for PID %s: %s", self.id_, self.existing_pid)
+        if self.existing_pid is not None and pid_exists(self.existing_pid):
+            self.is_assigned = False
+        else:
+            if self.existing_pid is not None:
+                log.debug("Removing stale PID: %s", self.existing_pid)
+                os.remove(self.worker_file_path)
             log.debug("Assigning PID to current object: %s", self.id_)
             self._assign()
             self.is_assigned = True
-        else:
-            self.is_assigned = False
 
     def does_pid_match_file(self) -> bool:
         """
@@ -58,22 +60,22 @@ class UniqueWorker:
             # doesn't exist
             pass
 
-    def _is_file_empty(self) -> bool:
+    def _get_existing_pid(self) -> int | None:
         """
-        Check if the file is empty, returning a boolean result. If the file cannot be
-        found, create the file and assume it is empty when returning
+        Get the pid recorded `self.worker_file_path`. If the file cannot be found,
+        create the file and assume it is empty when returning.
         """
 
         try:
             pid = self._read_file()
             log.debug("File contents for PID %s: %s", self.id_, pid)
-            return False if pid else True
+            return int(pid) if pid else None
         except FileNotFoundError:
             # Create file (including path to it)
             msg = "Worker file doesn't exist, going to create one at: %s"
             log.debug(msg, self.worker_file_path)
             self.worker_file_path.parents[0].mkdir(parents=True, exist_ok=True)
-            return True
+            return None
 
     def _assign(self) -> None:
         """
