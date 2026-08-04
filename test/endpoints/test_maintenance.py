@@ -20,7 +20,7 @@ class TestMaintenance:
             # PUT the initial contents (we are using a tmpfile, which will start empty)
             response = test_app.put(
                 url="/maintenance",
-                content=json.dumps(initial_content),
+                json=initial_content,
                 headers={"Authorization": f"Bearer {login_and_get_token}"},
             )
             assert response.status_code == 200
@@ -36,7 +36,7 @@ class TestMaintenance:
             # Calling PUT will clear the cache after writing to file
             response = test_app.put(
                 url="/maintenance",
-                content=json.dumps(updated_content),
+                json=updated_content,
                 headers={"Authorization": f"Bearer {login_and_get_token}"},
             )
             assert response.status_code == 200
@@ -55,7 +55,7 @@ class TestMaintenance:
     ):
         response = test_app.put(
             url="/maintenance",
-            content=json.dumps({"show": False, "message": ""}),
+            json={"show": False, "message": ""},
             headers={"Authorization": f"Bearer {login_as_frontend_and_get_token}"},
         )
         assert response.status_code == 403
@@ -78,7 +78,7 @@ class TestMaintenance:
             # PUT the initial contents (we are using a tmpfile, which will start empty)
             response = test_app.put(
                 url="/scheduled_maintenance",
-                content=json.dumps(initial_content),
+                json=initial_content,
                 headers={"Authorization": f"Bearer {login_and_get_token}"},
             )
             assert response.status_code == 200
@@ -94,7 +94,7 @@ class TestMaintenance:
             # Calling PUT will clear the cache after writing to file
             response = test_app.put(
                 url="/scheduled_maintenance",
-                content=json.dumps(updated_content),
+                json=updated_content,
                 headers={"Authorization": f"Bearer {login_and_get_token}"},
             )
             assert response.status_code == 200
@@ -113,7 +113,7 @@ class TestMaintenance:
     ):
         response = test_app.put(
             url="/scheduled_maintenance",
-            content=json.dumps({"show": False, "message": "", "severity": "info"}),
+            json={"show": False, "message": "", "severity": "info"},
             headers={"Authorization": f"Bearer {login_as_frontend_and_get_token}"},
         )
         assert response.status_code == 403

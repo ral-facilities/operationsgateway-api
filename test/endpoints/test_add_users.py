@@ -100,14 +100,12 @@ class TestCreateUsers:
         create_response = test_app.post(
             "/users",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
-            content=json.dumps(
-                {
-                    "_id": username,
-                    "auth_type": auth_type,
-                    "authorised_routes": routes,
-                    "sha256_password": password,
-                },
-            ),
+            json={
+                "_id": username,
+                "auth_type": auth_type,
+                "authorised_routes": routes,
+                "sha256_password": password,
+            },
         )
 
         assert create_response.status_code == expected_response_code
@@ -262,14 +260,12 @@ class TestCreateUsers:
         create_response = test_app.post(
             "/users",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
-            content=json.dumps(
-                {
-                    "_id": username,
-                    "auth_type": auth_type,
-                    "authorised_routes": routes,
-                    "sha256_password": password,
-                },
-            ),
+            json={
+                "_id": username,
+                "auth_type": auth_type,
+                "authorised_routes": routes,
+                "sha256_password": password,
+            },
         )
 
         assert create_response.status_code == expected_response_code
@@ -308,14 +304,12 @@ class TestCreateUsers:
     ):
         create_response = test_app.post(
             "/users",
-            content=json.dumps(
-                {
-                    "_id": username,
-                    "auth_type": auth_type,
-                    "authorised_routes": routes,
-                    "sha256_password": password,
-                },
-            ),
+            json={
+                "_id": username,
+                "auth_type": auth_type,
+                "authorised_routes": routes,
+                "sha256_password": password,
+            },
         )
 
         assert create_response.status_code == expected_response_code
@@ -330,14 +324,12 @@ class TestCreateUsers:
         create_local_response = test_app.post(
             "/users",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
-            content=json.dumps(
-                {
-                    "_id": "testuserthatdoesnotexistinthedatabaselocal",
-                    "auth_type": "local",
-                    "authorised_routes": ["/submit/hdf POST", "/experiments POST"],
-                    "sha256_password": "password",
-                },
-            ),
+            json={
+                "_id": "testuserthatdoesnotexistinthedatabaselocal",
+                "auth_type": "local",
+                "authorised_routes": ["/submit/hdf POST", "/experiments POST"],
+                "sha256_password": "password",
+            },
         )
 
         assert create_local_response.status_code == 400
@@ -353,13 +345,11 @@ class TestCreateUsers:
         response = test_app.post(
             "/users",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
-            content=json.dumps(
-                {
-                    "_id": "fed",
-                    "auth_type": "FedID",
-                    "authorised_routes": ["/submit/hdf POST"],
-                },
-            ),
+            json={
+                "_id": "fed",
+                "auth_type": "FedID",
+                "authorised_routes": ["/submit/hdf POST"],
+            },
         )
 
         assert response.status_code == 400
