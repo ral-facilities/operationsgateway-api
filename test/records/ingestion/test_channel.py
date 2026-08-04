@@ -582,6 +582,39 @@ class TestChannel:
         expected = [{"TS-202-TSM-WFS-COEF": message}]
         assert channel_checker.optional_dtype_checks() == expected
 
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(["bit_depth"], [pytest.param(8), pytest.param(16)])
+    @pytest.mark.parametrize(
+        ["bit_depth_inferred"],
+        [pytest.param(False), pytest.param(True)],
+    )
+    async def test_bit_depth_inferred(
+        self,
+        bit_depth: int,
+        bit_depth_inferred: bool,
+        remove_hdf_file: None,
+    ):
+        dtype = np.uint8 if bit_depth == 8 else np.uint16
+        data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=dtype)
+        with h5py.File("test.h5", "w") as f:
+            f.attrs.create("epac_ops_data_version", "1.2")
+            record = f["/"]
+            record.attrs.create("timestamp", "2020-04-07T14:28:16Z")
+            record.attrs.create("shotnum", 366272, dtype="u8")
+            record.attrs.create("active_area", "ea1")
+            record.attrs.create("active_experiment", "90097341")
+            channel = record.create_group("PM-201-FE-CAM-2")
+            channel.create_dataset("data", data=data)
+            channel.attrs.create("channel_dtype", "image")
+            if not bit_depth_inferred:
+                channel.attrs.create("bit_depth", bit_depth)
+
+        hdf_data_handler = HDFDataHandler("test.h5")
+        await hdf_data_handler.extract_data()
+        metadata = hdf_data_handler.channels["PM-201-FE-CAM-2"].metadata
+        assert metadata.bit_depth == bit_depth
+        assert metadata.bit_depth_inferred == bit_depth_inferred
+
     @pytest.mark.parametrize(
         "required_attributes, response, extra",
         [

@@ -55,18 +55,19 @@ def test_app_backup_enabled(tmp_path: Path):
 
 @pytest.fixture()
 def login_and_get_token(test_app: TestClient):
-    json = '{"username": "backend", "password": "back"}'
-    response = test_app.post("/login", content=json)
-    # strip the first and last characters off the response
-    # (the double quotes that surround it)
-    token = response.text[1:-1]
-    return token
+    return login(test_app=test_app, username="backend", password="back")
 
 
 @pytest.fixture()
 def login_as_frontend_and_get_token(test_app: TestClient):
-    json = '{"username": "frontend", "password": "front"}'
-    response = test_app.post("/login", content=json)
+    return login(test_app=test_app, username="frontend", password="front")
+
+
+def login(test_app: TestClient, username: str, password: str) -> str:
+    body = {"username": username, "password": password}
+    response = test_app.post("/login", json=body)
+    if response.status_code != 200:
+        raise RuntimeError(response.text)
     # strip the first and last characters off the response
     # (the double quotes that surround it)
     token = response.text[1:-1]
@@ -153,12 +154,10 @@ def set_preferred_colourmap(test_app: TestClient, auth_token: str, do_it: bool):
     if do_it:
         test_app.post(
             "/users/preferences",
-            content=json.dumps(
-                {
-                    "name": FalseColourHandler.preferred_colour_map_pref_name,
-                    "value": "coolwarm",
-                },
-            ),
+            json={
+                "name": FalseColourHandler.preferred_colour_map_pref_name,
+                "value": "coolwarm",
+            },
             headers={"Authorization": f"Bearer {auth_token}"},
         )
 
@@ -172,12 +171,10 @@ def set_preferred_float_colourmap(test_app: TestClient, auth_token: str, do_it: 
     if do_it:
         test_app.post(
             "/users/preferences",
-            content=json.dumps(
-                {
-                    "name": FalseColourHandler.preferred_float_colour_map_pref_name,
-                    "value": "vanimo",
-                },
-            ),
+            json={
+                "name": FalseColourHandler.preferred_float_colour_map_pref_name,
+                "value": "vanimo",
+            },
             headers={"Authorization": f"Bearer {auth_token}"},
         )
 
