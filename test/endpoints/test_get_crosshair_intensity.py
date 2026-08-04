@@ -7,29 +7,67 @@ import pytest
 
 class TestGetCrosshairIntensity:
     @pytest.mark.parametrize(
-        ["channel_name", "functions", "row", "column"],
+        ["apply_functions"],
+        [pytest.param(False), pytest.param(True)],
+    )
+    @pytest.mark.parametrize(
         [
-            pytest.param("FE-204-NSO-P1-CAM-1", None, [308, 337, 384], [240, 381, 235]),
+            "record_id",
+            "channel_name",
+            "row_position",
+            "row_fwhm",
+            "row",
+            "column_position",
+            "column_fwhm",
+            "column",
+        ],
+        [
             pytest.param(
-                "a",
-                {"name": "a", "expression": "FE-204-NSO-P1-CAM-1 / 10"},
-                [30.8, 33.7, 38.4],
-                [24.0, 38.1, 23.5],
+                "20230605080000",
+                "FE-204-NSO-P1-CAM-1",
+                609,
+                616,
+                [606, 582, 536],
+                760,
+                539,
+                [543, 575, 339],
+                id="16 bit image",
+            ),
+            pytest.param(
+                "20230606120000",
+                "CM-202-CVC-CAM-1",
+                612,
+                607,
+                [277, 28, 108],
+                890,
+                538,
+                [480, 222, 376],
+                id="12 bit image",
             ),
         ],
     )
     def test_get_crosshair_intensity(
         self,
+        apply_functions: bool,
+        record_id: str,
         channel_name: str,
-        functions: dict[str, str],
+        row_position: int,
+        row_fwhm: int,
         row: list[float],
+        column_position: int,
+        column_fwhm: int,
         column: list[float],
         test_app: TestClient,
         login_and_get_token,
     ):
-        url = f"/images/20230605100000/{channel_name}/crosshair"
-        if functions is not None:
-            url += f"?functions={quote(json.dumps(functions))}"
+        if apply_functions:
+            row = [r / 10 for r in row]
+            column = [c / 10 for c in column]
+            functions = json.dumps({"name": "a", "expression": f"{channel_name} / 10"})
+            url = f"/images/{record_id}/a/crosshair?functions={quote(functions)}"
+        else:
+            url = f"/images/{record_id}/{channel_name}/crosshair"
+
         test_response = test_app.get(
             url=url,
             headers={"Authorization": f"Bearer {login_and_get_token}"},
@@ -38,12 +76,12 @@ class TestGetCrosshairIntensity:
         assert test_response.status_code == 200, test_response.content.decode()
         content_dict = json.loads(test_response.content.decode())
 
-        assert content_dict["row"]["position"] == 607
-        assert content_dict["row"]["fwhm"] == 621
+        assert content_dict["row"]["position"] == row_position
+        assert content_dict["row"]["fwhm"] == row_fwhm
         assert content_dict["row"]["intensity"]["x"][:3] == [0, 1, 2]
         assert content_dict["row"]["intensity"]["y"][:3] == row
 
-        assert content_dict["column"]["position"] == 760
-        assert content_dict["column"]["fwhm"] == 543
+        assert content_dict["column"]["position"] == column_position
+        assert content_dict["column"]["fwhm"] == column_fwhm
         assert content_dict["column"]["intensity"]["x"][:3] == [0, 1, 2]
         assert content_dict["column"]["intensity"]["y"][:3] == column

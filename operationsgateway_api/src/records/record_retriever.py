@@ -66,6 +66,7 @@ class RecordRetriever:
         vector_limit: int | None = None,
         return_thumbnails: bool = True,
         truncate: bool = False,
+        return_raw_bit_depth=False,
     ) -> None:
         # Request parameters and the record as is from the database
         self.record = record
@@ -79,6 +80,7 @@ class RecordRetriever:
         self.vector_limit = vector_limit
         self.return_thumbnails = return_thumbnails
         self.truncate = truncate
+        self.return_raw_bit_depth = return_raw_bit_depth
 
         # Functions specific objects
         self.functions_data = [FunctionData(f) for f in functions] if functions else []
@@ -196,6 +198,7 @@ class RecordRetriever:
                 bit_depths=function_data.get_bit_depths(self.bit_depths),
                 return_thumbnails=self.return_thumbnails,
                 truncate=self.truncate,
+                return_raw_bit_depth=self.return_raw_bit_depth,
             )
 
         self.record.channels = self.record.channels
