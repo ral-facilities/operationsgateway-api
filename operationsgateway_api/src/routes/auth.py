@@ -60,7 +60,7 @@ async def login(
 
     username = login_details.username
 
-    if Config.config.auth.allow_user_office_login and "@" in username:
+    if Config.config.auth.user_office_api_key is not None and "@" in username:
         user_id = Authentication.do_user_office_auth(login_details)
 
         # User Office returns the ICAT/User Office user id.

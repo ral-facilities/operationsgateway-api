@@ -112,8 +112,7 @@ class AuthConfig(BaseModel):
     refresh_token_validity_days: StrictInt
     fedid_server_url: StrictStr
     fedid_server_ldap_realm: StrictStr
-    allow_user_office_login: StrictBool
-    user_office_api_key: StrictStr
+    user_office_api_key: Optional[StrictStr] = None
     oidc_providers: dict[StrictStr, OidcProviderConfig] = {}
 
 

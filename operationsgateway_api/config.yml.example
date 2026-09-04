@@ -50,7 +50,6 @@ auth:
   refresh_token_validity_days: 7
   fedid_server_url: ldap://fed.cclrc.ac.uk:389
   fedid_server_ldap_realm: FED.CCLRC.AC.UK
-  allow_user_office_login: false
   oidc_providers:
     keycloak:
       display_name: A name # This gets displayed on the FE as an auth option
