@@ -220,8 +220,6 @@ class Authentication:
 
             return user_id
 
-        except UnauthorisedError:
-            raise
         except requests.exceptions.RequestException as exc:
             log.exception("Problem with User Office auth service")
             raise AuthServerError() from exc
@@ -274,9 +272,7 @@ class Authentication:
             user_id = lookup_response[0].get("userNumber")
 
             if not user_id:
-                log.error(
-                    "User Office lookup response did not contain userNumber"
-                )
+                log.error("User Office lookup response did not contain userNumber")
                 raise AuthServerError()
 
             log.info(
@@ -296,7 +292,7 @@ class Authentication:
 
     @staticmethod
     def get_user_office_emails(
-            user_numbers: list[str],
+        user_numbers: list[str],
     ) -> dict[str, str]:
         """
         Look up multiple User Office users in one request.
@@ -327,8 +323,7 @@ class Authentication:
                 },
                 headers={
                     "Authorization": (
-                        f"Api-key "
-                        f"{Config.config.auth.user_office_api_key}"
+                        f"Api-key " f"{Config.config.auth.user_office_api_key}"
                     ),
                     "Accept": "application/json",
                     "Content-Type": "application/json",
@@ -348,22 +343,29 @@ class Authentication:
             lookup_response = response.json()
 
             if not isinstance(lookup_response, list):
-                log.error(
-                    "Unexpected User Office lookup response format"
-                )
+                log.error("Unexpected User Office lookup response format")
                 raise AuthServerError()
 
-            emails = {
-                str(person["userNumber"]): person["email"]
-                for person in lookup_response
-                if (
-                        person.get("userNumber") is not None
-                        and str(person["userNumber"]) in requested_numbers
-                        and "[deactivated]" not in person.get("familyName",
-                                                              "").lower()
-                        and person.get("email")
-                )
-            }
+            # Include only requested, active User Office accounts with an email address.
+            emails: dict[str, str] = {}
+
+            for person in lookup_response:
+                user_number = person.get("userNumber")
+                email = person.get("email")
+                family_name = person.get("familyName", "")
+
+                if user_number is None or not email:
+                    continue
+
+                user_number = str(user_number)
+
+                if user_number not in requested_numbers:
+                    continue
+
+                if "[deactivated]" in family_name.lower():
+                    continue
+
+                emails[user_number] = email
 
             return emails
 
@@ -372,7 +374,5 @@ class Authentication:
             raise AuthServerError() from exc
 
         except ValueError as exc:
-            log.exception(
-                "Invalid JSON response from User Office lookup service"
-            )
+            log.exception("Invalid JSON response from User Office lookup service")
             raise AuthServerError() from exc
