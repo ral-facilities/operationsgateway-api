@@ -8,6 +8,7 @@ from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authentication import Authentication
 from operationsgateway_api.src.auth.authorisation import authorise_route
+from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import QueryParameterError, UnauthorisedError
 from operationsgateway_api.src.models import UpdateUserModel, UserModel
@@ -79,9 +80,12 @@ async def add_user(
         login_details.email = email
 
     if auth_type == "user_office":
-        log.debug("Performing User Office lookup for '%s'",
-                  login_details.username)
-        user_id = Authentication.get_user_id_from_user_office_email(login_details.username)
+        if not Config.config.auth.user_office_api_key:
+            raise QueryParameterError("User Office integration is not configured")
+        log.debug("Performing User Office lookup for '%s'", login_details.username)
+        user_id = Authentication.get_user_id_from_user_office_email(
+            login_details.username,
+        )
 
         if not user_id:
             raise QueryParameterError(
@@ -229,8 +233,9 @@ async def get_all_users(access_token: AuthoriseRoute):
             user_office_numbers.append(str(user["_id"]))
 
     user_office_emails = {}
+    user_office_enabled = bool(Config.config.auth.user_office_api_key)
 
-    if user_office_numbers:
+    if user_office_numbers and user_office_enabled:
         user_office_emails = await asyncio.to_thread(
             Authentication.get_user_office_emails,
             user_office_numbers,
