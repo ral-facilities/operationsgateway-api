@@ -171,7 +171,6 @@ async def export_records(
         colourmap_name,
         functions,
         export_scalars,
-        export_strings,
         export_images,
         export_float_images,
         export_waveform_csvs,

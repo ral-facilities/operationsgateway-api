@@ -107,6 +107,13 @@ class ImageChannelMetadataModel(BaseModel):
     y_pixel_size: Optional[Union[float, Any]] = None
     y_pixel_units: Optional[Union[str, Any]] = None
     bit_depth: Optional[Union[int, Any]] = None
+    bit_depth_inferred: bool = Field(
+        default=False,
+        description=(
+            "If True, then bit_depth was not provided explicitly but instead inferred "
+            "based on the datatype from the HDF5 dataset."
+        ),
+    )
 
     @field_validator("bit_depth")
     @classmethod

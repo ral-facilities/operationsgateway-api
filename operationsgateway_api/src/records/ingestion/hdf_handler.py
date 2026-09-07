@@ -4,6 +4,7 @@ from tempfile import SpooledTemporaryFile
 from typing import Any, Literal
 
 import h5py
+import numpy as np
 from pydantic import ValidationError
 
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
@@ -200,10 +201,15 @@ class HDFDataHandler:
 
         try:
             metadata = ImageChannelMetadataModel(**channel_metadata)
+            data = value["data"][()]
+            if not metadata.bit_depth:
+                metadata.bit_depth = 8 if data.dtype == np.uint8 else 16
+                metadata.bit_depth_inferred = True
+
             channel = ImageChannelModel(metadata=metadata, image_path=image_path)
             image_model = ImageModel(
                 path=image_path,
-                data=value["data"][()],
+                data=data,
                 bit_depth=metadata.bit_depth,
             )
             self.images.append(image_model)

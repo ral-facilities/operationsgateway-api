@@ -433,7 +433,7 @@ class Record:
     async def get_raw_bit_depth(
         record_id: str,
         channel_name: str,
-        channel_value: PartialChannelModel,
+        channel_value: PartialChannelModel | None = None,
     ) -> "int | None":
         """
         Extract "bit_depth" from `channel_value`, or if not present, retrieve with a
@@ -442,8 +442,9 @@ class Record:
         Args:
             record_id (str): Record identifier
             channel_name (str): Channel name to get the bit depth for
-            channel_value (dict):
+            channel_value (PartialChannelModel | None):
                 Previously fetched channel (may not include all the metadata).
+                Defaults to None.
 
         Returns:
             int | None: The bit_depth if found, `None` otherwise.
@@ -612,6 +613,7 @@ class Record:
         bit_depths: "list[int]",
         return_thumbnails: bool = True,
         truncate: bool = False,
+        return_raw_bit_depth: bool = False,
     ) -> PartialVariableChannelModel:
         """
         Parses the numerical `result` and modifies `record` in place to contain
@@ -628,6 +630,7 @@ class Record:
                 return_thumbnails=return_thumbnails,
                 truncate=truncate,
                 bit_depths=bit_depths,
+                return_raw_depth=return_raw_bit_depth,
             )
 
         elif isinstance(result, WaveformVariable):
@@ -666,6 +669,7 @@ class Record:
         return_thumbnails: bool,
         truncate: bool,
         bit_depths: "list[int]",
+        return_raw_depth: bool = False,
     ) -> PartialImageVariableChannelModel:
         """Parses a numpy ndarray and returns image bytes, either for a thumbnail or
         full image.
@@ -681,10 +685,13 @@ class Record:
             # choosing the highest bit depth needed
             overall_bit_depth = max(bit_depths)
 
-        result, storage_bit_depth = Record._bit_shift_to_storage(
-            img_array=result,
-            raw_bit_depth=overall_bit_depth,
-        )
+        if return_raw_depth:
+            storage_bit_depth = overall_bit_depth
+        else:
+            result, storage_bit_depth = Record._bit_shift_to_storage(
+                img_array=result,
+                raw_bit_depth=overall_bit_depth,
+            )
         if return_thumbnails:
             metadata = {
                 "channel_dtype": "image",

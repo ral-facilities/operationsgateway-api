@@ -12,28 +12,33 @@ from operationsgateway_api.src.experiments.unique_worker import (
 
 class TestUniqueWorker:
     @patch("os.getpid", return_value=10)
-    @patch(
-        "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
-        "._is_file_empty",
-        return_value=True,
+    @pytest.mark.parametrize(
+        ["file_pid"],
+        [
+            pytest.param(None, id="No PID recorded"),
+            pytest.param(0, id="PID of process that does not exist"),
+        ],
     )
-    @patch(
-        "operationsgateway_api.src.experiments.unique_worker.UniqueWorker._assign",
-    )
-    def test_init(self, mock_assign, _, __, remove_background_pid_file):
-        test_worker = UniqueWorker("test/path")
+    def test_init(self, _, file_pid: int | None, tmp_path: Path):
+        worker_file_path = tmp_path / "worker"
+        if file_pid is not None:
+            with open(worker_file_path, "w") as f:
+                f.write(str(file_pid))
 
-        assert test_worker.worker_file_path == Path("test/path")
+        test_worker = UniqueWorker(str(worker_file_path))
+
+        assert test_worker.worker_file_path == worker_file_path
         assert test_worker.id_ == "10"
-        assert test_worker.file_empty
+        assert test_worker.existing_pid is file_pid
         assert test_worker.is_assigned
-        assert mock_assign.call_count == 1
+        with open(worker_file_path) as f:
+            assert f.read() == "10"
 
     @patch("os.getpid", return_value=10)
     @patch(
         "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
-        "._is_file_empty",
-        return_value=True,
+        "._get_existing_pid",
+        return_value=None,
     )
     @patch(
         "operationsgateway_api.src.experiments.unique_worker.UniqueWorker._assign",
@@ -91,16 +96,16 @@ class TestUniqueWorker:
     @pytest.mark.parametrize(
         "expected_return, mock_exception",
         [
-            pytest.param(False, None, id="File is not empty"),
-            pytest.param(True, None, id="File is empty"),
+            pytest.param(10, None, id="File is not empty"),
+            pytest.param(None, None, id="File is empty"),
             pytest.param(
-                True,
+                None,
                 FileNotFoundError,
                 id="File not found, but is created (and therefore empty)",
             ),
         ],
     )
-    def test_is_file_empty(
+    def test_get_existing_pid(
         self,
         _,
         __,
@@ -109,13 +114,13 @@ class TestUniqueWorker:
         mock_exception,
         remove_background_pid_file,
     ):
-        file_pid = "" if expected_return else 10
+        file_pid = str(expected_return) if expected_return else ""
         print(f"File PID: {file_pid}")
 
         with patch(
             "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
-            "._is_file_empty",
-            return_value=True,
+            "._get_existing_pid",
+            return_value=None,
         ):
             test_worker = UniqueWorker("test/path")
 
@@ -125,14 +130,13 @@ class TestUniqueWorker:
             return_value=file_pid,
             side_effect=mock_exception,
         ):
-            file_empty = test_worker._is_file_empty()
-            assert file_empty == expected_return
+            assert test_worker._get_existing_pid() == expected_return
 
     @patch("os.getpid", return_value=10)
     @patch(
         "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
-        "._is_file_empty",
-        return_value=True,
+        "._get_existing_pid",
+        return_value=None,
     )
     @patch(
         "operationsgateway_api.src.experiments.unique_worker.UniqueWorker._assign",
@@ -189,24 +193,24 @@ class TestUniqueWorker:
         "operationsgateway_api.src.experiments.unique_worker.UniqueWorker._assign",
     )
     @pytest.mark.parametrize(
-        "file_empty, expected_output",
+        "existing_pid, expected_output",
         [
-            pytest.param(True, 1, id="Worker assigned"),
-            pytest.param(False, None, id="Worker not assigned"),
+            pytest.param(None, 1, id="Worker assigned"),
+            pytest.param(os.getpid(), None, id="Worker not assigned"),
         ],
     )
     async def test_assign_decorator_reload_enabled(
         self,
         _,
         __,
-        file_empty,
+        existing_pid: int | None,
         expected_output,
         remove_background_pid_file,
     ):
         with patch(
             "operationsgateway_api.src.experiments.unique_worker.UniqueWorker"
-            "._is_file_empty",
-            return_value=file_empty,
+            "._get_existing_pid",
+            return_value=existing_pid,
         ):
 
             @assign_event_to_single_worker(UniqueWorker("test/path"))

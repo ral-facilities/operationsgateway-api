@@ -301,14 +301,9 @@ class ExportHandler:
         elif channel_type == "vector":
             log.info("Channel %s is a vector", channel_name)
             await self._add_vector_to_zip(channels, record_id, channel_name)
-        # process a scalar or string channel
-        # process a scalar or string channel
+        # process a scalar channel
         else:
-            log.info("Channel %s is a %s", channel_name, channel_type)
-            if channel_type == "scalar" and not self.export_scalars:
-                return line
-            if channel_type == "string" and not self.export_strings:
-                return line
+            log.info("Channel %s is a scalar", channel_name)
             if channel_name in channels and channels[channel_name].data is not None:
                 value = channels[channel_name].data
             else:
@@ -509,7 +504,7 @@ class ExportHandler:
         If other files have been exported and therefore a zip file is being prepared
         for export then add the CSV file to the zip file.
         """
-        if self.export_scalars or self.export_strings:
+        if self.export_scalars:
             if (
                 len(self.zip_file.infolist()) > 0
                 and len(self.main_csv_file_in_memory.getvalue()) > 0

@@ -125,14 +125,12 @@ class TestUpdateUsers:
         update_local_response = test_app.patch(
             "/users",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
-            content=json.dumps(
-                {
-                    "_id": username,
-                    "updated_password": updated_password,
-                    "add_authorised_routes": add_authorised_routes,
-                    "remove_authorised_routes": remove_authorised_routes,
-                },
-            ),
+            json={
+                "_id": username,
+                "updated_password": updated_password,
+                "add_authorised_routes": add_authorised_routes,
+                "remove_authorised_routes": remove_authorised_routes,
+            },
         )
         user = await User.get_user(username)
 
@@ -214,14 +212,12 @@ class TestUpdateUsers:
         update_local_response = test_app.patch(
             "/users",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
-            content=json.dumps(
-                {
-                    "_id": username,
-                    "updated_password": updated_password,
-                    "add_authorised_routes": add_authorised_routes,
-                    "remove_authorised_routes": remove_authorised_routes,
-                },
-            ),
+            json={
+                "_id": username,
+                "updated_password": updated_password,
+                "add_authorised_routes": add_authorised_routes,
+                "remove_authorised_routes": remove_authorised_routes,
+            },
         )
 
         assert update_local_response.status_code == expected_response_code
@@ -258,12 +254,10 @@ class TestUpdateUsers:
         update_fed_response = test_app.patch(
             "/users",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
-            content=json.dumps(
-                {
-                    "_id": username,
-                    "updated_password": updated_password,
-                },
-            ),
+            json={
+                "_id": username,
+                "updated_password": updated_password,
+            },
         )
 
         assert update_fed_response.status_code == expected_response_code
@@ -280,14 +274,12 @@ class TestUpdateUsers:
     ):
         update_local_response = test_app.patch(
             "/users",
-            content=json.dumps(
-                {
-                    "_id": "testuserthatdoesnotexistinthedatabaselocal",
-                    "updated_password": "passwords",
-                    "add_authorised_routes": [],
-                    "remove_authorised_routes": [],
-                },
-            ),
+            json={
+                "_id": "testuserthatdoesnotexistinthedatabaselocal",
+                "updated_password": "passwords",
+                "add_authorised_routes": [],
+                "remove_authorised_routes": [],
+            },
         )
 
         assert update_local_response.status_code == 401

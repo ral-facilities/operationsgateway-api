@@ -84,7 +84,7 @@ class TestValidateFunction:
         test_response = test_app.post(
             "/functions/validate",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
-            content=json.dumps(functions),
+            json=functions,
         )
 
         assert test_response.status_code == 200, test_response.content.decode()
@@ -199,7 +199,7 @@ class TestValidateFunction:
         test_response = test_app.post(
             "/functions/validate",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
-            content=json.dumps(functions),
+            json=functions,
         )
 
         assert test_response.status_code == 400, test_response.content.decode()
@@ -213,7 +213,7 @@ class TestValidateFunction:
         test_response = test_app.post(
             "/functions/validate",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
-            content=json.dumps([{"name": "", "expression": ""}]),
+            json=[{"name": "", "expression": ""}],
         )
 
         assert test_response.status_code == 422, test_response.content.decode()
