@@ -32,6 +32,7 @@ class APIClient:
             response = requests.post(
                 f"{self.url}{endpoint}",
                 data=credentials_json,
+                headers={"Content-Type": "application/json"},
             )
             if response.status_code != 200:
                 raise RuntimeError(f"{response.status_code}: {response.text}")
