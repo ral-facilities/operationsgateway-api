@@ -82,7 +82,7 @@ async def add_user(
     if auth_type == "user_office":
         if not Config.config.auth.user_office_api_key:
             raise QueryParameterError("User Office integration is not configured")
-        log.debug("Performing User Office lookup for '%s'", login_details.username)
+        log.debug("Performing User Office lookup for %r", login_details.username)
         user_id = Authentication.get_user_id_from_user_office_email(
             login_details.username,
         )
