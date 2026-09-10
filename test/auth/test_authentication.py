@@ -91,7 +91,7 @@ class TestAuthentication:
         )
 
     @pytest.mark.parametrize(
-        "status_code", [401, 403]
+        "status_code", [401, 403,]
     )  # i can't remember which one it does return so including both
     @patch("operationsgateway_api.src.auth.authentication.requests.post")
     def test_user_office_auth_invalid_credentials(
