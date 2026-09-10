@@ -323,7 +323,7 @@ class Authentication:
                 },
                 headers={
                     "Authorization": (
-                        f"Api-key " f"{Config.config.auth.user_office_api_key}"
+                        f"Api-key {Config.config.auth.user_office_api_key}"
                     ),
                     "Accept": "application/json",
                     "Content-Type": "application/json",
