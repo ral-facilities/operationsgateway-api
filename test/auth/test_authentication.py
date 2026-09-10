@@ -144,32 +144,32 @@ class TestAuthentication:
         with pytest.raises(AuthServerError):
             Authentication.do_user_office_auth(login_details)
 
-    # @patch("operationsgateway_api.src.auth.authentication.requests.post")
-    # def test_user_office_auth_request_error(self, mock_post):
-    #     # Test that a User Office connection failure raises AuthServerError.
-    #     mock_post.side_effect = requests.exceptions.RequestException()
-    #
-    #     login_details = LoginDetailsModel(
-    #         username="user@example.com",
-    #         password="password",
-    #     )
-    #
-    #     with pytest.raises(AuthServerError):
-    #         Authentication.do_user_office_auth(login_details)
-    #
-    # @patch("operationsgateway_api.src.auth.authentication.requests.post")
-    # def test_user_office_auth_invalid_json(self, mock_post):
-    #     # Test that invalid JSON from User Office raises AuthServerError.
-    #     mock_post.return_value.status_code = 201
-    #     mock_post.return_value.json.side_effect = ValueError()
-    #
-    #     login_details = LoginDetailsModel(
-    #         username="user@example.com",
-    #         password="password",
-    #     )
-    #
-    #     with pytest.raises(AuthServerError):
-    #         Authentication.do_user_office_auth(login_details)
+    @patch("operationsgateway_api.src.auth.authentication.requests.post")
+    def test_user_office_auth_request_error(self, mock_post):
+        # Test that a User Office connection failure raises AuthServerError.
+        mock_post.side_effect = requests.exceptions.RequestException()
+
+        login_details = LoginDetailsModel(
+            username="user@example.com",
+            password="password",
+        )
+
+        with pytest.raises(AuthServerError):
+            Authentication.do_user_office_auth(login_details)
+
+    @patch("operationsgateway_api.src.auth.authentication.requests.post")
+    def test_user_office_auth_invalid_json(self, mock_post):
+        # Test that invalid JSON from User Office raises AuthServerError.
+        mock_post.return_value.status_code = 201
+        mock_post.return_value.json.side_effect = ValueError()
+
+        login_details = LoginDetailsModel(
+            username="user@example.com",
+            password="password",
+        )
+
+        with pytest.raises(AuthServerError):
+            Authentication.do_user_office_auth(login_details)
 
     @patch("operationsgateway_api.src.auth.authentication.requests.get")
     def test_get_user_id_from_user_office_email_success(self, mock_get):
@@ -202,17 +202,17 @@ class TestAuthentication:
             timeout=10,
         )
 
-    # @patch("operationsgateway_api.src.auth.authentication.requests.get")
-    # def test_get_user_id_from_user_office_email_not_found(self, mock_get):
-    #     # Test that an email with no User Office account returns None.
-    #     mock_get.return_value.status_code = 200
-    #     mock_get.return_value.json.return_value = []
-    #
-    #     user_id = Authentication.get_user_id_from_user_office_email(
-    #         "missing@example.com",
-    #     )
-    #
-    #     assert user_id is None
+    @patch("operationsgateway_api.src.auth.authentication.requests.get")
+    def test_get_user_id_from_user_office_email_not_found(self, mock_get):
+        # Test that an email with no User Office account returns None.
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = []
+
+        user_id = Authentication.get_user_id_from_user_office_email(
+            "missing@example.com",
+        )
+
+        assert user_id is None
 
     @patch("operationsgateway_api.src.auth.authentication.requests.get")
     def test_get_user_id_from_user_office_email_unexpected_response(
@@ -247,18 +247,18 @@ class TestAuthentication:
                 "user@example.com",
             )
 
-    # @patch("operationsgateway_api.src.auth.authentication.requests.get")
-    # def test_get_user_id_from_user_office_email_request_error(
-    #     self,
-    #     mock_get,
-    # ):
-    #     # Test that an email lookup connection failure raises AuthServerError.
-    #     mock_get.side_effect = requests.exceptions.RequestException()
-    #
-    #     with pytest.raises(AuthServerError):
-    #         Authentication.get_user_id_from_user_office_email(
-    #             "user@example.com",
-    #         )
+    @patch("operationsgateway_api.src.auth.authentication.requests.get")
+    def test_get_user_id_from_user_office_email_request_error(
+        self,
+        mock_get,
+    ):
+        # Test that an email lookup connection failure raises AuthServerError.
+        mock_get.side_effect = requests.exceptions.RequestException()
+
+        with pytest.raises(AuthServerError):
+            Authentication.get_user_id_from_user_office_email(
+                "user@example.com",
+            )
 
     @patch("operationsgateway_api.src.auth.authentication.requests.get")
     def test_get_user_id_from_user_office_email_invalid_json(
@@ -338,26 +338,26 @@ class TestAuthentication:
         }
         assert call_args.kwargs["timeout"] == 10
 
-    # @patch("operationsgateway_api.src.auth.authentication.requests.post")
-    # def test_get_user_office_emails_unexpected_response(self, mock_post):
-    #     # Test that an unexpected batch lookup status raises AuthServerError.
-    #     mock_post.return_value.status_code = 204
-    #     mock_post.return_value.text = ""
-    #
-    #     with pytest.raises(AuthServerError):
-    #         Authentication.get_user_office_emails(["13814"])
+    @patch("operationsgateway_api.src.auth.authentication.requests.post")
+    def test_get_user_office_emails_unexpected_response(self, mock_post):
+        # Test that an unexpected batch lookup status raises AuthServerError.
+        mock_post.return_value.status_code = 204
+        mock_post.return_value.text = ""
 
-    # @patch("operationsgateway_api.src.auth.authentication.requests.post")
-    # def test_get_user_office_emails_invalid_response_format(self, mock_post):
-    #     # Test that a non-list batch lookup response raises AuthServerError.
-    #     mock_post.return_value.status_code = 200
-    #     mock_post.return_value.json.return_value = {
-    #         "userNumber": "13814",
-    #         "email": "active@example.com",
-    #     }
-    #
-    #     with pytest.raises(AuthServerError):
-    #         Authentication.get_user_office_emails(["13814"])
+        with pytest.raises(AuthServerError):
+            Authentication.get_user_office_emails(["13814"])
+
+    @patch("operationsgateway_api.src.auth.authentication.requests.post")
+    def test_get_user_office_emails_invalid_response_format(self, mock_post):
+        # Test that a non-list batch lookup response raises AuthServerError.
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {
+            "userNumber": "13814",
+            "email": "active@example.com",
+        }
+
+        with pytest.raises(AuthServerError):
+            Authentication.get_user_office_emails(["13814"])
 
     @patch("operationsgateway_api.src.auth.authentication.requests.post")
     def test_get_user_office_emails_request_error(self, mock_post):
