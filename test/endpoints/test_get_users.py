@@ -1,12 +1,14 @@
 import socket
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi.testclient import TestClient
 import ldap
 import pytest
 
 from operationsgateway_api.src.auth.authentication import Authentication
+from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import AuthServerError
+from operationsgateway_api.src.users.user import User
 
 
 class TestGetUsers:
@@ -177,3 +179,144 @@ class TestGetUsers:
 
             with pytest.raises(AuthServerError):
                 Authentication.get_email_from_fedid("wheteverfedid")
+
+    @pytest.mark.asyncio
+    async def test_get_users_with_user_office_users(
+        self,
+        test_app: TestClient,
+        login_and_get_token,
+        monkeypatch,
+    ):
+        # Test that active User Office users are returned using their emails.
+        monkeypatch.setattr(
+            Config.config.auth,
+            "user_office_api_key",
+            "test-api-key",
+        )
+
+        users = [
+            {
+                "_id": "backend",
+                "auth_type": "local",
+                "authorised_routes": ["/users GET"],
+            },
+            {
+                "_id": "13814",
+                "auth_type": "user_office",
+                "authorised_routes": [],
+            },
+            {
+                "_id": "12592",
+                "auth_type": "user_office",
+                "authorised_routes": [],
+            },
+            {
+                "_id": "invalid-user",
+                "auth_type": "invalid",
+            },
+        ]
+
+        with (
+            patch.object(
+                User,
+                "get_all_users",
+                new_callable=AsyncMock,
+                return_value=users,
+            ),
+            patch(
+                "operationsgateway_api.src.routes.users.asyncio.to_thread",
+                new_callable=AsyncMock,
+                return_value={
+                    "13814": "active@example.com",
+                },
+            ) as mock_to_thread,
+        ):
+            response = test_app.get(
+                "/users",
+                headers={
+                    "Authorization": f"Bearer {login_and_get_token}",
+                },
+            )
+
+        assert response.status_code == 200
+        assert response.json() == {
+            "users": [
+                {
+                    "_id": "backend",
+                    "username": "backend",
+                    "auth_type": "local",
+                    "authorised_routes": ["/users GET"],
+                },
+                {
+                    "_id": "13814",
+                    "username": "active@example.com",
+                    "auth_type": "user_office",
+                    "authorised_routes": [],
+                },
+            ],
+        }
+
+        mock_to_thread.assert_awaited_once_with(
+            Authentication.get_user_office_emails,
+            ["13814", "12592"],
+        )
+
+    @pytest.mark.asyncio
+    async def test_get_users_when_user_office_is_not_configured(
+        self,
+        test_app: TestClient,
+        login_and_get_token,
+        monkeypatch,
+    ):
+        # Test that User Office users are excluded when there is no API key.
+        monkeypatch.setattr(
+            Config.config.auth,
+            "user_office_api_key",
+            None,
+        )
+
+        users = [
+            {
+                "_id": "backend",
+                "auth_type": "local",
+                "authorised_routes": ["/users GET"],
+            },
+            {
+                "_id": "13814",
+                "auth_type": "user_office",
+                "authorised_routes": [],
+            },
+        ]
+
+        with (
+            patch.object(
+                User,
+                "get_all_users",
+                new_callable=AsyncMock,
+                return_value=users,
+            ),
+            patch(
+                "operationsgateway_api.src.routes.users.asyncio.to_thread",
+                new_callable=AsyncMock,
+            ) as mock_to_thread,
+        ):
+            response = test_app.get(
+                "/users",
+                headers={
+                    "Authorization": f"Bearer {login_and_get_token}",
+                },
+            )
+
+        assert response.status_code == 200
+        assert response.json() == {
+            "users": [
+                {
+                    "_id": "backend",
+                    "username": "backend",
+                    "auth_type": "local",
+                    "authorised_routes": ["/users GET"],
+                },
+            ],
+        }
+
+        mock_to_thread.assert_not_awaited()

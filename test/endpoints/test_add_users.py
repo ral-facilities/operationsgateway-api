@@ -6,6 +6,7 @@ import pytest
 import pytest_asyncio
 
 from operationsgateway_api.src.auth.authentication import Authentication
+from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import UnauthorisedError
 from operationsgateway_api.src.models import UserModel
 from operationsgateway_api.src.users.user import User
@@ -385,3 +386,148 @@ class TestCreateUsers:
 
             with pytest.raises(UnauthorisedError):
                 await User.get_user_by_email("test@example.com")
+
+    @pytest.mark.asyncio
+    async def test_create_user_office_user_success(
+        self,
+        test_app: TestClient,
+        login_and_get_token,
+        monkeypatch,
+    ):
+        # Test that a User Office email is resolved and its user ID is stored.
+        monkeypatch.setattr(
+            Config.config.auth,
+            "user_office_api_key",
+            "test-api-key",
+        )
+
+        with (
+            patch.object(
+                User,
+                "get_user",
+                new_callable=AsyncMock,
+                side_effect=UnauthorisedError,
+            ),
+            patch.object(
+                User,
+                "add",
+                new_callable=AsyncMock,
+            ) as mock_add,
+            patch.object(
+                Authentication,
+                "get_user_id_from_user_office_email",
+                return_value="1116911",
+            ) as mock_lookup,
+        ):
+            response = test_app.post(
+                "/users",
+                headers={
+                    "Authorization": f"Bearer {login_and_get_token}",
+                },
+                json={
+                    "_id": "user@example.com",
+                    "auth_type": "user_office",
+                    "authorised_routes": [],
+                },
+            )
+
+        assert response.status_code == 201
+        assert response.json() == "1116911"
+
+        mock_lookup.assert_called_once_with("user@example.com")
+        mock_add.assert_awaited_once()
+
+        added_user = mock_add.call_args.args[0]
+
+        assert added_user.username == "1116911"
+        assert added_user.auth_type == "user_office"
+
+    @pytest.mark.asyncio
+    async def test_create_user_office_user_without_configuration(
+        self,
+        test_app: TestClient,
+        login_and_get_token,
+        monkeypatch,
+    ):
+        # Test that User Office users cannot be added without an API key.
+        monkeypatch.setattr(
+            Config.config.auth,
+            "user_office_api_key",
+            None,
+        )
+
+        with (
+            patch.object(
+                User,
+                "get_user",
+                new_callable=AsyncMock,
+                side_effect=UnauthorisedError,
+            ),
+            patch.object(
+                Authentication,
+                "get_user_id_from_user_office_email",
+            ) as mock_lookup,
+        ):
+            response = test_app.post(
+                "/users",
+                headers={
+                    "Authorization": f"Bearer {login_and_get_token}",
+                },
+                json={
+                    "_id": "user@example.com",
+                    "auth_type": "user_office",
+                    "authorised_routes": [],
+                },
+            )
+
+        assert response.status_code == 400
+        assert "User Office integration is not configured" in response.text
+        mock_lookup.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_create_user_office_user_not_found(
+        self,
+        test_app: TestClient,
+        login_and_get_token,
+        monkeypatch,
+    ):
+        # Test that an email with no User Office account is rejected.
+        monkeypatch.setattr(
+            Config.config.auth,
+            "user_office_api_key",
+            "test-api-key",
+        )
+
+        with (
+            patch.object(
+                User,
+                "get_user",
+                new_callable=AsyncMock,
+                side_effect=UnauthorisedError,
+            ),
+            patch.object(
+                User,
+                "add",
+                new_callable=AsyncMock,
+            ) as mock_add,
+            patch.object(
+                Authentication,
+                "get_user_id_from_user_office_email",
+                return_value=None,
+            ),
+        ):
+            response = test_app.post(
+                "/users",
+                headers={
+                    "Authorization": f"Bearer {login_and_get_token}",
+                },
+                json={
+                    "_id": "missing@example.com",
+                    "auth_type": "user_office",
+                    "authorised_routes": [],
+                },
+            )
+
+        assert response.status_code == 400
+        assert "No User Office account found for 'missing@example.com'" in response.text
+        mock_add.assert_not_awaited()
