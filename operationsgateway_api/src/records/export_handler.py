@@ -294,10 +294,11 @@ class ExportHandler:
         line: str,
     ) -> str:
         """
-        Process data channels (those whose "projection" starts with "channels." as
-        opposed to metadata channels whose projection starts with "metadata.") by
-        adding image and waveform files to a zip file and scalar data to a line of text
-        that will be added to the main CSV file.
+        Process a projected data channel.
+
+        Images, float images, waveforms and vectors are exported to separate
+        files in a ZIP archive. Scalar and string values are added to the
+        main CSV when their respective export options are enabled.
         """
         channel_type = self._get_channel_type(channel_name)
 
