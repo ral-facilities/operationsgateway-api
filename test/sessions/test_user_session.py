@@ -6,7 +6,7 @@ from pymongo.errors import DuplicateKeyError
 import pytest
 
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
-from operationsgateway_api.src.constants import DATA_DATETIME_FORMAT
+from operationsgateway_api.src.constants import SESSION_DATETIME_FORMAT
 from operationsgateway_api.src.exceptions import (
     DatabaseError,
     DuplicateSessionError,
@@ -29,7 +29,7 @@ class TestUserSession:
         "username": "Test User",
         "name": "Test Session",
         "summary": "Test Summary",
-        "timestamp": datetime.strftime(datetime.now(), DATA_DATETIME_FORMAT),
+        "timestamp": datetime.strftime(datetime.now(), SESSION_DATETIME_FORMAT),
         "auto_saved": False,
         "session": {"sessionData": [1, 2, 3]},
     }
@@ -46,7 +46,7 @@ class TestUserSession:
             "username": "Test User",
             "name": "Test Session",
             "summary": "Test Summary",
-            "timestamp": datetime.strftime(datetime.now(), DATA_DATETIME_FORMAT),
+            "timestamp": datetime.strftime(datetime.now(), SESSION_DATETIME_FORMAT),
             "auto_saved": False,
             "session": {"sessionData": [1, 2, 3]},
         }

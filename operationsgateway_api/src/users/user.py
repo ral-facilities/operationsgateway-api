@@ -26,13 +26,14 @@ class User:
     auth_type_list = [
         "local",
         "FedID",
+        "user_office",
     ]
 
     @staticmethod
     async def get_user(username: str) -> UserModel:
         """
         Get the document for the user specified from the database and populate a
-        UserModel with the detals
+        UserModel with the details
         :return: the populated UserModel
         """
         user_data = await MongoDBInterface.find_one(

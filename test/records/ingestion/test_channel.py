@@ -18,6 +18,7 @@ def create_channel_response(responses, extra=None, channels=False):
     """
     model_response = {
         "accepted_channels": [
+            "ASTRA_CONTROL_MODE_STRING",
             "CM-202-CVC-WFS",
             "CM-202-CVC-WFS-COEF",
             "PM-201-FE-CAM-1",
@@ -85,6 +86,7 @@ class TestChannel:
 
         assert await channel_checker.channel_checks() == {
             "accepted_channels": [
+                "ASTRA_CONTROL_MODE_STRING",
                 "CM-202-CVC-WFS",
                 "CM-202-CVC-WFS-COEF",
                 "PM-201-FE-CAM-1",
@@ -219,6 +221,16 @@ class TestChannel:
                 ],
                 None,
                 id="Scalar data invalid",
+            ),
+            pytest.param(
+                {"string": {"data": 0}},
+                [
+                    {
+                        "ASTRA_CONTROL_MODE_STRING": "data has wrong datatype",
+                    },
+                ],
+                None,
+                id="String data invalid",
             ),
             pytest.param(
                 {"image": {"data": "missing"}},

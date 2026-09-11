@@ -9,6 +9,7 @@ import pytest_asyncio
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import EchoS3Error
 from operationsgateway_api.src.records.echo_interface import EchoInterface, log
+from test.conftest import RECORD_ID_05_0800
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -153,7 +154,8 @@ class TestEchoInterface:
             wraps=echo_interface._bucket.download_fileobj,
         )
         # First call results in download
-        object_path = "images/2023/06/05/100000/FE-204-NSO-P1-CAM-1.png"
+        directories_str = EchoInterface.format_record_id(RECORD_ID_05_0800)
+        object_path = f"images/{directories_str}/FE-204-NSO-P1-CAM-1.png"
         await echo_interface.download_file_object(object_path)
         echo_interface._bucket.download_fileobj.assert_called_once_with(
             Fileobj=ANY,

@@ -1,5 +1,7 @@
 from fastapi.testclient import TestClient
 
+from test.conftest import RECORD_ID_05_0803
+
 
 class TestGetVectorById:
     def test_get_vector(
@@ -9,7 +11,7 @@ class TestGetVectorById:
     ):
 
         test_response = test_app.get(
-            "/vectors/20230605080300/CM-202-CVC-WFS-COEF",
+            f"/vectors/{RECORD_ID_05_0803}/CM-202-CVC-WFS-COEF",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
 
@@ -46,12 +48,12 @@ class TestGetVectorById:
     ):
 
         test_response = test_app.get(
-            "/vectors/20230605080300/test",
+            f"/vectors/{RECORD_ID_05_0803}/test",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
 
         assert test_response.status_code == 404
         assert test_response.json()["detail"] == (
-            "Vector with id=20230605080300, channel=test could not be found due to "
-            "invalid id and or channel"
+            f"Vector with id={RECORD_ID_05_0803}, channel=test could not be "
+            "found due to invalid id and or channel"
         )

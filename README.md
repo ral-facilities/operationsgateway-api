@@ -142,9 +142,7 @@ export XrdSecSSSKT=/path/to/.keytab
 
 ## Test Data
 
-A script has been created to set up the API with some test data and test users. This script also comes with a configuration file that needs to be reviewed and renamed at `util/realistic_data/config.yml.example`.
-
-Once the appropriate configuration has been entered, run the script using Poetry:
+A script has been created to set up the API with some test data and test users. This script also comes with a configuration file that needs to be reviewed and renamed at `util/realistic_data/config.yml.example`. Note that the example comes pre-populated with example values for `epac` and `gemini` style test data, affecting the source and destination for the test data. The ingest will run automatically as part of `pytest` via the fixtures (see [Testing](#testing)), but it can also be run explicitly using Poetry:
 
 ```bash
 poetry run python util/realistic_data/ingest_echo_data.py
@@ -166,6 +164,18 @@ Alternatively, you can use the Postman requests in this repo. This gives a more 
 
 ## Testing
 
+While initially developed for a single facility (EPAC), the API is now designed to support multiple facilities with specific anticipated behaviour. This behaviour is controlled by configuration settings. These settings should be applied both during ingest of test data and while the tests are run. For ease, there is a `"session"` scoped fixture which ingests the test data, but only if the database is empty. This means when developing locally, the first execution of the tests may hang for around 4 minutes while ingestion occurs, but subsequent executions will start testing immediately.
+
+By default, the "usual" location of the configuration at [operationsgateway_api/config.yml](operationsgateway_api/config.yml) will apply (as it does when running the API locally). However, pytest can be configured to override these settings using the `pytest-env` plugin.
+
+### pytest.ini
+
+To support test suites for EPAC and Gemini style data, [test/pytest_epac.ini.example](test/pytest_epac.ini.example) and [test/pytest_gemini.ini.example](test/pytest_gemini.ini.example) should be copied to `test/pytest_epac.ini` and `test/pytest_gemini.ini` respectively. While the majority of the settings can then be used as is, it will also be necessary to choose bucket name(s) (i.e. replace `yourname`) and create a bucket and Mongo database with the corresponding name(s) before the tests will run. As mentioned above, it is not necessary to manually ingest the data if the database starts empty.
+
+Note that because of how [Pydantic parses environment variables](https://pydantic.dev/docs/validation/latest/concepts/pydantic_settings/#parsing-environment-variable-values), settings in the `env` section of `pytest.ini` will always take precedence over the `config.yml`. If one of the env settings is commented out (`;`), or removed, then whatever setting is in `config.yml` will be used as the next highest priority source. Conversely, if a new field is added the env, this will then override the corresponding setting in `config.yml`. There are therefore multiple ways to make config changes for the tests, and the appropriate method to use will depend on the circumstances.
+
+### nox
+
 Like the [DataGateway API](https://github.com/ral-facilities/datagateway-api), this repository contains a [Nox](https://nox.thea.codes) file (`noxfile.py`), which exists at the root level of this repository.
 
 To install Nox, use the following command:
@@ -185,5 +195,7 @@ The following Nox sessions have been created:
 - `black` - This uses Black to format Python code in a pre-defined style.
 - `lint` - This uses [flake8](https://flake8.pycqa.org/en/latest/) with a number of additional plugins to lint the code to keep it Pythonic.
 - `safety` - This uses [safety](https://github.com/pyupio/safety) to check the dependencies (pulled directly from Poetry) for any known vulnerabilities.
-- `tests` - this uses [pytest](https://docs.pytest.org/en/stable/) to execute the automated tests in `test/`.
+- `tests` - This uses [pytest](https://docs.pytest.org/en/stable/) to execute the automated tests in `test/`. Note that this runs without any additional configuration, so will use whatever values are in the locally defined config plus the default `pytest.ini` overrides.
+- `tests_epac` - This uses [pytest](https://docs.pytest.org/en/stable/) to execute the automated tests in `test/`. Note that this expects `pytest_epac.ini` to be defined with appropriate settings (i.e. `APP__USE_SUB_SECOND_TIMESTAMPS=False`)
+- `tests_gemini` - This uses [pytest](https://docs.pytest.org/en/stable/) to execute the automated tests in `test/`. Note that this expects `pytest_gemini.ini` to be defined with appropriate settings (i.e. `APP__USE_SUB_SECOND_TIMESTAMPS=True`)
 

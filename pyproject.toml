@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     "Matthew Richards <matthew.richards@stfc.ac.uk>",
     "Patrick Austin <patrick.austin@stfc.ac.uk>",
-    "Alexander Kemp <matthew.richards@stfc.ac.uk>"
+    "Alexander Kemp <alexander.kemp@stfc.ac.uk>"
 ]
 
 [tool.poetry.dependencies]
@@ -18,6 +18,7 @@ fastapi = "^0.141.1"
 motor = "^3.3.2"
 uvicorn = ">=0.20,<0.50"
 python-multipart = ">=0.0.27,<0.0.33"
+pydantic-settings = "^2.14.0"
 PyYAML = "^6.0"
 ImageHash = "4.3.2"
 # scipy is a dependency of ImageHash but is listed to mitigate
@@ -32,7 +33,7 @@ orjson = "^3.11.6"
 python-dateutil = "^2.8.2"
 email-validator = "^2.1.1"
 PyJWT = "2.13.0"
-cryptography = ">=46.0.5,<50.0.0"
+cryptography = ">=50.0.1,<51.0.0"
 python-ldap = "3.4.7"
 cron-converter = "^1.0.1"
 zeep = "^4.2.1"

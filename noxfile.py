@@ -58,3 +58,33 @@ def tests(session):
     session.env["POETRY_VIRTUALENVS_CREATE"] = "false"
     session.run("poetry", "install", "--without", "simulated-data", external=True)
     session.run("poetry", "run", "pytest", *args, external=True)
+
+
+@nox.session(python=False)
+def tests_epac(session):
+    args = session.posargs
+    session.env["POETRY_VIRTUALENVS_CREATE"] = "false"
+    session.run("poetry", "install", "--without", "simulated-data", external=True)
+    session.run(
+        "poetry",
+        "run",
+        "pytest",
+        "--config-file=test/pytest_epac.ini",
+        *args,
+        external=True,
+    )
+
+
+@nox.session(python=False)
+def tests_gemini(session):
+    args = session.posargs
+    session.env["POETRY_VIRTUALENVS_CREATE"] = "false"
+    session.run("poetry", "install", "--without", "simulated-data", external=True)
+    session.run(
+        "poetry",
+        "run",
+        "pytest",
+        "--config-file=test/pytest_gemini.ini",
+        *args,
+        external=True,
+    )

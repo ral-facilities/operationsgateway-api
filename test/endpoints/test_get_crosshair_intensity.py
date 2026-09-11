@@ -4,14 +4,16 @@ from urllib.parse import quote
 from fastapi.testclient import TestClient
 import pytest
 
+from test.conftest import format_id
+
 
 class TestGetCrosshairIntensity:
     @pytest.mark.parametrize(
-        ["apply_functions"],
+        "apply_functions",
         [pytest.param(False), pytest.param(True)],
     )
     @pytest.mark.parametrize(
-        [
+        (
             "record_id",
             "channel_name",
             "row_position",
@@ -20,10 +22,10 @@ class TestGetCrosshairIntensity:
             "column_position",
             "column_fwhm",
             "column",
-        ],
+        ),
         [
             pytest.param(
-                "20230605080000",
+                "20230605080000123",
                 "FE-204-NSO-P1-CAM-1",
                 609,
                 616,
@@ -31,10 +33,10 @@ class TestGetCrosshairIntensity:
                 760,
                 539,
                 [543, 575, 339],
-                id="16 bit image",
+                id="16-bit image",
             ),
             pytest.param(
-                "20230606120000",
+                "20230606120000456",
                 "CM-202-CVC-CAM-1",
                 612,
                 607,
@@ -42,7 +44,7 @@ class TestGetCrosshairIntensity:
                 890,
                 538,
                 [480, 222, 376],
-                id="12 bit image",
+                id="12-bit image",
             ),
         ],
     )
@@ -60,11 +62,18 @@ class TestGetCrosshairIntensity:
         test_app: TestClient,
         login_and_get_token,
     ):
+        record_id = format_id(record_id)
+
         if apply_functions:
-            row = [r / 10 for r in row]
-            column = [c / 10 for c in column]
-            functions = json.dumps({"name": "a", "expression": f"{channel_name} / 10"})
-            url = f"/images/{record_id}/a/crosshair?functions={quote(functions)}"
+            row = [value / 10 for value in row]
+            column = [value / 10 for value in column]
+            functions = json.dumps(
+                {
+                    "name": "a",
+                    "expression": f"{channel_name} / 10",
+                },
+            )
+            url = f"/images/{record_id}/a/crosshair" f"?functions={quote(functions)}"
         else:
             url = f"/images/{record_id}/{channel_name}/crosshair"
 
@@ -74,7 +83,8 @@ class TestGetCrosshairIntensity:
         )
 
         assert test_response.status_code == 200, test_response.content.decode()
-        content_dict = json.loads(test_response.content.decode())
+
+        content_dict = test_response.json()
 
         assert content_dict["row"]["position"] == row_position
         assert content_dict["row"]["fwhm"] == row_fwhm

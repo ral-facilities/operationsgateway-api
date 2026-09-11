@@ -1,3 +1,4 @@
+import asyncio
 from http import HTTPStatus
 import logging
 
@@ -7,6 +8,7 @@ from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authentication import Authentication
 from operationsgateway_api.src.auth.authorisation import authorise_route
+from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import QueryParameterError, UnauthorisedError
 from operationsgateway_api.src.models import UpdateUserModel, UserModel
@@ -76,6 +78,22 @@ async def add_user(
                 f"No email found for FedID username '{login_details.username}'",
             )
         login_details.email = email
+
+    if auth_type == "user_office":
+        if not Config.config.auth.user_office_api_key:
+            raise QueryParameterError("User Office integration is not configured")
+        log.debug("Performing User Office lookup for %r", login_details.username)
+        user_id = Authentication.get_user_id_from_user_office_email(
+            login_details.username,
+        )
+
+        if not user_id:
+            raise QueryParameterError(
+                f"No User Office account found for '{login_details.username}'",
+            )
+
+        # Store the User Office ID instead of the email.
+        login_details.username = user_id
 
     await User.add(login_details)
 
@@ -184,12 +202,21 @@ async def delete_user(
 @endpoint_error_handling
 async def get_all_users(access_token: AuthoriseRoute):
     """
-    Fetch all users from the database, including their usernames (_id),
+    Fetch all users from the database, including their usernames,
     authentication types, and authorised routes.
+
+    For User Office users:
+    - The MongoDB `_id` (User Office user number) remains the unique identifier.
+    - The associated email address is returned as the username.
+    - Deactivated or unavailable User Office accounts are excluded.
+
+    See: DSEGOG-552
     """
     users = await User.get_all_users()
 
-    response_data = []
+    valid_users = []
+    user_office_numbers = []
+
     for user in users:
         # Skip users without a valid auth_type or those missing essential fields
         if (
@@ -200,11 +227,44 @@ async def get_all_users(access_token: AuthoriseRoute):
             log.warning("Skipping invalid or incomplete user '%s':", user)
             continue
 
+        valid_users.append(user)
+
+        if user["auth_type"] == "user_office":
+            user_office_numbers.append(str(user["_id"]))
+
+    user_office_emails = {}
+    user_office_enabled = bool(Config.config.auth.user_office_api_key)
+
+    if user_office_numbers and user_office_enabled:
+        user_office_emails = await asyncio.to_thread(
+            Authentication.get_user_office_emails,
+            user_office_numbers,
+        )
+
+    response_data = []
+
+    for user in valid_users:
+        if user["auth_type"] == "user_office":
+            user_number = str(user["_id"])
+
+            if user_number not in user_office_emails:
+                log.info(
+                    "Skipping User Office users with no email or deactivated'%s'",
+                    user["_id"],
+                )
+                continue
+
+            username = user_office_emails[user_number]
+        else:
+            username = user["_id"]
+
         user_info = {
-            "username": user["_id"],
+            "_id": user["_id"],
+            "username": username,
             "auth_type": user["auth_type"],
             "authorised_routes": user.get("authorised_routes", []),
         }
+
         response_data.append(user_info)
 
     log.info("Successfully retrieved all users.")

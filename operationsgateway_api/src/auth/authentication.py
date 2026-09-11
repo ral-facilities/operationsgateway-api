@@ -3,6 +3,7 @@ import logging
 import socket
 
 import ldap
+import requests
 from starlette.responses import JSONResponse
 
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
@@ -160,3 +161,218 @@ class Authentication:
         )
 
         return response
+
+    @staticmethod
+    def do_user_office_auth(login_details: LoginDetailsModel) -> str:
+        """
+        Authenticate a User Office user.
+        User enters email + password.
+        User Office returns userId
+        The returned userId is used to find the user in Mongo.
+        """
+        username = login_details.username
+        password = login_details.password
+
+        log.debug("Doing User Office auth for '%s'", username)
+
+        login_url = "https://api.facilities.rl.ac.uk/users-service/v2/sessions"
+
+        try:
+            response = requests.post(
+                login_url,
+                json={
+                    "username": username,
+                    "password": password,
+                },
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                },
+                timeout=10,
+            )
+
+            if response.status_code in (401, 403):
+                log.info("Invalid User Office username or password for '%s'", username)
+                raise UnauthorisedError()
+
+            if response.status_code != 201:
+                log.error(
+                    "Unexpected User Office auth response for '%s': %s %s",
+                    username,
+                    response.status_code,
+                    response.text,
+                )
+                response.raise_for_status()
+                raise AuthServerError()
+
+            login_response = response.json()
+            user_id = login_response.get("userId")
+
+            if not user_id:
+                log.error("User Office auth response did not contain userId")
+                raise AuthServerError()
+
+            log.info(
+                "User Office login successful for '%s', userId '%s'",
+                username,
+                user_id,
+            )
+
+            return user_id
+
+        except requests.exceptions.RequestException as exc:
+            log.exception("Problem with User Office auth service")
+            raise AuthServerError() from exc
+        except ValueError as exc:
+            log.exception("Invalid JSON response from User Office auth service")
+            raise AuthServerError() from exc
+
+    @staticmethod
+    def get_user_id_from_user_office_email(email: str) -> str | None:
+        """
+        Look up a User Office user by email address.
+
+        Returns the User Office userId if found, otherwise None.
+        """
+        log.debug("Looking up User Office user '%s'", email)
+
+        lookup_url = (
+            "https://api.facilities.rl.ac.uk/users-service/v2/basic-person-details"
+        )
+
+        try:
+            response = requests.get(
+                lookup_url,
+                params={"emails": email},
+                headers={
+                    "Authorization": (
+                        f"Api-key {Config.config.auth.user_office_api_key}"
+                    ),
+                    "Accept": "application/json",
+                },
+                timeout=10,
+            )
+
+            if response.status_code != 200:
+                log.error(
+                    "Unexpected User Office lookup response for '%s': %s %s",
+                    email,
+                    response.status_code,
+                    response.text,
+                )
+                response.raise_for_status()
+                raise AuthServerError()
+
+            lookup_response = response.json()
+
+            if not lookup_response:
+                log.info("No User Office account found for '%s'", email)
+                return None
+
+            user_id = lookup_response[0].get("userNumber")
+
+            if not user_id:
+                log.error("User Office lookup response did not contain userNumber")
+                raise AuthServerError()
+
+            log.info(
+                "User Office lookup successful for '%s', userId '%s'",
+                email,
+                user_id,
+            )
+
+            return str(user_id)
+
+        except requests.exceptions.RequestException as exc:
+            log.exception("Problem with User Office lookup service")
+            raise AuthServerError() from exc
+        except ValueError as exc:
+            log.exception("Invalid JSON response from User Office lookup service")
+            raise AuthServerError() from exc
+
+    @staticmethod
+    def get_user_office_emails(
+        user_numbers: list[str],
+    ) -> dict[str, str]:
+        """
+        Look up multiple User Office users in one request.
+
+        Returns a mapping of User Office user numbers to email addresses.
+        Accounts marked as deactivated or without an email address are
+        excluded from the returned mapping.
+        """
+
+        lookup_url = (
+            "https://api.facilities.rl.ac.uk/"
+            "users-service/v2/basic-person-details/search"
+        )
+
+        requested_numbers = {str(number) for number in user_numbers}
+
+        log.debug(
+            "Looking up %d User Office users",
+            len(requested_numbers),
+        )
+
+        try:
+            response = requests.post(
+                lookup_url,
+                params={"searchable": "false"},
+                json={
+                    "userNumbers": list(requested_numbers),
+                },
+                headers={
+                    "Authorization": (
+                        f"Api-key {Config.config.auth.user_office_api_key}"
+                    ),
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                },
+                timeout=10,
+            )
+
+            if response.status_code != 200:
+                log.error(
+                    "Unexpected User Office lookup response: %s %s",
+                    response.status_code,
+                    response.text,
+                )
+                response.raise_for_status()
+                raise AuthServerError()
+
+            lookup_response = response.json()
+
+            if not isinstance(lookup_response, list):
+                log.error("Unexpected User Office lookup response format")
+                raise AuthServerError()
+
+            # Include only requested, active User Office accounts with an email address.
+            emails: dict[str, str] = {}
+
+            for person in lookup_response:
+                user_number = person.get("userNumber")
+                email = person.get("email")
+                family_name = person.get("familyName", "")
+
+                if user_number is None or not email:
+                    continue
+
+                user_number = str(user_number)
+
+                if user_number not in requested_numbers:
+                    continue
+
+                if "[deactivated]" in family_name.lower():
+                    continue
+
+                emails[user_number] = email
+
+            return emails
+
+        except requests.exceptions.RequestException as exc:
+            log.exception("Problem with User Office lookup service")
+            raise AuthServerError() from exc
+
+        except ValueError as exc:
+            log.exception("Invalid JSON response from User Office lookup service")
+            raise AuthServerError() from exc
