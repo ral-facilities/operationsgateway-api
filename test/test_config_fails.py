@@ -4,7 +4,6 @@ from pydantic import ValidationError
 import pytest
 
 from operationsgateway_api.src.config import (
-    APIConfig,
     AuthConfig,
     ExperimentsConfig,
 )
