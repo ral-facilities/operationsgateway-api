@@ -175,7 +175,7 @@ class Authentication:
 
         log.debug("Doing User Office auth for '%s'", username)
 
-        login_url = "https://api.facilities.rl.ac.uk/users-service/v2/sessions"
+        login_url = f"{Config.config.auth.user_office_users_service_url}/sessions"
 
         try:
             response = requests.post(
@@ -237,7 +237,7 @@ class Authentication:
         log.debug("Looking up User Office user '%s'", email)
 
         lookup_url = (
-            "https://api.facilities.rl.ac.uk/users-service/v2/basic-person-details"
+            f"{Config.config.auth.user_office_users_service_url}/basic-person-details"
         )
 
         try:
@@ -303,8 +303,8 @@ class Authentication:
         """
 
         lookup_url = (
-            "https://api.facilities.rl.ac.uk/"
-            "users-service/v2/basic-person-details/search"
+            f"{Config.config.auth.user_office_users_service_url}"
+            "/basic-person-details/search"
         )
 
         requested_numbers = {str(number) for number in user_numbers}

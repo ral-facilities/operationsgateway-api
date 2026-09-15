@@ -50,6 +50,14 @@ auth:
   refresh_token_validity_days: 7
   fedid_server_url: ldap://fed.cclrc.ac.uk:389
   fedid_server_ldap_realm: FED.CCLRC.AC.UK
+  # Enables logging in as, adding and listing User Office users. When true, both
+  # user_office_api_key and user_office_users_service_url must be set
+  user_office_integration: false
+  # API key used to look up User Office user details
+  # user_office_api_key: <api key>
+  # Base URL of the User Office users service, used for User Office
+  # authentication and looking up user details
+  # user_office_users_service_url: https://api.facilities.rl.ac.uk/users-service/v2
   oidc_providers:
     keycloak:
       display_name: A name # This gets displayed on the FE as an auth option

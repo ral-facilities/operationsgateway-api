@@ -11,6 +11,7 @@ from pydantic import (
     Field,
     field_validator,
     FilePath,
+    model_validator,
     NonNegativeInt,
     PositiveInt,
     SecretStr,
@@ -112,8 +113,30 @@ class AuthConfig(BaseModel):
     refresh_token_validity_days: StrictInt
     fedid_server_url: StrictStr
     fedid_server_ldap_realm: StrictStr
+    user_office_integration: StrictBool
     user_office_api_key: Optional[StrictStr] = None
+    user_office_users_service_url: Optional[StrictStr] = None
     oidc_providers: dict[StrictStr, OidcProviderConfig] = {}
+
+    @model_validator(mode="after")
+    def check_user_office_settings(self) -> "AuthConfig":
+        """
+        When the User Office integration is enabled, both the API key and the users
+        service URL are needed to contact it
+        """
+        if self.user_office_integration:
+            missing = [
+                name
+                for name in ("user_office_api_key", "user_office_users_service_url")
+                if not getattr(self, name)
+            ]
+            if missing:
+                raise ValueError(
+                    f"{', '.join(missing)} must be set when "
+                    "'user_office_integration' is enabled",
+                )
+
+        return self
 
 
 class ExperimentsConfig(BaseModel):

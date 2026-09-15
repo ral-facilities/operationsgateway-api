@@ -268,11 +268,11 @@ class TestGetUsers:
         login_and_get_token,
         monkeypatch,
     ):
-        # Test that User Office users are excluded when there is no API key.
+        # Test that User Office users are excluded when the integration is off.
         monkeypatch.setattr(
             Config.config.auth,
-            "user_office_api_key",
-            None,
+            "user_office_integration",
+            False,
         )
 
         users = [

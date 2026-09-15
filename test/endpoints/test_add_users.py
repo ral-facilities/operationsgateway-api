@@ -449,11 +449,11 @@ class TestCreateUsers:
         login_and_get_token,
         monkeypatch,
     ):
-        # Test that User Office users cannot be added without an API key.
+        # Test that User Office users cannot be added when the integration is off.
         monkeypatch.setattr(
             Config.config.auth,
-            "user_office_api_key",
-            None,
+            "user_office_integration",
+            False,
         )
 
         with (

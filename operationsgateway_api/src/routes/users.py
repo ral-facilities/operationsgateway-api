@@ -80,7 +80,7 @@ async def add_user(
         login_details.email = email
 
     if auth_type == "user_office":
-        if not Config.config.auth.user_office_api_key:
+        if not Config.config.auth.user_office_integration:
             raise QueryParameterError("User Office integration is not configured")
         log.debug("Performing User Office lookup for %r", login_details.username)
         user_id = Authentication.get_user_id_from_user_office_email(
@@ -233,7 +233,7 @@ async def get_all_users(access_token: AuthoriseRoute):
             user_office_numbers.append(str(user["_id"]))
 
     user_office_emails = {}
-    user_office_enabled = bool(Config.config.auth.user_office_api_key)
+    user_office_enabled = Config.config.auth.user_office_integration
 
     if user_office_numbers and user_office_enabled:
         user_office_emails = await asyncio.to_thread(
