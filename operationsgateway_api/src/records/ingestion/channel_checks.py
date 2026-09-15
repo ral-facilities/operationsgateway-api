@@ -93,7 +93,7 @@ class ChannelChecks:
         """
         ingested_channels = self.ingested_record
         dump = False
-        if type(ingested_channels) is not dict:
+        if not isinstance(ingested_channels, dict):
             ingested_channels = ingested_channels.channels
             dump = True
 
@@ -539,7 +539,7 @@ class ChannelChecks:
         this generates a rejected channel message depending on what was fed to this
         function (which dataset and why it failed)
         """
-        if type(value) is not list:
+        if not isinstance(value, list):
             rejected_channels.append({key: letter + " attribute has wrong shape"})
         else:
             if not all(isinstance(element, float) for element in value):
