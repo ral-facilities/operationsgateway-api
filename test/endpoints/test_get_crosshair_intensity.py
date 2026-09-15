@@ -73,7 +73,7 @@ class TestGetCrosshairIntensity:
                     "expression": f"{channel_name} / 10",
                 },
             )
-            url = f"/images/{record_id}/a/crosshair" f"?functions={quote(functions)}"
+            url = f"/images/{record_id}/a/crosshair?functions={quote(functions)}"
         else:
             url = f"/images/{record_id}/{channel_name}/crosshair"
 
