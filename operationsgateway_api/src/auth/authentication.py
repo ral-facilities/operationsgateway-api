@@ -202,7 +202,7 @@ class Authentication:
                     response.status_code,
                     response.text,
                 )
-                response.raise_for_status()
+
                 raise AuthServerError()
 
             login_response = response.json()
@@ -260,7 +260,7 @@ class Authentication:
                     response.status_code,
                     response.text,
                 )
-                response.raise_for_status()
+
                 raise AuthServerError()
 
             lookup_response = response.json()
@@ -337,7 +337,7 @@ class Authentication:
                     response.status_code,
                     response.text,
                 )
-                response.raise_for_status()
+
                 raise AuthServerError()
 
             lookup_response = response.json()
