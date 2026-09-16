@@ -6,7 +6,7 @@ import ldap
 import pytest
 
 from operationsgateway_api.src.auth.authentication import Authentication
-from operationsgateway_api.src.config import Config
+from operationsgateway_api.src.config import Config, UserOfficeConfig
 from operationsgateway_api.src.exceptions import AuthServerError
 from operationsgateway_api.src.users.user import User
 
@@ -190,8 +190,11 @@ class TestGetUsers:
         # Test that active User Office users are returned using their emails.
         monkeypatch.setattr(
             Config.config.auth,
-            "user_office_api_key",
-            "test-api-key",
+            "user_office",
+            UserOfficeConfig(
+                api_key="test-api-key",
+                users_service_url="https://example.com",
+            ),
         )
 
         users = [
@@ -271,8 +274,8 @@ class TestGetUsers:
         # Test that User Office users are excluded when the integration is off.
         monkeypatch.setattr(
             Config.config.auth,
-            "user_office_integration",
-            False,
+            "user_office",
+            None,
         )
 
         users = [

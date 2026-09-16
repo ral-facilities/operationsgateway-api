@@ -196,7 +196,7 @@ class TestAuthentication:
             ),
             params={"emails": "user@example.com"},
             headers={
-                "Authorization": (f"Api-key {Config.config.auth.user_office_api_key}"),
+                "Authorization": (f"Api-key {Config.config.auth.user_office.api_key}"),
                 "Accept": "application/json",
             },
             timeout=10,
@@ -332,7 +332,7 @@ class TestAuthentication:
             "12345",
         }
         assert call_args.kwargs["headers"] == {
-            "Authorization": (f"Api-key {Config.config.auth.user_office_api_key}"),
+            "Authorization": (f"Api-key {Config.config.auth.user_office.api_key}"),
             "Accept": "application/json",
             "Content-Type": "application/json",
         }

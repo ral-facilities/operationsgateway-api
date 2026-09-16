@@ -6,7 +6,7 @@ import pytest
 import pytest_asyncio
 
 from operationsgateway_api.src.auth.authentication import Authentication
-from operationsgateway_api.src.config import Config
+from operationsgateway_api.src.config import Config, UserOfficeConfig
 from operationsgateway_api.src.exceptions import UnauthorisedError
 from operationsgateway_api.src.models import UserModel
 from operationsgateway_api.src.users.user import User
@@ -397,8 +397,11 @@ class TestCreateUsers:
         # Test that a User Office email is resolved and its user ID is stored.
         monkeypatch.setattr(
             Config.config.auth,
-            "user_office_api_key",
-            "test-api-key",
+            "user_office",
+            UserOfficeConfig(
+                api_key="test-api-key",
+                users_service_url="https://example.com",
+            ),
         )
 
         with (
@@ -452,8 +455,8 @@ class TestCreateUsers:
         # Test that User Office users cannot be added when the integration is off.
         monkeypatch.setattr(
             Config.config.auth,
-            "user_office_integration",
-            False,
+            "user_office",
+            None,
         )
 
         with (
@@ -494,8 +497,11 @@ class TestCreateUsers:
         # Test that an email with no User Office account is rejected.
         monkeypatch.setattr(
             Config.config.auth,
-            "user_office_api_key",
-            "test-api-key",
+            "user_office",
+            UserOfficeConfig(
+                api_key="test-api-key",
+                users_service_url="https://example.com",
+            ),
         )
 
         with (

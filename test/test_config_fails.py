@@ -27,43 +27,26 @@ class TestConfigFails:
         ):
             ExperimentsConfig.check_timezone(value="Mars")
 
-    def test_user_office_integration_without_api_key_or_url(self):
-        # Test that enabling the integration requires the API key and the URL
-        with pytest.raises(
-            ValidationError,
-            match=re.escape(
-                "user_office_api_key, user_office_users_service_url must be set "
-                "when 'user_office_integration' is enabled",
-            ),
-        ):
-            AuthConfig(**BASE_CONFIG, user_office_integration=True)
+    def test_user_office_not_configured(self):
+        # Test that the User Office section stays optional. This just checks that the API can be
+        # configured (and so started) without it.
+        assert AuthConfig(**BASE_CONFIG).user_office is None
 
-    def test_user_office_integration_without_url(self):
-        # Test that enabling the integration requires the users service URL
+    def test_user_office_without_api_key(self):
+        # Test that a User Office section is rejected without an API key
         with pytest.raises(
             ValidationError,
-            match=re.escape(
-                "user_office_users_service_url must be set when "
-                "'user_office_integration' is enabled",
-            ),
+            match=re.escape("user_office.api_key"),
         ):
             AuthConfig(
                 **BASE_CONFIG,
-                user_office_integration=True,
-                user_office_api_key="an-api-key",
+                user_office={"users_service_url": "https://example.com"},
             )
 
-    def test_user_office_integration_without_api_key(self):
-        # Test that enabling the integration requires the API key
+    def test_user_office_without_users_service_url(self):
+        # Test that a User Office section is rejected without a users service URL
         with pytest.raises(
             ValidationError,
-            match=re.escape(
-                "user_office_api_key must be set when "
-                "'user_office_integration' is enabled",
-            ),
+            match=re.escape("user_office.users_service_url"),
         ):
-            AuthConfig(
-                **BASE_CONFIG,
-                user_office_integration=True,
-                user_office_users_service_url="https://example.com",
-            )
+            AuthConfig(**BASE_CONFIG, user_office={"api_key": "an-api-key"})
