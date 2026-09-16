@@ -28,8 +28,8 @@ class TestConfigFails:
             ExperimentsConfig.check_timezone(value="Mars")
 
     def test_user_office_not_configured(self):
-        # Test that the User Office section stays optional. This just checks that the API can be
-        # configured (and so started) without it.
+        # Test that the User Office section stays optional.
+        # This just checks that the API can be started without it.
         assert AuthConfig(**BASE_CONFIG).user_office is None
 
     def test_user_office_without_api_key(self):
