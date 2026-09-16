@@ -184,9 +184,8 @@ class User:
     @staticmethod
     async def edit_routes(username, authorised_routes, routes, add=True):
         if routes is not None:
-            # a user document may have no authorised_routes field at all, which must
-            # be treated as an empty route list. Skipping the amend in that case would
-            # write the caller's list verbatim, so a removal would grant those routes
+            # A user document in the db may have no authorised_routes field at
+            # all, which should be treated as an empty route list.
             routes = User.amend_routes_list(
                 authorised_routes if authorised_routes is not None else [],
                 routes,
