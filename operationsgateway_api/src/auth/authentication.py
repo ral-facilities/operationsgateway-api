@@ -175,7 +175,7 @@ class Authentication:
 
         log.debug("Doing User Office auth for '%s'", username)
 
-        login_url = f"{Config.config.auth.user_office_users_service_url}/sessions"
+        login_url = f"{Config.config.auth.user_office.users_service_url}/sessions"
 
         try:
             response = requests.post(
@@ -236,18 +236,15 @@ class Authentication:
         """
         log.debug("Looking up User Office user '%s'", email)
 
-        lookup_url = (
-            f"{Config.config.auth.user_office_users_service_url}/basic-person-details"
-        )
+        user_office_config = Config.config.auth.user_office
+        lookup_url = f"{user_office_config.users_service_url}/basic-person-details"
 
         try:
             response = requests.get(
                 lookup_url,
                 params={"emails": email},
                 headers={
-                    "Authorization": (
-                        f"Api-key {Config.config.auth.user_office_api_key}"
-                    ),
+                    "Authorization": f"Api-key {user_office_config.api_key}",
                     "Accept": "application/json",
                 },
                 timeout=10,
@@ -302,9 +299,9 @@ class Authentication:
         excluded from the returned mapping.
         """
 
+        user_office_config = Config.config.auth.user_office
         lookup_url = (
-            f"{Config.config.auth.user_office_users_service_url}"
-            "/basic-person-details/search"
+            f"{user_office_config.users_service_url}/basic-person-details/search"
         )
 
         requested_numbers = {str(number) for number in user_numbers}
@@ -322,9 +319,7 @@ class Authentication:
                     "userNumbers": list(requested_numbers),
                 },
                 headers={
-                    "Authorization": (
-                        f"Api-key {Config.config.auth.user_office_api_key}"
-                    ),
+                    "Authorization": f"Api-key {user_office_config.api_key}",
                     "Accept": "application/json",
                     "Content-Type": "application/json",
                 },
