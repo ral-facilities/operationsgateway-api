@@ -40,9 +40,9 @@ auth:
   refresh_token_validity_days: 7
   fedid_server_url: ldap://fed.cclrc.ac.uk:389
   fedid_server_ldap_realm: FED.CCLRC.AC.UK
-  user_office_integration: true
-  user_office_api_key: ci-api-key
-  user_office_users_service_url: https://api.facilities.rl.ac.uk/users-service/v2
+  user_office:
+    api_key: ci-api-key
+    users_service_url: https://api.facilities.rl.ac.uk/users-service/v2
 experiments:
   user_office_rest_api_url: https://devapi.facilities.rl.ac.uk/users-service/v1
   scheduler_wsdl_url: https://devapis.facilities.rl.ac.uk/ws/ScheduleWebService?wsdl
