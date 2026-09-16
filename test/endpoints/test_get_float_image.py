@@ -5,46 +5,40 @@ import imagehash
 from PIL import Image
 import pytest
 
-from test.conftest import set_preferred_float_colourmap, unset_preferred_float_colourmap
+from test.conftest import (
+    RECORD_ID_05_0803,
+    set_preferred_float_colourmap,
+    unset_preferred_float_colourmap,
+)
 
 
 class TestGetImage:
     @pytest.mark.parametrize(
         [
-            "record_id",
-            "channel_name",
             "use_preferred_colourmap",
             "colourmap_name",
             "expected_image_phash",
         ],
         [
             pytest.param(
-                "20230605080300",
-                "CM-202-CVC-WFS",
                 False,
                 None,
                 "9b326c6930cf6798",
                 id="Original image",
             ),
             pytest.param(
-                "20230605080300",
-                "CM-202-CVC-WFS",
                 True,
                 None,
                 "966939966562b665",
                 id="Image using user's preferred colourmap",
             ),
             pytest.param(
-                "20230605080300",
-                "CM-202-CVC-WFS",
                 False,
                 "berlin",
                 "96493996656ab665",
                 id="Image with all false colour params specified",
             ),
             pytest.param(
-                "20230605080300",
-                "CM-202-CVC-WFS",
                 True,
                 "berlin",
                 "96493996656ab665",
@@ -59,8 +53,6 @@ class TestGetImage:
         self,
         test_app: TestClient,
         login_and_get_token: str,
-        record_id: str,
-        channel_name: str,
         use_preferred_colourmap: bool,
         colourmap_name: str,
         expected_image_phash: str,
@@ -80,7 +72,7 @@ class TestGetImage:
             query_string = "?" + "&".join(query_params_array)
 
         test_response = test_app.get(
-            f"/images/float/{record_id}/{channel_name}{query_string}",
+            f"/images/float/{RECORD_ID_05_0803}/CM-202-CVC-WFS{query_string}",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
 

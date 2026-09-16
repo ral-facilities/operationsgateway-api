@@ -9,15 +9,16 @@ script_options:
   # successful file that ingested e.g. data/2023-06-04T1200.h5
   file_to_restart_ingestion: ""
 database:
-  connection_uri: mongodb://localhost:27017/opsgateway
+  connection_uri: mongodb://localhost:27017/opsgateway-epac
+  # connection_uri: mongodb://localhost:27017/opsgateway-gemini
   remote_experiments_file_path: /tmp/experiments_for_mongoimport.json
   test_users_file_path: util/users_for_mongoimport.json
-echo:
+source:
   endpoint_url: https://s3.echo.stfc.ac.uk
   access_key: access_key
   secret_key: secret_key
-  simulated_data_bucket: og-ci-simulated-data
-  storage_bucket: og-developersname-dev
+  simulated_data_bucket: og-ci-simulated-data-epac
+  # simulated_data_bucket: og-ci-simulated-data-gemini
   # Number of HDF files downloaded & ingested in one go
   page_size: 2
 api:
@@ -31,6 +32,8 @@ api:
   # assigned to the instance
   gunicorn_num_workers: "2"
   timeout_seconds: 300
+  storage_bucket: og-yourname-dev-epac
+  # storage_bucket: og-yourname-dev-gemini
 observability:
   # used to view logs and traces in Elasticsearch run by Platforms & Services
   environment: dev

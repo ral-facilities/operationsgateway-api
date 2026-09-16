@@ -53,8 +53,49 @@ class TestExportHandler:
             False,
             False,
             False,
+            False,
         )
         assert await export_handler._process_projection(None, {}, proj) == ""
+
+    @pytest.mark.asyncio
+    async def test_process_string_channel_when_string_export_disabled(self):
+        channel_name = "string-channel"
+
+        channel_manifest = MagicMock()
+        channel_manifest.channels = {
+            channel_name: MagicMock(type_="string"),
+        }
+
+        export_handler = ExportHandler(
+            records_data=[],
+            channel_manifest=channel_manifest,
+            projection=[],
+            lower_level=0,
+            upper_level=255,
+            limit_bit_depth=8,
+            colourmap_name="viridis",
+            functions=[],
+            export_scalars=True,
+            export_strings=False,
+            export_images=True,
+            export_float_images=True,
+            export_waveform_csvs=True,
+            export_waveform_images=True,
+            export_vector_csvs=True,
+            export_vector_images=True,
+        )
+
+        existing_line = "existing content"
+
+        result = await export_handler._process_data_channel(
+            channels={},
+            record_id="20230605080000",
+            raw_data={},
+            channel_name=channel_name,
+            line=existing_line,
+        )
+
+        assert result == existing_line
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -81,6 +122,7 @@ class TestExportHandler:
             colourmap_name="viridis",
             functions=[],
             export_scalars=True,
+            export_strings=True,
             export_images=True,
             export_float_images=True,
             export_waveform_images=True,
@@ -117,6 +159,7 @@ class TestExportHandler:
             colourmap_name="viridis",
             functions=[],
             export_scalars=True,
+            export_strings=True,
             export_images=True,
             export_float_images=True,
             export_waveform_images=True,

@@ -92,6 +92,10 @@ async def export_records(
         True,
         description="Whether to export the scalar values from the main data table",
     ),
+    export_strings: Optional[bool] = Query(
+        True,
+        description="Whether to export string values from the main data table",
+    ),
     export_images: Optional[bool] = Query(
         True,
         description="Whether to export the images for image channels",
@@ -167,6 +171,7 @@ async def export_records(
         colourmap_name,
         functions,
         export_scalars,
+        export_strings,
         export_images,
         export_float_images,
         export_waveform_csvs,

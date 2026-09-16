@@ -7,12 +7,13 @@ import sys
 import threading
 from time import sleep
 
-from util.realistic_data.ingest.config import Config
+from util.realistic_data.ingest.config import API
 
 
 class APIStarter:
-    def __init__(self) -> None:
-        if Config.config.script_options.launch_api:
+    def __init__(self, launch_api: bool, api_config: API) -> None:
+        self.api_config = api_config
+        if launch_api:
             self.api_alive = False
             self.process = Popen(
                 [
@@ -20,16 +21,11 @@ class APIStarter:
                     "run",
                     "gunicorn",
                     "operationsgateway_api.src.main:app",
-                    "--workers",
-                    Config.config.api.gunicorn_num_workers,
-                    "--worker-class",
-                    "uvicorn.workers.UvicornWorker",
-                    "-b",
-                    f"{Config.config.api.host}:{Config.config.api.port}",
-                    "--log-config",
-                    str(Path(Config.config.api.log_config_path)),
-                    "--timeout",
-                    str(Config.config.api.timeout_seconds),
+                    f"--workers={api_config.gunicorn_num_workers}",
+                    "--worker-class=uvicorn.workers.UvicornWorker",
+                    f"--bind={api_config.host}:{api_config.port}",
+                    f"--log-config={Path(api_config.log_config_path)}",
+                    f"--timeout={api_config.timeout_seconds}",
                 ],
                 stdout=PIPE,
                 stderr=PIPE,
@@ -62,7 +58,7 @@ class APIStarter:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(2)
         try:
-            s.connect((Config.config.api.host, int(Config.config.api.port)))
+            s.connect((self.api_config.host, int(self.api_config.port)))
             return True
         except Exception:
             return False
@@ -77,7 +73,7 @@ class APIStarter:
 
     def kill(self) -> None:
         lsof_output = Popen(
-            ["lsof", "-ti", f":{Config.config.api.port}"],
+            ["lsof", "-ti", f":{self.api_config.port}"],
             stdout=PIPE,
             stderr=PIPE,
         )
@@ -97,4 +93,4 @@ class APIStarter:
             print(f"Killing pid {pid}")
             os.kill(int(pid), signal.SIGKILL)
 
-        print(f"API stopped on {Config.config.api.host}:{Config.config.api.port}")
+        print(f"API stopped on {self.api_config.host}:{self.api_config.port}")

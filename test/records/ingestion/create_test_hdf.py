@@ -170,6 +170,22 @@ async def create_test_hdf_file(  # noqa: C901
             pm_201_fe_cam_2_fwhmx.attrs.create("channel_dtype", "scalar")
         pm_201_fe_cam_2_fwhmx.create_dataset("data", data="FP")
 
+        astra_control_mode_string = record.create_group("ASTRA_CONTROL_MODE_STRING")
+        astra_control_mode_string.attrs["channel_dtype"] = "string"
+        astra_control_mode_string.attrs["units"] = "NONE"
+        if required_attributes and "string" in required_attributes:
+            astra_control_mode_string.create_dataset(
+                name="data",
+                shape=(),
+                data=required_attributes["string"]["data"],
+            )
+        else:
+            astra_control_mode_string.create_dataset(
+                name="data",
+                shape=(),
+                data="2USERS",
+            )
+
         if channel_name and "scalar" in channel_name:
             false_scalar = record.create_group("FALSE_SCALAR")
             false_scalar.attrs.create("channel_dtype", "scalar")

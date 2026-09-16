@@ -15,7 +15,7 @@ from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.records.ingestion.partial_import_checks import (
     PartialImportChecks,
 )
-from test.endpoints.conftest import reset_record_storage
+from test.conftest import RECORD_ID_TMP
 from test.records.ingestion.create_test_hdf import create_test_hdf_file
 
 CHANNEL_PRESENT_MESSAGE = "Channel is already present in existing record"
@@ -281,7 +281,7 @@ class TestPartialImport:
 
         # make sure the version hasn't been updated and remains the standard
         response = test_app.get(
-            "/records/20200407142816",
+            f"/records/{RECORD_ID_TMP}",
             headers={"Authorization": f"Bearer {login_and_get_token}"},
         )
         assert response.status_code == 200
@@ -295,6 +295,7 @@ class TestPartialImport:
                 {
                     "accepted_channels": [],
                     "rejected_channels": {
+                        "ASTRA_CONTROL_MODE_STRING": CHANNEL_PRESENT_MESSAGE,
                         "CM-202-CVC-WFS": CHANNEL_PRESENT_MESSAGE,
                         "CM-202-CVC-WFS-COEF": CHANNEL_PRESENT_MESSAGE,
                         "PM-201-FE-EM": CHANNEL_PRESENT_MESSAGE,
@@ -325,6 +326,7 @@ class TestPartialImport:
                         "PM-201-TJ-CAM-2-FWHMY",
                     ],
                     "rejected_channels": {
+                        "ASTRA_CONTROL_MODE_STRING": CHANNEL_PRESENT_MESSAGE,
                         "CM-202-CVC-WFS": CHANNEL_PRESENT_MESSAGE,
                         "CM-202-CVC-WFS-COEF": CHANNEL_PRESENT_MESSAGE,
                         "PM-201-FE-CAM-2-CENX": CHANNEL_PRESENT_MESSAGE,
@@ -347,6 +349,7 @@ class TestPartialImport:
                 "none",
                 {
                     "accepted_channels": [
+                        "ASTRA_CONTROL_MODE_STRING",
                         "CM-202-CVC-WFS",
                         "CM-202-CVC-WFS-COEF",
                         "PM-201-FE-CAM-1",
@@ -403,6 +406,7 @@ class TestPartialImport:
             channels["o"] = channels.pop("PM-201-TJ-CAM-2-FWHMY")
             channels["p"] = channels.pop("CM-202-CVC-WFS")
             channels["q"] = channels.pop("CM-202-CVC-WFS-COEF")
+            channels["r"] = channels.pop("ASTRA_CONTROL_MODE_STRING")
 
         partial_import_checker = PartialImportChecks(hdf_tuple[0], stored_record)
 

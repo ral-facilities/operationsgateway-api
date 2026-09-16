@@ -8,6 +8,7 @@ import pytest
 from operationsgateway_api.src.exceptions import FunctionParseError
 from operationsgateway_api.src.models import PartialRecordModel
 from operationsgateway_api.src.records.record_retriever import RecordRetriever
+from test.conftest import RECORD_ID_05_0800, RECORD_ID_05_1700
 
 
 class TestRecordRetriever:
@@ -18,13 +19,13 @@ class TestRecordRetriever:
             pytest.param({}, id="No channels"),
             pytest.param(
                 {
-                    "TS-202-TSM-P1-CAM-2-CENX": {"data": 4.145480878063205},
+                    "TS-202-TSM-P1-CAM-2-CENX": {"data": 3.0393419803062544},
                     "CM-202-CVC-SP": {
-                        "waveform_path": "20230605100000/CM-202-CVC-SP.json",
+                        "waveform_path": "20230605080000/CM-202-CVC-SP.json",
                         "metadata": {"x_units": "nm"},
                     },
                     "FE-204-NSO-P1-CAM-1": {
-                        "image_path": "20230605100000/FE-204-NSO-P1-CAM-1.png",
+                        "image_path": "20230605080000/FE-204-NSO-P1-CAM-1.png",
                     },
                 },
                 id="Channels loaded",
@@ -43,7 +44,7 @@ class TestRecordRetriever:
                 ],
                 {
                     "a": {
-                        "data": 0.4145480878063205,
+                        "data": 0.30393419803062544,
                         "metadata": {"channel_dtype": "scalar"},
                     },
                 },
@@ -62,11 +63,11 @@ class TestRecordRetriever:
                 ],
                 {
                     "a": {
-                        "data": 0.4145480878063205,
+                        "data": 0.30393419803062544,
                         "metadata": {"channel_dtype": "scalar"},
                     },
                     "b": {
-                        "data": -0.880566297127881,
+                        "data": -1.1909440548520571,
                         "metadata": {"channel_dtype": "scalar"},
                     },
                 },
@@ -82,7 +83,7 @@ class TestRecordRetriever:
                 ],
                 {
                     "a": {
-                        "thumbnail": "bbb14eb0c14eb14e",
+                        "thumbnail": "bab14eb3d04eb04e",
                         "metadata": {"channel_dtype": "waveform", "x_units": "nm"},
                     },
                 },
@@ -97,7 +98,7 @@ class TestRecordRetriever:
                 ],
                 {
                     "a": {
-                        "thumbnail": "ce39b1c74e6c9191",
+                        "thumbnail": "cf38b1d84e07b1b8",
                         "metadata": {"channel_dtype": "waveform", "x_units": "nm"},
                     },
                 },
@@ -112,7 +113,7 @@ class TestRecordRetriever:
                 ],
                 {
                     "a": {
-                        "data": 1721.4288093253808,
+                        "data": 1917.3650764729987,
                         "metadata": {"channel_dtype": "scalar"},
                     },
                 },
@@ -131,11 +132,11 @@ class TestRecordRetriever:
                 ],
                 {
                     "a": {
-                        "thumbnail": "bbb14eb0c14eb14e",
+                        "thumbnail": "bab14eb3d04eb04e",
                         "metadata": {"channel_dtype": "waveform", "x_units": "nm"},
                     },
                     "b": {
-                        "data": 984.4247056536747,
+                        "data": 1180.3609728012923,
                         "metadata": {"channel_dtype": "scalar"},
                     },
                 },
@@ -151,7 +152,7 @@ class TestRecordRetriever:
                 ],
                 {
                     "a": {
-                        "thumbnail": "b9c0c6c9a79cccc5",
+                        "thumbnail": "b9ccc52e8463cca7",
                         "metadata": {
                             "channel_dtype": "image",
                             "x_pixel_size": 1936,
@@ -190,7 +191,7 @@ class TestRecordRetriever:
                 ],
                 {
                     "a": {
-                        "data": 376.9670147856405,
+                        "data": 802.7587045318617,
                         "metadata": {"channel_dtype": "scalar"},
                     },
                 },
@@ -205,7 +206,7 @@ class TestRecordRetriever:
                 ],
                 {
                     "a": {
-                        "data": 156.09,
+                        "data": 303.76,
                         "metadata": {"channel_dtype": "scalar"},
                     },
                 },
@@ -224,7 +225,7 @@ class TestRecordRetriever:
                 ],
                 {
                     "a": {
-                        "thumbnail": "b9c0c6c9a79cccc5",
+                        "thumbnail": "b9ccc52e8463cca7",
                         "metadata": {
                             "channel_dtype": "image",
                             "x_pixel_size": 1936,
@@ -232,7 +233,7 @@ class TestRecordRetriever:
                         },
                     },
                     "b": {
-                        "data": 375.9670147856405,
+                        "data": 801.7587045318617,
                         "metadata": {"channel_dtype": "scalar"},
                     },
                 },
@@ -249,7 +250,7 @@ class TestRecordRetriever:
     ):
         # Use a copy to prevent in place modification of record.channels form persisting
         # between test executions
-        record = PartialRecordModel(_id="20230605100000", channels=channels.copy())
+        record = PartialRecordModel(_id=RECORD_ID_05_0800, channels=channels.copy())
         print(record.channels)
         record_retriever = RecordRetriever(
             record=record,
@@ -294,7 +295,7 @@ class TestRecordRetriever:
         self,
         functions: "list[dict[str, str]]",
     ):
-        record = PartialRecordModel(_id="20230605100000")
+        record = PartialRecordModel(_id=RECORD_ID_05_0800)
         record_retriever = RecordRetriever(
             record,
             functions,
@@ -308,8 +309,8 @@ class TestRecordRetriever:
     @pytest.mark.asyncio
     async def test_apply_functions_missing_channel(self):
         # Note we need a record where not all channels are defined, so not using
-        # 20230605100000 as above
-        record = PartialRecordModel(_id="20230604000000")
+        # 20230605080000 as above
+        record = PartialRecordModel(_id=RECORD_ID_05_1700)
         functions = [
             {"name": "a", "expression": "TS-202-TSM-P1-CAM-2-CENX / 10"},
             {"name": "b", "expression": "a / 10"},

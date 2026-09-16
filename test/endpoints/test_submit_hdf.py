@@ -9,7 +9,11 @@ import pytest
 
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import DatabaseError, EchoS3Error
-from operationsgateway_api.src.records.echo_interface import get_echo_interface
+from operationsgateway_api.src.records.echo_interface import (
+    EchoInterface,
+    get_echo_interface,
+)
+from test.conftest import RECORD_ID_TMP
 from test.records.ingestion.create_test_hdf import create_test_hdf_file
 
 
@@ -148,9 +152,10 @@ class TestSubmitHDF:
         )
 
         expected_response = {
-            "message": "Added as 20200407142816",
+            "message": f"Added as {RECORD_ID_TMP}",
             "response": {
                 "accepted_channels": [
+                    "ASTRA_CONTROL_MODE_STRING",
                     "CM-202-CVC-WFS",
                     "CM-202-CVC-WFS-COEF",
                     "PM-201-FE-CAM-1",
@@ -193,9 +198,10 @@ class TestSubmitHDF:
             headers={"Authorization": f"Bearer {login_and_get_token}"},
             files=files,
         )
-        cache_path_1 = Config.config.backup.cache_directory / "2020/04/07/142816/1.hdf5"
+        directories = EchoInterface.format_record_id(RECORD_ID_TMP)
+        cache_path_1 = Config.config.backup.cache_directory / directories / "1.hdf5"
         assert cache_path_1.exists()
-        assert cache_path_1.stat().st_size == 115056
+        assert cache_path_1.stat().st_size == 117264
 
         get_echo_interface.cache_clear()
         test_response = test_app_backup_enabled.post(
@@ -206,10 +212,11 @@ class TestSubmitHDF:
 
         channel_present_message = "Channel is already present in existing record"
         expected_response = {
-            "message": "Updated 20200407142816",
+            "message": f"Updated {RECORD_ID_TMP}",
             "response": {
                 "accepted_channels": [],
                 "rejected_channels": {
+                    "ASTRA_CONTROL_MODE_STRING": channel_present_message,
                     "CM-202-CVC-WFS": channel_present_message,
                     "CM-202-CVC-WFS-COEF": channel_present_message,
                     "PM-201-FE-CAM-1": channel_present_message,
@@ -235,9 +242,9 @@ class TestSubmitHDF:
         assert test_response.json() == expected_response
         assert test_response.status_code == 200
 
-        cache_path_2 = Config.config.backup.cache_directory / "2020/04/07/142816/2.hdf5"
+        cache_path_2 = Config.config.backup.cache_directory / directories / "2.hdf5"
         assert cache_path_2.exists()
-        assert cache_path_2.stat().st_size == 115056
+        assert cache_path_2.stat().st_size == 117264
 
         temporary_file = SpooledTemporaryFile()
         with h5py.File(temporary_file, "w") as f:
@@ -258,7 +265,7 @@ class TestSubmitHDF:
         )
 
         expected_response = {
-            "message": "Updated 20200407142816",
+            "message": f"Updated {RECORD_ID_TMP}",
             "response": {
                 "accepted_channels": ["PM-201-TJ-CRY-T"],
                 "rejected_channels": {},
@@ -268,7 +275,7 @@ class TestSubmitHDF:
         assert test_response.json() == expected_response
         assert test_response.status_code == 200
 
-        cache_path_3 = Config.config.backup.cache_directory / "2020/04/07/142816/3.hdf5"
+        cache_path_3 = Config.config.backup.cache_directory / directories / "3.hdf5"
         assert cache_path_3.exists()
         assert cache_path_3.stat().st_size == 7080
 
@@ -335,7 +342,7 @@ class TestSubmitHDF:
         )
 
         expected_response = {
-            "message": "Added as 20200407142816",
+            "message": f"Added as {RECORD_ID_TMP}",
             "response": {
                 "accepted_channels": ["CM-202-CVC-WFS-COEF"],
                 "rejected_channels": {
@@ -386,7 +393,7 @@ class TestSubmitHDF:
         )
 
         expected_response = {
-            "message": "Updated 20200407142816",
+            "message": f"Updated {RECORD_ID_TMP}",
             "response": {
                 "accepted_channels": ["PM-201-TJ-CAM-2-FWHMY"],
                 "rejected_channels": {
@@ -432,7 +439,7 @@ class TestSubmitHDF:
             assert test_response.status_code == 201
 
             expected_response = {
-                "message": "Added as 20200407142816",
+                "message": f"Added as {RECORD_ID_TMP}",
                 "response": {
                     "accepted_channels": ["PM-201-TJ-CAM-2-FWHMY"],
                     "rejected_channels": {
@@ -541,7 +548,7 @@ class TestSubmitHDF:
             assert test_response.status_code == 201
 
             expected_response = {
-                "message": "Added as 20200407142816",
+                "message": f"Added as {RECORD_ID_TMP}",
                 "response": {
                     "accepted_channels": ["PM-201-HJ-PD", "PM-201-TJ-CAM-2-FWHMY"],
                     "rejected_channels": {

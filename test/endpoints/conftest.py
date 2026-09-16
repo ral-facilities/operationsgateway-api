@@ -14,6 +14,7 @@ from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.record import Record
 from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
+from test.conftest import RECORD_ID_TMP
 
 
 async def add_user(auth_type):
@@ -68,30 +69,6 @@ async def delete_fed_fixture():
 async def delete_local_fixture():
     yield
     await remove_user("local")
-
-
-async def remove_record(timestamp_id):
-    await MongoDBInterface.delete_one(
-        "records",
-        filter_={"_id": f"{timestamp_id}"},
-    )
-
-
-@pytest_asyncio.fixture(scope="function")
-async def reset_record_storage():
-    yield
-    record_id = "20200407142816"
-    await remove_record(record_id)
-    await MongoDBInterface.delete_one("records", {"metadata.shotnum": 366272})
-    echo = EchoInterface()
-    subdirectories = echo.format_record_id(record_id)
-    await echo.delete_directory(f"{Waveform.echo_prefix}/{subdirectories}/")
-    await echo.delete_directory(f"{Image.echo_prefix}/{subdirectories}/")
-    await echo.delete_directory(f"{FloatImage.echo_prefix}/{subdirectories}/")
-    await echo.delete_directory(f"{Vector.echo_prefix}/{subdirectories}/")
-
-    if os.path.exists("test.h5"):
-        os.remove("test.h5")
 
 
 @pytest_asyncio.fixture(scope="function")

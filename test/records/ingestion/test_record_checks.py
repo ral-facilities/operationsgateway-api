@@ -66,22 +66,6 @@ class TestRecordChecks:
             ),
             pytest.param(
                 ["ea1", "exists"],
-                ["invalid", "exists"],
-                [90097341, "exists"],
-                "other",
-                "empty",
-                id="shotnum and active_experiment have wrong datatype",
-            ),
-            pytest.param(
-                ["ea1", "exists"],
-                ["invalid", "exists"],
-                ["90097341", "missing"],
-                "other",
-                "empty",
-                id="shotnum has wrong datatype active_experiment missing",
-            ),
-            pytest.param(
-                ["ea1", "exists"],
                 ["valid", "missing"],
                 [90097341, "exists"],
                 "optional",

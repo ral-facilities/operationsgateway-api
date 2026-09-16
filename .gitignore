@@ -1,3 +1,5 @@
+.tmp
+.venv
 venv/
 .idea/
 *.pyc
@@ -16,6 +18,7 @@ id_rsa
 id_rsa.pub
 logging.ini*
 !logging.ini.example
+pytest*.ini
 util/realistic_data/data
 util/realistic_data/resources
 docs/site

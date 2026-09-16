@@ -12,6 +12,7 @@ from operationsgateway_api.src.models import (
     ImageChannelMetadataModel,
     ImageModel,
     ScalarChannelMetadataModel,
+    StringChannelMetadataModel,
     VectorChannelMetadataModel,
     VectorModel,
     WaveformChannelMetadataModel,
@@ -50,6 +51,7 @@ class ChannelChecks:
             "rgb-image",
             "waveform",
             "vector",
+            "string",
         ]
 
     def set_channels(self, manifest) -> None:
@@ -370,6 +372,23 @@ class ChannelChecks:
         return rejected_channels
 
     @classmethod
+    def string_metadata_checks(
+        cls,
+        key: str,
+        value_dict: dict | StringChannelMetadataModel,
+        rejected_channels: list[dict[str, str]],
+    ) -> list[dict[str, str]]:
+        """
+        Various checks brought out of the main function to simplify it
+
+        when called it returns a list of rejected_channels (if any) from the checks ran
+        """
+        value_dict = ChannelChecks._ensure_dict(value_dict)
+        ChannelChecks._check_str(key, "units", value_dict, rejected_channels)
+
+        return rejected_channels
+
+    @classmethod
     def image_metadata_checks(
         cls,
         key: str,
@@ -466,6 +485,13 @@ class ChannelChecks:
         for key, value in ingested_channels.items():
             if value.metadata.channel_dtype == "scalar":
                 rejected_channels = self.scalar_metadata_checks(
+                    key,
+                    value.metadata,
+                    rejected_channels,
+                )
+
+            elif value.metadata.channel_dtype == "string":
+                rejected_channels = self.string_metadata_checks(
                     key,
                     value.metadata,
                     rejected_channels,

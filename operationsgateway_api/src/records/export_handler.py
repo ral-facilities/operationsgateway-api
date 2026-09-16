@@ -39,6 +39,7 @@ class ExportHandler:
         colourmap_name: str,
         functions: "list[dict[str, str]]",
         export_scalars: bool,
+        export_strings: bool,
         export_images: bool,
         export_float_images: bool,
         export_waveform_csvs: bool,
@@ -57,6 +58,7 @@ class ExportHandler:
         self.limit_bit_depth = limit_bit_depth
         self.colourmap_name = colourmap_name
         self.export_scalars = export_scalars
+        self.export_strings = export_strings
         self.export_images = export_images
         self.export_float_images = export_float_images
         self.export_waveform_csvs = export_waveform_csvs
@@ -146,25 +148,38 @@ class ExportHandler:
 
     def _create_main_csv_headers(self) -> None:
         """
-        Process the "projection" (data table columns requested) to add the necessary
-        column headings to the main CSV file.
-        projection will be an array like:
-        ["metadata.shotnum", "channels.N_COMP_NF_IMAGE..."]
-        where the column/data channel name will be the part between the first and
-        second dots eg. shotnum and N_COMP_NF_IMAGE in these examples.
+        Process the projection (requested data-table columns) and add the
+        necessary headings to the main CSV file.
+
+        A projection can look like:
+        ["metadata.shotnum", "channels.N_COMP_NF_IMAGE.data"]
+
+        The column or channel name is the part between the first and second
+        dots, such as "shotnum" or "N_COMP_NF_IMAGE".
+
+        Metadata and record ID headings are always included. Channel headings
+        are included only for scalar and string channels when their respective
+        export options are enabled. Other channel types are exported as
+        separate files and are not included in the main CSV.
         """
         line = ""
+
         for proj in self.projection:
             channel_name = self._get_channel_name(proj)
-            if proj.split(".")[0] == "channels":
-                # image and waveform data will be exported to separate files so will not
-                # have values put in the main csv file
+            projection_type = proj.split(".")[0]
+
+            if projection_type == "channels":
                 channel_type = self._get_channel_type(channel_name)
-                if channel_type not in ["image", "float_image", "waveform", "vector"]:
+
+                if channel_type == "scalar" and self.export_scalars:
                     line = self._add_value_to_csv_line(line, channel_name)
-            else:
-                # this must be a "metadata" channel
+
+                elif channel_type == "string" and self.export_strings:
+                    line = self._add_value_to_csv_line(line, channel_name)
+
+            elif projection_type == "metadata" or proj == "_id":
                 line = self._add_value_to_csv_line(line, channel_name)
+
         # don't put empty lines in the CSV file
         if line != "":
             self.main_csv_file_in_memory.write(line + "\n")
@@ -279,34 +294,74 @@ class ExportHandler:
         line: str,
     ) -> str:
         """
-        Process data channels (those whose "projection" starts with "channels." as
-        opposed to metadata channels whose projection starts with "metadata.") by
-        adding image and waveform files to a zip file and scalar data to a line of text
-        that will be added to the main CSV file.
+        Process a projected data channel.
+
+        Images, float images, waveforms and vectors are exported to separate
+        files in a ZIP archive. Scalar and string values are added to the
+        main CSV when their respective export options are enabled.
         """
-        # process an image channel
         channel_type = self._get_channel_type(channel_name)
+
         if channel_type == "image":
-            log.info("Channel %s is an image", channel_name)
-            await self._add_image_to_zip(channels, record_id, raw_data, channel_name)
-        elif channel_type == "float_image":
-            log.info("Channel %s is a float image", channel_name)
-            await self._add_float_image_to_zip(channels, record_id, channel_name)
-        # process a waveform channel
-        elif channel_type == "waveform":
-            log.info("Channel %s is a waveform", channel_name)
-            await self._add_waveform_to_zip(channels, record_id, raw_data, channel_name)
-        elif channel_type == "vector":
-            log.info("Channel %s is a vector", channel_name)
-            await self._add_vector_to_zip(channels, record_id, channel_name)
-        # process a scalar channel
-        else:
-            log.info("Channel %s is a scalar", channel_name)
-            if channel_name in channels and channels[channel_name].data is not None:
-                value = channels[channel_name].data
-            else:
-                value = ""
-            line = self._add_value_to_csv_line(line=line, value=value, verbose=True)
+            await self._add_image_to_zip(
+                channels,
+                record_id,
+                raw_data,
+                channel_name,
+            )
+            return line
+
+        if channel_type == "float_image":
+            await self._add_float_image_to_zip(
+                channels,
+                record_id,
+                channel_name,
+            )
+            return line
+
+        if channel_type == "waveform":
+            await self._add_waveform_to_zip(
+                channels,
+                record_id,
+                raw_data,
+                channel_name,
+            )
+            return line
+
+        if channel_type == "vector":
+            await self._add_vector_to_zip(
+                channels,
+                record_id,
+                channel_name,
+            )
+            return line
+
+        if channel_type == "scalar":
+            if not self.export_scalars:
+                return line
+
+            return self._add_channel_value_to_csv_line(
+                channels,
+                channel_name,
+                line,
+            )
+
+        if channel_type == "string":
+            if not self.export_strings:
+                return line
+
+            return self._add_channel_value_to_csv_line(
+                channels,
+                channel_name,
+                line,
+            )
+
+        log.warning(
+            "Unrecognised channel type %r for channel %r",
+            channel_type,
+            channel_name,
+        )
+
         return line
 
     async def _add_image_to_zip(
@@ -497,12 +552,31 @@ class ExportHandler:
             await self._write_to_zip(f"{record_id}_{channel_name}.png", vector_image)
             self._check_zip_file_size()
 
+    def _add_channel_value_to_csv_line(
+        self,
+        channels: PartialChannels,
+        channel_name: str,
+        line: str,
+    ) -> str:
+        """
+        Add a scalar or string channel value to the main CSV line.
+        """
+        if channel_name in channels and channels[channel_name].data is not None:
+            value = channels[channel_name].data
+        else:
+            value = ""
+
+        return self._add_value_to_csv_line(
+            line=line,
+            value=value,
+        )
+
     def _add_main_csv_file_to_zip(self):
         """
         If other files have been exported and therefore a zip file is being prepared
         for export then add the CSV file to the zip file.
         """
-        if self.export_scalars:
+        if self.export_scalars or self.export_strings:
             if (
                 len(self.zip_file.infolist()) > 0
                 and len(self.main_csv_file_in_memory.getvalue()) > 0
@@ -534,7 +608,7 @@ class ExportHandler:
         if len(self.zip_file.infolist()) > 0:
             return self.zip_file_in_memory
         else:
-            if self.export_scalars:
+            if self.export_scalars or self.export_strings:
                 return self.main_csv_file_in_memory
             else:
                 raise ExportError("Nothing to export")

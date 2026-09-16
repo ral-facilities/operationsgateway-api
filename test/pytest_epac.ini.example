@@ -1,0 +1,11 @@
+[pytest]
+asyncio_mode=auto
+env = 
+    ; EPAC ingest config overrides
+    DATABASE__CONNECTION_URI=mongodb://localhost:27017/opsgateway-epac
+    SOURCE__SIMULATED_DATA_BUCKET=og-ci-simulated-data-epac
+    API__STORAGE_BUCKET=og-yourname-dev-epac
+    ; EPAC API config overrides
+    APP__USE_SUB_SECOND_TIMESTAMPS=False
+    ECHO__BUCKET_NAME=og-yourname-dev-epac
+    MONGODB__DATABASE_NAME=opsgateway-epac
