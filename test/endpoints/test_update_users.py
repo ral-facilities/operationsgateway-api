@@ -1,8 +1,10 @@
 import json
+from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 import pytest
 
+from operationsgateway_api.src.exceptions import QueryParameterError
 from operationsgateway_api.src.users.user import User
 
 
