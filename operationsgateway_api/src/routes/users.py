@@ -134,13 +134,14 @@ async def update_user(
 
     user = await User.check_username_exists(change_details.username)
 
-    if user.auth_type == "local":
-        await User.update_password(
-            change_details.username,
-            change_details.updated_password,
-        )
-    else:
-        log.info("cannot add password to FedID user type")
+    if change_details.updated_password is not None:
+        if user.auth_type == "local":
+            await User.update_password(
+                change_details.username,
+                change_details.updated_password,
+            )
+        else:
+            log.info("cannot add password to FedID user type")
 
     await User.edit_routes(
         change_details.username,

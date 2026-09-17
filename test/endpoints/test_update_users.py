@@ -1,8 +1,9 @@
-import json
+from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 import pytest
 
+from operationsgateway_api.src.exceptions import QueryParameterError
 from operationsgateway_api.src.users.user import User
 
 
@@ -134,8 +135,11 @@ class TestUpdateUsers:
         )
         user = await User.get_user(username)
 
-        if user.sha256_password is not None:
+        if updated_password is not None:
             assert User.hash_password(updated_password) == user.sha256_password
+        else:
+            # omitting the password must leave the existing one untouched
+            assert User.hash_password("password") == user.sha256_password
 
         assert set(user.authorised_routes) == set(expected_routes)
 
@@ -265,6 +269,71 @@ class TestUpdateUsers:
         if expected_response_code == 200:
             user = await User.get_user(username)
             assert user.sha256_password is None
+
+    @pytest.mark.asyncio
+    async def test_update_routes_only_keeps_password(
+        self,
+        test_app: TestClient,
+        login_and_get_token,
+        add_delete_local_fixture,
+    ):
+        """A PATCH that omits the password entirely must not wipe the stored hash."""
+        username = "testuserthatdoesnotexistinthedatabaselocal"
+        response = test_app.patch(
+            "/users",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+            json={"_id": username, "add_authorised_routes": ["/users GET"]},
+        )
+
+        assert response.status_code == 200
+
+        user = await User.get_user(username)
+        assert user.sha256_password == User.hash_password("password")
+        assert set(user.authorised_routes) == {
+            "/submit/hdf POST",
+            "/experiments POST",
+            "/users GET",
+        }
+
+    @pytest.mark.asyncio
+    async def test_update_password_only_keeps_routes(
+        self,
+        test_app: TestClient,
+        login_and_get_token,
+        add_delete_local_fixture,
+    ):
+        """A PATCH that omits both route fields must leave the routes untouched."""
+        username = "testuserthatdoesnotexistinthedatabaselocal"
+        response = test_app.patch(
+            "/users",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+            json={"_id": username, "updated_password": "newpassword"},
+        )
+
+        assert response.status_code == 200
+
+        user = await User.get_user(username)
+        assert user.sha256_password == User.hash_password("newpassword")
+        assert set(user.authorised_routes) == {
+            "/submit/hdf POST",
+            "/experiments POST",
+        }
+
+    @pytest.mark.asyncio
+    async def test_update_password_rejects_none(self):
+        """Test to check that calling User.update_password() with None
+        raises an error without touching the database."""
+        with patch(
+            "operationsgateway_api.src.users.user.MongoDBInterface.update_one",
+            new_callable=AsyncMock,
+        ) as update_one:
+            with pytest.raises(
+                QueryParameterError,
+                match="a password is required",
+            ):
+                await User.update_password("test-user", None)
+
+            update_one.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_update_local_user_forbidden(

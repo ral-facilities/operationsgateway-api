@@ -82,6 +82,12 @@ class User:
         """
         updates the password of the user given by the username
         """
+        if password is None:
+            log.error("no password supplied to update for user '%s'", username)
+            raise QueryParameterError(
+                f"a password is required to update user '{username}'",
+            )
+
         await MongoDBInterface.update_one(
             "users",
             filter_={"_id": username},
@@ -178,12 +184,13 @@ class User:
     @staticmethod
     async def edit_routes(username, authorised_routes, routes, add=True):
         if routes is not None:
-            if authorised_routes is not None:
-                routes = User.amend_routes_list(
-                    authorised_routes,
-                    routes,
-                    add,
-                )
+            # A user document in the db may have no authorised_routes field at
+            # all, which should be treated as an empty route list.
+            routes = User.amend_routes_list(
+                authorised_routes if authorised_routes is not None else [],
+                routes,
+                add,
+            )
             await User.update_routes(
                 username,
                 routes,
