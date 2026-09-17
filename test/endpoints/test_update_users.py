@@ -321,6 +321,22 @@ class TestUpdateUsers:
         }
 
     @pytest.mark.asyncio
+    async def test_update_password_rejects_none(self):
+        """Test to check that calling User.update_password() with None
+        raises an error without touching the database."""
+        with patch(
+                "operationsgateway_api.src.users.user.MongoDBInterface.update_one",
+                new_callable=AsyncMock,
+        ) as update_one:
+            with pytest.raises(
+                    QueryParameterError,
+                    match="a password is required",
+            ):
+                await User.update_password("test-user", None)
+
+            update_one.assert_not_called()
+
+    @pytest.mark.asyncio
     async def test_update_local_user_forbidden(
         self,
         test_app: TestClient,
