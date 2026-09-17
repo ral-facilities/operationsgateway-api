@@ -324,12 +324,12 @@ class TestUpdateUsers:
         """Test to check that calling User.update_password() with None
         raises an error without touching the database."""
         with patch(
-                "operationsgateway_api.src.users.user.MongoDBInterface.update_one",
-                new_callable=AsyncMock,
+            "operationsgateway_api.src.users.user.MongoDBInterface.update_one",
+            new_callable=AsyncMock,
         ) as update_one:
             with pytest.raises(
-                    QueryParameterError,
-                    match="a password is required",
+                QueryParameterError,
+                match="a password is required",
             ):
                 await User.update_password("test-user", None)
 
