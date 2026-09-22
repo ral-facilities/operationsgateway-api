@@ -93,6 +93,8 @@ export:
   # 1048576 = 1 MB
   # 1073741824 = 1 GB
   max_filesize_bytes: 1073741824
+  # Use shot numbers in export filenames when available, mainly for GEMINI.
+  use_shotnum_in_filenames: false
 observability:
   # used to view logs and traces in Elasticsearch run by Platforms & Services
   environment: dev

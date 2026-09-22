@@ -148,12 +148,23 @@ async def export_records(
     log.info("conditions: %s", conditions)
     ParameterHandler.encode_date_for_conditions(conditions)
 
+    query_projection = list(projection)
+
+    if Config.config.export.use_shotnum_in_filenames:
+        # Check whether the requested fields already include the shot number.
+        includes_metadata = "metadata" in query_projection
+        includes_shotnum = "metadata.shotnum" in query_projection
+
+        # Fetch the shot number so we can use it in filenames if not already requested.
+        if not includes_metadata and not includes_shotnum:
+            query_projection.append("metadata.shotnum")
+
     records_data = await Record.find_record(
         conditions,
         skip,
         limit,
         query_order,
-        projection,
+        query_projection,
     )
 
     if len(records_data) == 0:

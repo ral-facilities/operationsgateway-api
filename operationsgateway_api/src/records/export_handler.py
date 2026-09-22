@@ -81,6 +81,30 @@ class ExportHandler:
         self.functions = functions
         self.function_types = {}
 
+        self.use_shotnum_in_filenames = Config.config.export.use_shotnum_in_filenames
+        self.shotnums_by_record_id = self._get_shotnums_by_record_id()
+
+    def _get_shotnums_by_record_id(self) -> dict[str, int | str | None]:
+        """This creates a look up table; IDs : shotnum, for example:
+        {
+            "20230605080000": 12345,
+            "20230605080300": 12346,
+            "20230605080600": None,
+        }
+        """
+        shotnums = {}
+
+        if self.use_shotnum_in_filenames:
+            for record in self.records_data:
+                # Records without metadata have no shot number.
+                shotnum = None
+                if record.metadata is not None:
+                    shotnum = record.metadata.shotnum
+
+                shotnums[record.id_] = shotnum
+
+        return shotnums
+
     @staticmethod
     def _ensure_waveform_metadata(channel: PartialWaveformChannelModel) -> None:
         """Utility method for ensuring Waveform Metadata and units are not None."""
@@ -409,8 +433,16 @@ class ExportHandler:
                     limit_bit_depth=self.limit_bit_depth,
                     colourmap_name=self.colourmap_name,
                 )
-            await self._write_to_zip(f"{record_id}_{channel_name}.png", image_bytes)
+
+            filename = f"{record_id}_{channel_name}.png"
+
+            if self.use_shotnum_in_filenames:
+                shotnum = self.shotnums_by_record_id[record_id]
+                filename = f"{channel_name}_{shotnum}.png"
+
+            await self._write_to_zip(filename, image_bytes)
             self._check_zip_file_size()
+
         except Exception:
             log.exception("Could not find image for %s %s", record_id, channel_name)
             self.errors_file_in_memory.write(
@@ -433,7 +465,15 @@ class ExportHandler:
         log.info("Getting float image to add to zip: %s %s", record_id, channel_name)
         try:
             storage_bytes = await FloatImage.get_bytes(record_id, channel_name)
-            await self._write_to_zip(f"{record_id}_{channel_name}.npz", storage_bytes)
+
+            filename = f"{record_id}_{channel_name}.npz"
+
+            if self.use_shotnum_in_filenames:
+                shotnum = self.shotnums_by_record_id[record_id]
+                filename = f"{channel_name}_{shotnum}.npz"
+
+            await self._write_to_zip(filename, storage_bytes)
+
             self._check_zip_file_size()
         except Exception:
             self.errors_file_in_memory.write(
@@ -488,7 +528,14 @@ class ExportHandler:
                     + "\n",
                 )
             csv_bytes = waveform_csv_in_memory.getvalue()
-            await self._write_to_zip(f"{record_id}_{channel_name}.csv", csv_bytes)
+            filename = f"{record_id}_{channel_name}.csv"
+
+            if self.use_shotnum_in_filenames:
+                shotnum = self.shotnums_by_record_id[record_id]
+                filename = f"{channel_name}_{shotnum}.csv"
+
+            await self._write_to_zip(filename, csv_bytes)
+
             self._check_zip_file_size()
 
         if self.export_waveform_images:
@@ -498,7 +545,15 @@ class ExportHandler:
                 x_label=channel.metadata.x_units,
                 y_label=channel.metadata.y_units,
             )
-            await self._write_to_zip(f"{record_id}_{channel_name}.png", png_bytes)
+
+            filename = f"{record_id}_{channel_name}.png"
+
+            if self.use_shotnum_in_filenames:
+                shotnum = self.shotnums_by_record_id[record_id]
+                filename = f"{channel_name}_{shotnum}.png"
+
+            await self._write_to_zip(filename, png_bytes)
+
             self._check_zip_file_size()
 
     async def _add_vector_to_zip(
@@ -543,13 +598,27 @@ class ExportHandler:
                     string_io.write(f"{value}\n")
 
             data = string_io.getvalue()
-            await self._write_to_zip(f"{record_id}_{channel_name}.csv", data)
+
+            filename = f"{record_id}_{channel_name}.csv"
+
+            if self.use_shotnum_in_filenames:
+                shotnum = self.shotnums_by_record_id[record_id]
+                filename = f"{channel_name}_{shotnum}.csv"
+
+            await self._write_to_zip(filename, data)
+
             self._check_zip_file_size()
 
         if self.export_vector_images:
             vector = Vector(vector_model)
             vector_image = vector.get_fullsize_png(labels)
-            await self._write_to_zip(f"{record_id}_{channel_name}.png", vector_image)
+            filename = f"{record_id}_{channel_name}.png"
+
+            if self.use_shotnum_in_filenames:
+                shotnum = self.shotnums_by_record_id[record_id]
+                filename = f"{channel_name}_{shotnum}.png"
+
+            await self._write_to_zip(filename, vector_image)
             self._check_zip_file_size()
 
     def _add_channel_value_to_csv_line(
@@ -615,15 +684,25 @@ class ExportHandler:
 
     def get_filename_stem(self) -> str:
         """
-        Create a suitable download filename based on the records ID(s) and, in some
-        cases, the channel name.
-        For a single record the filename should include the record ID.
-        For multiple records the filename should include the first and the last record
-        ID.
-        If only a single channel is being exported the filename should include that.
+        Create a suitable download filename using record IDs or, when
+        use_shotnum_in_filenames is enabled, shot numbers.
+
+        For a single record, include its record ID or shot number.
+        For multiple records, include the IDs or shot numbers of the first
+        and last records, ordered by record ID.
+
+        If only a single channel is being exported, include its name.
         Note that this does not include the file extension.
         """
         first, last = self._get_first_last_record_ids()
+
+        # Use the shot numbers belonging to the first and last records.
+        if self.use_shotnum_in_filenames:
+            first = str(self.shotnums_by_record_id[first])
+
+            if last is not None:
+                last = str(self.shotnums_by_record_id[last])
+
         filename = first
         if last is not None:
             filename += "_to_" + last
