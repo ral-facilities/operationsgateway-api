@@ -11,6 +11,7 @@ import numpy as np
 from PIL import Image
 import pytest
 
+from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import EchoS3Error
 from test.conftest import (
     assert_text_file_contents,
@@ -23,6 +24,7 @@ from test.conftest import (
 
 
 class TestExport:
+
     @pytest.mark.parametrize(
         [
             "conditions",
@@ -1121,3 +1123,236 @@ class TestExport:
             assert len(zip_contents_dict) == len(
                 zip_file.infolist(),
             ), f"Missing files in export zip: {files_diff}"
+
+    # Gemini-only tests to check standalone CSV filenames can use {shotnum}.csv
+    # or {first_shotnum}_to_{last_shotnum}.csv when shot-number naming is enabled.
+    # It also checks this works without selecting shotnum as an exported column,
+    # and that the CSV contents remain unchanged.
+    @pytest.mark.parametrize(
+        ["record_ids", "expected_stem"],
+        [
+            pytest.param(
+                [RECORD_ID_05_0803],
+                "20230605-080259",
+                marks=MARK_GEMINI_TEST,
+                id="single-shot",
+            ),
+            pytest.param(
+                [RECORD_ID_05_0800, RECORD_ID_05_0803],
+                "20230605-075959_to_20230605-080259",
+                marks=MARK_GEMINI_TEST,
+                id="shot-range",
+            ),
+        ],
+    )
+    def test_csv_shotnum_filename(
+        self,
+        test_app,
+        login_and_get_token,
+        monkeypatch,
+        record_ids,
+        expected_stem,
+    ):
+        """Check shot-number filenames without changing the exported CSV data."""
+        params = [
+            ("conditions", json.dumps({"_id": {"$in": record_ids}})),
+            # Omit shotnum to check that it is fetched automatically for naming.
+            ("projection", "metadata.timestamp"),
+            ("projection", "channels.FE-204-PSO-EM.data"),
+            ("export_scalars", "true"),
+        ]
+        headers = {
+            "Authorization": f"Bearer {login_and_get_token}",
+        }
+
+        # Export with existing naming to establish the expected CSV contents.
+        monkeypatch.setattr(
+            Config.config.export,
+            "use_shotnum_in_filenames",
+            False,
+        )
+        original_response = test_app.get(
+            "/export",
+            params=params,
+            headers=headers,
+        )
+        assert original_response.status_code == 200, original_response.text
+
+        # Enable shot-number naming for the next request.
+        monkeypatch.setattr(
+            Config.config.export,
+            "use_shotnum_in_filenames",
+            True,
+        )
+        response = test_app.get(
+            "/export",
+            params=params,
+            headers=headers,
+        )
+        assert response.status_code == 200, response.text
+
+        # Check the download filename.
+        assert response.headers["Content-Disposition"] == (
+            f'attachment; filename="{expected_stem}.csv"'
+        )
+
+        # The selected columns and exported values must stay unchanged.
+        assert response.content == original_response.content
+
+    # Gemini-only tests covering all six individual export file types,
+    # plus a two-record image export to check range naming.
+    # Check filenames use {channel}_{shotnum}.{extension} when enabled,
+    # and {record_id}_{channel}.{extension} when disabled.
+    # Verify ZIP and main CSV names use the corresponding identifier or range.
+    # Range names run from the earliest to the latest record,
+    # even when the request returns records in reverse order.
+    # Each scenario runs with shot-number naming disabled and enabled:
+    # seven scenarios × two flag settings = fourteen test cases.
+    @pytest.mark.parametrize(
+        ["channel_name", "export_option", "extension", "multiple_records"],
+        [
+            pytest.param(
+                "FE-204-PSO-CAM-1",
+                "export_images",
+                "png",
+                False,
+                marks=MARK_GEMINI_TEST,
+                id="image",
+            ),
+            pytest.param(
+                "FE-204-NSS-WFS",
+                "export_float_images",
+                "npz",
+                False,
+                marks=MARK_GEMINI_TEST,
+                id="float-image",
+            ),
+            pytest.param(
+                "FE-204-PSO-P1-SP",
+                "export_waveform_csvs",
+                "csv",
+                False,
+                marks=MARK_GEMINI_TEST,
+                id="waveform-csv",
+            ),
+            pytest.param(
+                "FE-204-PSO-P1-SP",
+                "export_waveform_images",
+                "png",
+                False,
+                marks=MARK_GEMINI_TEST,
+                id="waveform-image",
+            ),
+            pytest.param(
+                "FE-204-NSS-WFS-COEF",
+                "export_vector_csvs",
+                "csv",
+                False,
+                marks=MARK_GEMINI_TEST,
+                id="vector-csv",
+            ),
+            pytest.param(
+                "FE-204-NSS-WFS-COEF",
+                "export_vector_images",
+                "png",
+                False,
+                marks=MARK_GEMINI_TEST,
+                id="vector-image",
+            ),
+            pytest.param(
+                "FE-204-PSO-CAM-1",
+                "export_images",
+                "png",
+                True,
+                marks=MARK_GEMINI_TEST,
+                id="image-shot-range",
+            ),
+        ],
+    )
+    @pytest.mark.parametrize(
+        "use_shotnum",
+        [False, True],
+        ids=["record-id-naming", "shotnum-naming"],
+    )
+    def test_zip_export_filenames(
+        self,
+        test_app,
+        login_and_get_token,
+        monkeypatch,
+        channel_name,
+        export_option,
+        extension,
+        multiple_records,
+        use_shotnum,
+    ):
+        """Check individual file, main CSV and ZIP names for both flag settings."""
+        monkeypatch.setattr(
+            Config.config.export,
+            "use_shotnum_in_filenames",
+            use_shotnum,
+        )
+
+        # These IDs and shot numbers belong to the existing Gemini test data.
+        record_ids = [RECORD_ID_05_0803]
+        shotnums = ["20230605-080259"]
+
+        if multiple_records:
+            record_ids = [RECORD_ID_05_0800, RECORD_ID_05_0803]
+            shotnums = ["20230605-075959", "20230605-080259"]
+
+        # Enable only the individual file type being tested.
+        export_options = {
+            "export_images": False,
+            "export_float_images": False,
+            "export_waveform_csvs": False,
+            "export_waveform_images": False,
+            "export_vector_csvs": False,
+            "export_vector_images": False,
+            export_option: True,
+        }
+
+        params = [
+            ("conditions", json.dumps({"_id": {"$in": record_ids}})),
+            # Reverse the results to check that range names remain chronological.
+            ("order", "_id DESC"),
+            # Do not select shotnum: it must be fetched internally for naming.
+            ("projection", "metadata.timestamp"),
+            ("projection", f"channels.{channel_name}"),
+            ("export_scalars", "true"),
+            ("export_strings", "false"),
+        ]
+        for option, enabled in export_options.items():
+            params.append((option, str(enabled).lower()))
+
+        response = test_app.get(
+            "/export",
+            params=params,
+            headers={
+                "Authorization": f"Bearer {login_and_get_token}",
+            },
+        )
+        assert response.status_code == 200, response.text
+
+        # Check the outer ZIP filename.
+        identifiers = shotnums if use_shotnum else record_ids
+        expected_stem = identifiers[0]
+        if multiple_records:
+            expected_stem += "_to_" + identifiers[-1]
+
+        assert response.headers["Content-Disposition"] == (
+            f'attachment; filename="{expected_stem}.zip"'
+        )
+
+        # Check the main CSV and every individual filename inside the ZIP.
+        expected_files = {f"{expected_stem}.csv"}
+
+        for record_id, shotnum in zip(record_ids, shotnums, strict=True):
+            if use_shotnum:
+                expected_files.add(f"{channel_name}_{shotnum}.{extension}")
+            else:
+                expected_files.add(f"{record_id}_{channel_name}.{extension}")
+
+        with ZipFile(io.BytesIO(response.content)) as archive:
+            actual_files = archive.namelist()
+            assert set(actual_files) == expected_files
+            assert len(actual_files) == len(expected_files)
