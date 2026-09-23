@@ -1,3 +1,4 @@
+from datetime import datetime, timezone, timedelta
 from unittest.mock import MagicMock
 
 import pytest
@@ -177,3 +178,79 @@ class TestExportHandler:
         errors = export_handler.errors_file_in_memory.getvalue()
         assert errors.startswith("Could not find")
         assert errors.endswith(f"19700101000000 {channel_name}\n")
+
+    # Check UTC headings and timestamp formatting for both EPAC and Gemini.
+    # They should now display the '+00:00' to indicate utc
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ["timestamp", "expected_timestamp"],
+        [
+            pytest.param(
+                datetime(2023, 6, 5, 8, 0, 0),
+                "2023-06-05 08:00:00+00:00",
+                id="naive-timestamp",
+            ),
+            pytest.param(
+                datetime(2023, 6, 5, 8, 0, 0, 123000),
+                "2023-06-05 08:00:00.123000+00:00",
+                id="fractional-seconds",
+            ),
+            pytest.param(
+                datetime(2023, 6, 5, 8, 0, 0, tzinfo=timezone.utc),
+                "2023-06-05 08:00:00+00:00",
+                id="already-utc",
+            ),
+            pytest.param(
+                datetime(
+                    2023,
+                    6,
+                    5,
+                    0,
+                    30,
+                    0,
+                    tzinfo=timezone(timedelta(hours=1)),
+                ),
+                "2023-06-04 23:30:00+00:00",
+                id="convert-to-utc-across-midnight",
+            ),
+        ],
+    )
+    async def test_csv_timestamp_utc(self, timestamp, expected_timestamp):
+        """Check the UTC heading, offset, conversion and timestamp precision."""
+        export_handler = ExportHandler(
+            records_data=[],
+            channel_manifest=None,
+            projection=["metadata.timestamp"],
+            lower_level=0,
+            upper_level=255,
+            limit_bit_depth=8,
+            colourmap_name=None,
+            functions=[],
+            export_scalars=True,
+            export_strings=False,
+            export_images=False,
+            export_float_images=False,
+            export_waveform_csvs=False,
+            export_waveform_images=False,
+            export_vector_csvs=False,
+            export_vector_images=False,
+        )
+
+        # Supply the timestamp directly to test its export formatting.
+        record = MagicMock()
+        record.metadata.timestamp = timestamp
+
+        try:
+            export_handler._create_main_csv_headers()
+            assert export_handler.main_csv_file_in_memory.getvalue() == (
+                '"timestamp_utc",\n'
+            )
+
+            result = await export_handler._process_projection(
+                record,
+                {},
+                "metadata.timestamp",
+            )
+            assert result == f"{expected_timestamp},"
+        finally:
+            export_handler.zip_file.close()
