@@ -1348,7 +1348,7 @@ class TestExport:
 
         for record_id, shotnum in zip(record_ids, shotnums, strict=True):
             if use_shotnum:
-                expected_files.add(f"{channel_name}_{shotnum}.{extension}")
+                expected_files.add(f"{shotnum}_{channel_name}.{extension}")
             else:
                 expected_files.add(f"{record_id}_{channel_name}.{extension}")
 

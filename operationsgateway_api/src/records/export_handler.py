@@ -438,7 +438,7 @@ class ExportHandler:
 
             if self.use_shotnum_in_filenames:
                 shotnum = self.shotnums_by_record_id[record_id]
-                filename = f"{channel_name}_{shotnum}.png"
+                filename = f"{shotnum}_{channel_name}.png"
 
             await self._write_to_zip(filename, image_bytes)
             self._check_zip_file_size()
@@ -470,7 +470,7 @@ class ExportHandler:
 
             if self.use_shotnum_in_filenames:
                 shotnum = self.shotnums_by_record_id[record_id]
-                filename = f"{channel_name}_{shotnum}.npz"
+                filename = f"{shotnum}_{channel_name}.npz"
 
             await self._write_to_zip(filename, storage_bytes)
 
@@ -532,7 +532,7 @@ class ExportHandler:
 
             if self.use_shotnum_in_filenames:
                 shotnum = self.shotnums_by_record_id[record_id]
-                filename = f"{channel_name}_{shotnum}.csv"
+                filename = f"{shotnum}_{channel_name}.csv"
 
             await self._write_to_zip(filename, csv_bytes)
 
@@ -550,7 +550,7 @@ class ExportHandler:
 
             if self.use_shotnum_in_filenames:
                 shotnum = self.shotnums_by_record_id[record_id]
-                filename = f"{channel_name}_{shotnum}.png"
+                filename = f"{shotnum}_{channel_name}.png"
 
             await self._write_to_zip(filename, png_bytes)
 
@@ -603,7 +603,7 @@ class ExportHandler:
 
             if self.use_shotnum_in_filenames:
                 shotnum = self.shotnums_by_record_id[record_id]
-                filename = f"{channel_name}_{shotnum}.csv"
+                filename = f"{shotnum}_{channel_name}.csv"
 
             await self._write_to_zip(filename, data)
 
@@ -616,7 +616,7 @@ class ExportHandler:
 
             if self.use_shotnum_in_filenames:
                 shotnum = self.shotnums_by_record_id[record_id]
-                filename = f"{channel_name}_{shotnum}.png"
+                filename = f"{shotnum}_{channel_name}.png"
 
             await self._write_to_zip(filename, vector_image)
             self._check_zip_file_size()
