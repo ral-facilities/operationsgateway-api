@@ -1302,13 +1302,13 @@ class TestExport:
 
         # Enable only the individual file type being tested.
         export_options = {
-            "export_images": False,
-            "export_float_images": False,
-            "export_waveform_csvs": False,
-            "export_waveform_images": False,
-            "export_vector_csvs": False,
-            "export_vector_images": False,
-            export_option: True,
+            "export_images": "false",
+            "export_float_images": "false",
+            "export_waveform_csvs": "false",
+            "export_waveform_images": "false",
+            "export_vector_csvs": "false",
+            "export_vector_images": "false",
+            export_option: "true",
         }
 
         params = [
@@ -1320,9 +1320,8 @@ class TestExport:
             ("projection", f"channels.{channel_name}"),
             ("export_scalars", "true"),
             ("export_strings", "false"),
+            *export_options.items(),  # insert each option as a (name, value) pair
         ]
-        for option, enabled in export_options.items():
-            params.append((option, str(enabled).lower()))
 
         response = test_app.get(
             "/export",
@@ -1346,11 +1345,8 @@ class TestExport:
         # Check the main CSV and every individual filename inside the ZIP.
         expected_files = {f"{expected_stem}.csv"}
 
-        for record_id, shotnum in zip(record_ids, shotnums, strict=True):
-            if use_shotnum:
-                expected_files.add(f"{shotnum}_{channel_name}.{extension}")
-            else:
-                expected_files.add(f"{record_id}_{channel_name}.{extension}")
+        for identifier in identifiers:
+            expected_files.add(f"{identifier}_{channel_name}.{extension}")
 
         with ZipFile(io.BytesIO(response.content)) as archive:
             actual_files = archive.namelist()
