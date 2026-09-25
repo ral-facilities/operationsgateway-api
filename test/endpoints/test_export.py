@@ -1201,7 +1201,7 @@ class TestExport:
 
     # Gemini-only tests covering all six individual export file types,
     # plus a two-record image export to check range naming.
-    # Check filenames use {channel}_{shotnum}.{extension} when enabled,
+    # Check filenames use {shotnum}_{channel}.{extension} when enabled,
     # and {record_id}_{channel}.{extension} when disabled.
     # Verify ZIP and main CSV names use the corresponding identifier or range.
     # Range names run from the earliest to the latest record,
