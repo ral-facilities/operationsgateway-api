@@ -24,8 +24,8 @@ vectors:
 echo:
   url: http://127.0.0.1:9000
   username: operationsgateway
-  access_key: minioadmin
-  secret_key: minioadmin
+  access_key: echoadmin
+  secret_key: echoadmin
   bucket_name: og-actions-test
 mongodb:
   mongodb_url: mongodb://localhost:27017

@@ -155,6 +155,9 @@ class ExportConfig(BaseModel):
 
     max_filesize_bytes: StrictInt
 
+    # mostly used for gemini
+    use_shotnum_in_filenames: bool = False
+
 
 class ObservabilityConfig(BaseModel):
     """Configuration model class to store export observability details"""
