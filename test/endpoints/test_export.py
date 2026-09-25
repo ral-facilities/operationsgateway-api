@@ -1349,6 +1349,5 @@ class TestExport:
             expected_files.add(f"{identifier}_{channel_name}.{extension}")
 
         with ZipFile(io.BytesIO(response.content)) as archive:
-            actual_files = archive.namelist()
-            assert set(actual_files) == expected_files
-            assert len(actual_files) == len(expected_files)
+            # Check that the ZIP contains the filenames we expect and each file appears only once
+            assert sorted(archive.namelist()) == sorted(expected_files)
