@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timezone
 from io import BytesIO, StringIO
 import logging
 from typing import Any, List, Tuple, Union
@@ -178,6 +179,9 @@ class ExportHandler:
                     line = self._add_value_to_csv_line(line, channel_name)
 
             elif projection_type == "metadata" or proj == "_id":
+                # Make the timezone explicit in the exported CSV heading.
+                if proj == "metadata.timestamp":
+                    channel_name = "timestamp_utc"
                 line = self._add_value_to_csv_line(line, channel_name)
 
         # don't put empty lines in the CSV file
@@ -264,11 +268,23 @@ class ExportHandler:
                 verbose=True,
             )
         elif projection_parts[0] == "metadata":
+            value = getattr(record_data.metadata, projection_parts[1], "")
+
+            if proj == "metadata.timestamp" and isinstance(value, datetime):
+                if value.tzinfo is None:
+                    # MongoDB returns timezone-naive datetimes representing UTC.
+                    # Attach UTC without changing the clock time.
+                    value = value.replace(tzinfo=timezone.utc)
+                else:
+                    # Convert timezone-aware timestamps to UTC.
+                    value = value.astimezone(timezone.utc)
+
             return self._add_value_to_csv_line(
                 line="",
-                value=getattr(record_data.metadata, projection_parts[1], ""),
+                value=value,
                 verbose=True,
             )
+
         elif projection_parts[0] == "channels":
             # process one of the data channels
             return await self._process_data_channel(
