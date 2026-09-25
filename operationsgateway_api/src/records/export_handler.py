@@ -434,13 +434,8 @@ class ExportHandler:
                     colourmap_name=self.colourmap_name,
                 )
 
-            filename = f"{record_id}_{channel_name}.png"
+            await self._write_to_zip(record_id, channel_name, "png", image_bytes)
 
-            if self.use_shotnum_in_filenames:
-                shotnum = self.shotnums_by_record_id[record_id]
-                filename = f"{shotnum}_{channel_name}.png"
-
-            await self._write_to_zip(filename, image_bytes)
             self._check_zip_file_size()
 
         except Exception:
@@ -466,13 +461,7 @@ class ExportHandler:
         try:
             storage_bytes = await FloatImage.get_bytes(record_id, channel_name)
 
-            filename = f"{record_id}_{channel_name}.npz"
-
-            if self.use_shotnum_in_filenames:
-                shotnum = self.shotnums_by_record_id[record_id]
-                filename = f"{shotnum}_{channel_name}.npz"
-
-            await self._write_to_zip(filename, storage_bytes)
+            await self._write_to_zip(record_id, channel_name, "npz", storage_bytes)
 
             self._check_zip_file_size()
         except Exception:
@@ -528,13 +517,8 @@ class ExportHandler:
                     + "\n",
                 )
             csv_bytes = waveform_csv_in_memory.getvalue()
-            filename = f"{record_id}_{channel_name}.csv"
 
-            if self.use_shotnum_in_filenames:
-                shotnum = self.shotnums_by_record_id[record_id]
-                filename = f"{shotnum}_{channel_name}.csv"
-
-            await self._write_to_zip(filename, csv_bytes)
+            await self._write_to_zip(record_id, channel_name, "csv", csv_bytes)
 
             self._check_zip_file_size()
 
@@ -546,13 +530,7 @@ class ExportHandler:
                 y_label=channel.metadata.y_units,
             )
 
-            filename = f"{record_id}_{channel_name}.png"
-
-            if self.use_shotnum_in_filenames:
-                shotnum = self.shotnums_by_record_id[record_id]
-                filename = f"{shotnum}_{channel_name}.png"
-
-            await self._write_to_zip(filename, png_bytes)
+            await self._write_to_zip(record_id, channel_name, "png", png_bytes)
 
             self._check_zip_file_size()
 
@@ -599,26 +577,16 @@ class ExportHandler:
 
             data = string_io.getvalue()
 
-            filename = f"{record_id}_{channel_name}.csv"
-
-            if self.use_shotnum_in_filenames:
-                shotnum = self.shotnums_by_record_id[record_id]
-                filename = f"{shotnum}_{channel_name}.csv"
-
-            await self._write_to_zip(filename, data)
+            await self._write_to_zip(record_id, channel_name, "csv", data)
 
             self._check_zip_file_size()
 
         if self.export_vector_images:
             vector = Vector(vector_model)
             vector_image = vector.get_fullsize_png(labels)
-            filename = f"{record_id}_{channel_name}.png"
 
-            if self.use_shotnum_in_filenames:
-                shotnum = self.shotnums_by_record_id[record_id]
-                filename = f"{shotnum}_{channel_name}.png"
+            await self._write_to_zip(record_id, channel_name, "png", vector_image)
 
-            await self._write_to_zip(filename, vector_image)
             self._check_zip_file_size()
 
     def _add_channel_value_to_csv_line(
@@ -761,7 +729,21 @@ class ExportHandler:
                 "channels requested, or both.",
             )
 
-    async def _write_to_zip(self, arcname: str, data: str | bytes) -> None:
+    async def _write_to_zip(
+        self,
+        record_id: str,
+        channel_name: str,
+        extension: str,
+        data: str | bytes,
+    ) -> None:
+
+        # Build the channel filename
+        filename = f"{record_id}_{channel_name}.{extension}"
+
+        if self.use_shotnum_in_filenames:
+            shotnum = self.shotnums_by_record_id[record_id]
+            filename = f"{shotnum}_{channel_name}.{extension}"
+
         """
         As a precaution, lock access to the zip_file to prevent simultaneous access.
         This might not be strictly necessary as zip_file has it's own (synchronous)
@@ -769,4 +751,4 @@ class ExportHandler:
         awaiting the outcome of one ongoing writestr while it performs another writestr.
         """
         async with self.zip_lock:
-            self.zip_file.writestr(arcname, data)
+            self.zip_file.writestr(filename, data)
