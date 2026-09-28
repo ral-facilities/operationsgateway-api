@@ -1343,10 +1343,10 @@ class TestExport:
         )
 
         # Check the main CSV and every individual filename inside the ZIP.
-        expected_files = {f"{expected_stem}.csv"}
+        expected_files = [f"{expected_stem}.csv"]
 
         for identifier in identifiers:
-            expected_files.add(f"{identifier}_{channel_name}.{extension}")
+            expected_files.append(f"{identifier}_{channel_name}.{extension}")
 
         with ZipFile(io.BytesIO(response.content)) as archive:
             # Check that the ZIP contains the filenames we expect
