@@ -117,6 +117,8 @@ class DataIngester:
         if self.config.script_options.launch_api:
             starter.kill()
 
+        print("Ingestion finished.")
+
 
 if __name__ == "__main__":
     data_ingester = DataIngester()
