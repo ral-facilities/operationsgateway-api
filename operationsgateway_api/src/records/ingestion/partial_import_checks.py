@@ -99,11 +99,11 @@ class PartialImportChecks:
         echo_interface = get_echo_interface()
         for channel_name, channel_model in self.ingested_record.channels.items():
             if channel_name in self.stored_record.channels:
-                if isinstance(channel_model, ImageChannelModel):
-                    path = Image.get_full_path(channel_model.image_path)
-                    object_stored = await echo_interface.head_object(path)
-                elif isinstance(channel_model, ImageSeriesChannelModel):
+                if isinstance(channel_model, ImageSeriesChannelModel):
                     path = ImageSeries.get_full_path(channel_model.image_path)
+                    object_stored = await echo_interface.head_object(path)
+                elif isinstance(channel_model, ImageChannelModel):
+                    path = Image.get_full_path(channel_model.image_path)
                     object_stored = await echo_interface.head_object(path)
                 elif isinstance(channel_model, FloatImageChannelModel):
                     path = FloatImage.get_full_path(channel_model.image_path)

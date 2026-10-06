@@ -12,6 +12,7 @@ from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.models import SubmitHDFResponse
 from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.image_series import ImageSeries
 from operationsgateway_api.src.records.ingestion.channel_checks import ChannelChecks
 from operationsgateway_api.src.records.ingestion.file_checks import FileChecks
 from operationsgateway_api.src.records.ingestion.hdf_handler import HDFDataHandler
@@ -145,7 +146,7 @@ async def submit_hdf(
 
     checker_response["warnings"] = warnings
 
-    record_data, images, float_images, waveforms, vectors = HDFDataHandler._update_data(
+    record_data, images, image_series, float_images, waveforms, vectors = HDFDataHandler._update_data(
         checker_response,
         record_data,
         images,
@@ -163,9 +164,15 @@ async def submit_hdf(
         await _insert(Waveform(w), failed_waveform_uploads, record)
 
     failed_image_uploads = await record.concurrent_upload(images, Image)
+
     failed_float_image_uploads = await record.concurrent_upload(
         float_images,
         FloatImage,
+    )
+
+    failed_image_series_uploads = await record.concurrent_upload(
+        image_series,
+        ImageSeries,
     )
 
     log.debug("Processing vectors")
@@ -178,6 +185,7 @@ async def submit_hdf(
     all_failed_upload_channels = (
         failed_waveform_uploads
         + failed_image_uploads
+        + failed_image_series_uploads
         + failed_float_image_uploads
         + failed_vector_uploads
     )

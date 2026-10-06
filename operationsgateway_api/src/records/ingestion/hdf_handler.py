@@ -77,7 +77,8 @@ class HDFDataHandler:
     ) -> tuple[
         RecordModel,
         list[WaveformModel],
-        list[ImageModel],
+        list[ImageModel], # normal images
+        list[ImageModel],  # image_series
         list[FloatImageModel],
         list[VectorModel],
         list[dict[str, str]],
@@ -117,6 +118,7 @@ class HDFDataHandler:
             record,
             self.waveforms,
             self.images,
+            self.image_series,
             self.float_images,
             self.vectors,
             self.internal_failed_channel,
@@ -616,7 +618,8 @@ class HDFDataHandler:
         vectors: list[VectorModel],
     ) -> tuple[
         RecordModel,
-        list[ImageModel],
+        list[ImageModel],# image
+        list[ImageModel],# image series
         list[FloatImageModel],
         list[WaveformModel],
         list[VectorModel],
