@@ -610,6 +610,7 @@ class HDFDataHandler:
         checker_response: dict[str, Any],
         record_data: RecordModel,
         images: list[ImageModel],
+        image_series: list[ImageModel],
         float_images: list[FloatImageModel],
         waveforms: list[WaveformModel],
         vectors: list[VectorModel],
@@ -628,6 +629,8 @@ class HDFDataHandler:
 
             if channel.metadata.channel_dtype == "image":
                 HDFDataHandler.remove_channel(images, channel.image_path)
+            elif channel.metadata.channel_dtype == "image_series":
+                HDFDataHandler.remove_channel(image_series, channel.image_path)
             elif channel.metadata.channel_dtype == "float_image":
                 HDFDataHandler.remove_channel(float_images, channel.image_path)
             elif channel.metadata.channel_dtype == "waveform":
@@ -637,7 +640,7 @@ class HDFDataHandler:
 
             del record_data.channels[key]
 
-        return record_data, images, float_images, waveforms, vectors
+        return record_data, images, image_series, float_images, waveforms, vectors
 
     @staticmethod
     def remove_channel(
