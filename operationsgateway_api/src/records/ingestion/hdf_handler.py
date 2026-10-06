@@ -245,6 +245,17 @@ class HDFDataHandler:
             metadata = ImageSeriesChannelMetadataModel(**channel_metadata)
             dataset = value["data"]
 
+            if dataset.ndim != 3:
+                internal_failed_channel.append(
+                    {
+                        channel_name: (
+                            "data has wrong shape, expected 3 dimensions; "
+                            "(frame_count, height, width), e.g. (25, 480, 640)"
+                        ),
+                    },
+                )
+                return None, internal_failed_channel
+
             data = dataset[()]
 
             if not metadata.bit_depth:
@@ -263,6 +274,7 @@ class HDFDataHandler:
             channel = ImageSeriesChannelModel(
                 metadata=metadata,
                 image_path=image_path,
+                shape=(data.shape[0], data.shape[1], data.shape[2]),
                 header_offset_bytes=series.get_header_offset_bytes(data),
             )
 

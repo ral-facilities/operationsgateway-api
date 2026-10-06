@@ -178,6 +178,19 @@ class ChannelChecks:
                         {key: "data has wrong datatype, should be ndarray"},
                     )
 
+            elif value.metadata.channel_dtype == "image_series":
+                image = ChannelChecks._find_path(
+                    self.ingested_image_series,
+                    value.image_path,
+                )
+                if not isinstance(image, ImageModel) or not isinstance(
+                    image.data,
+                    np.ndarray,
+                ):
+                    rejected_channels.append(
+                        {key: "data has wrong datatype, should be ndarray"},
+                    )
+
             elif value.metadata.channel_dtype == "float_image":
                 image = ChannelChecks._find_path(
                     self.ingested_float_images,
@@ -507,6 +520,13 @@ class ChannelChecks:
                     rejected_channels,
                 )
 
+            elif value.metadata.channel_dtype == "image_series":
+                rejected_channels = self.image_metadata_checks(
+                    key,
+                    value.metadata,
+                    rejected_channels,
+                )
+
             elif value.metadata.channel_dtype == "float_image":
                 rejected_channels = self.float_image_metadata_checks(
                     key,
@@ -592,16 +612,6 @@ class ChannelChecks:
                 ):
                     rejected_channels.append(
                         {key: "data has wrong datatype, should be uint16 or uint8"}
-                    )
-
-                elif data.ndim != 3:
-                    rejected_channels.append(
-                        {
-                            key: (
-                                "data has wrong shape, expected 3 dimensions; "
-                                "(frame_count, height, width), e.g. (25, 480, 640)"
-                            ),
-                        },
                     )
 
             elif value.metadata.channel_dtype == "float_image":

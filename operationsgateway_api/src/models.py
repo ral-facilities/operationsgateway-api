@@ -154,6 +154,7 @@ class ImageSeriesChannelMetadataModel(ImageChannelMetadataModel):
 
 class ImageSeriesChannelModel(ImageChannelModel):
     metadata: ImageSeriesChannelMetadataModel
+    shape: tuple[int, int, int]
     header_offset_bytes: int
 
 
