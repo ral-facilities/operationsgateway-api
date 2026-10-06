@@ -31,7 +31,7 @@ class ChannelChecks:
         ingested_float_images=None,
         ingested_vectors=None,
         internal_failed_channels=None,
-        ingested_image_series=None
+        ingested_image_series=None,
     ):
         """
         This class is instantiated using everything from hdf_handler

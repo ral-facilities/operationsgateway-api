@@ -6,7 +6,8 @@ from operationsgateway_api.src.models import (
     ImageChannelModel,
     RecordModel,
     VectorChannelModel,
-    WaveformChannelModel, ImageSeriesChannelModel,
+    WaveformChannelModel,
+    ImageSeriesChannelModel,
 )
 from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.records.float_image import FloatImage

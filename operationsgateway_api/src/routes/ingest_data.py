@@ -146,14 +146,16 @@ async def submit_hdf(
 
     checker_response["warnings"] = warnings
 
-    record_data, images, image_series, float_images, waveforms, vectors = HDFDataHandler._update_data(
-        checker_response,
-        record_data,
-        images,
-        image_series,
-        float_images,
-        waveforms,
-        vectors=vectors,
+    record_data, images, image_series, float_images, waveforms, vectors = (
+        HDFDataHandler._update_data(
+            checker_response,
+            record_data,
+            images,
+            image_series,
+            float_images,
+            waveforms,
+            vectors=vectors,
+        )
     )
 
     record = Record(record_data)
