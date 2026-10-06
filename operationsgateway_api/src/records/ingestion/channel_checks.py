@@ -31,6 +31,7 @@ class ChannelChecks:
         ingested_float_images=None,
         ingested_vectors=None,
         internal_failed_channels=None,
+        ingested_image_series=None
     ):
         """
         This class is instantiated using everything from hdf_handler
@@ -40,20 +41,20 @@ class ChannelChecks:
         self.ingested_record = ingested_record or []
         self.ingested_waveforms = ingested_waveforms or []
         self.ingested_images = ingested_images or []
-        self.ingested_image_series = ingested_images_series or []
         self.ingested_float_images = ingested_float_images or []
         self.ingested_vectors = ingested_vectors or []
         self.internal_failed_channels = internal_failed_channels or []
+        self.ingested_image_series = ingested_image_series or []
 
         self.supported_channel_types = [
             "scalar",
             "image",
-            "image_series",
             "float_image",
             "rgb-image",
             "waveform",
             "vector",
             "string",
+            "image_series",
         ]
 
     def set_channels(self, manifest) -> None:

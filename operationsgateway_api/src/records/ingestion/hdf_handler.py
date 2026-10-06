@@ -67,7 +67,7 @@ class HDFDataHandler:
         self.channels = {}
         self.waveforms = []
         self.images = []
-        self.images_series = []
+        self.image_series = []
         self.float_images = []
         self.vectors = []
         self.strings = []
@@ -263,7 +263,6 @@ class HDFDataHandler:
             channel = ImageSeriesChannelModel(
                 metadata=metadata,
                 image_path=image_path,
-                shape=(data.shape[0], data.shape[1], data.shape[2]),
                 header_offset_bytes=series.get_header_offset_bytes(data),
             )
 
