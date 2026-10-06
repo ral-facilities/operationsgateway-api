@@ -34,9 +34,12 @@ from operationsgateway_api.src.models import (
     WaveformChannelMetadataModel,
     WaveformChannelModel,
     WaveformModel,
+    ImageSeriesChannelMetadataModel,
+    ImageSeriesChannelModel,
 )
 from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.image_series import ImageSeries
 from operationsgateway_api.src.records.ingestion.channel_checks import ChannelChecks
 from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
@@ -48,6 +51,7 @@ class HDFDataHandler:
     acceptable_datasets = {
         "scalar": ["data"],
         "image": ["data"],
+        "image_series": ["data"],
         "float_image": ["data"],
         "waveform": ["x", "y"],
         "vector": ["data"],
@@ -63,6 +67,7 @@ class HDFDataHandler:
         self.channels = {}
         self.waveforms = []
         self.images = []
+        self.images_series = []
         self.float_images = []
         self.vectors = []
         self.strings = []
@@ -220,6 +225,58 @@ class HDFDataHandler:
                 {channel_name: "data attribute is missing"},
             )
             return None, internal_failed_channel
+        except ValidationError as exc:
+            raise ModelError(str(exc)) from exc
+
+    def _extract_image_series(
+        self,
+        internal_failed_channel,
+        channel_name,
+        channel_metadata,
+        value,
+    ):
+        if self._unexpected_attribute("image_series", value):
+            internal_failed_channel.append(
+                {channel_name: "unexpected group or dataset in channel group"},
+            )
+            return None, internal_failed_channel
+
+        try:
+            metadata = ImageSeriesChannelMetadataModel(**channel_metadata)
+            dataset = value["data"]
+
+            data = dataset[()]
+
+            if not metadata.bit_depth:
+                metadata.bit_depth = 8 if data.dtype == np.uint8 else 16
+                metadata.bit_depth_inferred = True
+
+            image_path = ImageSeries.get_relative_path(self.record_id, channel_name)
+
+            image_model = ImageModel(
+                path=image_path,
+                data=data,
+                bit_depth=metadata.bit_depth,
+            )
+            series = ImageSeries(image_model)
+
+            channel = ImageSeriesChannelModel(
+                metadata=metadata,
+                image_path=image_path,
+                shape=(data.shape[0], data.shape[1], data.shape[2]),
+                header_offset_bytes=series.get_header_offset_bytes(data),
+            )
+
+            self.image_series.append(image_model)
+
+            return channel, False
+
+        except KeyError:
+            internal_failed_channel.append(
+                {channel_name: "data attribute is missing"},
+            )
+            return None, internal_failed_channel
+
         except ValidationError as exc:
             raise ModelError(str(exc)) from exc
 
@@ -457,6 +514,13 @@ class HDFDataHandler:
             return internal_failed_channel
         elif value.attrs["channel_dtype"] == "image":
             channel, fail = self._extract_image(
+                internal_failed_channel,
+                channel_name,
+                channel_metadata,
+                value,
+            )
+        elif value.attrs["channel_dtype"] == "image_series":
+            channel, fail = self._extract_image_series(
                 internal_failed_channel,
                 channel_name,
                 channel_metadata,

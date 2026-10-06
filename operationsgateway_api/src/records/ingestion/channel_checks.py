@@ -40,6 +40,7 @@ class ChannelChecks:
         self.ingested_record = ingested_record or []
         self.ingested_waveforms = ingested_waveforms or []
         self.ingested_images = ingested_images or []
+        self.ingested_image_series = ingested_images_series or []
         self.ingested_float_images = ingested_float_images or []
         self.ingested_vectors = ingested_vectors or []
         self.internal_failed_channels = internal_failed_channels or []
@@ -47,6 +48,7 @@ class ChannelChecks:
         self.supported_channel_types = [
             "scalar",
             "image",
+            "image_series",
             "float_image",
             "rgb-image",
             "waveform",
@@ -575,6 +577,29 @@ class ChannelChecks:
                     rejected_channels.append(
                         {
                             key: "data has wrong datatype, should be uint16 or uint8",
+                        },
+                    )
+
+            elif value.metadata.channel_dtype == "image_series":
+                image = ChannelChecks._find_path(
+                    self.ingested_image_series, value.image_path
+                )
+                data = image.data if isinstance(image, ImageModel) else None
+                if not (
+                    isinstance(data, np.ndarray)
+                    and (data.dtype == np.uint16 or data.dtype == np.uint8)
+                ):
+                    rejected_channels.append(
+                        {key: "data has wrong datatype, should be uint16 or uint8"}
+                    )
+
+                elif data.ndim != 3:
+                    rejected_channels.append(
+                        {
+                            key: (
+                                "data has wrong shape, expected 3 dimensions; "
+                                "(frame_count, height, width), e.g. (25, 480, 640)"
+                            ),
                         },
                     )
 
