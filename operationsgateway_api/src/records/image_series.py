@@ -3,12 +3,15 @@ from __future__ import annotations
 from io import BytesIO
 
 import numpy as np
-
-from operationsgateway_api.src.exceptions import EchoS3Error
-from operationsgateway_api.src.models import ImageModel
+from PIL import Image as PILImage
+from operationsgateway_api.src.exceptions import EchoS3Error, \
+    MissingAttributeError, QueryParameterError, RecordError
+from operationsgateway_api.src.models import ImageModel, \
+    PartialImageSeriesChannelModel, ChannelDtype
 from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.image_abc import ImageABC
+from operationsgateway_api.src.records.record import Record
 
 
 # pretty much a copy paste from the image class
@@ -71,9 +74,75 @@ class ImageSeries(ImageABC):
             return input_image.get_channel_name_from_path()
 
     @staticmethod
+    async def get_frame(
+            record_id: str,
+            channel_name: str,
+            frame_index: int,
+    ) -> bytes:
+        """Retrieve one zero-based frame and return it as a greyscale PNG."""
+
+        record = await Record.find_record_by_id(record_id, {})
+        channel = (record.channels or {}).get(channel_name)
+
+        if channel is None:
+            raise MissingAttributeError(
+                f"Channel '{channel_name}' not found in record '{record_id}'",
+            )
+
+        if not isinstance(channel, PartialImageSeriesChannelModel):
+            raise QueryParameterError("Channel is not an image series")
+
+        metadata = channel.metadata
+        if metadata is None or metadata.channel_dtype != ChannelDtype.IMAGE_SERIES:
+            raise RecordError("Image series metadata is missing or invalid")
+
+        shape = channel.shape
+        header_offset = channel.header_offset_bytes
+        image_path = channel.image_path
+
+        if (
+                shape is None
+                or any(dimension <= 0 for dimension in shape)
+                or header_offset is None
+                or header_offset <= 0
+                or not image_path
+        ):
+            raise RecordError("Image series storage metadata is missing or invalid")
+
+        frame_count, height, width = shape
+
+        if not 0 <= frame_index < frame_count:
+            raise QueryParameterError(
+                f"Frame index must be between 0 and {frame_count - 1}",
+            )
+
+        # Each frame occupies consecutive bytes after the NPY header.
+        frame_size = height * width * ImageSeries.storage_dtype.itemsize
+        start_byte = header_offset + frame_index * frame_size
+        end_byte = start_byte + frame_size - 1
+
+        pixel_bytes = await get_echo_interface().download_file_range(
+            object_path=ImageSeries.get_full_path(image_path),
+            start_byte=start_byte,
+            end_byte=end_byte,
+        )
+
+        frame = np.frombuffer(
+            pixel_bytes,
+            dtype=ImageSeries.storage_dtype,
+        ).reshape(height, width)
+
+        output = BytesIO()
+        with PILImage.fromarray(frame) as image:
+            image.save(output, format="PNG")
+
+        return output.getvalue()
+
+    @staticmethod
     async def get_image(
         record_id: str, channel_name: str, colourmap_name: str
     ) -> BytesIO:
+        # needed because we're an abstract class
         raise NotImplementedError(
             "TDDO: Frame retrieval will be implemented later",
         )
