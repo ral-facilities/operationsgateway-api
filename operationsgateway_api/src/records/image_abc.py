@@ -13,6 +13,7 @@ log = logging.getLogger()
 class ImageABC(ChannelObjectABC):
     def __init__(self, image: ImageModel) -> None:
         self.image = image
+        self.thumbnail: bytes | None = None
 
     @property
     @abstractmethod
