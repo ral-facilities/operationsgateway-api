@@ -380,7 +380,7 @@ class Record:
             b64_thumbnail_str = getattr(value, "thumbnail", None)
             thumbnail_set = b64_thumbnail_str is not None
             skip_limit_set = vector_skip or vector_limit
-            if channel_dtype == "image" and thumbnail_set:
+            if channel_dtype in {"image", "image_series"} and thumbnail_set:
                 thumbnail_bytes = FalseColourHandler.apply_false_colour_to_b64_img(
                     base64_image=b64_thumbnail_str,
                     lower_level=lower_level,
