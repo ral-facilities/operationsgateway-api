@@ -79,7 +79,12 @@ class ImageSeries(ImageABC):
             channel_name: str,
             frame_index: int,
     ) -> bytes:
-        """Retrieve one zero-based frame and return it as a greyscale PNG."""
+        """
+        This doesn't just get any old frame! but it works out where each frame
+        is by calculate the requested frame's byte range. It uses the header offset,
+        frame index, dimensions, and bytes per pixel, then retrieve it as a
+        greyscale PNG.
+        """
 
         record = await Record.find_record_by_id(record_id, {})
         channel = (record.channels or {}).get(channel_name)
