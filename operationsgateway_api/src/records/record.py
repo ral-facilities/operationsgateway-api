@@ -300,7 +300,7 @@ class Record:
 
             if channel.metadata.channel_dtype in {"scalar", "string"}:
                 data = channel.data
-            elif channel.metadata.channel_dtype == "image":
+            elif channel.metadata.channel_dtype in {"image", "image_series"}:
                 thumbnail_bytes = FalseColourHandler.apply_false_colour_to_b64_img(
                     channel.thumbnail,
                     None,
