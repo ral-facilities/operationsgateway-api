@@ -149,7 +149,7 @@ class ImageSeriesChannelMetadataModel(ImageChannelMetadataModel):
     channel_dtype: Literal[ChannelDtype.IMAGE_SERIES] | Any | None = (
         ChannelDtype.IMAGE_SERIES
     )
-    frame_rate_hz: float
+    frame_rate_hz: float | Any | None = None
 
 
 class ImageSeriesChannelModel(ImageChannelModel):
