@@ -247,7 +247,8 @@ class HDFDataHandler:
             metadata = ImageSeriesChannelMetadataModel(**channel_metadata)
             dataset = value["data"]
 
-            if dataset.ndim != 3:
+            # check shape
+            if dataset.ndim != 3 or any(dimension <= 0 for dimension in dataset.shape):
                 internal_failed_channel.append(
                     {
                         channel_name: (
