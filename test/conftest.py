@@ -23,6 +23,7 @@ from operationsgateway_api.src.records.echo_interface import (
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.image_series import ImageSeries
 from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
 from util.realistic_data.ingest_echo_data import DataIngester
@@ -192,6 +193,7 @@ async def reset_record_storage():
     subdirectories = echo.format_record_id(RECORD_ID_TMP)
     await echo.delete_directory(f"{Waveform.echo_prefix}/{subdirectories}/")
     await echo.delete_directory(f"{Image.echo_prefix}/{subdirectories}/")
+    await echo.delete_directory(f"{ImageSeries.echo_prefix}/{subdirectories}/")
     await echo.delete_directory(f"{FloatImage.echo_prefix}/{subdirectories}/")
     await echo.delete_directory(f"{Vector.echo_prefix}/{subdirectories}/")
 

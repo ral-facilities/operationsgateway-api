@@ -28,15 +28,19 @@ class ChannelChecks:
         ingested_record=None,
         ingested_waveforms=None,
         ingested_images=None,
+        ingested_image_series=None,
         ingested_float_images=None,
         ingested_vectors=None,
         internal_failed_channels=None,
-        ingested_image_series=None,
     ):
         """
         This class is instantiated using everything from hdf_handler
         internal_failed_channel is a list of channels that have failed inside
         hdf_handler already
+
+        The parameter order matches the tuple returned by
+        `HDFDataHandler.extract_data()`, so `ChannelChecks(*extract_data())` binds
+        correctly.
         """
         self.ingested_record = ingested_record or []
         self.ingested_waveforms = ingested_waveforms or []

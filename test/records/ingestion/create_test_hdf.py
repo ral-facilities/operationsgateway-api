@@ -73,7 +73,8 @@ async def create_test_hdf_file(  # noqa: C901
 ) -> tuple[
     RecordModel,
     list[WaveformModel],
-    list[ImageModel],
+    list[ImageModel],  # ordinary images
+    list[ImageModel],  # image series
     list[FloatImageModel],
     list[VectorModel],
     list[dict[str, str]],
@@ -233,6 +234,20 @@ async def create_test_hdf_file(  # noqa: C901
         cm_202_cvc_wfs.attrs.create("y_pixel_units", "µm")
         data = np.ones((100, 100), dtype=np.float64)
         cm_202_cvc_wfs.create_dataset("data", data=data)
+
+        image_series = record.create_group("TEST_IMAGE_SERIES")
+        image_series.attrs.create("channel_dtype", "image_series")
+        image_series.attrs.create("frame_rate_hz", 100.0)
+
+        data = np.array(
+            [
+                [[0, 255], [256, 4095]],
+                [[65535, 1], [32768, 1024]],
+                [[42, 128], [2048, 8192]],
+            ],
+            dtype=np.uint16,
+        )
+        image_series.create_dataset("data", data=data)
 
         cm_202_cvc_wfs_coef = record.create_group("CM-202-CVC-WFS-COEF")
         cm_202_cvc_wfs_coef.attrs.create("channel_dtype", "vector")
