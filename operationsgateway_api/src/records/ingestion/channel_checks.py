@@ -199,9 +199,15 @@ class ChannelChecks:
                         {key: "frame_rate_hz attribute is missing"},
                     )
                 elif not isinstance(frame_rate, (float, np.floating)):
-                    rejected_channels.append({key: "frame_rate_hz attribute has wrong datatype, should be a float"})
-                elif frame_rate <= 0 :
-                    rejected_channels.append({key: "frame_rate_hz must be greater than zero"})
+                    rejected_channels.append(
+                        {
+                            key: "frame_rate_hz attribute has wrong datatype, should be a float"
+                        }
+                    )
+                elif frame_rate <= 0:
+                    rejected_channels.append(
+                        {key: "frame_rate_hz must be greater than zero"}
+                    )
 
             elif value.metadata.channel_dtype == "float_image":
                 image = ChannelChecks._find_path(

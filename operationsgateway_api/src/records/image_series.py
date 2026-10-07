@@ -4,10 +4,17 @@ from io import BytesIO
 
 import numpy as np
 from PIL import Image as PILImage
-from operationsgateway_api.src.exceptions import EchoS3Error, \
-    MissingAttributeError, QueryParameterError, RecordError
-from operationsgateway_api.src.models import ImageModel, \
-    PartialImageSeriesChannelModel, ChannelDtype
+from operationsgateway_api.src.exceptions import (
+    EchoS3Error,
+    MissingAttributeError,
+    QueryParameterError,
+    RecordError,
+)
+from operationsgateway_api.src.models import (
+    ImageModel,
+    PartialImageSeriesChannelModel,
+    ChannelDtype,
+)
 from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.image_abc import ImageABC
@@ -75,9 +82,9 @@ class ImageSeries(ImageABC):
 
     @staticmethod
     async def get_frame(
-            record_id: str,
-            channel_name: str,
-            frame_index: int,
+        record_id: str,
+        channel_name: str,
+        frame_index: int,
     ) -> bytes:
         """
         This doesn't just get any old frame! but it works out where each frame
@@ -106,11 +113,11 @@ class ImageSeries(ImageABC):
         image_path = channel.image_path
 
         if (
-                shape is None
-                or any(dimension <= 0 for dimension in shape)
-                or header_offset is None
-                or header_offset <= 0
-                or not image_path
+            shape is None
+            or any(dimension <= 0 for dimension in shape)
+            or header_offset is None
+            or header_offset <= 0
+            or not image_path
         ):
             raise RecordError("Image series storage metadata is missing or invalid")
 
