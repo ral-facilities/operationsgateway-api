@@ -4,6 +4,7 @@ from io import BytesIO
 
 import numpy as np
 from PIL import Image as PILImage
+
 from operationsgateway_api.src.exceptions import (
     EchoS3Error,
     MissingAttributeError,
@@ -11,9 +12,9 @@ from operationsgateway_api.src.exceptions import (
     RecordError,
 )
 from operationsgateway_api.src.models import (
+    ChannelDtype,
     ImageModel,
     PartialImageSeriesChannelModel,
-    ChannelDtype,
 )
 from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.records.image import Image
@@ -31,12 +32,13 @@ class ImageSeries(ImageABC):
         super().__init__(image)
 
     def write_npy_header(self, file_object: BytesIO, shape: tuple[int, ...]) -> None:
-        # before the numpy data (of images) we write a header so we know what the data contains
+        # before the numpy data (of images) we write a header so we
+        # know what the data contains
         np.lib.format.write_array_header_1_0(
             file_object,
             {
                 "descr": np.lib.format.dtype_to_descr(self.storage_dtype),
-                "fortran_order": False,  # this option makes sure the data is stored in series order
+                "fortran_order": False,  # makes sure the data is stored in series order
                 "shape": shape,  # [number of images, height, width]
             },
         )
@@ -152,7 +154,9 @@ class ImageSeries(ImageABC):
 
     @staticmethod
     async def get_image(
-        record_id: str, channel_name: str, colourmap_name: str
+        record_id: str,
+        channel_name: str,
+        colourmap_name: str,
     ) -> BytesIO:
         # needed because we're an abstract class
         raise NotImplementedError(

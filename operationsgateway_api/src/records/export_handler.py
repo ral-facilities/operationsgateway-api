@@ -473,10 +473,10 @@ class ExportHandler:
             )
 
     async def _add_image_series_to_zip(
-            self,
-            channels: PartialChannels,
-            record_id: str,
-            channel_name: str,
+        self,
+        channels: PartialChannels,
+        record_id: str,
+        channel_name: str,
     ) -> None:
         """Download an image series and export every frame as a PNG."""
         if not self.export_images or channel_name not in channels:
@@ -487,10 +487,10 @@ class ExportHandler:
             series = np.load(BytesIO(storage_bytes), allow_pickle=False)
 
             if (
-                    not isinstance(series, np.ndarray)
-                    or series.ndim != 3
-                    or any(dimension <= 0 for dimension in series.shape)
-                    or series.dtype != ImageSeries.storage_dtype
+                not isinstance(series, np.ndarray)
+                or series.ndim != 3
+                or any(dimension <= 0 for dimension in series.shape)
+                or series.dtype != ImageSeries.storage_dtype
             ):
                 raise ValueError("Invalid image-series array")
 

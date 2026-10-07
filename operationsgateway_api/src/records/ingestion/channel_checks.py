@@ -201,12 +201,13 @@ class ChannelChecks:
                 elif not isinstance(frame_rate, (float, np.floating)):
                     rejected_channels.append(
                         {
-                            key: "frame_rate_hz attribute has wrong datatype, should be a float"
-                        }
+                            key: "frame_rate_hz attribute has wrong datatype, "
+                            "should be a float",
+                        },
                     )
                 elif frame_rate <= 0:
                     rejected_channels.append(
-                        {key: "frame_rate_hz must be greater than zero"}
+                        {key: "frame_rate_hz must be greater than zero"},
                     )
 
             elif value.metadata.channel_dtype == "float_image":
@@ -621,7 +622,8 @@ class ChannelChecks:
 
             elif value.metadata.channel_dtype == "image_series":
                 image = ChannelChecks._find_path(
-                    self.ingested_image_series, value.image_path
+                    self.ingested_image_series,
+                    value.image_path,
                 )
                 data = image.data if isinstance(image, ImageModel) else None
                 if not (
@@ -629,7 +631,7 @@ class ChannelChecks:
                     and (data.dtype == np.uint16 or data.dtype == np.uint8)
                 ):
                     rejected_channels.append(
-                        {key: "data has wrong datatype, should be uint16 or uint8"}
+                        {key: "data has wrong datatype, should be uint16 or uint8"},
                     )
 
             elif value.metadata.channel_dtype == "float_image":

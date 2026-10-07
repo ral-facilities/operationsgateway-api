@@ -22,6 +22,8 @@ from operationsgateway_api.src.models import (
     ImageChannelMetadataModel,
     ImageChannelModel,
     ImageModel,
+    ImageSeriesChannelMetadataModel,
+    ImageSeriesChannelModel,
     RecordMetadataModel,
     RecordModel,
     ScalarChannelMetadataModel,
@@ -34,8 +36,6 @@ from operationsgateway_api.src.models import (
     WaveformChannelMetadataModel,
     WaveformChannelModel,
     WaveformModel,
-    ImageSeriesChannelMetadataModel,
-    ImageSeriesChannelModel,
 )
 from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image

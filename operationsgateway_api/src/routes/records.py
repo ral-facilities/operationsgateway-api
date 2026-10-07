@@ -313,7 +313,7 @@ async def delete_record_by_id(
 
     log.info("Deleting image series for record ID '%s'", id_)
     await echo_interface.delete_directory(
-        f"{ImageSeries.echo_prefix}/{sub_directories}/"
+        f"{ImageSeries.echo_prefix}/{sub_directories}/",
     )
     await echo_interface.delete_directory(f"{ImageSeries.echo_prefix}/{directory}/")
 
