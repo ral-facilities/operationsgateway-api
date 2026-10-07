@@ -5,6 +5,9 @@ import logging
 from typing import Any, List, Tuple, Union
 import zipfile
 
+import numpy as np
+from PIL import Image as PILImage
+
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import ExportError
 from operationsgateway_api.src.functions.type_transformer import TypeTransformer
@@ -19,6 +22,7 @@ from operationsgateway_api.src.models import (
 )
 from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.image_series import ImageSeries
 from operationsgateway_api.src.records.record_retriever import RecordRetriever
 from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
@@ -351,6 +355,14 @@ class ExportHandler:
             )
             return line
 
+        if channel_type == "image_series":
+            await self._add_image_series_to_zip(
+                channels,
+                record_id,
+                channel_name,
+            )
+            return line
+
         if channel_type == "float_image":
             await self._add_float_image_to_zip(
                 channels,
@@ -459,6 +471,54 @@ class ExportHandler:
             self.errors_file_in_memory.write(
                 f"Could not find image for {record_id} {channel_name}\n",
             )
+
+    async def _add_image_series_to_zip(
+            self,
+            channels: PartialChannels,
+            record_id: str,
+            channel_name: str,
+    ) -> None:
+        """Download an image series and export every frame as a PNG."""
+        if not self.export_images or channel_name not in channels:
+            return
+
+        try:
+            storage_bytes = await ImageSeries.get_bytes(record_id, channel_name)
+            series = np.load(BytesIO(storage_bytes), allow_pickle=False)
+
+            if (
+                    not isinstance(series, np.ndarray)
+                    or series.ndim != 3
+                    or any(dimension <= 0 for dimension in series.shape)
+                    or series.dtype != ImageSeries.storage_dtype
+            ):
+                raise ValueError("Invalid image-series array")
+
+        except Exception:
+            log.exception(
+                "Could not load image series for %s %s",
+                record_id,
+                channel_name,
+            )
+            self.errors_file_in_memory.write(
+                f"Could not load image series for {record_id} {channel_name}\n",
+            )
+            return
+
+        for frame_index, frame in enumerate(series):
+            png_bytes = BytesIO()
+            with PILImage.fromarray(frame) as image:
+                image.save(png_bytes, format="PNG")
+
+            # e.g: 20261006130652496_TEST_IMAGE_SERIES_frame_0.png
+            await self._write_to_zip(
+                record_id,
+                f"{channel_name}_frame_{frame_index}",
+                "png",
+                png_bytes.getvalue(),
+            )
+
+            self._check_zip_file_size()
 
     async def _add_float_image_to_zip(
         self,
