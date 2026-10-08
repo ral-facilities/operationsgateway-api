@@ -14,6 +14,7 @@ import pytest
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import EchoS3Error
 from test.conftest import (
+    apply_export_identifiers,
     assert_text_file_contents,
     MARK_EPAC_TEST,
     MARK_GEMINI_TEST,
@@ -1062,6 +1063,7 @@ class TestExport:
             disposition_header = response.headers["content-disposition"]
         except KeyError as err:
             raise AssertionError("No 'content-disposition' header found") from err
+        (expected_filename,) = apply_export_identifiers(expected_filename)
         assert disposition_header == f'attachment; filename="{expected_filename}"'
 
     @staticmethod
@@ -1078,6 +1080,13 @@ class TestExport:
         Images will have a perceptual hash which can be checked to ensure the image is
         as expected.
         """
+        # The names of the files inside the zip follow the same record ID / shot
+        # number rule as the download filename, but the paths they map to (the
+        # expected contents) are unaffected. All the names are translated together
+        # so the all-or-nothing rule is applied across the whole export.
+        translated = apply_export_identifiers(*zip_contents_dict.keys())
+        zip_contents_dict = dict(zip(translated, zip_contents_dict.values()))
+
         with ZipFile(io.BytesIO(response.content)) as zip_file:
             filenames_in_zip = []
             for zip_info in zip_file.infolist():
@@ -1123,6 +1132,40 @@ class TestExport:
             assert len(zip_contents_dict) == len(
                 zip_file.infolist(),
             ), f"Missing files in export zip: {files_diff}"
+
+    @MARK_EPAC_TEST
+    def test_export_filename_falls_back_to_record_id(
+        self,
+        test_app: TestClient,
+        login_and_get_token,
+        monkeypatch,
+    ):
+        """
+        RECORD_ID_05_1700 has no shot number in the EPAC test data. With
+        shot-number naming enabled the filename should fall back to the record ID
+        rather than stringifying the missing shot number into "None.csv".
+        """
+        monkeypatch.setattr(
+            Config.config.export,
+            "use_shotnum_in_filenames",
+            True,
+        )
+
+        # Two projections, so no single-channel name is appended to the stem.
+        get_params = [
+            f"conditions={json.dumps({'_id': {'$eq': RECORD_ID_05_1700}})}",
+            "projection=metadata.timestamp",
+            "projection=metadata.epac_ops_data_version",
+        ]
+        response = test_app.get(
+            f"/export?{'&'.join(get_params)}",
+            headers={"Authorization": f"Bearer {login_and_get_token}"},
+        )
+
+        assert response.status_code == 200, response.text
+        assert response.headers["Content-Disposition"] == (
+            f'attachment; filename="{RECORD_ID_05_1700}.csv"'
+        )
 
     # Gemini-only tests to check standalone CSV filenames can use {shotnum}.csv
     # or {first_shotnum}_to_{last_shotnum}.csv when shot-number naming is enabled.
