@@ -87,6 +87,16 @@ DATETIME_STR_05_0803 = format_datetime_str("2023-06-05T08:03:00.234000")
 DATETIME_STR_05_1700 = format_datetime_str("2023-06-05T17:00:00.345000")
 DATETIME_STR_06_1200 = format_datetime_str("2023-06-06T12:00:00.456000")
 
+# The frames written to the image series channel by `create_test_hdf_file`. Values
+# span the 16 bit range and differ between frames, so that a frame served from the
+# wrong byte offset is obvious. Image series pixels are stored without rescaling,
+# so these come back out of the API unchanged.
+IMAGE_SERIES_FRAMES = [
+    [[0, 255], [256, 4095]],
+    [[65535, 1], [32768, 1024]],
+    [[42, 128], [2048, 8192]],
+]
+
 # Shot numbers belonging to the ingested test records. Gemini uses date-style
 # strings, EPAC uses integers (and one record has no shot number at all).
 if Config.config.app.use_sub_second_timestamps:

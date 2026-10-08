@@ -9,6 +9,7 @@ from operationsgateway_api.src.models import (
     WaveformModel,
 )
 from operationsgateway_api.src.records.ingestion.hdf_handler import HDFDataHandler
+from test.conftest import IMAGE_SERIES_FRAMES
 
 
 def generate_channel_check_block(record, test_type):
@@ -239,14 +240,7 @@ async def create_test_hdf_file(  # noqa: C901
         image_series.attrs.create("channel_dtype", "image_series")
         image_series.attrs.create("frame_rate_hz", 100.0)
 
-        data = np.array(
-            [
-                [[0, 255], [256, 4095]],
-                [[65535, 1], [32768, 1024]],
-                [[42, 128], [2048, 8192]],
-            ],
-            dtype=np.uint16,
-        )
+        data = np.array(IMAGE_SERIES_FRAMES, dtype=np.uint16)
         image_series.create_dataset("data", data=data)
 
         cm_202_cvc_wfs_coef = record.create_group("CM-202-CVC-WFS-COEF")
