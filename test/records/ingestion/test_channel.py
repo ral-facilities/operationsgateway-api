@@ -66,7 +66,9 @@ class TestChannel:
     async def test_channel_checks_success(self, remove_hdf_file):
         hdf_tuple = await create_test_hdf_file()
 
-        record, waveforms, images, image_series, float_images, vectors, failures = hdf_tuple
+        record, waveforms, images, image_series, float_images, vectors, failures = (
+            hdf_tuple
+        )
 
         channel_checker = ChannelChecks(
             ingested_record=record,
@@ -205,7 +207,9 @@ class TestChannel:
     @pytest.mark.asyncio
     async def test_channel_dtype_fail(self, remove_hdf_file, altered_channel, response):
         hdf_tuple = await create_test_hdf_file(channel_dtype=altered_channel)
-        record, waveforms, images, image_series, float_images, vectors, failures = hdf_tuple
+        record, waveforms, images, image_series, float_images, vectors, failures = (
+            hdf_tuple
+        )
 
         channel_checker = ChannelChecks(
             ingested_record=record,
@@ -394,7 +398,9 @@ class TestChannel:
                 required_attributes=required_attributes,
             )
 
-        record, waveforms, images, image_series, float_images, vectors, failures = hdf_tuple
+        record, waveforms, images, image_series, float_images, vectors, failures = (
+            hdf_tuple
+        )
 
         channel_checker = ChannelChecks(
             ingested_record=record,
@@ -597,7 +603,9 @@ class TestChannel:
         response,
     ):
         hdf_tuple = await create_test_hdf_file(optional_attributes=optional_attributes)
-        record, waveforms, images, image_series, float_images, vectors, failures = hdf_tuple
+        record, waveforms, images, image_series, float_images, vectors, failures = (
+            hdf_tuple
+        )
 
         channel_checker = ChannelChecks(
             ingested_record=record,
@@ -822,7 +830,9 @@ class TestChannel:
         extra,
     ):
         hdf_tuple = await create_test_hdf_file(required_attributes=required_attributes)
-        record, waveforms, images, image_series, float_images, vectors, failures = hdf_tuple
+        record, waveforms, images, image_series, float_images, vectors, failures = (
+            hdf_tuple
+        )
 
         channel_checker = ChannelChecks(
             ingested_record=record,
@@ -999,7 +1009,9 @@ class TestChannel:
         hdf_tuple = await create_test_hdf_file(
             unrecognised_attribute=unrecognised_attribute,
         )
-        record, waveforms, images, image_series, float_images, vectors, failures = hdf_tuple
+        record, waveforms, images, image_series, float_images, vectors, failures = (
+            hdf_tuple
+        )
 
         channel_checker = ChannelChecks(
             ingested_record=record,
@@ -1078,7 +1090,9 @@ class TestChannel:
         response,
     ):
         hdf_tuple = await create_test_hdf_file(channel_name=channel_name)
-        record, waveforms, images, image_series, float_images, vectors, failures = hdf_tuple
+        record, waveforms, images, image_series, float_images, vectors, failures = (
+            hdf_tuple
+        )
 
         channel_checker = ChannelChecks(
             ingested_record=record,
@@ -1202,7 +1216,9 @@ class TestChannel:
             channel_name=channel_name,
             channels_check=channels_check,
         )
-        record, waveforms, images, image_series, float_images, vectors, failures = hdf_tuple
+        record, waveforms, images, image_series, float_images, vectors, failures = (
+            hdf_tuple
+        )
 
         channel_checker = ChannelChecks(
             ingested_record=record,
@@ -1279,7 +1295,9 @@ class TestChannel:
         response,
     ):
         hdf_tuple = await create_test_hdf_file(test_type=test_type)
-        record, waveforms, images, image_series, float_images, vectors, failures = hdf_tuple
+        record, waveforms, images, image_series, float_images, vectors, failures = (
+            hdf_tuple
+        )
 
         channel_checker = ChannelChecks(
             ingested_record=record,
