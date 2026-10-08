@@ -313,6 +313,7 @@ class TestPartialImport:
                         "PM-201-TJ-CAM-2-FWHMX": CHANNEL_PRESENT_MESSAGE,
                         "PM-201-TJ-CAM-2-CENY": CHANNEL_PRESENT_MESSAGE,
                         "PM-201-TJ-CAM-2-FWHMY": CHANNEL_PRESENT_MESSAGE,
+                        "TEST_IMAGE_SERIES": CHANNEL_PRESENT_MESSAGE,
                     },
                 },
                 id="All channels match",
@@ -341,6 +342,7 @@ class TestPartialImport:
                         "PM-201-HJ-PD": CHANNEL_PRESENT_MESSAGE,
                         "PM-201-TJ-CAM-2-FWHMX": CHANNEL_PRESENT_MESSAGE,
                         "PM-201-TJ-CAM-2-CENY": CHANNEL_PRESENT_MESSAGE,
+                        "TEST_IMAGE_SERIES": CHANNEL_PRESENT_MESSAGE,
                     },
                 },
                 id="Some channels match",
@@ -367,6 +369,7 @@ class TestPartialImport:
                         "PM-201-TJ-CAM-2-FWHMX",
                         "PM-201-TJ-CAM-2-FWHMY",
                         "PM-201-TJ-EM",
+                        "TEST_IMAGE_SERIES",
                     ],
                     "rejected_channels": {},
                 },
@@ -407,6 +410,7 @@ class TestPartialImport:
             channels["p"] = channels.pop("CM-202-CVC-WFS")
             channels["q"] = channels.pop("CM-202-CVC-WFS-COEF")
             channels["r"] = channels.pop("ASTRA_CONTROL_MODE_STRING")
+            channels["s"] = channels.pop("TEST_IMAGE_SERIES")
 
         partial_import_checker = PartialImportChecks(hdf_tuple[0], stored_record)
 

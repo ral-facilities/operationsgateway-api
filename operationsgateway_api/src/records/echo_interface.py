@@ -211,6 +211,60 @@ class EchoInterface:
             log.exception("%s when deleting directory %s", code, dir_path)
             raise EchoS3Error(f"{code} when deleting directory '{dir_path}'") from exc
 
+    async def download_file_range(
+        self,
+        object_path: str,
+        start_byte: int,
+        end_byte: int,
+    ) -> bytes:
+        """
+        Download an inclusive byte range from an image_series object. it allows
+        one image-series frame to be fetched without downloading the entire array.
+        """
+        if start_byte < 0 or end_byte < start_byte:
+            raise ValueError("Invalid byte range")
+
+        expected_size = (
+            end_byte - start_byte + 1
+        )  # because the first byte is after the header
+
+        bucket = await self.get_bucket()
+
+        try:
+            response = await bucket.meta.client.get_object(
+                Bucket=Config.config.echo.bucket_name,
+                Key=object_path,
+                Range=f"bytes={start_byte}-{end_byte}",
+            )
+
+            async with response["Body"] as stream:
+                expected_range = f"bytes {start_byte}-{end_byte}/"
+
+                if not response.get("ContentRange", "").startswith(
+                    expected_range,
+                ):
+                    raise EchoS3Error(
+                        "Echo returned an unexpected byte range",
+                    )
+
+                data = await stream.read()
+
+        except ClientError as exc:
+            code = str(exc.response["Error"]["Code"])
+            # catch range that are not found
+            status_code = 404 if code in {"NoSuchKey", "NotFound", "404"} else 500
+            raise EchoS3Error(
+                f"{code} when downloading byte range from '{object_path}'",
+                status_code=status_code,
+            ) from exc
+
+        if len(data) != expected_size:
+            raise EchoS3Error(
+                f"Expected {expected_size} bytes, received {len(data)}",
+            )
+
+        return data
+
 
 @lru_cache
 def get_echo_interface() -> EchoInterface:

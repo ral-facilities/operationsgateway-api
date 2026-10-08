@@ -28,6 +28,7 @@ class ChannelChecks:
         ingested_record=None,
         ingested_waveforms=None,
         ingested_images=None,
+        ingested_image_series=None,
         ingested_float_images=None,
         ingested_vectors=None,
         internal_failed_channels=None,
@@ -36,6 +37,10 @@ class ChannelChecks:
         This class is instantiated using everything from hdf_handler
         internal_failed_channel is a list of channels that have failed inside
         hdf_handler already
+
+        The parameter order matches the tuple returned by
+        `HDFDataHandler.extract_data()`, so `ChannelChecks(*extract_data())` binds
+        correctly.
         """
         self.ingested_record = ingested_record or []
         self.ingested_waveforms = ingested_waveforms or []
@@ -43,6 +48,7 @@ class ChannelChecks:
         self.ingested_float_images = ingested_float_images or []
         self.ingested_vectors = ingested_vectors or []
         self.internal_failed_channels = internal_failed_channels or []
+        self.ingested_image_series = ingested_image_series or []
 
         self.supported_channel_types = [
             "scalar",
@@ -52,6 +58,7 @@ class ChannelChecks:
             "waveform",
             "vector",
             "string",
+            "image_series",
         ]
 
     def set_channels(self, manifest) -> None:
@@ -173,6 +180,38 @@ class ChannelChecks:
                 ):
                     rejected_channels.append(
                         {key: "data has wrong datatype, should be ndarray"},
+                    )
+
+            elif value.metadata.channel_dtype == "image_series":
+                image = ChannelChecks._find_path(
+                    self.ingested_image_series,
+                    value.image_path,
+                )
+                if not isinstance(image, ImageModel) or not isinstance(
+                    image.data,
+                    np.ndarray,
+                ):
+                    rejected_channels.append(
+                        {key: "data has wrong datatype, should be ndarray"},
+                    )
+
+                # reject the channel if frame_rate looks weird
+                frame_rate = value.metadata.frame_rate_hz
+
+                if frame_rate is None:
+                    rejected_channels.append(
+                        {key: "frame_rate_hz attribute is missing"},
+                    )
+                elif not isinstance(frame_rate, (float, np.floating)):
+                    rejected_channels.append(
+                        {
+                            key: "frame_rate_hz attribute has wrong datatype, "
+                            "should be a float",
+                        },
+                    )
+                elif frame_rate <= 0:
+                    rejected_channels.append(
+                        {key: "frame_rate_hz must be greater than zero"},
                     )
 
             elif value.metadata.channel_dtype == "float_image":
@@ -504,6 +543,13 @@ class ChannelChecks:
                     rejected_channels,
                 )
 
+            elif value.metadata.channel_dtype == "image_series":
+                rejected_channels = self.image_metadata_checks(
+                    key,
+                    value.metadata,
+                    rejected_channels,
+                )
+
             elif value.metadata.channel_dtype == "float_image":
                 rejected_channels = self.float_image_metadata_checks(
                     key,
@@ -576,6 +622,20 @@ class ChannelChecks:
                         {
                             key: "data has wrong datatype, should be uint16 or uint8",
                         },
+                    )
+
+            elif value.metadata.channel_dtype == "image_series":
+                image = ChannelChecks._find_path(
+                    self.ingested_image_series,
+                    value.image_path,
+                )
+                data = image.data if isinstance(image, ImageModel) else None
+                if not (
+                    isinstance(data, np.ndarray)
+                    and (data.dtype == np.uint16 or data.dtype == np.uint8)
+                ):
+                    rejected_channels.append(
+                        {key: "data has wrong datatype, should be uint16 or uint8"},
                     )
 
             elif value.metadata.channel_dtype == "float_image":

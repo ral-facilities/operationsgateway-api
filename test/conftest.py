@@ -23,6 +23,7 @@ from operationsgateway_api.src.records.echo_interface import (
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.image_series import ImageSeries
 from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
 from util.realistic_data.ingest_echo_data import DataIngester
@@ -85,6 +86,67 @@ DATETIME_STR_05_0800 = format_datetime_str("2023-06-05T08:00:00.123000")
 DATETIME_STR_05_0803 = format_datetime_str("2023-06-05T08:03:00.234000")
 DATETIME_STR_05_1700 = format_datetime_str("2023-06-05T17:00:00.345000")
 DATETIME_STR_06_1200 = format_datetime_str("2023-06-06T12:00:00.456000")
+
+# The frames written to the image series channel by `create_test_hdf_file`. Values
+# span the 16 bit range and differ between frames, so that a frame served from the
+# wrong byte offset is obvious. Image series pixels are stored without rescaling,
+# so these come back out of the API unchanged.
+IMAGE_SERIES_FRAMES = [
+    [[0, 255], [256, 4095]],
+    [[65535, 1], [32768, 1024]],
+    [[42, 128], [2048, 8192]],
+]
+
+# Shot numbers belonging to the ingested test records. Gemini uses date-style
+# strings, EPAC uses integers (and one record has no shot number at all).
+if Config.config.app.use_sub_second_timestamps:
+    SHOTNUMS_BY_RECORD_ID = {
+        RECORD_ID_05_0800: "20230605-075959",
+        RECORD_ID_05_0803: "20230605-080259",
+        RECORD_ID_05_1700: "GA123",
+        RECORD_ID_06_1200: "20230606-115959",
+    }
+else:
+    SHOTNUMS_BY_RECORD_ID = {
+        RECORD_ID_05_0800: 423648000000,
+        RECORD_ID_05_0803: 423648001800,
+        RECORD_ID_05_1700: None,
+        RECORD_ID_06_1200: 423649008000,
+    }
+
+
+def apply_export_identifiers(*filenames: str) -> list[str]:
+    """
+    Rewrite record IDs in expected export filenames to the matching shot numbers
+    when `export.use_shotnum_in_filenames` is enabled.
+
+    Export filenames are expressed in terms of record IDs throughout the tests. The
+    API substitutes shot numbers when that setting is on, which is how Gemini runs
+    in production, so the expectations need the same substitution applying.
+
+    Mirrors `ExportHandler._shotnum_naming_applies`: shot numbers are only used if
+    every record involved has one, so that a name never mixes the two kinds of
+    identifier. Pass every filename belonging to a single export together, so the
+    all-or-nothing decision is made across the whole of it.
+    """
+    names = list(filenames)
+    if not Config.config.export.use_shotnum_in_filenames:
+        return names
+
+    referenced = {
+        record_id: shotnum
+        for record_id, shotnum in SHOTNUMS_BY_RECORD_ID.items()
+        if any(record_id in name for name in names)
+    }
+    if not referenced or any(shotnum is None for shotnum in referenced.values()):
+        return names
+
+    translated = []
+    for name in names:
+        for record_id, shotnum in referenced.items():
+            name = name.replace(record_id, str(shotnum))
+        translated.append(name)
+    return translated
 
 
 @pytest.fixture(scope="session")
@@ -192,6 +254,7 @@ async def reset_record_storage():
     subdirectories = echo.format_record_id(RECORD_ID_TMP)
     await echo.delete_directory(f"{Waveform.echo_prefix}/{subdirectories}/")
     await echo.delete_directory(f"{Image.echo_prefix}/{subdirectories}/")
+    await echo.delete_directory(f"{ImageSeries.echo_prefix}/{subdirectories}/")
     await echo.delete_directory(f"{FloatImage.echo_prefix}/{subdirectories}/")
     await echo.delete_directory(f"{Vector.echo_prefix}/{subdirectories}/")
 

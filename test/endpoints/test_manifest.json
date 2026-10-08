@@ -2647,6 +2647,11 @@
       "name": "Astra control mode",
       "path": "/astra",
       "type": "string"
+    },
+    "TEST_IMAGE_SERIES": {
+      "name": "Test image series",
+      "path": "/TEST",
+      "type": "image_series"
     }
   }
 }
