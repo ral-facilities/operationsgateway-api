@@ -202,7 +202,7 @@ class ChannelChecks:
                     rejected_channels.append(
                         {key: "frame_rate_hz attribute is missing"},
                     )
-                elif not isinstance(frame_rate, (float, np.floating)):
+                elif not isinstance(frame_rate, float):
                     rejected_channels.append(
                         {
                             key: "frame_rate_hz attribute has wrong datatype, "
