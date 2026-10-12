@@ -187,6 +187,19 @@ class HDFDataHandler:
         """
         return any(val != self.acceptable_datasets[channel_type][0] for val in value)
 
+    @staticmethod
+    def _infer_bit_depth(
+        metadata: ImageChannelMetadataModel,
+        data: np.ndarray,
+    ) -> None:
+        """
+        Set `bit_depth` from the data's dtype when the HDF file didn't declare one,
+        flagging that it was inferred rather than supplied.
+        """
+        if not metadata.bit_depth:
+            metadata.bit_depth = 8 if data.dtype == np.uint8 else 16
+            metadata.bit_depth_inferred = True
+
     def _extract_image(
         self,
         internal_failed_channel,
@@ -209,9 +222,8 @@ class HDFDataHandler:
         try:
             metadata = ImageChannelMetadataModel(**channel_metadata)
             data = value["data"][()]
-            if not metadata.bit_depth:
-                metadata.bit_depth = 8 if data.dtype == np.uint8 else 16
-                metadata.bit_depth_inferred = True
+
+            self._infer_bit_depth(metadata, data)
 
             channel = ImageChannelModel(metadata=metadata, image_path=image_path)
             image_model = ImageModel(
@@ -261,9 +273,7 @@ class HDFDataHandler:
 
             data = dataset[()]
 
-            if not metadata.bit_depth:
-                metadata.bit_depth = 8 if data.dtype == np.uint8 else 16
-                metadata.bit_depth_inferred = True
+            self._infer_bit_depth(metadata, data)
 
             image_path = ImageSeries.get_relative_path(self.record_id, channel_name)
 
