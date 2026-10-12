@@ -150,9 +150,11 @@ class EchoInterface:
         except ClientError as exc:
             code = exc.response["Error"]["Code"]
             log.exception("%s when downloading file at %s", code, object_path)
+            # code is a string, so it cannot be used as a status code directly
+            status_code = 404 if code in {"NoSuchKey", "NotFound", "404"} else 500
             raise EchoS3Error(
                 f"{code} when downloading file at '{object_path}'",
-                status_code=code,
+                status_code=status_code,
             ) from exc
 
         if len(file.getvalue()) == 0:
