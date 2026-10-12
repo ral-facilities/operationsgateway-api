@@ -20,7 +20,7 @@ AuthoriseToken = Annotated[str, Depends(authorise_token)]
 async def get_image_series_frame(
     record_id: str,
     channel_name: str,
-    frame_index: Annotated[int, Path(ge=0)],
+    frame_index: NonNegativeInt,
     access_token: AuthoriseToken,
 ) -> Response:
     """Retrieve one image-series frame as a PNG."""
