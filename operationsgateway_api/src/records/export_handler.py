@@ -5,9 +5,6 @@ import logging
 from typing import Any, List, Tuple, Union
 import zipfile
 
-import numpy as np
-from PIL import Image as PILImage
-
 from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import ExportError
 from operationsgateway_api.src.functions.type_transformer import TypeTransformer
@@ -495,47 +492,24 @@ class ExportHandler:
         record_id: str,
         channel_name: str,
     ) -> None:
-        """Download an image series and export every frame as a PNG."""
+        """
+        Get an image series from Echo and add it to the zip file being created for
+        download. The stored .npy is exported as it is, because thats how we store it
+        """
         if not self.export_images or channel_name not in channels:
             return
 
+        log.info("Getting image series to add to zip: %s %s", record_id, channel_name)
         try:
             storage_bytes = await ImageSeries.get_bytes(record_id, channel_name)
-            series = np.load(BytesIO(storage_bytes), allow_pickle=False)
 
-            if (
-                not isinstance(series, np.ndarray)
-                or series.ndim != 3
-                or any(dimension <= 0 for dimension in series.shape)
-                or series.dtype != ImageSeries.storage_dtype
-            ):
-                raise ValueError("Invalid image-series array")
-
-        except Exception:
-            log.exception(
-                "Could not load image series for %s %s",
-                record_id,
-                channel_name,
-            )
-            self.errors_file_in_memory.write(
-                f"Could not load image series for {record_id} {channel_name}\n",
-            )
-            return
-
-        for frame_index, frame in enumerate(series):
-            png_bytes = BytesIO()
-            with PILImage.fromarray(frame) as image:
-                image.save(png_bytes, format="PNG")
-
-            # e.g: 20261006130652496_TEST_IMAGE_SERIES_frame_0.png
-            await self._write_to_zip(
-                record_id,
-                f"{channel_name}_frame_{frame_index}",
-                "png",
-                png_bytes.getvalue(),
-            )
+            await self._write_to_zip(record_id, channel_name, "npy", storage_bytes)
 
             self._check_zip_file_size()
+        except Exception:
+            self.errors_file_in_memory.write(
+                f"Could not find image series for {record_id} {channel_name}\n",
+            )
 
     async def _add_float_image_to_zip(
         self,

@@ -1120,6 +1120,10 @@ class TestExport:
                 elif filename_in_zip.endswith(".npz"):
                     array = np.load(zip_file.open(filename_in_zip))["arr_0"]
                     assert array.shape == filepath_or_hash
+                elif filename_in_zip.endswith(".npy"):
+                    # image series are exported as the stored array
+                    array = np.load(zip_file.open(filename_in_zip))
+                    assert array.shape == filepath_or_hash
                 else:
                     raise ValueError(f"Unexpected file extension for {filename_in_zip}")
             # diff the expected file list with that found in the zip
