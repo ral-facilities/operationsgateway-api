@@ -9,7 +9,6 @@ from PIL import Image as PILImage, PngImagePlugin
 from pydantic import Json
 
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
-from operationsgateway_api.src.config import Config
 from operationsgateway_api.src.exceptions import (
     EchoS3Error,
     ImageError,
@@ -22,85 +21,28 @@ from operationsgateway_api.src.models import ImageModel
 from operationsgateway_api.src.records.echo_interface import get_echo_interface
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.image_abc import ImageABC
-from operationsgateway_api.src.records.thumbnail_handler import ThumbnailHandler
 
 log = logging.getLogger()
 
 
 class Image(ImageABC):
-    lookup_table_16_to_8_bit = [i / 256 for i in range(65536)]
     echo_prefix = "images"
     echo_extension = "png"
 
     def __init__(self, image: ImageModel) -> None:
         super().__init__(image)
 
-        if isinstance(self.image.bit_depth, int):
-            bit_depth = self.image.bit_depth
-            if bit_depth <= 8 and self.image.data.dtype != np.uint8:
-                msg = (
-                    "Specified bit depth is lower than actual bit depth with dtype "
-                    "of %s, only data in the %s least significant bits will be kept"
-                )
-                log.warning(msg, self.image.data.dtype, bit_depth)
-            elif bit_depth > 16:
-                log.warning(
-                    "Specified bit depth is higher than the max supported depth of 16, "
-                    "only data in the 16 most significant bits will be kept",
-                )
-        else:
-            if self.image.data.dtype == np.uint8:
-                bit_depth = 8
-            else:
-                # In principle this could be data with any number of bits, but we have
-                # no way of knowing without an explicit bit_depth so default to 16
-                bit_depth = 16
-
-        # We only store data as either 8 or 16 bit PNGs, scale to most significant bits
-        if bit_depth <= 8:
-            target_bit_depth = 8
-            target_dtype = np.uint8
-        else:
-            target_bit_depth = 16
-            target_dtype = np.uint16
-
-        self.image.data = self.image.data.astype(target_dtype)
-        shifted_data = self.image.data * 2 ** (target_bit_depth - bit_depth)
-        # Negative shifts may result in a float output, so cast the type again
-        self.image.data = shifted_data.astype(target_dtype)
+        self._normalise_bit_depth()
 
     def create_thumbnail(self) -> None:
         """
         Using the object's image data, create a thumbnail of the image and store it as
         an attribute of this object
         """
-
-        log.info("Creating image thumbnail for %s", self.image.path)
-
-        # Opening image then saving in a bytes object before using that to open and
-        # generate a thumbnail as you can't produce a thumbnail when opening the image
-        # using `fromarray()`
-        image_bytes = BytesIO()
-        img_temp = PILImage.fromarray(self.image.data)
-        img_temp.save(image_bytes, format="PNG")
-
-        img = PILImage.open(image_bytes)
-        # Images of a certain mode must be converted to mode I to avoid a ValueError
-        # where PIL complains the image is in the wrong mode
-        if img.mode == "I;16":
-            img = img.convert("I")
-
-        img.thumbnail(Config.config.images.thumbnail_size)
-        # convert 16 bit greyscale thumbnails to 8 bit to save space
-        if img.mode == "I":
-            log.debug("Converting 16 bit greyscale thumbnail to 8 bit")
-            img = img.point(Image.lookup_table_16_to_8_bit, "L")
-        self.thumbnail = ThumbnailHandler.convert_to_base64(img)
-
-        img.close()
+        self._create_greyscale_thumbnail(self.image.data)
 
     @staticmethod
-    async def upload_image(input_image: Image) -> Optional[str]:
+    async def upload_image(input_image: ImageABC) -> Optional[str]:
         """
         Save the image on Echo S3 object storage
         """
