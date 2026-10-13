@@ -9,7 +9,6 @@ from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.error_handling import endpoint_error_handling
-from operationsgateway_api.src.records.image import Image
 from operationsgateway_api.src.records.image_series import ImageSeries
 from operationsgateway_api.src.records.record import Record
 
@@ -124,12 +123,12 @@ async def get_image_series_frame_crosshair_intensity(
         frame_index=frame_index,
     )
 
-    position_x, position_y = Image.validate_position(position, orig_img_array)
+    position_x, position_y = ImageSeries.validate_position(position, orig_img_array)
 
     column = orig_img_array[:, position_x]
     row = orig_img_array[position_y, :]
-    column_dict = Image.extract_image_intensity(position_x, column)
-    row_dict = Image.extract_image_intensity(position_y, row)
+    column_dict = ImageSeries.extract_image_intensity(position_x, column)
+    row_dict = ImageSeries.extract_image_intensity(position_y, row)
     return {"row": row_dict, "column": column_dict}
 
 

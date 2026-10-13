@@ -14,25 +14,19 @@ from operationsgateway_api.src.exceptions import (
 )
 from operationsgateway_api.src.models import (
     ChannelDtype,
-    ImageModel,
     PartialImageSeriesChannelModel,
 )
 from operationsgateway_api.src.records.echo_interface import get_echo_interface
-from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.greyscale_image_abc import GreyscaleImageABC
 from operationsgateway_api.src.records.image_abc import ImageABC
 from operationsgateway_api.src.records.record import Record
 
 log = logging.getLogger()
 
 
-class ImageSeries(ImageABC):
+class ImageSeries(GreyscaleImageABC):
     echo_prefix = "image_series"
     echo_extension = "npy"
-
-    def __init__(self, image: ImageModel) -> None:
-        super().__init__(image)
-
-        self._normalise_bit_depth()
 
     def create_thumbnail(self) -> None:
         # The thumbnail represents the first frame. The data has already been
@@ -216,7 +210,7 @@ class ImageSeries(ImageABC):
             channel_name=channel_name,
             frame_index=frame_index,
         )
-        return Image.apply_false_colour(
+        return ImageSeries.apply_false_colour(
             image_bytes=png_bytes,
             original_image=original_image,
             lower_level=lower_level,
@@ -224,7 +218,3 @@ class ImageSeries(ImageABC):
             limit_bit_depth=limit_bit_depth,
             colourmap_name=colourmap_name,
         )
-
-    @staticmethod
-    async def get_preferred_colourmap(access_token: str) -> str:
-        return await Image.get_preferred_colourmap(access_token)
