@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from io import BytesIO
+import logging
 
 import numpy as np
-from PIL import Image as PILImage
+from PIL import Image as PILImage, PngImagePlugin
 
 from operationsgateway_api.src.exceptions import (
     EchoS3Error,
@@ -13,74 +14,92 @@ from operationsgateway_api.src.exceptions import (
 )
 from operationsgateway_api.src.models import (
     ChannelDtype,
-    ImageModel,
     PartialImageSeriesChannelModel,
 )
 from operationsgateway_api.src.records.echo_interface import get_echo_interface
-from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.greyscale_image_abc import GreyscaleImageABC
 from operationsgateway_api.src.records.image_abc import ImageABC
 from operationsgateway_api.src.records.record import Record
 
+log = logging.getLogger()
 
-# pretty much a copy paste from the image class
-class ImageSeries(ImageABC):
+
+class ImageSeries(GreyscaleImageABC):
     echo_prefix = "image_series"
     echo_extension = "npy"
-    storage_dtype = np.dtype("<u2")
 
-    def __init__(self, image: ImageModel) -> None:
-        super().__init__(image)
+    def create_thumbnail(self) -> None:
+        # The thumbnail represents the first frame. The data has already been
+        # normalised to 8 or 16 bit, so it can be used as it is.
+        self._create_greyscale_thumbnail(self.image.data[0])
 
-    def write_npy_header(self, file_object: BytesIO, shape: tuple[int, ...]) -> None:
+    @staticmethod
+    def get_storage_dtype(bit_depth: int) -> np.dtype:
+        """Given the bit depth, return the numpy dtype that sets bytes per pixel."""
+        if bit_depth <= 8:
+            dtype = np.uint8
+        else:
+            dtype = np.uint16
+        return np.dtype(dtype)
+
+    @staticmethod
+    def write_npy_header(
+        file_object: BytesIO,
+        shape: tuple[int, ...],
+        dtype: np.dtype,
+    ) -> None:
         # before the numpy data (of images) we write a header so we
         # know what the data contains
         np.lib.format.write_array_header_1_0(
             file_object,
             {
-                "descr": np.lib.format.dtype_to_descr(self.storage_dtype),
-                "fortran_order": False,  # makes sure the data is stored in series order
-                "shape": shape,  # [number of images, height, width]
+                # "descr" is the key the .npy format requires for the dtype of the array
+                "descr": np.lib.format.dtype_to_descr(dtype),
+                # makes sure the data is stored in series order
+                "fortran_order": False,
+                # for example: [number of images, height, width]
+                "shape": shape,
             },
         )
 
-    def get_header_offset_bytes(self, data: np.ndarray) -> int:
+    @staticmethod
+    def get_header_offset_bytes(shape: tuple[int, ...], dtype: np.dtype) -> int:
+        """
+        Work out the offset of the numpy header in bytes, so we know where the data
+        starts
+        """
         header = BytesIO()
-        self.write_npy_header(header, data.shape)
+        ImageSeries.write_npy_header(header, shape, dtype)
         return header.tell()
 
-    def create_thumbnail(self) -> None:
-        # Use a separate copy of frame zero for PNG processing.
-        preview = Image(
-            ImageModel(
-                path=self.image.path,
-                data=self.image.data[0].copy(),
-                bit_depth=self.image.bit_depth,
-            ),
-        )
-        preview.create_thumbnail()
-        self.thumbnail = preview.thumbnail
-
     @staticmethod
-    async def upload_image(input_image: ImageSeries) -> str | None:
-        # Convert for storage without rescaling pixel values.
-        data = np.ascontiguousarray(
-            input_image.image.data,
-            dtype=input_image.storage_dtype,
-        )
+    async def upload_image(input_image: ImageABC) -> str | None:
+        """
+        Upload the image series to Echo
+        """
+        log.info("Storing image in a Bytes object: %s", input_image.image.path)
+
+        # The data is already uint8 or uint16, having been normalised in `__init__`
+        data = np.ascontiguousarray(input_image.image.data)
 
         image_bytes = BytesIO()
-        input_image.write_npy_header(image_bytes, data.shape)
+        ImageSeries.write_npy_header(image_bytes, data.shape, data.dtype)
 
         # Append the contiguous pixel bytes after the header.
         image_bytes.write(data.data.cast("B"))
 
+        echo_interface = get_echo_interface()
         storage_path = input_image.get_full_path(input_image.image.path)
+        log.info("Storing image on S3: %s", storage_path)
 
         try:
-            await get_echo_interface().upload_file_object(image_bytes, storage_path)
+            await echo_interface.upload_file_object(image_bytes, storage_path)
             return None
         except EchoS3Error:
-            return input_image.get_channel_name_from_path()
+            # Extract the channel name and propagate it
+            channel_name = input_image.get_channel_name_from_path()
+            log.error("Failed to upload image series for channel: %s", channel_name)
+            return channel_name
 
     @staticmethod
     async def get_frame(
@@ -94,6 +113,13 @@ class ImageSeries(ImageABC):
         frame index, dimensions, and bytes per pixel, then retrieve it as a
         greyscale PNG.
         """
+
+        log.info(
+            "Retrieving frame %d for channel %s in record %s",
+            frame_index,
+            channel_name,
+            record_id,
+        )
 
         record = await Record.find_record_by_id(record_id, {})
         channel = (record.channels or {}).get(channel_name)
@@ -113,6 +139,7 @@ class ImageSeries(ImageABC):
         shape = channel.shape
         header_offset = channel.header_offset_bytes
         image_path = channel.image_path
+        bit_depth = metadata.bit_depth
 
         if (
             shape is None
@@ -120,6 +147,7 @@ class ImageSeries(ImageABC):
             or header_offset is None
             or header_offset <= 0
             or not image_path
+            or not isinstance(bit_depth, int)
         ):
             raise RecordError("Image series storage metadata is missing or invalid")
 
@@ -130,8 +158,11 @@ class ImageSeries(ImageABC):
                 f"Frame index must be between 0 and {frame_count - 1}",
             )
 
+        # Every frame in a series has the same bit depth, and so the same width
+        storage_dtype = ImageSeries.get_storage_dtype(bit_depth)
+
         # Each frame occupies consecutive bytes after the NPY header.
-        frame_size = height * width * ImageSeries.storage_dtype.itemsize
+        frame_size = height * width * storage_dtype.itemsize
         start_byte = header_offset + frame_index * frame_size
         end_byte = start_byte + frame_size - 1
 
@@ -141,14 +172,17 @@ class ImageSeries(ImageABC):
             end_byte=end_byte,
         )
 
-        frame = np.frombuffer(
-            pixel_bytes,
-            dtype=ImageSeries.storage_dtype,
-        ).reshape(height, width)
+        frame = np.frombuffer(pixel_bytes, dtype=storage_dtype).reshape(height, width)
 
         output = BytesIO()
         with PILImage.fromarray(frame) as image:
-            image.save(output, format="PNG")
+            # As for normal images, record the original bit depth in the PNG
+            if 0 < bit_depth <= 16:
+                info = PngImagePlugin.PngInfo()
+                info.add(b"sBIT", bit_depth.to_bytes(1, byteorder="big"))
+                image.save(output, format="PNG", pnginfo=info)
+            else:
+                image.save(output, format="PNG")
 
         return output.getvalue()
 
@@ -156,13 +190,31 @@ class ImageSeries(ImageABC):
     async def get_image(
         record_id: str,
         channel_name: str,
+        frame_index: int,
+        original_image: bool,
+        lower_level: int,
+        upper_level: int,
+        limit_bit_depth: int,
         colourmap_name: str,
-    ) -> BytesIO:
-        # needed because we're an abstract class
-        raise NotImplementedError(
-            "TDDO: Frame retrieval will be implemented later",
-        )
+    ) -> bytes:
+        """
+        Retrieve one frame of an image series and return the bytes of the image
+        depending on what the user has requested.
 
-    @staticmethod
-    async def get_preferred_colourmap(access_token: str) -> str:
-        return await Image.get_preferred_colourmap(access_token)
+        This is the equivalent of `Image.get_image` for a single frame. If
+        'original_image' is set to True then the unprocessed frame is returned,
+        otherwise false colour is applied using the parameters provided.
+        """
+        png_bytes = await ImageSeries.get_frame(
+            record_id=record_id,
+            channel_name=channel_name,
+            frame_index=frame_index,
+        )
+        return ImageSeries.apply_false_colour(
+            image_bytes=png_bytes,
+            original_image=original_image,
+            lower_level=lower_level,
+            upper_level=upper_level,
+            limit_bit_depth=limit_bit_depth,
+            colourmap_name=colourmap_name,
+        )

@@ -282,13 +282,15 @@ class HDFDataHandler:
                 data=data,
                 bit_depth=metadata.bit_depth,
             )
-            series = ImageSeries(image_model)
 
             channel = ImageSeriesChannelModel(
                 metadata=metadata,
                 image_path=image_path,
                 shape=(data.shape[0], data.shape[1], data.shape[2]),
-                header_offset_bytes=series.get_header_offset_bytes(data),
+                header_offset_bytes=ImageSeries.get_header_offset_bytes(
+                    data.shape,
+                    ImageSeries.get_storage_dtype(metadata.bit_depth),
+                ),
             )
 
             self.image_series.append(image_model)
