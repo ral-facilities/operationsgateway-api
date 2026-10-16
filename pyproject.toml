@@ -72,6 +72,8 @@ fabric = "^3.1.0"
 pytest-asyncio = ">=0.21,<1.5"
 s4cmd = "^2.1.0"
 pytest-mock = "^3.14.1"
+# Required for the `env` blocks in test/pytest_epac.ini and test/pytest_gemini.ini
+pytest-env = "^1.1.5"
 
 [tool.poetry.group.simulated-data.dependencies]
 epac-data-sim = {git = "git@github.com:CentralLaserFacility/EPAC-DataSim.git"}
