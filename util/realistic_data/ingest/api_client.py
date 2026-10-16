@@ -67,11 +67,12 @@ class APIClient:
 
         try:
             response = requests.post(
-                f"{self.url}{endpoint}",
-                data=json.dumps({"token": f"{self.access_token}"}),
-                headers={"Cookie": f"refresh_token={self.refresh_token}"},
+                f"{self.url}/refresh",
+                json={"token": self.access_token},
+                cookies={"refresh_token": self.refresh_token},
             )
-            self.access_token = response.text[1:-1]
+            response.raise_for_status()
+            self.access_token = response.json()
 
         except ConnectionError:
             print(f"Cannot connect with API at {self.url} for {endpoint}")
