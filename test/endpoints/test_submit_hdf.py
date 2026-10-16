@@ -173,7 +173,6 @@ class TestSubmitHDF:
                     "PM-201-TJ-CAM-2-FWHMX",
                     "PM-201-TJ-CAM-2-FWHMY",
                     "PM-201-TJ-EM",
-                    "TEST_IMAGE_SERIES",
                 ],
                 "rejected_channels": {},
                 "warnings": [],
@@ -202,7 +201,7 @@ class TestSubmitHDF:
         directories = EchoInterface.format_record_id(RECORD_ID_TMP)
         cache_path_1 = Config.config.backup.cache_directory / directories / "1.hdf5"
         assert cache_path_1.exists()
-        assert cache_path_1.stat().st_size == 118768
+        assert cache_path_1.stat().st_size == 117264
 
         get_echo_interface.cache_clear()
         test_response = test_app_backup_enabled.post(
@@ -235,7 +234,6 @@ class TestSubmitHDF:
                     "PM-201-TJ-CAM-2-FWHMX": channel_present_message,
                     "PM-201-TJ-CAM-2-FWHMY": channel_present_message,
                     "PM-201-TJ-EM": channel_present_message,
-                    "TEST_IMAGE_SERIES": channel_present_message,
                 },
                 "warnings": [],
             },
@@ -246,7 +244,7 @@ class TestSubmitHDF:
 
         cache_path_2 = Config.config.backup.cache_directory / directories / "2.hdf5"
         assert cache_path_2.exists()
-        assert cache_path_2.stat().st_size == 118768
+        assert cache_path_2.stat().st_size == 117264
 
         temporary_file = SpooledTemporaryFile()
         with h5py.File(temporary_file, "w") as f:

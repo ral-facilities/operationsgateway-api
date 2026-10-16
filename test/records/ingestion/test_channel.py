@@ -36,7 +36,6 @@ def create_channel_response(responses, extra=None, channels=False):
             "PM-201-TJ-CAM-2-FWHMX",
             "PM-201-TJ-CAM-2-FWHMY",
             "PM-201-TJ-EM",
-            "TEST_IMAGE_SERIES",
         ],
         "rejected_channels": {},
     }
@@ -65,21 +64,7 @@ class TestChannel:
     @pytest.mark.asyncio
     async def test_channel_checks_success(self, remove_hdf_file):
         hdf_tuple = await create_test_hdf_file()
-
-        record, waveforms, images, image_series, float_images, vectors, failures = (
-            hdf_tuple
-        )
-
-        channel_checker = ChannelChecks(
-            ingested_record=record,
-            ingested_waveforms=waveforms,
-            ingested_images=images,
-            ingested_image_series=image_series,
-            ingested_float_images=float_images,
-            ingested_vectors=vectors,
-            internal_failed_channels=failures,
-        )
-
+        channel_checker = ChannelChecks(*hdf_tuple)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
         async_functions = [
@@ -119,7 +104,6 @@ class TestChannel:
                 "PM-201-TJ-CAM-2-FWHMX",
                 "PM-201-TJ-CAM-2-FWHMY",
                 "PM-201-TJ-EM",
-                "TEST_IMAGE_SERIES",
             ],
             "rejected_channels": {},
         }
@@ -207,19 +191,7 @@ class TestChannel:
     @pytest.mark.asyncio
     async def test_channel_dtype_fail(self, remove_hdf_file, altered_channel, response):
         hdf_tuple = await create_test_hdf_file(channel_dtype=altered_channel)
-        record, waveforms, images, image_series, float_images, vectors, failures = (
-            hdf_tuple
-        )
-
-        channel_checker = ChannelChecks(
-            ingested_record=record,
-            ingested_waveforms=waveforms,
-            ingested_images=images,
-            ingested_image_series=image_series,
-            ingested_float_images=float_images,
-            ingested_vectors=vectors,
-            internal_failed_channels=failures,
-        )
+        channel_checker = ChannelChecks(*hdf_tuple)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
@@ -398,19 +370,7 @@ class TestChannel:
                 required_attributes=required_attributes,
             )
 
-        record, waveforms, images, image_series, float_images, vectors, failures = (
-            hdf_tuple
-        )
-
-        channel_checker = ChannelChecks(
-            ingested_record=record,
-            ingested_waveforms=waveforms,
-            ingested_images=images,
-            ingested_image_series=image_series,
-            ingested_float_images=float_images,
-            ingested_vectors=vectors,
-            internal_failed_channels=failures,
-        )
+        channel_checker = ChannelChecks(*hdf_tuple)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
@@ -465,19 +425,7 @@ class TestChannel:
 
         hdf_data_handler = HDFDataHandler("test.h5")
         data = await hdf_data_handler.extract_data()
-
-        record, waveforms, images, image_series, float_images, vectors, failures = data
-
-        channel_checker = ChannelChecks(
-            ingested_record=record,
-            ingested_waveforms=waveforms,
-            ingested_images=images,
-            ingested_image_series=image_series,
-            ingested_float_images=float_images,
-            ingested_vectors=vectors,
-            internal_failed_channels=failures,
-        )
-
+        channel_checker = ChannelChecks(*data)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
@@ -603,19 +551,7 @@ class TestChannel:
         response,
     ):
         hdf_tuple = await create_test_hdf_file(optional_attributes=optional_attributes)
-        record, waveforms, images, image_series, float_images, vectors, failures = (
-            hdf_tuple
-        )
-
-        channel_checker = ChannelChecks(
-            ingested_record=record,
-            ingested_waveforms=waveforms,
-            ingested_images=images,
-            ingested_image_series=image_series,
-            ingested_float_images=float_images,
-            ingested_vectors=vectors,
-            internal_failed_channels=failures,
-        )
+        channel_checker = ChannelChecks(*hdf_tuple)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
@@ -651,17 +587,7 @@ class TestChannel:
 
         hdf_data_handler = HDFDataHandler("test.h5")
         data = await hdf_data_handler.extract_data()
-        record, waveforms, images, image_series, float_images, vectors, failures = data
-
-        channel_checker = ChannelChecks(
-            ingested_record=record,
-            ingested_waveforms=waveforms,
-            ingested_images=images,
-            ingested_image_series=image_series,
-            ingested_float_images=float_images,
-            ingested_vectors=vectors,
-            internal_failed_channels=failures,
-        )
+        channel_checker = ChannelChecks(*data)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
@@ -830,19 +756,7 @@ class TestChannel:
         extra,
     ):
         hdf_tuple = await create_test_hdf_file(required_attributes=required_attributes)
-        record, waveforms, images, image_series, float_images, vectors, failures = (
-            hdf_tuple
-        )
-
-        channel_checker = ChannelChecks(
-            ingested_record=record,
-            ingested_waveforms=waveforms,
-            ingested_images=images,
-            ingested_image_series=image_series,
-            ingested_float_images=float_images,
-            ingested_vectors=vectors,
-            internal_failed_channels=failures,
-        )
+        channel_checker = ChannelChecks(*hdf_tuple)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
@@ -865,17 +779,7 @@ class TestChannel:
 
         hdf_data_handler = HDFDataHandler("test.h5")
         data = await hdf_data_handler.extract_data()
-        record, waveforms, images, image_series, float_images, vectors, failures = data
-
-        channel_checker = ChannelChecks(
-            ingested_record=record,
-            ingested_waveforms=waveforms,
-            ingested_images=images,
-            ingested_image_series=image_series,
-            ingested_float_images=float_images,
-            ingested_vectors=vectors,
-            internal_failed_channels=failures,
-        )
+        channel_checker = ChannelChecks(*data)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
@@ -1009,19 +913,7 @@ class TestChannel:
         hdf_tuple = await create_test_hdf_file(
             unrecognised_attribute=unrecognised_attribute,
         )
-        record, waveforms, images, image_series, float_images, vectors, failures = (
-            hdf_tuple
-        )
-
-        channel_checker = ChannelChecks(
-            ingested_record=record,
-            ingested_waveforms=waveforms,
-            ingested_images=images,
-            ingested_image_series=image_series,
-            ingested_float_images=float_images,
-            ingested_vectors=vectors,
-            internal_failed_channels=failures,
-        )
+        channel_checker = ChannelChecks(*hdf_tuple)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
@@ -1090,19 +982,7 @@ class TestChannel:
         response,
     ):
         hdf_tuple = await create_test_hdf_file(channel_name=channel_name)
-        record, waveforms, images, image_series, float_images, vectors, failures = (
-            hdf_tuple
-        )
-
-        channel_checker = ChannelChecks(
-            ingested_record=record,
-            ingested_waveforms=waveforms,
-            ingested_images=images,
-            ingested_image_series=image_series,
-            ingested_float_images=float_images,
-            ingested_vectors=vectors,
-            internal_failed_channels=failures,
-        )
+        channel_checker = ChannelChecks(*hdf_tuple)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
@@ -1216,19 +1096,7 @@ class TestChannel:
             channel_name=channel_name,
             channels_check=channels_check,
         )
-        record, waveforms, images, image_series, float_images, vectors, failures = (
-            hdf_tuple
-        )
-
-        channel_checker = ChannelChecks(
-            ingested_record=record,
-            ingested_waveforms=waveforms,
-            ingested_images=images,
-            ingested_image_series=image_series,
-            ingested_float_images=float_images,
-            ingested_vectors=vectors,
-            internal_failed_channels=failures,
-        )
+        channel_checker = ChannelChecks(*hdf_tuple)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
@@ -1295,19 +1163,7 @@ class TestChannel:
         response,
     ):
         hdf_tuple = await create_test_hdf_file(test_type=test_type)
-        record, waveforms, images, image_series, float_images, vectors, failures = (
-            hdf_tuple
-        )
-
-        channel_checker = ChannelChecks(
-            ingested_record=record,
-            ingested_waveforms=waveforms,
-            ingested_images=images,
-            ingested_image_series=image_series,
-            ingested_float_images=float_images,
-            ingested_vectors=vectors,
-            internal_failed_channels=failures,
-        )
+        channel_checker = ChannelChecks(*hdf_tuple)
         manifest = await ChannelManifest.get_most_recent_manifest()
         channel_checker.set_channels(manifest)
 
