@@ -6,9 +6,11 @@ from fastapi.testclient import TestClient
 import h5py
 import numpy as np
 from PIL import Image
+import pytest
 
 from test.conftest import IMAGE_SERIES_CHANNEL_NAME, MARK_EPAC_TEST, RECORD_ID_TMP
 
+# 3 frames of 2x2 pixels of 16 bit data (uint16)
 FRAMES = np.array(
     [
         [[0, 255], [256, 4095]],
@@ -18,8 +20,31 @@ FRAMES = np.array(
     dtype=np.uint16,
 )
 
+# 3 frames of 2x2 pixels of 12 bit data.
+FRAMES_12_BIT = np.array(
+    [
+        [[0, 255], [256, 4095]],
+        [[4095, 1], [2048, 1024]],
+        [[42, 128], [2048, 3000]],
+    ],
+    dtype=np.uint16,
+)
 
-def create_image_series_hdf_file() -> None:
+# 3 frames of 2x2 pixels of 8 bit data (uint8).
+FRAMES_8_BIT = np.array(
+    [
+        [[0, 255], [128, 64]],
+        [[255, 1], [200, 100]],
+        [[42, 128], [17, 230]],
+    ],
+    dtype=np.uint8,
+)
+
+
+def create_image_series_hdf_file(
+    frames: np.ndarray = FRAMES,
+    bit_depth: int | None = None,
+) -> None:
     with h5py.File("test.h5", "w") as f:
         f.attrs.create("epac_ops_data_version", "1.0")
         record = f["/"]
@@ -31,23 +56,61 @@ def create_image_series_hdf_file() -> None:
         image_series = record.create_group(IMAGE_SERIES_CHANNEL_NAME)
         image_series.attrs.create("channel_dtype", "image_series")
         image_series.attrs.create("frame_rate_hz", 100.0)
-        image_series.create_dataset("data", data=FRAMES)
+        # Defines whether the system infers it or not
+        if bit_depth is not None:
+            image_series.attrs.create("bit_depth", bit_depth)
+        image_series.create_dataset("data", data=frames)
 
 
 @MARK_EPAC_TEST
 class TestGetImageSeriesFrame:
+    @pytest.mark.parametrize(
+        ("frames", "bit_depth", "expected_pixels", "expected_mode"),
+        [
+            # Stored as it was submitted, in a 16 bit PNG
+            pytest.param(
+                FRAMES,
+                16,
+                [[65535, 1], [32768, 1024]],
+                "I;16",
+                id="16 bit",
+            ),
+            # Each value is shifted up 4 bits (times 16) to fill the 16 bit PNG
+            pytest.param(
+                FRAMES_12_BIT,
+                12,
+                [[65520, 16], [32768, 16384]],
+                "I;16",
+                id="12 bit",
+            ),
+            # Stored as it was submitted, in an 8 bit PNG
+            pytest.param(
+                FRAMES_8_BIT,
+                8,
+                [[255, 1], [200, 100]],
+                "L",
+                id="8 bit",
+            ),
+        ],
+    )
     def test_submit_series_success(
         self,
         reset_record_storage,
         test_app: TestClient,
         login_and_get_token,
+        frames: np.ndarray,
+        bit_depth: int,
+        expected_pixels: list[list[int]],
+        expected_mode: str,
     ):
         """
         Submit an HDF file containing an image series of 3 frames, then
-        get the middle frame back through the API and check it is the right one.
+        get the middle frame back through the API and check it is the right one,
+        at each of the bit depths.
         """
         headers = {"Authorization": f"Bearer {login_and_get_token}"}
-        create_image_series_hdf_file()
+        # Here the bit depth is declared explicitly
+        create_image_series_hdf_file(frames, bit_depth)
 
         with open("test.h5", "rb") as file:
             submit_response = test_app.post(
@@ -66,7 +129,11 @@ class TestGetImageSeriesFrame:
         assert response.status_code == 200, response.text
         assert response.headers["content-type"] == "image/png"
         with Image.open(io.BytesIO(response.content)) as image:
-            np.testing.assert_array_equal(np.array(image), FRAMES[1])
+            assert image.mode == expected_mode
+            # Check the shift is correct
+            np.testing.assert_array_equal(np.array(image), expected_pixels)
+        # Check the sBIT chunk records the bit depth the data was submitted with
+        assert response.content[response.content.find(b"sBIT") + 4] == bit_depth
 
 
 @MARK_EPAC_TEST
@@ -83,6 +150,7 @@ class TestGetImageSeriesCrosshair:
         and column are the pixels of that frame through that position.
         """
         headers = {"Authorization": f"Bearer {login_and_get_token}"}
+        # No bit depth is given, so ingest infers 16 from the uint16 data
         create_image_series_hdf_file()
 
         with open("test.h5", "rb") as file:
@@ -125,6 +193,7 @@ class TestExportImageSeries:
         alongside the csv, with the same frames that were submitted.
         """
         headers = {"Authorization": f"Bearer {login_and_get_token}"}
+        # No bit depth is given, so ingest infers 16 from the uint16 data
         create_image_series_hdf_file()
 
         with open("test.h5", "rb") as file:
