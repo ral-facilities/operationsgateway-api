@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from io import BytesIO
 import logging
+from typing import Any
 
 from operationsgateway_api.src.models import ImageModel
 from operationsgateway_api.src.records.channel_object_abc import ChannelObjectABC
@@ -13,6 +14,7 @@ log = logging.getLogger()
 class ImageABC(ChannelObjectABC):
     def __init__(self, image: ImageModel) -> None:
         self.image = image
+        self.thumbnail: bytes | None = None
 
     @property
     @abstractmethod
@@ -37,11 +39,12 @@ class ImageABC(ChannelObjectABC):
 
     @staticmethod
     @abstractmethod
-    async def get_image(
-        record_id: str,
-        channel_name: str,
-        colourmap_name: str,
-    ) -> BytesIO: ...
+    async def get_image(*args: Any, **kwargs: Any) -> bytes | BytesIO:
+        """
+        Retrieve the stored image. The parameters differ between image types, for
+        example a series also needs the index of the frame to retrieve, so each type
+        declares its own.
+        """
 
     @staticmethod
     @abstractmethod

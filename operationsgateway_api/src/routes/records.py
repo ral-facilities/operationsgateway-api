@@ -20,6 +20,7 @@ from operationsgateway_api.src.records.echo_interface import (
 )
 from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.image_series import ImageSeries
 from operationsgateway_api.src.records.record import Record as Record
 from operationsgateway_api.src.records.record_retriever import RecordRetriever
 from operationsgateway_api.src.records.vector import Vector
@@ -309,6 +310,12 @@ async def delete_record_by_id(
     log.info("Deleting images for record ID '%s'", id_)
     await echo_interface.delete_directory(f"{Image.echo_prefix}/{sub_directories}/")
     await echo_interface.delete_directory(f"{Image.echo_prefix}/{directory}/")
+
+    log.info("Deleting image series for record ID '%s'", id_)
+    await echo_interface.delete_directory(
+        f"{ImageSeries.echo_prefix}/{sub_directories}/",
+    )
+    await echo_interface.delete_directory(f"{ImageSeries.echo_prefix}/{directory}/")
 
     log.info("Deleting vectors for record ID '%s'", id_)
     await echo_interface.delete_directory(f"{Vector.echo_prefix}/{sub_directories}/")

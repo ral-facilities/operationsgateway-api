@@ -19,6 +19,7 @@ from operationsgateway_api.src.models import (
 )
 from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.image_series import ImageSeries
 from operationsgateway_api.src.records.record_retriever import RecordRetriever
 from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
@@ -84,6 +85,23 @@ class ExportHandler:
 
         self.use_shotnum_in_filenames = Config.config.export.use_shotnum_in_filenames
         self.shotnums_by_record_id = self._get_shotnums_by_record_id()
+        self.shotnum_naming = self._shotnum_naming_applies()
+
+    def _shotnum_naming_applies(self) -> bool:
+        """
+        Whether shot numbers should be used to name this export.
+
+        Shot numbers are only used when every record in the export has one. If any
+        record is missing a shot number the whole export falls back to record IDs,
+        rather than mixing the two in a single name such as
+        "423648000000_to_20230605170000".
+        """
+        if not self.use_shotnum_in_filenames:
+            return False
+
+        return all(
+            shotnum is not None for shotnum in self.shotnums_by_record_id.values()
+        )
 
     def _get_shotnums_by_record_id(self) -> dict[str, int | str | None]:
         """This creates a look up table; IDs : shotnum, for example:
@@ -351,6 +369,14 @@ class ExportHandler:
             )
             return line
 
+        if channel_type == "image_series":
+            await self._add_image_series_to_zip(
+                channels,
+                record_id,
+                channel_name,
+            )
+            return line
+
         if channel_type == "float_image":
             await self._add_float_image_to_zip(
                 channels,
@@ -458,6 +484,31 @@ class ExportHandler:
             log.exception("Could not find image for %s %s", record_id, channel_name)
             self.errors_file_in_memory.write(
                 f"Could not find image for {record_id} {channel_name}\n",
+            )
+
+    async def _add_image_series_to_zip(
+        self,
+        channels: PartialChannels,
+        record_id: str,
+        channel_name: str,
+    ) -> None:
+        """
+        Get an image series from Echo and add it to the zip file being created for
+        download. The stored .npy is exported as it is, because thats how we store it
+        """
+        if not self.export_images or channel_name not in channels:
+            return
+
+        log.info("Getting image series to add to zip: %s %s", record_id, channel_name)
+        try:
+            storage_bytes = await ImageSeries.get_bytes(record_id, channel_name)
+
+            await self._write_to_zip(record_id, channel_name, "npy", storage_bytes)
+
+            self._check_zip_file_size()
+        except Exception:
+            self.errors_file_in_memory.write(
+                f"Could not find image series for {record_id} {channel_name}\n",
             )
 
     async def _add_float_image_to_zip(
@@ -681,11 +732,11 @@ class ExportHandler:
         first, last = self._get_first_last_record_ids()
 
         # Use the shot numbers belonging to the first and last records.
-        if self.use_shotnum_in_filenames:
-            first = str(self.shotnums_by_record_id[first])
+        if self.shotnum_naming:
+            first = self._filename_identifier(first)
 
             if last is not None:
-                last = str(self.shotnums_by_record_id[last])
+                last = self._filename_identifier(last)
 
         filename = first
         if last is not None:
@@ -694,6 +745,14 @@ class ExportHandler:
             channel_name = self._get_channel_name(self.projection[0])
             filename += "_" + channel_name
         return filename
+
+    def _filename_identifier(self, record_id: str) -> str:
+        """
+        The identifier to use for `record_id` in an export filename: its shot
+        number when `shotnum_naming` applies, otherwise the record ID.
+        """
+        shotnum = self.shotnums_by_record_id.get(record_id)
+        return record_id if shotnum is None else str(shotnum)
 
     def _get_first_last_record_ids(self) -> Tuple[str, str]:
         """
@@ -756,9 +815,9 @@ class ExportHandler:
         # Build the channel filename
         filename = f"{record_id}_{channel_name}.{extension}"
 
-        if self.use_shotnum_in_filenames:
-            shotnum = self.shotnums_by_record_id[record_id]
-            filename = f"{shotnum}_{channel_name}.{extension}"
+        if self.shotnum_naming:
+            identifier = self._filename_identifier(record_id)
+            filename = f"{identifier}_{channel_name}.{extension}"
 
         """
         As a precaution, lock access to the zip_file to prevent simultaneous access.
