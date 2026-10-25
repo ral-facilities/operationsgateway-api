@@ -217,6 +217,7 @@ class RecordMetadataModel(BaseModel):
     timestamp: Optional[Any] = None
     active_area: Optional[Any] = None
     active_experiment: Optional[Any] = None
+    tags: list[str] | None = None
 
 
 class RecordModel(BaseModel):
@@ -389,6 +390,11 @@ class ExperimentPartMappingModel(BaseModel):
     experiment_id: int
     parts: List[int]
     instrument_name: str
+
+
+class TagModel(BaseModel):
+    name: NonEmptyString
+    description: str
 
 
 class ShotnumConverterRange(BaseModel):

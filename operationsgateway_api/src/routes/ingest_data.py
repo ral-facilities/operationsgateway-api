@@ -121,6 +121,7 @@ async def submit_hdf(
     record_checker = RecordChecks(record_data)
     record_checker.active_area_checks()
     record_checker.optional_metadata_checks()
+    await record_checker.tag_checks()
 
     channel_checker = ChannelChecks(
         ingested_record=record_data,

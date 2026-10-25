@@ -720,6 +720,11 @@ class ExportHandler:
         if verbose:
             log.debug("value: %s of type %s", value, type(value))
 
+        if isinstance(value, list):
+            # Lists (e.g. tags) are joined into a single cell. The joined string is
+            # quoted below, like any other string, so its commas don't split the cell
+            value = ",".join(str(item) for item in value)
+
         if value is None or value == "":
             # leave cell empty in these cases
             return line + ","

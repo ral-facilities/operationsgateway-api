@@ -32,6 +32,7 @@ from operationsgateway_api.src.routes import (
     maintenance,
     records,
     sessions,
+    tags,
     user_preferences,
     users,
     vectors,
@@ -190,6 +191,7 @@ add_router_to_app(vectors.router)
 add_router_to_app(auth.router)
 add_router_to_app(channels.router)
 add_router_to_app(experiments.router)
+add_router_to_app(tags.router)
 add_router_to_app(export.router)
 add_router_to_app(sessions.router)
 add_router_to_app(user_preferences.router)
