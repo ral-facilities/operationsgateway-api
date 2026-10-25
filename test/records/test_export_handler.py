@@ -1,4 +1,6 @@
+import csv
 from datetime import datetime, timedelta, timezone
+import io
 from unittest.mock import MagicMock
 
 import pytest
@@ -252,5 +254,62 @@ class TestExportHandler:
                 "metadata.timestamp",
             )
             assert result == f"{expected_timestamp},"
+        finally:
+            export_handler.zip_file.close()
+
+
+class TestExportTags:
+    @pytest.mark.parametrize(
+        "tags, expected_cell",
+        [
+            pytest.param(["tripped"], '"tripped",', id="one tag"),
+            pytest.param(
+                ["tripped", "failed"],
+                '"tripped,failed",',
+                id="several tags in one cell",
+            ),
+            pytest.param(None, ",", id="no tags"),
+            pytest.param([], ",", id="empty tags"),
+        ],
+    )
+    async def test_csv_tags(self, tags, expected_cell):
+        export_handler = ExportHandler(
+            records_data=[],
+            channel_manifest=None,
+            projection=["metadata.tags"],
+            lower_level=0,
+            upper_level=255,
+            limit_bit_depth=8,
+            colourmap_name=None,
+            functions=[],
+            export_scalars=True,
+            export_strings=False,
+            export_images=False,
+            export_float_images=False,
+            export_waveform_csvs=False,
+            export_waveform_images=False,
+            export_vector_csvs=False,
+            export_vector_images=False,
+        )
+
+        # Supply the tags directly to test their export formatting.
+        record = MagicMock()
+        record.metadata.tags = tags
+
+        try:
+            export_handler._create_main_csv_headers()
+
+            # Check the heading, and that the tags stay in a single CSV cell
+            assert export_handler.main_csv_file_in_memory.getvalue() == '"tags",\n'
+            result = await export_handler._process_projection(
+                record,
+                {},
+                "metadata.tags",
+            )
+            assert result == expected_cell
+
+            # Check a CSV parser reads the commas between tags as one cell, followed by
+            # the empty cell the trailing comma leaves
+            assert next(csv.reader(io.StringIO(result))) == [",".join(tags or []), ""]
         finally:
             export_handler.zip_file.close()
