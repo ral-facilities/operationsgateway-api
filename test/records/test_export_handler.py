@@ -259,6 +259,7 @@ class TestExportHandler:
 
 
 class TestExportTags:
+    @pytest.mark.asyncio
     @pytest.mark.parametrize(
         "tags, expected_cell",
         [
