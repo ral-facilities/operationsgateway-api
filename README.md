@@ -155,12 +155,12 @@ export XrdSecSSSKT=/path/to/.keytab
 
 Data tagging lets the system producing an HDF file flag a shot, for example if something tripped or failed, and lets users filter records by those tags.
 
-- An ingested HDF file can have an optional `tags` attribute, alongside the other record metadata on the root of the file. It must be an array of strings, for example `["tripped", "failed"]`. The attribute can be left out, or be an empty array, if there are no tags.
+- An ingested HDF file can have an optional `tags` attribute, alongside the other record metadata on the root of the file. It must be an array of strings, for example `["tripped", "failed"]`. A tag that is repeated in the array is only stored once. The attribute can be left out, or be an empty array, if there are no tags.
 - Each tag must be an active tag in the `tags` collection, otherwise the file is rejected and the error names the tags that were not recognised. Tags are matched exactly, including case. If there are no tags in the collection, any file with tags is rejected.
 - The tags are stored as `metadata.tags` on the record. Records ingested without a `tags` attribute have no `tags` field, while an empty array is stored as an empty list. Re-ingesting a file for an existing record replaces its tags if the file has a `tags` attribute, so an empty array clears them, and leaves them as they are if the file does not have the attribute.
 - `GET /tags` returns the active tags and their descriptions. The list is empty if no tags have been set up, including if the `tags` collection does not exist.
 - Records can be filtered by tag using the `conditions` parameter of `GET /records` (and `/records/count` and `/export`) like any other field. For example, `{"metadata.tags": {"$all": ["tripped", "failed"]}}` finds records with both tags, and `{"metadata.tags": {"$in": ["tripped", "failed"]}}` finds records with either.
-- `metadata.tags` can be requested in the `projection` of `/export`. The tags of each record are put into one quoted CSV cell, separated by commas (for example `"tripped,failed"`), so the file needs to be read with a CSV parser, not by splitting lines on commas.
+- `metadata.tags` can be requested in the `projection` of `/export`. The tags of each record are put into one CSV cell, separated by semicolons (for example `tripped;failed`) so they don't mess up the CSV formatting.
 
 The list of tags is a controlled vocabulary which is deliberately not editable through the API. It needs to be created in every deployment, as documents in the `tags` collection which are managed directly in the database:
 

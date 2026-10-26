@@ -266,7 +266,7 @@ class TestExportTags:
             pytest.param(["tripped"], '"tripped",', id="one tag"),
             pytest.param(
                 ["tripped", "failed"],
-                '"tripped,failed",',
+                '"tripped;failed",',
                 id="several tags in one cell",
             ),
             pytest.param(None, ",", id="no tags"),
@@ -309,8 +309,8 @@ class TestExportTags:
             )
             assert result == expected_cell
 
-            # Check a CSV parser reads the commas between tags as one cell, followed by
-            # the empty cell the trailing comma leaves
-            assert next(csv.reader(io.StringIO(result))) == [",".join(tags or []), ""]
+            # Check a CSV parser reads the tags as one cell, followed by the empty cell
+            # the trailing comma leaves
+            assert next(csv.reader(io.StringIO(result))) == [";".join(tags or []), ""]
         finally:
             export_handler.zip_file.close()
