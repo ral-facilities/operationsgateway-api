@@ -56,7 +56,7 @@ class TestTags:
         test_app: TestClient,
         login_and_get_token,
     ):
-        create_tagged_hdf("test_tripped", "test_failed")
+        create_tagged_hdf("test_tripped", "test_failed", "test_tripped")
 
         test_file = "test.h5"
         files = {"file": (test_file, open(test_file, "rb"))}
@@ -66,7 +66,8 @@ class TestTags:
             files=files,
         )
 
-        # Check the tags in the file are stored on the record
+        # Check the tags in the file are stored on the record, and the repeated tag
+        # is only stored once
         assert test_response.status_code == 201
         assert await get_stored_tags() == ["test_tripped", "test_failed"]
 

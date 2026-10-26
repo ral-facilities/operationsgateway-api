@@ -219,6 +219,22 @@ class RecordMetadataModel(BaseModel):
     active_experiment: Optional[Any] = None
     tags: list[str] | None = None
 
+    @field_validator("tags")
+    @classmethod
+    def remove_repeated_tags(cls, tags: list[str] | None) -> list[str] | None:
+        """
+        A tag only needs to be stored once, so keep the first of any repeated tags.
+        """
+        if tags is None:
+            return None
+
+        unique_tags = []
+        for tag in tags:
+            if tag not in unique_tags:
+                unique_tags.append(tag)
+
+        return unique_tags
+
 
 class RecordModel(BaseModel):
     id_: str = Field(alias="_id")
