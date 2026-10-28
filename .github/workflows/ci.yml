@@ -35,6 +35,9 @@ jobs:
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-3.11-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
+      - name: Upgrade pip
+        run: python -m pip install --upgrade "pip>=26.2.2"
+
       - name: Install Poetry & Nox
         run: pip install -r .github/ci_requirements.txt
 
@@ -174,6 +177,9 @@ jobs:
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-3.11-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
+      - name: Upgrade pip
+        run: python -m pip install --upgrade "pip>=26.2.2"
+
       - name: Install Poetry & Nox
         run: pip install -r .github/ci_requirements.txt
 
@@ -306,6 +312,9 @@ jobs:
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-3.11-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
+      - name: Upgrade pip
+        run: python -m pip install --upgrade "pip>=26.2.2"
+
       - name: Install Poetry & Nox
         run: pip install -r .github/ci_requirements.txt
 
@@ -341,6 +350,9 @@ jobs:
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-3.11-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
+      - name: Upgrade pip
+        run: python -m pip install --upgrade "pip>=26.2.2"
+
       - name: Install Poetry & Nox
         run: pip install -r .github/ci_requirements.txt
 
@@ -376,6 +388,9 @@ jobs:
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-3.11-${{ env.pythonLocation }}-${{ hashFiles('.github/ci_requirements.txt') }}
+      - name: Upgrade pip
+        run: python -m pip install --upgrade "pip>=26.2.2"
+
       - name: Install Poetry & Nox
         run: pip install -r .github/ci_requirements.txt
 
