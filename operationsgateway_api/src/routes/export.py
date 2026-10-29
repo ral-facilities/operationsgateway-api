@@ -100,6 +100,16 @@ async def export_records(
         True,
         description="Whether to export the images for image channels",
     ),
+    # Defaults to False, unlike the other channel types, because a series holds every
+    # frame and so is far larger than a single image.
+    export_image_series: Optional[bool] = Query(
+        False,
+        description=(
+            "Whether to export image series channels. Separate from `export_images`, "
+            "and off by default because a series contains every frame and so is much "
+            "larger than a single image"
+        ),
+    ),
     export_float_images: Optional[bool] = Query(
         True,
         description="Whether to export float image channels",
@@ -184,6 +194,7 @@ async def export_records(
         export_scalars,
         export_strings,
         export_images,
+        export_image_series,
         export_float_images,
         export_waveform_csvs,
         export_waveform_images,
