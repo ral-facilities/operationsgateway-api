@@ -15,7 +15,7 @@ router = APIRouter()
 @router.get(
     "/tags",
     summary="Get the tags that can be applied to records",
-    response_description="List of active tags, with a description of each",
+    response_description="List of tags, with a description and whether each is active",
     tags=["Tags"],
     response_model=list[TagModel],
 )
@@ -28,4 +28,4 @@ async def get_tags(
     """
 
     log.info("Getting tags")
-    return await Tag.get_active_tags_from_database()
+    return await Tag.get_all_tags_from_database()

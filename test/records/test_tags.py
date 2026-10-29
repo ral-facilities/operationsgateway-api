@@ -127,7 +127,7 @@ class TestTags:
         }
         assert await get_stored_tags() is None
 
-    def test_get_tags_returns_only_active_tags(
+    def test_get_tags_includes_retired_tags(
         self,
         tags_fixture,
         test_app: TestClient,
@@ -139,11 +139,13 @@ class TestTags:
         )
         assert test_response.status_code == 200
 
-        # Check the retired tag is left out, and the others are in name order
+        # Check the retired tag is included and flagged as not active, and the tags
+        # are in name order
         test_tags = [
             tag for tag in test_response.json() if tag["name"].startswith("test_")
         ]
         assert test_tags == [
-            {"name": "test_failed", "description": "It failed"},
-            {"name": "test_tripped", "description": "It tripped"},
+            {"name": "test_failed", "description": "It failed", "active": True},
+            {"name": "test_retired", "description": "No longer used", "active": False},
+            {"name": "test_tripped", "description": "It tripped", "active": True},
         ]

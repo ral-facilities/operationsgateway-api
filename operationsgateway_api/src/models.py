@@ -411,6 +411,7 @@ class ExperimentPartMappingModel(BaseModel):
 class TagModel(BaseModel):
     name: NonEmptyString
     description: str
+    active: bool
 
 
 class ShotnumConverterRange(BaseModel):
