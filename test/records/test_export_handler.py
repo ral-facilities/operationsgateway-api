@@ -57,6 +57,7 @@ class TestExportHandler:
             False,
             False,
             False,
+            False,
         )
         assert await export_handler._process_projection(None, {}, proj) == ""
 
@@ -81,6 +82,7 @@ class TestExportHandler:
             export_scalars=True,
             export_strings=False,
             export_images=True,
+            export_image_series=True,
             export_float_images=True,
             export_waveform_csvs=True,
             export_waveform_images=True,
@@ -127,6 +129,7 @@ class TestExportHandler:
             export_scalars=True,
             export_strings=True,
             export_images=True,
+            export_image_series=True,
             export_float_images=True,
             export_waveform_images=True,
             export_waveform_csvs=True,
@@ -164,6 +167,7 @@ class TestExportHandler:
             export_scalars=True,
             export_strings=True,
             export_images=True,
+            export_image_series=True,
             export_float_images=True,
             export_waveform_images=True,
             export_waveform_csvs=True,
@@ -231,6 +235,7 @@ class TestExportHandler:
             export_scalars=True,
             export_strings=False,
             export_images=False,
+            export_image_series=False,
             export_float_images=False,
             export_waveform_csvs=False,
             export_waveform_images=False,
