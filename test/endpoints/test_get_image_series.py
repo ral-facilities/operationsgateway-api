@@ -212,7 +212,7 @@ class TestExportImageSeries:
                     "metadata.timestamp",
                     f"channels.{IMAGE_SERIES_CHANNEL_NAME}",
                 ],
-                "export_images": True,
+                "export_image_series": True,
             },
             headers=headers,
         )
@@ -225,3 +225,43 @@ class TestExportImageSeries:
             assert sorted(zip_file.namelist()) == [f"{RECORD_ID_TMP}.csv", npy_filename]
             exported = np.load(zip_file.open(npy_filename))
         np.testing.assert_array_equal(exported, FRAMES)
+
+    def test_export_excluded_by_option(
+        self,
+        reset_record_storage,
+        test_app: TestClient,
+        login_and_get_token,
+    ):
+        """
+        Test to check that turning image export on and image series export off
+        leaves out the series.
+        """
+        headers = {"Authorization": f"Bearer {login_and_get_token}"}
+        # No bit depth is given, so ingest infers 16 from the uint16 data
+        create_image_series_hdf_file()
+
+        with open("test.h5", "rb") as file:
+            submit_response = test_app.post(
+                "/submit/hdf",
+                headers=headers,
+                files={"file": ("test.h5", file)},
+            )
+        assert submit_response.status_code == 201, submit_response.text
+
+        export_response = test_app.get(
+            "/export",
+            params={
+                "conditions": json.dumps({"_id": {"$eq": RECORD_ID_TMP}}),
+                "projection": [
+                    "metadata.timestamp",
+                    f"channels.{IMAGE_SERIES_CHANNEL_NAME}",
+                ],
+                "export_images": True,
+                "export_image_series": False,
+            },
+            headers=headers,
+        )
+
+        # Check the series is left out, so only the csv is returned and not a zip
+        assert export_response.status_code == 200, export_response.text
+        assert "text/plain" in export_response.headers["content-type"]

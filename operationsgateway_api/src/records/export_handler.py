@@ -43,6 +43,7 @@ class ExportHandler:
         export_scalars: bool,
         export_strings: bool,
         export_images: bool,
+        export_image_series: bool,
         export_float_images: bool,
         export_waveform_csvs: bool,
         export_waveform_images: bool,
@@ -62,6 +63,7 @@ class ExportHandler:
         self.export_scalars = export_scalars
         self.export_strings = export_strings
         self.export_images = export_images
+        self.export_image_series = export_image_series
         self.export_float_images = export_float_images
         self.export_waveform_csvs = export_waveform_csvs
         self.export_waveform_images = export_waveform_images
@@ -496,7 +498,7 @@ class ExportHandler:
         Get an image series from Echo and add it to the zip file being created for
         download. The stored .npy is exported as it is, because thats how we store it
         """
-        if not self.export_images or channel_name not in channels:
+        if not self.export_image_series or channel_name not in channels:
             return
 
         log.info("Getting image series to add to zip: %s %s", record_id, channel_name)
