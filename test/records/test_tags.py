@@ -1,3 +1,5 @@
+import json
+
 from fastapi.testclient import TestClient
 import h5py
 import numpy as np
@@ -126,6 +128,41 @@ class TestTags:
             "detail": "Unrecognised or inactive tags: not_a_tag",
         }
         assert await get_stored_tags() is None
+
+    @pytest.mark.parametrize(
+        "filter_tag, expected_ids",
+        [
+            pytest.param("test_tripped", [RECORD_ID_TMP], id="record has the tag"),
+            pytest.param("test_failed", [], id="record does not have the tag"),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_get_record_by_tag(
+        self,
+        filter_tag,
+        expected_ids,
+        reset_record_storage,
+        tags_fixture,
+        test_app: TestClient,
+        login_and_get_token,
+    ):
+        create_tagged_hdf("test_tripped")
+
+        test_file = "test.h5"
+        files = {"file": (test_file, open(test_file, "rb"))}
+        headers = {"Authorization": f"Bearer {login_and_get_token}"}
+        test_app.post("/submit/hdf", headers=headers, files=files)
+
+        conditions = json.dumps({"metadata.tags": {"$all": [filter_tag]}})
+        test_response = test_app.get(
+            "/records",
+            headers=headers,
+            params={"conditions": conditions},
+        )
+
+        # Check filtering by a tag returns only the records carrying that tag
+        assert test_response.status_code == 200
+        assert [record["_id"] for record in test_response.json()] == expected_ids
 
     def test_get_tags_includes_retired_tags(
         self,
