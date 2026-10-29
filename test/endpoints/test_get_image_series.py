@@ -233,8 +233,8 @@ class TestExportImageSeries:
         login_and_get_token,
     ):
         """
-        Test to check that turning image export on and image series export off leaves out
-        the series.
+        Test to check that turning image export on and image series export off
+        leaves out the series.
         """
         headers = {"Authorization": f"Bearer {login_and_get_token}"}
         # No bit depth is given, so ingest infers 16 from the uint16 data
