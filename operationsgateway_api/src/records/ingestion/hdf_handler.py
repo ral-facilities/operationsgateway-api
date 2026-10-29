@@ -22,6 +22,8 @@ from operationsgateway_api.src.models import (
     ImageChannelMetadataModel,
     ImageChannelModel,
     ImageModel,
+    ImageSeriesChannelMetadataModel,
+    ImageSeriesChannelModel,
     RecordMetadataModel,
     RecordModel,
     ScalarChannelMetadataModel,
@@ -37,6 +39,7 @@ from operationsgateway_api.src.models import (
 )
 from operationsgateway_api.src.records.float_image import FloatImage
 from operationsgateway_api.src.records.image import Image
+from operationsgateway_api.src.records.image_series import ImageSeries
 from operationsgateway_api.src.records.ingestion.channel_checks import ChannelChecks
 from operationsgateway_api.src.records.vector import Vector
 from operationsgateway_api.src.records.waveform import Waveform
@@ -48,6 +51,7 @@ class HDFDataHandler:
     acceptable_datasets = {
         "scalar": ["data"],
         "image": ["data"],
+        "image_series": ["data"],
         "float_image": ["data"],
         "waveform": ["x", "y"],
         "vector": ["data"],
@@ -63,6 +67,7 @@ class HDFDataHandler:
         self.channels = {}
         self.waveforms = []
         self.images = []
+        self.image_series = []
         self.float_images = []
         self.vectors = []
         self.strings = []
@@ -72,7 +77,8 @@ class HDFDataHandler:
     ) -> tuple[
         RecordModel,
         list[WaveformModel],
-        list[ImageModel],
+        list[ImageModel],  # normal images
+        list[ImageModel],  # image_series
         list[FloatImageModel],
         list[VectorModel],
         list[dict[str, str]],
@@ -112,6 +118,7 @@ class HDFDataHandler:
             record,
             self.waveforms,
             self.images,
+            self.image_series,
             self.float_images,
             self.vectors,
             self.internal_failed_channel,
@@ -180,6 +187,19 @@ class HDFDataHandler:
         """
         return any(val != self.acceptable_datasets[channel_type][0] for val in value)
 
+    @staticmethod
+    def _infer_bit_depth(
+        metadata: ImageChannelMetadataModel,
+        data: np.ndarray,
+    ) -> None:
+        """
+        Set `bit_depth` from the data's dtype when the HDF file didn't declare one,
+        flagging that it was inferred rather than supplied.
+        """
+        if not metadata.bit_depth:
+            metadata.bit_depth = 8 if data.dtype == np.uint8 else 16
+            metadata.bit_depth_inferred = True
+
     def _extract_image(
         self,
         internal_failed_channel,
@@ -202,9 +222,8 @@ class HDFDataHandler:
         try:
             metadata = ImageChannelMetadataModel(**channel_metadata)
             data = value["data"][()]
-            if not metadata.bit_depth:
-                metadata.bit_depth = 8 if data.dtype == np.uint8 else 16
-                metadata.bit_depth_inferred = True
+
+            self._infer_bit_depth(metadata, data)
 
             channel = ImageChannelModel(metadata=metadata, image_path=image_path)
             image_model = ImageModel(
@@ -220,6 +239,70 @@ class HDFDataHandler:
                 {channel_name: "data attribute is missing"},
             )
             return None, internal_failed_channel
+        except ValidationError as exc:
+            raise ModelError(str(exc)) from exc
+
+    def _extract_image_series(
+        self,
+        internal_failed_channel,
+        channel_name,
+        channel_metadata,
+        value,
+    ):
+        if self._unexpected_attribute("image_series", value):
+            internal_failed_channel.append(
+                {channel_name: "unexpected group or dataset in channel group"},
+            )
+            return None, internal_failed_channel
+
+        try:
+            metadata = ImageSeriesChannelMetadataModel(**channel_metadata)
+            dataset = value["data"]
+
+            # check shape
+            if dataset.ndim != 3 or any(dimension <= 0 for dimension in dataset.shape):
+                internal_failed_channel.append(
+                    {
+                        channel_name: (
+                            "data has wrong shape, expected 3 dimensions; "
+                            "(frame_count, height, width), e.g. (25, 480, 640)"
+                        ),
+                    },
+                )
+                return None, internal_failed_channel
+
+            data = dataset[()]
+
+            self._infer_bit_depth(metadata, data)
+
+            image_path = ImageSeries.get_relative_path(self.record_id, channel_name)
+
+            image_model = ImageModel(
+                path=image_path,
+                data=data,
+                bit_depth=metadata.bit_depth,
+            )
+
+            channel = ImageSeriesChannelModel(
+                metadata=metadata,
+                image_path=image_path,
+                shape=(data.shape[0], data.shape[1], data.shape[2]),
+                header_offset_bytes=ImageSeries.get_header_offset_bytes(
+                    data.shape,
+                    ImageSeries.get_storage_dtype(metadata.bit_depth),
+                ),
+            )
+
+            self.image_series.append(image_model)
+
+            return channel, False
+
+        except KeyError:
+            internal_failed_channel.append(
+                {channel_name: "data attribute is missing"},
+            )
+            return None, internal_failed_channel
+
         except ValidationError as exc:
             raise ModelError(str(exc)) from exc
 
@@ -462,6 +545,13 @@ class HDFDataHandler:
                 channel_metadata,
                 value,
             )
+        elif value.attrs["channel_dtype"] == "image_series":
+            channel, fail = self._extract_image_series(
+                internal_failed_channel,
+                channel_name,
+                channel_metadata,
+                value,
+            )
         elif value.attrs["channel_dtype"] == "float_image":
             channel, fail = self._extract_float_image(
                 internal_failed_channel,
@@ -535,12 +625,14 @@ class HDFDataHandler:
         checker_response: dict[str, Any],
         record_data: RecordModel,
         images: list[ImageModel],
+        image_series: list[ImageModel],
         float_images: list[FloatImageModel],
         waveforms: list[WaveformModel],
         vectors: list[VectorModel],
     ) -> tuple[
         RecordModel,
-        list[ImageModel],
+        list[ImageModel],  # image
+        list[ImageModel],  # image series
         list[FloatImageModel],
         list[WaveformModel],
         list[VectorModel],
@@ -553,6 +645,8 @@ class HDFDataHandler:
 
             if channel.metadata.channel_dtype == "image":
                 HDFDataHandler.remove_channel(images, channel.image_path)
+            elif channel.metadata.channel_dtype == "image_series":
+                HDFDataHandler.remove_channel(image_series, channel.image_path)
             elif channel.metadata.channel_dtype == "float_image":
                 HDFDataHandler.remove_channel(float_images, channel.image_path)
             elif channel.metadata.channel_dtype == "waveform":
@@ -562,7 +656,7 @@ class HDFDataHandler:
 
             del record_data.channels[key]
 
-        return record_data, images, float_images, waveforms, vectors
+        return record_data, images, image_series, float_images, waveforms, vectors
 
     @staticmethod
     def remove_channel(

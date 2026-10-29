@@ -167,3 +167,94 @@ class TestEchoInterface:
             Fileobj=ANY,
             Key=object_path,
         )
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("start_byte", "end_byte"),
+        [
+            # A byte position cannot be negative
+            pytest.param(-1, 5, id="start is negative"),
+            # The end cannot come before the start
+            pytest.param(10, 5, id="end is before the start"),
+        ],
+    )
+    async def test_download_file_range_invalid_range(
+        self,
+        start_byte: int,
+        end_byte: int,
+    ):
+        # Rejected before anything is requested, so no bucket is needed
+        echo_interface = EchoInterface()
+
+        with pytest.raises(ValueError, match="Invalid byte range"):
+            await echo_interface.download_file_range("test", start_byte, end_byte)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("content_range", "data", "expected_message"),
+        [
+            # 4 to 7 was asked for, but Echo says it sent 0 to 3
+            pytest.param(
+                "bytes 0-3/100",
+                b"abcd",
+                "Echo returned an unexpected byte range",
+                id="wrong range returned",
+            ),
+            # 4 bytes were asked for, but only 2 arrived
+            pytest.param(
+                "bytes 4-7/100",
+                b"ab",
+                "Expected 4 bytes, received 2",
+                id="short read",
+            ),
+        ],
+    )
+    async def test_download_file_range_bad_response(
+        self,
+        content_range: str,
+        data: bytes,
+        expected_message: str,
+    ):
+        stream = MagicMock()
+        stream.read = AsyncMock(return_value=data)
+        body = MagicMock()
+        body.__aenter__.return_value = stream
+        mock_get_object = AsyncMock(
+            return_value={"Body": body, "ContentRange": content_range},
+        )
+        mock_bucket = MagicMock()
+        mock_bucket.meta.client.get_object = mock_get_object
+        echo_interface = EchoInterface()
+        echo_interface._bucket = mock_bucket
+
+        with pytest.raises(EchoS3Error, match=expected_message):
+            await echo_interface.download_file_range("test", 4, 7)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("error_code", "expected_status_code"),
+        [
+            # boto3 gives the code as a string, and a missing object is a 404
+            pytest.param("NoSuchKey", 404, id="object is missing"),
+            # Any other failure is a server side problem
+            pytest.param("AccessDenied", 500, id="any other error"),
+        ],
+    )
+    async def test_download_file_range_client_error(
+        self,
+        error_code: str,
+        expected_status_code: int,
+    ):
+        side_effect = ClientError(
+            {"Error": {"Code": error_code, "Message": "Failure"}},
+            "get_object",
+        )
+        mock_bucket = MagicMock()
+        mock_bucket.meta.client.get_object = AsyncMock(side_effect=side_effect)
+        echo_interface = EchoInterface()
+        echo_interface._bucket = mock_bucket
+
+        with pytest.raises(EchoS3Error, match=error_code) as exc_info:
+            await echo_interface.download_file_range("test", 4, 7)
+
+        assert exc_info.value.status_code == expected_status_code

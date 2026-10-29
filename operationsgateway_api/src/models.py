@@ -48,6 +48,7 @@ default_exclude_field = Field(None, exclude=True)
 
 class ChannelDtype(StrEnum):
     IMAGE = "image"
+    IMAGE_SERIES = "image_series"
     FLOAT_IMAGE = "float_image"
     WAVEFORM = "waveform"
     VECTOR = "vector"
@@ -144,6 +145,19 @@ class ImageChannelModel(BaseModel):
     thumbnail: Optional[Union[bytes, Any]] = None
 
 
+class ImageSeriesChannelMetadataModel(ImageChannelMetadataModel):
+    channel_dtype: Literal[ChannelDtype.IMAGE_SERIES] | Any | None = (
+        ChannelDtype.IMAGE_SERIES
+    )
+    frame_rate_hz: float | Any | None = None
+
+
+class ImageSeriesChannelModel(ImageChannelModel):
+    metadata: ImageSeriesChannelMetadataModel
+    shape: tuple[int, int, int]
+    header_offset_bytes: int
+
+
 class FloatImageChannelMetadataModel(BaseModel):
     channel_dtype: Literal[ChannelDtype.FLOAT_IMAGE] | Any | None = (
         ChannelDtype.FLOAT_IMAGE
@@ -232,6 +246,7 @@ class RecordModel(BaseModel):
     channels: dict[
         str,
         ImageChannelModel
+        | ImageSeriesChannelModel
         | FloatImageChannelModel
         | ScalarChannelModel
         | WaveformChannelModel
@@ -244,6 +259,16 @@ class PartialImageChannelModel(ImageChannelModel):
     metadata: ImageChannelMetadataModel | None = None
     image_path: str | None = None
     thumbnail: bytes | None = None
+
+
+class PartialImageSeriesChannelMetadataModel(ImageSeriesChannelMetadataModel):
+    frame_rate_hz: float | None = None
+
+
+class PartialImageSeriesChannelModel(PartialImageChannelModel):
+    metadata: PartialImageSeriesChannelMetadataModel | None = None
+    shape: tuple[int, int, int] | None = None
+    header_offset_bytes: int | None = None
 
 
 class PartialFloatImageChannelModel(FloatImageChannelModel):
@@ -276,6 +301,7 @@ class PartialStringChannelModel(StringChannelModel):
 
 PartialChannelModel = (
     PartialImageChannelModel
+    | PartialImageSeriesChannelModel
     | PartialFloatImageChannelModel
     | PartialScalarChannelModel
     | PartialWaveformChannelModel
