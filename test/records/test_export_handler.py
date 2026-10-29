@@ -291,6 +291,7 @@ class TestExportTags:
             export_scalars=True,
             export_strings=False,
             export_images=False,
+            export_image_series=False,
             export_float_images=False,
             export_waveform_csvs=False,
             export_waveform_images=False,
