@@ -76,7 +76,7 @@ class RecordChecks:
         vocabulary. The record is rejected if any are not, with the offending tags named
         in the error. Records without tags always pass.
         """
-        tags = (self.ingested_record).metadata.tags
+        tags = self.ingested_record.metadata.tags
         if not tags:
             return
 
