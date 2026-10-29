@@ -12,7 +12,11 @@ jobs:
   tests_epac:
     strategy:
       fail-fast: false
-    runs-on: ubuntu-24.04
+    # ubuntu-24.04 images now use a Linux 7.0.0 kernel, and MongoDB 8.0 refuses to
+    # start on kernels 6.19 to 7.0.13 (https://jira.mongodb.org/browse/SERVER-121912).
+    # ubuntu-22.04 uses 6.8. Move back to ubuntu-24.04 once its image has a kernel
+    # of 7.0.14 or later. GitHub is retiring ubuntu-22.04 by April 2027
+    runs-on: ubuntu-22.04
 
     name: Python 3.11 Tests EPAC
     steps:
@@ -59,7 +63,7 @@ jobs:
           sudo apt-get install -y wget gnupg curl
           curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc \
             | sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor
-          echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0 multiverse" \
+          echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/8.0 multiverse" \
             | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
 
           sudo apt-get update
@@ -159,7 +163,11 @@ jobs:
   tests-gemini:
     strategy:
       fail-fast: false
-    runs-on: ubuntu-24.04
+    # ubuntu-24.04 images now use a Linux 7.0.0 kernel, and MongoDB 8.0 refuses to
+    # start on kernels 6.19 to 7.0.13 (https://jira.mongodb.org/browse/SERVER-121912).
+    # ubuntu-22.04 uses 6.8. Move back to ubuntu-24.04 once its image has a kernel
+    # of 7.0.14 or later. GitHub is retiring ubuntu-22.04 by April 2027
+    runs-on: ubuntu-22.04
 
     name: Python 3.11 Tests Gemini
     steps:
@@ -198,7 +206,7 @@ jobs:
           sudo apt-get install -y wget gnupg curl
           curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc \
             | sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor
-          echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0 multiverse" \
+          echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/8.0 multiverse" \
             | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
 
           sudo apt-get update
