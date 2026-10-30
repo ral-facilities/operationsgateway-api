@@ -35,7 +35,7 @@ def safety(session):
         "pip",
         "install",
         "--upgrade",
-        "pip>=26.0",
+        "pip>=26.2.2",
         external=True,
     )
 

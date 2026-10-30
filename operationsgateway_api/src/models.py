@@ -231,6 +231,23 @@ class RecordMetadataModel(BaseModel):
     timestamp: Optional[Any] = None
     active_area: Optional[Any] = None
     active_experiment: Optional[Any] = None
+    tags: list[str] | None = None
+
+    @field_validator("tags")
+    @classmethod
+    def remove_repeated_tags(cls, tags: list[str] | None) -> list[str] | None:
+        """
+        A tag only needs to be stored once, so keep the first of any repeated tags.
+        """
+        if tags is None:
+            return None
+
+        unique_tags = []
+        for tag in tags:
+            if tag not in unique_tags:
+                unique_tags.append(tag)
+
+        return unique_tags
 
 
 class RecordModel(BaseModel):
@@ -415,6 +432,12 @@ class ExperimentPartMappingModel(BaseModel):
     experiment_id: int
     parts: List[int]
     instrument_name: str
+
+
+class TagModel(BaseModel):
+    name: NonEmptyString
+    description: str
+    active: bool
 
 
 class ShotnumConverterRange(BaseModel):

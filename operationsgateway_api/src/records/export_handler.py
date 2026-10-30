@@ -781,6 +781,10 @@ class ExportHandler:
         if verbose:
             log.debug("value: %s of type %s", value, type(value))
 
+        if isinstance(value, list):
+            # using semi colons so it doesn't mess up the CSV formatting
+            value = ";".join(str(item) for item in value)
+
         if value is None or value == "":
             # leave cell empty in these cases
             return line + ","
