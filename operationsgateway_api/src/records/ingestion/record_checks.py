@@ -2,6 +2,7 @@ import logging
 
 from operationsgateway_api.src.exceptions import RejectRecordError
 from operationsgateway_api.src.models import RecordModel
+from operationsgateway_api.src.tags.tag import Tag
 
 log = logging.getLogger()
 
@@ -68,3 +69,21 @@ class RecordChecks:
                 raise RejectRecordError(
                     "shotnum has wrong datatype. Expected integer or string",
                 )
+
+    async def tag_checks(self) -> None:
+        """
+        Checks that every tag in the record is one of the active tags in the controlled
+        vocabulary. The record is rejected if any are not, with the offending tags named
+        in the error. Records without tags always pass.
+        """
+        tags = self.ingested_record.metadata.tags
+        if not tags:
+            return
+
+        active_tags = {tag.name for tag in await Tag.get_active_tags_from_database()}
+        unrecognised_tags = [tag for tag in tags if tag not in active_tags]
+        if unrecognised_tags:
+            log.error("Tags '%s' are not active tags", unrecognised_tags)
+            raise RejectRecordError(
+                f"Unrecognised or inactive tags: {', '.join(unrecognised_tags)}",
+            )

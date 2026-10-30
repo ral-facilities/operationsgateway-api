@@ -27,11 +27,13 @@ from operationsgateway_api.src.routes import (
     filters,
     float_images,
     functions,
+    image_series,
     images,
     ingest_data,
     maintenance,
     records,
     sessions,
+    tags,
     user_preferences,
     users,
     vectors,
@@ -182,6 +184,7 @@ def add_router_to_app(api_router: APIRouter):
 
 # Adding endpoints to FastAPI app
 add_router_to_app(images.router)
+add_router_to_app(image_series.router)
 add_router_to_app(float_images.router)
 add_router_to_app(ingest_data.router)
 add_router_to_app(records.router)
@@ -190,6 +193,7 @@ add_router_to_app(vectors.router)
 add_router_to_app(auth.router)
 add_router_to_app(channels.router)
 add_router_to_app(experiments.router)
+add_router_to_app(tags.router)
 add_router_to_app(export.router)
 add_router_to_app(sessions.router)
 add_router_to_app(user_preferences.router)

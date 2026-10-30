@@ -35,11 +35,12 @@ def safety(session):
         "pip",
         "install",
         "--upgrade",
-        "pip>=26.0",
+        "pip>=26.2.2",
         external=True,
     )
 
     # Can't fix 70790 because epac data sim uses it
+    # SFTY-20260902-58666 is in nltk, a transitive dependency of safety itself.
     session.run(
         "poetry",
         "run",
@@ -48,6 +49,8 @@ def safety(session):
         "--full-report",
         "--ignore",
         "70790",
+        "--ignore",
+        "SFTY-20260902-58666",
         external=True,
     )
 
