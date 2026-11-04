@@ -15,11 +15,11 @@ class FileChecks:
 
     def epac_data_version_checks(self):
         """
-        Checks that the epac_data_version on the file is "1.0"
+        Checks that the epac_data_version on the file is between "1.0" and "1.3"
         if:
             it is not a string = a file error is raised
             the first number is not "1" = a file error is raised
-            the second number is not "0" = a warning is given
+            the second number is greater than 3 = a warning is given
         """
         ingested_metadata = (self.ingested_record).metadata
         if (
@@ -46,11 +46,11 @@ class FileChecks:
                     raise RejectFileError(
                         "epac_ops_data_version major version was not 1",
                     )
-                if int(epac_numbers[1]) > 2:
+                if int(epac_numbers[1]) > 3:
                     log.warning(
                         "epac_ops_data_version minor version: %s",
                         epac_numbers[1],
                     )
-                    return "File minor version number too high (expected <=2)"
+                    return "File minor version number too high (expected <=3)"
         else:
             raise RejectFileError("epac_ops_data_version does not exist")

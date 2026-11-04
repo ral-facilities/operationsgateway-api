@@ -12,7 +12,11 @@ jobs:
   tests_epac:
     strategy:
       fail-fast: false
-    runs-on: ubuntu-24.04
+    # ubuntu-24.04 images now use a Linux 7.0.0 kernel, and MongoDB 8.0 refuses to
+    # start on kernels 6.19 to 7.0.13 (https://jira.mongodb.org/browse/SERVER-121912).
+    # ubuntu-22.04 uses 6.8. Move back to ubuntu-24.04 once its image has a kernel
+    # of 7.0.14 or later. GitHub is retiring ubuntu-22.04 by April 2027
+    runs-on: ubuntu-22.04
 
     name: Python 3.11 Tests EPAC
     steps:
@@ -44,6 +48,14 @@ jobs:
         with:
           mongodb-version: '8.0'
 
+      # The action only reports that the container is "not running". The reason is in
+      # the container's own output and exit status, so show both if it fails to start
+      - name: Dump MongoDB container logs
+        if: failure()
+        run: |
+          docker inspect mongodb --format 'exit code {{.State.ExitCode}}, oom killed {{.State.OOMKilled}}, error "{{.State.Error}}"' || true
+          docker logs mongodb || true
+
       # Used to install mongoimport when Ubuntu 22.04 is used, identified at https://github.com/actions/runner-images/issues/6626#issuecomment-1327744126
       - name: Install MongoDB Database Tools
         run: |
@@ -51,7 +63,7 @@ jobs:
           sudo apt-get install -y wget gnupg curl
           curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc \
             | sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor
-          echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0 multiverse" \
+          echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/8.0 multiverse" \
             | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
 
           sudo apt-get update
@@ -134,7 +146,7 @@ jobs:
 
       - name: Dump logs
         if: ${{ failure() }}
-        run: cat operationsgateway-api.log
+        run: cat operationsgateway-api.log || echo "No API log, the API never started"
 
       # Run EPAC tests session, saves and uploads a coverage report to codecov
       - name: Run Nox tests session
@@ -151,7 +163,11 @@ jobs:
   tests-gemini:
     strategy:
       fail-fast: false
-    runs-on: ubuntu-24.04
+    # ubuntu-24.04 images now use a Linux 7.0.0 kernel, and MongoDB 8.0 refuses to
+    # start on kernels 6.19 to 7.0.13 (https://jira.mongodb.org/browse/SERVER-121912).
+    # ubuntu-22.04 uses 6.8. Move back to ubuntu-24.04 once its image has a kernel
+    # of 7.0.14 or later. GitHub is retiring ubuntu-22.04 by April 2027
+    runs-on: ubuntu-22.04
 
     name: Python 3.11 Tests Gemini
     steps:
@@ -181,15 +197,18 @@ jobs:
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.12.1
         with:
-          mongodb-version: '7.0'
+          mongodb-version: '8.0'
 
       # Used to install mongoimport when Ubuntu 22.04 is used, identified at https://github.com/actions/runner-images/issues/6626#issuecomment-1327744126
       - name: Install MongoDB Database Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget gnupg
-          wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | sudo apt-key add -
-          echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+          sudo apt-get install -y wget gnupg curl
+          curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc \
+            | sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor
+          echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/8.0 multiverse" \
+            | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
+
           sudo apt-get update
           sudo apt-get install -y mongodb-database-tools
 
