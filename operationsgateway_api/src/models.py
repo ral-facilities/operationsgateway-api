@@ -378,8 +378,8 @@ class ChannelStatsModel(BaseModel):
     """
 
     id_: str = Field(alias="_id")
-    first_record_id: str # the oldest
-    last_record_ids: List[str] # the 3 newest
+    first_record_id: str  # the oldest
+    last_record_ids: List[str]  # the 3 newest
 
 
 class ChannelSummaryModel(BaseModel):

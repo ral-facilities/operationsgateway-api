@@ -17,7 +17,11 @@ from operationsgateway_api.src.channels.channel_stats import (
     NUM_RECENT_RECORDS,
 )
 
-DATABASE_URL = "mongodb://OpsGateway_gemini_scratch_user:***@dbsmongo12.fds.rl.ac.uk:27017,dbsmongo13.fds.rl.ac.uk:27017,dbsmongo14.fds.rl.ac.uk:27017/?authMechanism=SCRAM-SHA-256&authSource=admin&replicaSet=rep_dev03&readPreference=secondaryPreferred"
+DATABASE_URL = (
+    "mongodb://username:password@host1:27017,host2:27017,host3:27017/"
+    "?authMechanism=SCRAM-SHA-256&authSource=admin&replicaSet=replica_set"
+    "&readPreference=secondaryPreferred"
+)
 DATABASE_NAME = "OpsGateway_gemini_scratch"
 
 # Errors are written here, progress is printed to the screen
