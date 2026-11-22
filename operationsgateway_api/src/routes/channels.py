@@ -1,13 +1,14 @@
 import logging
 
 from fastapi import APIRouter, Depends, Path
-import pymongo
 from typing_extensions import Annotated
 
 from operationsgateway_api.src.auth.authorisation import authorise_token
 from operationsgateway_api.src.auth.jwt_handler import JwtHandler
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
+from operationsgateway_api.src.channels.channel_stats import ChannelStats
 from operationsgateway_api.src.error_handling import endpoint_error_handling
+from operationsgateway_api.src.exceptions import ChannelSummaryError
 from operationsgateway_api.src.models import ChannelSummaryModel
 from operationsgateway_api.src.records.false_colour_handler import FalseColourHandler
 from operationsgateway_api.src.records.record import Record
@@ -41,13 +42,14 @@ async def get_channel_summary(
 
     log.info("Getting channel summary for: %s", channel_name)
 
-    first_date = await Record.get_date_of_channel_data(
+    stats = await ChannelStats.get(channel_name)
+    if stats is None or not stats.last_record_ids:
+        raise ChannelSummaryError(f"There is no timestamp data for {channel_name}")
+
+    first_date = await Record.get_date_of_record(stats.first_record_id, channel_name)
+    most_recent_date = await Record.get_date_of_record(
+        stats.last_record_ids[0],
         channel_name,
-        [("_id", pymongo.ASCENDING)],
-    )
-    most_recent_date = await Record.get_date_of_channel_data(
-        channel_name,
-        [("_id", pymongo.DESCENDING)],
     )
 
     msg = "Preferred colourmaps after user prefs check are %s, %s (float)"
@@ -58,6 +60,7 @@ async def get_channel_summary(
 
     recent_data = await Record.get_recent_channel_values(
         channel_name,
+        stats.last_record_ids,
         colourmap_name,
         float_colourmap,
     )

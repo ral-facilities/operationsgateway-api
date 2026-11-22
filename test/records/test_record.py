@@ -215,6 +215,7 @@ class TestRecord:
         ):
             recent_data = await Record.get_recent_channel_values(
                 "test-scalar-channel",
+                ["19520605070023"],
                 "colourmap_name",
                 "float_colourmap",
             )

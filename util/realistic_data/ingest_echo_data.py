@@ -37,7 +37,7 @@ class DataIngester:
 
         if self.config.script_options.wipe_database:
             print("Wiping database")
-            collection_names = ["channels", "experiments", "records"]
+            collection_names = ["channels", "channel_stats", "experiments", "records"]
             mongodb.drop_collections(collection_names)
 
         echo.download_experiments()
