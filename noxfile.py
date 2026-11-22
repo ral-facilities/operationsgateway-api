@@ -25,9 +25,6 @@ def lint(session):
 
 @nox.session(python=False)
 def safety(session):
-    session.env["POETRY_VIRTUALENVS_CREATE"] = "false"
-    # sync rather than install, so packages dropped from the lock are uninstalled
-    # rather than left behind to be scanned.
     session.run("poetry", "sync", "--without", "simulated-data", external=True)
     session.run(
         "poetry",
