@@ -74,22 +74,31 @@ async def clean_stats_and_records():
     already have are put back afterwards for the tests which run after these
     """
 
-    stats_collection = MongoDBInterface.get_collection_object(COLLECTION_NAME)
-    existing_stats = await stats_collection.find(
-        {"_id": {"$in": CHANNELS_WITH_STATS}},
-    ).to_list(length=None)
+    def stats_collection():
+        # Looked up each time it's needed, rather than kept, because shutting the app
+        # down closes the database connection a collection object is bound to. The
+        # tests which run the app tear it down before this fixture cleans up
+        return MongoDBInterface.get_collection_object(COLLECTION_NAME)
+
+    existing_stats = (
+        await stats_collection()
+        .find(
+            {"_id": {"$in": CHANNELS_WITH_STATS}},
+        )
+        .to_list(length=None)
+    )
 
     async def remove_everything():
         await MongoDBInterface.get_collection_object("records").delete_many(
             {"_id": {"$in": ALL_RECORDS}},
         )
-        await stats_collection.delete_many({"_id": {"$in": CHANNELS_WITH_STATS}})
+        await stats_collection().delete_many({"_id": {"$in": CHANNELS_WITH_STATS}})
 
     await remove_everything()
     yield
     await remove_everything()
     if existing_stats:
-        await stats_collection.insert_many(existing_stats)
+        await stats_collection().insert_many(existing_stats)
 
 
 async def store_record(record_id, channel_names):
