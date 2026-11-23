@@ -12,12 +12,6 @@ log = logging.getLogger()
 COLLECTION_NAME = "channel_stats"
 NUM_RECENT_RECORDS = 3
 
-# Stats are changed by MongoDB itself, using an aggregation pipeline, so two records
-# being ingested at once can't overwrite each other's change. A pipeline is built from
-# expressions, which the small functions below name so the pipelines read as a list of
-# steps. Each takes and returns either a field reference (like "$first_record_id") or an
-# expression, and `record_ids` is always an array of record IDs
-
 
 def _recent_ids() -> Dict[str, Any]:
     """The channel's current newest record IDs, or none if it has no stats yet"""
@@ -59,23 +53,17 @@ class ChannelStats:
     """
     Keeps track of the first and most recent records that contain each channel, stored
     as one document per channel (the `_id` being the channel name)
-
-    Record IDs are strings which sort in the same order as the records' timestamps, so
-    comparing them as strings gives the same result as comparing the dates
     """
 
     @staticmethod
     def update_pipeline(record_id: str) -> List[Dict[str, Any]]:
         """
-        Build the update which adds a record to a channel's stats. The same update is
-        used when ingesting and when back populating, so the two agree
+        Build the update which adds a record to a channel's stats.
 
         It sets the channel's:
         - first record to the earlier of its current first record and this one. That
           can move it earlier, if an old record is ingested after newer ones
-        - newest records to the current newest plus this one, keeping the newest few.
-          Adding a record already listed changes nothing, so ingesting the same record
-          twice is harmless
+        - newest records to the current newest plus this one, keeping the newest three.
         """
 
         return [
@@ -94,8 +82,7 @@ class ChannelStats:
         """
         Update the stats of every channel in a record that has just been stored
 
-        Each channel is a separate update for now, which could be sent to MongoDB as
-        one bulk write instead
+        Each channel is a separate update for now.
         """
 
         pipeline = ChannelStats.update_pipeline(record_id)
@@ -115,12 +102,9 @@ class ChannelStats:
         channel_names: Iterable[str],
     ) -> None:
         """
-        Update the stats of every channel in a record that has just been stored, as
-        `update_for_record()` does, but log a failure instead of raising it
-
-        The record is already saved at this point, so failing the request would report
-        an error for data that is stored. Ingesting the record again, or re-running the
-        back population, corrects any stats that were missed
+        Updates the stats of every channel in a record that has just been stored,
+        The record is already saved at this point.
+        If this fails it logs a failure instead of raising it
         """
 
         try:
@@ -132,7 +116,7 @@ class ChannelStats:
     async def get(channel_name: str) -> Optional[ChannelStatsModel]:
         """
         Get a channel's stats, or `None` if the channel has no stats (which means no
-        stored record contains it, or that stats haven't been back populated yet)
+        stored record contains it)
         """
 
         stats_dict = await MongoDBInterface.find_one(
@@ -146,14 +130,11 @@ class ChannelStats:
     async def remove_record(record_id: str) -> None:
         """
         Correct the stats of every channel which referred to a record that has just
-        been deleted. Stats only hold the first and newest records of a channel, so a
-        channel that doesn't refer to the record is unaffected
+        been deleted.
 
         The record must be deleted first, or it could be chosen as its own replacement.
         A channel stops referring to the record once it has been corrected, so if this
-        fails part way through, running it again finishes the remaining channels. The
-        affected channels are read through a cursor as a record can be the first or
-        newest for more channels than the query limit
+        fails part way through, running it again finishes the remaining channels.
         """
 
         log.debug("Correcting channel stats after deleting record %s", record_id)
@@ -176,9 +157,6 @@ class ChannelStats:
     async def _correct_after_delete(stats: ChannelStatsModel, record_id: str) -> None:
         """
         Correct one channel's stats after `record_id` was deleted
-
-        The stats are updated using the values stored when the update runs, not those
-        read here, so a record ingested in the meantime isn't lost
         """
 
         channel_name = stats.id_
@@ -230,7 +208,7 @@ class ChannelStats:
     ) -> List[str]:
         """
         Find the records which fill the places in a channel's newest records left by a
-        deleted one. They're the next records older than the oldest one still listed
+        deleted one.
         """
 
         missing = NUM_RECENT_RECORDS - len(remaining_ids)
@@ -271,8 +249,7 @@ class ChannelStats:
     @staticmethod
     async def _remove_stats_if_empty(channel_name: str, deleted_id: str) -> None:
         """
-        Remove a channel's stats because no record contains the channel any more, unless
-        a record was added to them in the meantime
+        Remove a channel's stats because no record contains the channel any more
         """
 
         log.debug("No records left with channel %s, removing stats", channel_name)
@@ -293,8 +270,7 @@ class ChannelStats:
     ) -> List[str]:
         """
         Get the IDs of records containing a channel, whose ID meets `id_condition`
-        (e.g. `{"$lt": some_id}`), nearest first in the direction given. Limiting the ID
-        means the search starts there instead of at one end of the collection
+        (e.g. `{"$lt": some_id}`), nearest first in the direction given.
         """
 
         records = MongoDBInterface.find(
