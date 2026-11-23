@@ -57,6 +57,7 @@ def safety(session):
         "SFTY-20261020-91319",
         "SFTY-20261023-16869",
         "SFTY-20261023-24590",
+        "SFTY-20261023-10299",
     ]
 
     ignore_args = [arg for id_ in ignored for arg in ("--ignore", id_)]
