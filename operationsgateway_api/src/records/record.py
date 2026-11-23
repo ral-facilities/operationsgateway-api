@@ -720,7 +720,8 @@ class Record:
             if original_image:
                 image_bytes = BytesIO()
                 img_temp = PILImage.fromarray(result.astype(np.int32))
-                img_temp.save(image_bytes, format="PNG")
+
+                img_temp.convert("I;16").save(image_bytes, format="PNG")
             else:
                 image_bytes = FalseColourHandler.apply_false_colour(
                     image_array=result,

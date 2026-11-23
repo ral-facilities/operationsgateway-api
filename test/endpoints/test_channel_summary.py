@@ -125,7 +125,7 @@ class TestChannelSummary:
                 {
                     "first_date": DATETIME_STR_05_0803,
                     "most_recent_date": DATETIME_STR_05_0803,
-                    "recent_sample": [{DATETIME_STR_05_0803: "93cf6c1833976165"}],
+                    "recent_sample": [{DATETIME_STR_05_0803: "93cd6c1873976165"}],
                 },
                 False,
                 id="Float image channel summary (using system default colourmap)",
@@ -135,7 +135,7 @@ class TestChannelSummary:
                 {
                     "first_date": DATETIME_STR_05_0803,
                     "most_recent_date": DATETIME_STR_05_0803,
-                    "recent_sample": [{DATETIME_STR_05_0803: "ec3893c79c688f92"}],
+                    "recent_sample": [{DATETIME_STR_05_0803: "ec3893c79c688e9a"}],
                 },
                 True,
                 id="Float image channel summary (using user's preferred colourmap)",
