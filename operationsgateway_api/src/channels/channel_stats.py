@@ -161,9 +161,13 @@ class ChannelStats:
         """
 
         channel_name = stats.id_
+        # Get the remaining ids that aren't the deleted record. The deleted record may
+        # not be listed at all, if it was only the channel's first record
         remaining_ids = [id_ for id_ in stats.last_record_ids if id_ != record_id]
-        # With fewer than `NUM_RECENT_RECORDS` listed, every record with the channel is
-        # listed, so there are no other records to search for
+
+        # With fewer than `NUM_RECENT_RECORDS` listed on `stats` before the deletion,
+        # every record with the channel is listed, so there are no other records to
+        # search for
         list_is_complete = len(stats.last_record_ids) < NUM_RECENT_RECORDS
 
         replacements = []
