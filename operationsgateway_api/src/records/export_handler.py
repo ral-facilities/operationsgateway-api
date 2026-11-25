@@ -29,6 +29,8 @@ log = logging.getLogger()
 
 class ExportHandler:
     max_filesize_bytes = Config.config.export.max_filesize_bytes
+    # Passed to `RecordRetriever` for the images that functions return
+    return_raw_bit_depth = False
 
     def __init__(
         self,
@@ -161,6 +163,7 @@ class ExportHandler:
         if self.functions:
             await self._init_function_types()
 
+        self._start_export()
         self._create_main_csv_headers()
         tasks = []
         async with asyncio.TaskGroup() as task_group:
@@ -174,12 +177,23 @@ class ExportHandler:
             if line != "":
                 self.main_csv_file_in_memory.write(line + "\n")
 
-        self._add_main_csv_file_to_zip()
-        self._add_messages_file_to_zip()
+        self._finish_export()
 
         # end of adding files to the zip file
         # close the file to finish writing the directory entry etc.
         self.zip_file.close()
+
+    def _start_export(self) -> None:
+        """Called before the records are processed. Does nothing, so that subclasses
+        can override it.
+        """
+
+    def _finish_export(self) -> None:
+        """Called after the records are processed. Adds the main CSV file and the
+        messages file to the zip file. Subclasses can override it.
+        """
+        self._add_main_csv_file_to_zip()
+        self._add_messages_file_to_zip()
 
     async def _init_function_types(self):
         """Before writing the CSV header, need to determine function return types so
@@ -277,6 +291,7 @@ class ExportHandler:
                 limit_bit_depth=self.limit_bit_depth,
                 colourmap_name=self.colourmap_name,
                 return_thumbnails=False,
+                return_raw_bit_depth=self.return_raw_bit_depth,
             )
             await record_retriever.process_functions()
             raw_data = record_retriever.raw_data
