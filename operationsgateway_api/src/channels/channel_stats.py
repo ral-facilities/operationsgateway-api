@@ -14,28 +14,28 @@ COLLECTION_NAME = "channel_stats"
 NUM_RECENT_RECORDS = 3
 
 
-def _recent_ids() -> dict[str, Any]:
+def _recent_ids() -> dict[str, list[str | list[str]]]:
     """The channel's current newest record IDs, or none if it has no stats yet"""
     return {"$ifNull": ["$last_record_ids", []]}
 
 
-def _earlier_of(first_record_id: str, record_id: str) -> dict[str, Any]:
+def _earlier_of(first_record_id: str, record_id: str) -> dict[str, list[str]]:
     """The earlier ID of the two. A missing first ID is ignored, so a channel's first
     record becomes its first ID"""
     return {"$min": [first_record_id, record_id]}
 
 
-def _with_ids(record_ids: Any, extra_ids: Any) -> dict[str, Any]:
+def _with_ids(record_ids: Any, extra_ids: Any) -> dict:
     """`record_ids` and `extra_ids` together, without duplicates"""
     return {"$setUnion": [record_ids, extra_ids]}
 
 
-def _without_id(record_ids: Any, record_id: str) -> dict[str, Any]:
+def _without_id(record_ids: Any, record_id: str) -> dict:
     """`record_ids` with `record_id` taken out"""
     return {"$setDifference": [record_ids, [record_id]]}
 
 
-def _newest(record_ids: Any) -> dict[str, Any]:
+def _newest(record_ids: Any) -> dict:
     """The newest `NUM_RECENT_RECORDS` of `record_ids`, newest first"""
     return {
         "$slice": [
@@ -45,7 +45,7 @@ def _newest(record_ids: Any) -> dict[str, Any]:
     }
 
 
-def _replace_id(field: str, old_id: str, new_id: str) -> dict[str, Any]:
+def _replace_id(field: str, old_id: str, new_id: str) -> dict:
     """The value of `field`, with `new_id` in its place if it's `old_id`"""
     return {"$cond": [{"$eq": [field, old_id]}, new_id, field]}
 
