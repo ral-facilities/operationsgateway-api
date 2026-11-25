@@ -1,5 +1,6 @@
+from collections.abc import Iterable
 import logging
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any
 
 import pymongo
 
@@ -13,28 +14,28 @@ COLLECTION_NAME = "channel_stats"
 NUM_RECENT_RECORDS = 3
 
 
-def _recent_ids() -> Dict[str, Any]:
+def _recent_ids() -> dict[str, Any]:
     """The channel's current newest record IDs, or none if it has no stats yet"""
     return {"$ifNull": ["$last_record_ids", []]}
 
 
-def _earlier_of(first_record_id: str, record_id: str) -> Dict[str, Any]:
+def _earlier_of(first_record_id: str, record_id: str) -> dict[str, Any]:
     """The earlier ID of the two. A missing first ID is ignored, so a channel's first
     record becomes its first ID"""
     return {"$min": [first_record_id, record_id]}
 
 
-def _with_ids(record_ids: Any, extra_ids: Any) -> Dict[str, Any]:
+def _with_ids(record_ids: Any, extra_ids: Any) -> dict[str, Any]:
     """`record_ids` and `extra_ids` together, without duplicates"""
     return {"$setUnion": [record_ids, extra_ids]}
 
 
-def _without_id(record_ids: Any, record_id: str) -> Dict[str, Any]:
+def _without_id(record_ids: Any, record_id: str) -> dict[str, Any]:
     """`record_ids` with `record_id` taken out"""
     return {"$setDifference": [record_ids, [record_id]]}
 
 
-def _newest(record_ids: Any) -> Dict[str, Any]:
+def _newest(record_ids: Any) -> dict[str, Any]:
     """The newest `NUM_RECENT_RECORDS` of `record_ids`, newest first"""
     return {
         "$slice": [
@@ -44,7 +45,7 @@ def _newest(record_ids: Any) -> Dict[str, Any]:
     }
 
 
-def _replace_id(field: str, old_id: str, new_id: str) -> Dict[str, Any]:
+def _replace_id(field: str, old_id: str, new_id: str) -> dict[str, Any]:
     """The value of `field`, with `new_id` in its place if it's `old_id`"""
     return {"$cond": [{"$eq": [field, old_id]}, new_id, field]}
 
@@ -56,7 +57,7 @@ class ChannelStats:
     """
 
     @staticmethod
-    def update_pipeline(record_id: str) -> List[Dict[str, Any]]:
+    def update_pipeline(record_id: str) -> list[dict[str, Any]]:
         """
         Build the update which adds a record to a channel's stats.
 
@@ -113,7 +114,7 @@ class ChannelStats:
             log.exception("Failed to update channel stats for record %s", record_id)
 
     @staticmethod
-    async def get(channel_name: str) -> Optional[ChannelStatsModel]:
+    async def get(channel_name: str) -> ChannelStatsModel | None:
         """
         Get a channel's stats, or `None` if the channel has no stats (which means no
         stored record contains it)
@@ -204,8 +205,8 @@ class ChannelStats:
     @staticmethod
     async def _find_older_ids(
         channel_name: str,
-        remaining_ids: List[str],
-    ) -> List[str]:
+        remaining_ids: list[str],
+    ) -> list[str]:
         """
         Find the records which fill the places in a channel's newest records left by a
         deleted one.
@@ -226,9 +227,9 @@ class ChannelStats:
     async def _find_new_first_id(
         channel_name: str,
         deleted_id: str,
-        remaining_ids: List[str],
+        remaining_ids: list[str],
         list_is_complete: bool,
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Find a channel's new first record after its old one was deleted, which is the
         next record after it, or `None` if no record contains the channel any more
@@ -264,10 +265,10 @@ class ChannelStats:
     @staticmethod
     async def _find_record_ids(
         channel_name: str,
-        id_condition: Dict[str, str],
+        id_condition: dict[str, str],
         direction: int,
         limit: int,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Get the IDs of records containing a channel, whose ID meets `id_condition`
         (e.g. `{"$lt": some_id}`), nearest first in the direction given.
