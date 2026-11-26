@@ -265,3 +265,77 @@ class TestExportImageSeries:
         # Check the series is left out, so only the csv is returned and not a zip
         assert export_response.status_code == 200, export_response.text
         assert "text/plain" in export_response.headers["content-type"]
+
+    @pytest.mark.parametrize(
+        ("frames", "bit_depth", "expected_dtype"),
+        [
+            pytest.param(FRAMES, 16, np.uint16, id="16 bit"),
+            pytest.param(FRAMES_12_BIT, 12, np.uint16, id="12 bit"),
+            pytest.param(FRAMES_8_BIT, 8, np.uint8, id="8 bit"),
+        ],
+    )
+    def test_export_hdf_success(
+        self,
+        reset_record_storage,
+        test_app: TestClient,
+        login_and_get_token,
+        frames: np.ndarray,
+        bit_depth: int,
+        expected_dtype: type,
+    ):
+        """
+        Submit an HDF file containing an image series of 3 frames, then export the
+        record as HDF and check the series, read back from Echo, is in the file with
+        the values it was submitted with, at each of the bit depths.
+        """
+        headers = {"Authorization": f"Bearer {login_and_get_token}"}
+        create_image_series_hdf_file(frames, bit_depth)
+
+        with open("test.h5", "rb") as file:
+            submit_response = test_app.post(
+                "/submit/hdf",
+                headers=headers,
+                files={"file": ("test.h5", file)},
+            )
+        assert submit_response.status_code == 201, submit_response.text
+
+        export_response = test_app.get(
+            "/export",
+            params={
+                "conditions": json.dumps({"_id": {"$eq": RECORD_ID_TMP}}),
+                "projection": [f"channels.{IMAGE_SERIES_CHANNEL_NAME}"],
+                "export_hdf": True,
+            },
+            headers=headers,
+        )
+
+        assert export_response.status_code == 200, export_response.text
+        # Check the response is an HDF file named after the record and the channel
+        assert export_response.headers["content-type"] == "application/x-hdf5"
+        assert export_response.headers["content-disposition"] == (
+            f'attachment; filename="{RECORD_ID_TMP}_{IMAGE_SERIES_CHANNEL_NAME}.h5"'
+        )
+
+        with h5py.File(io.BytesIO(export_response.content)) as hdf_file:
+            # Check the file has a single group, for the record
+            assert list(hdf_file) == [RECORD_ID_TMP]
+            record_group = hdf_file[RECORD_ID_TMP]
+
+            # Check the record metadata is in the attributes of the record group
+            assert record_group.attrs["shotnum"] == 366272
+            assert record_group.attrs["timestamp"] == "2020-04-07T14:28:16.000+00:00"
+            assert record_group.attrs["active_area"] == "ea1"
+            assert record_group.attrs["active_experiment"] == "90097341"
+
+            # Check the channel group has the channel metadata as attributes
+            channel_group = record_group[IMAGE_SERIES_CHANNEL_NAME]
+            assert channel_group.attrs["channel_dtype"] == "image_series"
+            assert channel_group.attrs["frame_rate_hz"] == 100.0
+            assert channel_group.attrs["bit_depth"] == bit_depth
+            assert list(channel_group) == ["data"]
+            exported = channel_group["data"][()]
+
+        # Check the dtype is the one it is stored with, and the frames are the values
+        # that were submitted, not the values shifted up to fill the stored bits
+        assert exported.dtype == expected_dtype
+        np.testing.assert_array_equal(exported, frames)
