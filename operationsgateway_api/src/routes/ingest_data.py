@@ -8,6 +8,7 @@ from typing_extensions import Annotated
 from operationsgateway_api.src.auth.authorisation import authorise_route
 from operationsgateway_api.src.backup.x_root_d_client import XRootDClient
 from operationsgateway_api.src.channels.channel_manifest import ChannelManifest
+from operationsgateway_api.src.channels.channel_stats import ChannelStats
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.models import SubmitHDFResponse
 from operationsgateway_api.src.records.float_image import FloatImage
@@ -190,6 +191,10 @@ async def submit_hdf(
         )
         record.record.version = stored_record.version + 1
         await record.update()
+        await ChannelStats.update_for_stored_record(
+            record.record.id_,
+            record.record.channels.keys(),
+        )
         XRootDClient.cache_hdf(record_model=record.record, buffer=file.file)
 
         content = {
@@ -201,6 +206,10 @@ async def submit_hdf(
     else:
         log.debug("Inserting new record into MongoDB")
         await record.insert()
+        await ChannelStats.update_for_stored_record(
+            record.record.id_,
+            record.record.channels.keys(),
+        )
         XRootDClient.cache_hdf(record_model=record.record, buffer=file.file)
         record_id = record.record.id_
         content = {

@@ -237,24 +237,14 @@ class Record:
             raise MissingDocumentError("Record cannot be found")
 
     @staticmethod
-    async def get_date_of_channel_data(
-        channel_name: str,
-        direction: List[tuple],
-    ) -> datetime:
+    async def get_date_of_record(record_id: str, channel_name: str) -> datetime:
         """
-        Depending on the direction given, either get the date of the newest or oldest
-        piece of data that exists for a particular channel. If no data can be found, a
-        `ChannelSummaryError` will be raised
+        Get the date of a record, which is known to contain a channel.
         """
-        channel_exist_condition = {
-            f"channels.{channel_name}": {"$exists": True},
-            "metadata.timestamp": {"$exists": True},
-        }
 
         data = await MongoDBInterface.find_one(
             "records",
-            filter_=channel_exist_condition,
-            sort=direction,
+            filter_={"_id": record_id},
             projection={"metadata.timestamp": 1},
         )
 
@@ -268,11 +258,13 @@ class Record:
     @staticmethod
     async def get_recent_channel_values(
         channel_name: str,
+        record_ids: List[str],
         colourmap_name: str,
         float_colourmap: str,
     ) -> List[Union[str, int, float]]:
         """
-        Return the most recent three values for a particular channel
+        Return the values of a particular channel in the records given, the newest
+        first. These are the channel's most recent records, which its stats hold
 
         Depending on the channel type, different samples will be collected:
         - Scalar: return the values themselves
@@ -280,13 +272,12 @@ class Record:
           represent
         """
 
-        channel_path = f"channels.{channel_name}"
-        channel_exist_condition = {channel_path: {"$exists": True}}
-
         recent_channel_query = MongoDBInterface.find(
             "records",
-            filter_=channel_exist_condition,
-            limit=3,
+            filter_={
+                "_id": {"$in": record_ids},
+                f"channels.{channel_name}": {"$exists": True},
+            },
             sort=[("_id", pymongo.DESCENDING)],
             projection=[f"channels.{channel_name}", "metadata"],
         )
@@ -729,7 +720,8 @@ class Record:
             if original_image:
                 image_bytes = BytesIO()
                 img_temp = PILImage.fromarray(result.astype(np.int32))
-                img_temp.save(image_bytes, format="PNG")
+
+                img_temp.convert("I;16").save(image_bytes, format="PNG")
             else:
                 image_bytes = FalseColourHandler.apply_false_colour(
                     image_array=result,

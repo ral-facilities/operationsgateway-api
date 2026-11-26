@@ -370,6 +370,18 @@ class ChannelManifestModel(BaseModel):
     channels: Dict[str, ChannelModel]
 
 
+class ChannelStatsModel(BaseModel):
+    """
+    Where a channel's data sits in the records collection, so its summary doesn't need
+    to search for it. `last_record_ids` holds the (up to) three newest records
+    containing the channel, newest first
+    """
+
+    id_: str = Field(alias="_id")
+    first_record_id: str  # the oldest
+    last_record_ids: List[str]  # the 3 newest
+
+
 class ChannelSummaryModel(BaseModel):
     first_date: datetime
     most_recent_date: datetime

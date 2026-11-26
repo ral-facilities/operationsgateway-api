@@ -13,6 +13,7 @@ from PIL import Image as PILImage
 import pytest
 import pytest_asyncio
 
+from operationsgateway_api.src.channels.channel_stats import ChannelStats
 from operationsgateway_api.src.config import BackupConfig, Config
 from operationsgateway_api.src.main import app
 from operationsgateway_api.src.mongo.interface import MongoDBInterface
@@ -188,6 +189,7 @@ async def reset_record_storage():
     yield
     await remove_record(RECORD_ID_TMP)
     await MongoDBInterface.delete_one("records", {"metadata.shotnum": 366272})
+    await ChannelStats.remove_record(RECORD_ID_TMP)
     echo = EchoInterface()
     subdirectories = echo.format_record_id(RECORD_ID_TMP)
     await echo.delete_directory(f"{Waveform.echo_prefix}/{subdirectories}/")

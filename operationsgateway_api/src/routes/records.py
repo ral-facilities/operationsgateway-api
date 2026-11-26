@@ -11,6 +11,7 @@ from operationsgateway_api.src.auth.authorisation import (
     authorise_route,
     authorise_token,
 )
+from operationsgateway_api.src.channels.channel_stats import ChannelStats
 from operationsgateway_api.src.error_handling import endpoint_error_handling
 from operationsgateway_api.src.exceptions import QueryParameterError
 from operationsgateway_api.src.models import PartialRecordModel
@@ -296,6 +297,7 @@ async def delete_record_by_id(
     log.info("Deleting record by ID: %s", id_)
 
     await Record.delete_record(id_)
+    await ChannelStats.remove_record(id_)  # request fails if unsuccessful
     echo_interface = get_echo_interface()
     # In principle historic data might be in the old directory format on Echo, so delete
     # in both locations
