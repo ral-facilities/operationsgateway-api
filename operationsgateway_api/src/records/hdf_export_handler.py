@@ -16,6 +16,7 @@ from operationsgateway_api.src.models import (
     PartialRecordModel,
 )
 from operationsgateway_api.src.records.export_handler import ExportHandler
+from operationsgateway_api.src.records.record import Record
 
 log = logging.getLogger()
 
@@ -62,6 +63,7 @@ class HdfExportHandler(ExportHandler):
         self.hdf_file = None
         self.records_by_id = {}
         self.function_expressions = {}
+        self.size_exceeded = False
 
     @staticmethod
     def get_projection(projection: List[str]) -> List[str]:
@@ -106,11 +108,9 @@ class HdfExportHandler(ExportHandler):
 
     def _start_export(self) -> None:
         """
-        Raises an `ExportError` if the projected image series are estimated to be over
-        `max_filesize_bytes`. Then opens `hdf_file` on `hdf_file_in_memory` and creates
-        a group for each record, with the record metadata as attributes.
+        Opens `hdf_file` on `hdf_file_in_memory` and creates a group for each record,
+        with the record metadata as attributes.
         """
-        self._check_image_series_size()
         self.records_by_id = {record.id_: record for record in self.records_data}
         self.function_expressions = {
             function["name"]: function["expression"]
@@ -125,17 +125,24 @@ class HdfExportHandler(ExportHandler):
     def _finish_export(self) -> None:
         """
         Writes the lines of `errors_file_in_memory` to an `EXPORT_ERRORS` dataset, if
-        there are any, then closes `hdf_file` and checks its size.
+        there are any, then closes `hdf_file`. Raises an `ExportError` if `_check_size`
+        found the file to be over `max_filesize_bytes`. It is raised here because this
+        runs after the tasks, so it is not wrapped in an `ExceptionGroup`.
         """
         errors = self.errors_file_in_memory.getvalue().splitlines()
-        if errors:
+        if errors and not self.size_exceeded:
             self.hdf_file.create_dataset(
                 "EXPORT_ERRORS",
                 data=np.array(errors, dtype=h5py.string_dtype()),
             )
 
         self.hdf_file.close()
-        self._check_size(self.hdf_file_in_memory.getbuffer().nbytes)
+        if self.size_exceeded:
+            raise ExportError(
+                "Too much data requested. Reduce either the number of records or "
+                "channels requested, or both. The skip and limit parameters can also "
+                "be used to export the records in pages.",
+            )
 
     async def _process_data_channel(
         self,
@@ -147,21 +154,27 @@ class HdfExportHandler(ExportHandler):
     ) -> str:
         """
         Writes scalar and string channels, otherwise calls `_process_data_channel` in
-        `ExportHandler`.
+        `ExportHandler`. Then calls `_check_size`. Does nothing once `size_exceeded`
+        is set, so the remaining channels are not fetched.
         """
+        if self.size_exceeded:
+            return line
+
         if self._get_channel_type(channel_name) in ("scalar", "string"):
             value = channels[channel_name].data if channel_name in channels else None
             if value is not None:
                 self._write_to_hdf(record_id, channel_name, {"data": value})
-            return line
+        else:
+            line = await super()._process_data_channel(
+                channels,
+                record_id,
+                raw_data,
+                channel_name,
+                line,
+            )
 
-        return await super()._process_data_channel(
-            channels,
-            record_id,
-            raw_data,
-            channel_name,
-            line,
-        )
+        self._check_size()
+        return line
 
     async def _write_to_zip(
         self,
@@ -204,8 +217,11 @@ class HdfExportHandler(ExportHandler):
                     array = np.array(png)
             else:
                 array = np.load(BytesIO(data))
+            # Shift back to the ingested values, which are stored as most significant
+            # bits, and cast back to the stored dtype as the shift returns floats
             bit_depth = getattr(channel.metadata, "bit_depth", None)
-            datasets = {"data": self._remove_bit_depth_shift(array, bit_depth)}
+            raw_array = Record._bit_shift_to_raw(array, bit_depth)
+            datasets = {"data": raw_array.astype(array.dtype, copy=False)}
 
         self._write_to_hdf(record_id, channel_name, datasets, attributes)
 
@@ -280,54 +296,19 @@ class HdfExportHandler(ExportHandler):
             self._filename_identifier(record_id) if self.shotnum_naming else record_id
         )
 
-    def _check_image_series_size(self) -> None:
+    def _check_size(self) -> None:
         """
-        Raises an `ExportError` if the projected image series are estimated to be over
-        `max_filesize_bytes`, from their stored `shape` and two bytes per pixel.
+        Flushes `hdf_file` so that everything written so far is in
+        `hdf_file_in_memory`, then sets `size_exceeded` if that is over
+        `max_filesize_bytes`. It doesn't raise, because an exception in a task is
+        wrapped in an `ExceptionGroup`, and the image, image series and float image
+        methods catch every exception.
         """
-        channel_names = {
-            self._get_channel_name(proj)
-            for proj in self.projection
-            if proj.startswith("channels.")
-        }
-        total_bytes = 0
-        for record_data in self.records_data:
-            channels = record_data.channels or {}
-            for channel_name in channel_names:
-                channel = channels.get(channel_name)
-                is_series = self._get_channel_type(channel_name) == "image_series"
-                if is_series and channel is not None and channel.shape is not None:
-                    total_bytes += int(np.prod(channel.shape, dtype=np.int64)) * 2
-
-        self._check_size(total_bytes)
-
-    def _check_size(self, nbytes: int) -> None:
-        """Raises an `ExportError` if `nbytes` is more than `max_filesize_bytes`."""
+        self.hdf_file.flush()
+        nbytes = self.hdf_file_in_memory.getbuffer().nbytes
+        log.info("HDF file size: %d", nbytes)
         if nbytes > ExportHandler.max_filesize_bytes:
-            raise ExportError(
-                "Too much data requested. Reduce either the number of records or "
-                "channels requested, or both. The skip and limit parameters can also "
-                "be used to export the records in pages.",
-            )
-
-    @staticmethod
-    def _remove_bit_depth_shift(data: np.ndarray, bit_depth: Any) -> np.ndarray:
-        """
-        Right shifts `data` in place by the number of bits in its dtype minus
-        `bit_depth`, and returns it. For example a uint16 array with a `bit_depth` of
-        12 is shifted right by 4.
-
-        Returns `data` unchanged if `bit_depth` is not an int, is less than 1, or is
-        not less than the number of bits in the dtype.
-        """
-        if not isinstance(bit_depth, int) or isinstance(bit_depth, bool):
-            return data
-
-        shift = data.dtype.itemsize * 8 - bit_depth
-        if bit_depth < 1 or shift <= 0:
-            return data
-
-        return np.right_shift(data, shift, out=data)
+            self.size_exceeded = True
 
     @staticmethod
     def _to_attribute(value: Any) -> Any:
